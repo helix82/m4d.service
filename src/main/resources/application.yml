@@ -1,0 +1,15 @@
+server:
+  port: 8099
+spring:
+  profiles:
+    default: local
+    active: "@spring.profiles.active@"
+logging:
+  level:
+    su.opencode.digsigcik.synapi: INFO
+---
+spring:
+  config.activate.on-profile: local
+logging:
+  level:
+    su.opencode.digsigcik.synapi: TRACE
