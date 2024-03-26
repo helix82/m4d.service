@@ -3,10 +3,7 @@ package su.opencode.digsigcik.synapi.controller;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
@@ -17,6 +14,7 @@ import su.opencode.digsigcik.synapi.service.ContainerService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -38,8 +36,7 @@ public class ApiControllerV1 {
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        var headers = resourceOctetStreamHeaders(res);
-        return resourceOrInternal(res, headers);
+        return resourceOctetStreamOrInternal(res);
     }
 
     @PutMapping(value = "/update-pdf-container-regdata",
@@ -52,8 +49,7 @@ public class ApiControllerV1 {
         if (res == null) {
             return ResponseEntity.internalServerError().build();
         }
-        var headers = resourceOctetStreamHeaders(res);
-        return resourceOrInternal(res, headers);
+        return resourceOctetStreamOrInternal(res);
     }
 
     @PostMapping(value = "/get-container-data",
@@ -84,25 +80,22 @@ public class ApiControllerV1 {
             return ResponseEntity.internalServerError().build();
         }
         var resource = new ByteArrayResource(res);
-        var headers = resourceOctetStreamHeaders(resource);
-        return resourceOrInternal(resource, headers);
+        return resourceOctetStreamOrInternal(resource);
     }
 
-    private static HttpHeaders resourceOctetStreamHeaders(Resource resource) {
-        var headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", resource.getFilename());
-        return headers;
-    }
-
-    private static ResponseEntity<Resource> resourceOrInternal(
-            Resource resource,
-            HttpHeaders headers
+    private static ResponseEntity<Resource> resourceOctetStreamOrInternal(
+            Resource resource
     ) {
         try {
+            var filename = Objects.requireNonNull(resource.getFilename(),
+                    "empty resource filename");
+            var disposition = ContentDisposition.attachment()
+                    .filename(filename)
+                    .build();
             return ResponseEntity.ok()
-                    .headers(headers)
                     .contentLength(resource.contentLength())
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
                     .body(resource);
         } catch (IOException e) {
             e.printStackTrace();
