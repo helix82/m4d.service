@@ -2,7 +2,7 @@ openapi: 3.0.3 # TODO: upgrade to v3.1 as soon as openapi-codegen add support fo
 info:
   title: SynAPI schema
   description: SynAPI schema
-  version: 0.0.1
+  version: 0.0.2
 servers:
   - url: '{protocol}://cik-sep.o-code.ru:{port}/api/v1'
     description: Development server
@@ -100,7 +100,7 @@ paths:
                 reverify:
                   type: boolean
                   default: false
-                  description: Verify all signatures again
+                  description: Verify signatures affecting selected data again (not persistent)
       responses:
         200:
           description: Compound result of all processing actions
@@ -108,6 +108,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ContainerData"
+        400:
+          description: Invalid request
+  /get-container-part:
+    post:
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [ container, selector ]
+              properties:
+                container:
+                  type: string
+                  format: binary
+                  description: DSCP container to update
+                selector:
+                  $ref: "#/components/schemas/ContainerSelector"
+                reverify:
+                  type: boolean
+                  default: false
+                  description: Verify signatures affecting selected data again (not persistent)
+      responses:
+        200:
+          description: Compound result of all processing actions
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                description: Selected data
         400:
           description: Invalid request
 
@@ -163,43 +194,7 @@ components:
         - description
     ContainerData:
       type: object
-      properties:
-        signCheck:
-          type: string
-          format: binary
-        certData:
-          type: string
-          format: binary
-        poaCheck:
-          type: string
-          format: binary
-        checkHistory:
-          type: string
-          format: binary
-        sourceFile:
-          type: string
-          format: binary
-        preview:
-          type: string
-          format: binary
-        detachedSign:
-          type: string
-          format: binary
-        attachedSign:
-          type: string
-          format: binary
-        hashType:
-          type: string
-          format: binary
-        hash:
-          type: string
-          format: binary
-        poaContainer:
-          type: string
-          format: binary
-        poaDescription:
-          type: string
-          format: binary
-        description:
-          type: string
-          format: binary
+      description: Keys are ContainerSelectorCode variants and values are base64 encoded files
+      additionalProperties:
+        type: string
+        format: byte
