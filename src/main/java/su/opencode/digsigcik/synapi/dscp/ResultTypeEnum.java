@@ -1,11 +1,11 @@
 package su.opencode.digsigcik.synapi.dscp;
 
-public enum ResultTypeEnum implements HasCode<ResultTypeEnum>{
+public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 
 	SIGN_CHECK("signCheck", "text/plain"),
 	CERT_DATA("certData", "text/plain"),
 	POA_CHECK("poaCheck", "text/plain"),
-	CHECK_HISTORY("certData", "text/plain", ContainerFileEnum.CHECK_HISTORY, "_check_history", "txt"),
+	CHECK_HISTORY("checkHistory", "text/plain", ContainerFileEnum.CHECK_HISTORY, "_check_history", "txt"),
 	SOURCE_FILE("sourceFile", MetaAttribute.MAIN_FILE_CONTENT_TYPE, ContainerFileEnum.MAIN_FILE, "", MetaAttribute.MAIN_FILE_EXTENSION),
 	PREVIEW("preview", "application/pdf", ContainerFileEnum.PREVIEW, "_preview", "pdf"),
 	DETACHED_SIGN("detachedSign", "application/octet-stream"),

@@ -9,7 +9,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
-final class InvariantUtils {
+public final class InvariantUtils {
 
 	private static final Map<Pair<Class<? extends Enum>, String>, Enum> ENUM_BY_CODE = new HashMap<>();
 	private static final Log LOG = LogFactory.getLog(InvariantUtils.class);
