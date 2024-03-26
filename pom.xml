@@ -199,6 +199,40 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>${openapi-generator-version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/schema/synapi-api.yml</inputSpec>
+                            <generatorName>java</generatorName>
+                            <output>${project.basedir}/</output>
+                            <modelPackage>su.opencode.digsigcik.synapi.api.model</modelPackage>
+                            <packageName>su.opencode.digsigcik.synapi.api</packageName>
+                            <groupId>su.opencode.digsigcik.synapi</groupId>
+                            <artifactId>api</artifactId>
+                            <artifactVersion>${project.version}</artifactVersion>
+                            <generateApis>false</generateApis>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <supportingFilesToGenerate>JSON.java,RFC3339DateFormat.java,AbstractOpenApiSchema.java</supportingFilesToGenerate>
+                            <library>native</library>
+                            <configOptions>
+                                <sourceFolder>target/generated-sources/src/main/java</sourceFolder>
+                                <sortModelPropertiesByRequiredFlag>false</sortModelPropertiesByRequiredFlag>
+                                <useBeanValidation>true</useBeanValidation>
+                                <modelNameSuffix>Vo</modelNameSuffix>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>

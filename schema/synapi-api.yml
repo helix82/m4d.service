@@ -1,0 +1,205 @@
+openapi: 3.0.3 # TODO: upgrade to v3.1 as soon as openapi-codegen add support for v3.1
+info:
+  title: SynAPI schema
+  description: SynAPI schema
+  version: 0.0.1
+servers:
+  - url: '{protocol}://cik-sep.o-code.ru:{port}/api/v1'
+    description: Development server
+    variables:
+      protocol:
+        enum:
+          - http
+          - https
+        default: http
+      port:
+        enum:
+          - '8080'
+          - '8443'
+        default: '8080'
+paths:
+  /create-pdf-container:
+    post:
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [sourceFile, sourceSig, createSigStamp]
+              properties:
+                sourceFile:
+                  type: string
+                  format: binary
+                  description: Signed PDF payload
+                sourceSig:
+                  type: string
+                  format: binary
+                  description: Signature data
+                createSigStamp:
+                  type: boolean
+                  description: Should signature stamp be created and added to the container
+                sigStampPosition:
+                  $ref: "#/components/schemas/StampPosition"
+      responses:
+        200:
+          description: DSCP Container created successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                description: Raw bytes of created DSCP container
+        400:
+          description: Invalid request
+  /update-pdf-container-regdata:
+    put:
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [container. regData]
+              properties:
+                container:
+                  type: string
+                  format: binary
+                  description: DSCP container to update
+                regData:
+                  $ref: "#/components/schemas/RegistrationData"
+      responses:
+        200:
+          description: DSCP Container updated successfully
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                description: DSCP container
+        400:
+          description: Invalid request
+  /get-container-data:
+    post:
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [ container, selectors ]
+              properties:
+                container:
+                  type: string
+                  format: binary
+                  description: DSCP container to update
+                selectors:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ContainerSelector"
+                reverify:
+                  type: boolean
+                  default: false
+                  description: Verify all signatures again
+      responses:
+        200:
+          description: Compound result of all processing actions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContainerData"
+        400:
+          description: Invalid request
+
+components:
+  schemas:
+    StampPosition:
+      type: object
+      description: Position of the stamp
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: A page to put a stamp on; last page of document by default
+        topLeftX:
+          type: integer
+          description: x-offset from top left corner, in mm; bottomRightX-width by default
+        topLeftY:
+          type: integer
+          description: y-offset from top left corner, in mm; bottomRightY-height by default
+    RegistrationData:
+      type: object
+      description: Document registration data
+      required: [number, date]
+      properties:
+        number:
+          type: string
+          description: Document registration number
+        date:
+          type: string
+          description: Date and time of document registration, e.g. '2024-03-25T16:15:30+04:00'
+          format: date-time
+    ContainerSelector:
+      type: object
+      required: [code]
+      properties:
+        code:
+          $ref: "#/components/schemas/ContainerSelectorCode"
+    ContainerSelectorCode:
+      type: string
+      enum:
+        - signCheck
+        - certData
+        - poaCheck
+        - checkHistory
+        - sourceFile
+        - preview
+        - detachedSign
+        - attachedSign
+        - hashType
+        - hash
+        - poaContainer
+        - poaDescription
+        - description
+    ContainerData:
+      type: object
+      properties:
+        signCheck:
+          type: string
+          format: binary
+        certData:
+          type: string
+          format: binary
+        poaCheck:
+          type: string
+          format: binary
+        checkHistory:
+          type: string
+          format: binary
+        sourceFile:
+          type: string
+          format: binary
+        preview:
+          type: string
+          format: binary
+        detachedSign:
+          type: string
+          format: binary
+        attachedSign:
+          type: string
+          format: binary
+        hashType:
+          type: string
+          format: binary
+        hash:
+          type: string
+          format: binary
+        poaContainer:
+          type: string
+          format: binary
+        poaDescription:
+          type: string
+          format: binary
+        description:
+          type: string
+          format: binary

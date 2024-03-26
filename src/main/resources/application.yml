@@ -1,5 +1,5 @@
 server:
-  port: 8099
+  port: 8080
 spring:
   profiles:
     default: local
@@ -8,6 +8,8 @@ logging:
   level:
     su.opencode.digsigcik.synapi: INFO
 ---
+server:
+  port: 8099
 spring:
   config.activate.on-profile: local
 logging:
