@@ -1,0 +1,20 @@
+[Unit]
+Description=Apache ZooKeeper
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+
+WorkingDirectory=/opt/kafka/kafka
+
+ExecStart=/opt/kafka/kafka/bin/zookeeper-server-start.sh /home/kafka/kafka/config/zookeeper.properties
+ExecStop=/opt/kafka/kafka/bin/zookeeper-server-stop.sh
+Restart=on-abort
+
+User=javadev
+Group=javadev
+UMask=0007
+
+[Install]
+WantedBy=multi-user.target
