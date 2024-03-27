@@ -1,6 +1,8 @@
 package su.opencode.digsigcik.synapi.controller;
 
 import lombok.AllArgsConstructor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
@@ -14,12 +16,13 @@ import su.opencode.digsigcik.synapi.service.ContainerService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1")
 @AllArgsConstructor
 public class ApiControllerV1 {
+    private static final String DEFAULT_FILENAME = "container.dscp";
 
     private final ContainerService containerService;
 
@@ -36,7 +39,7 @@ public class ApiControllerV1 {
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        return resourceOctetStreamOrInternal(res);
+        return resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME));
     }
 
     @PutMapping(value = "/update-pdf-container-regdata",
@@ -49,7 +52,7 @@ public class ApiControllerV1 {
         if (res == null) {
             return ResponseEntity.internalServerError().build();
         }
-        return resourceOctetStreamOrInternal(res);
+        return resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME));
     }
 
     @PostMapping(value = "/get-container-data",
@@ -68,8 +71,8 @@ public class ApiControllerV1 {
     }
 
     @PostMapping(value = "/get-container-part",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Resource> getContainerData(
+                 produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Resource> getContainerPart(
             @RequestPart("container") MultipartFile container,
             @RequestPart("selector") ContainerSelector selector,
             @RequestPart(value = "reverify", required = false) Boolean reverify
@@ -79,16 +82,16 @@ public class ApiControllerV1 {
         if (res == null) {
             return ResponseEntity.internalServerError().build();
         }
+        var filename = filename(container, selector.getCode().getValue());
         var resource = new ByteArrayResource(res);
-        return resourceOctetStreamOrInternal(resource);
+        return resourceOctetStreamOrInternal(resource, filename);
     }
 
     private static ResponseEntity<Resource> resourceOctetStreamOrInternal(
-            Resource resource
+            @NotNull Resource resource,
+            @NotNull String filename
     ) {
         try {
-            var filename = Objects.requireNonNull(resource.getFilename(),
-                    "empty resource filename");
             var disposition = ContentDisposition.attachment()
                     .filename(filename)
                     .build();
@@ -101,5 +104,23 @@ public class ApiControllerV1 {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static String filename(@NotNull Resource resource,
+                                   @NotNull String fallback) {
+        return Optional.ofNullable(resource.getFilename()).orElse(fallback);
+    }
+
+    private static String filename(@NotNull MultipartFile file,
+                                   @Nullable String prefix) {
+        String s = Optional.ofNullable(file.getOriginalFilename())
+                .orElse(file.getName());
+        return addPrefix(s, prefix);
+    }
+
+    private static String addPrefix(@NotNull String s,
+                                    @Nullable String prefix) {
+        return prefix == null ? s : String.join("_", prefix, s);
     }
 }
