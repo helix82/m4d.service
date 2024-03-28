@@ -8,40 +8,41 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.*;
 
 @EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+    public static final String CORS_CFG_SOURCE_BEAN = "corsConfigurationSource";
 
     private final WebConfigProperties webConfigProperties;
 
     @Order(0)
     @Bean
-    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
-        http.cors(c -> c.configurationSource(
-                    corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable)
             .authorizeRequests(rm -> rm
                 .antMatchers("/api/**").permitAll()
                 .anyRequest().authenticated());
         return http.build();
     }
 
-    // After change, verify that it matches su.opencode.digsigcik.synapi.middleware.ApiCorsFilter.doFilter
-    CorsConfigurationSource corsConfigurationSource() {
+    @Bean
+    public CorsProcessor corsProcessor() {
+        return new DefaultCorsProcessor();
+    }
+
+    @Bean(CORS_CFG_SOURCE_BEAN)
+    public CorsConfigurationSource corsConfigurationSource() {
         var cors = webConfigProperties.getCors();
         var configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(cors.getAllowedOrigin());
-        configuration.setAllowedMethods(cors.getAllowedMethods());
-        configuration.setAllowedHeaders(cors.getAllowedHeaders());
-        configuration.setExposedHeaders(cors.getExposedHeaders());
-//        configuration.setAllowCredentials(true);
+        configuration.setAllowedMethods(cors.getAllowMethods());
+        configuration.setAllowedHeaders(cors.getAllowHeaders());
+        configuration.setExposedHeaders(cors.getExposeHeaders());
+        configuration.setAllowCredentials(true);
         var source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }

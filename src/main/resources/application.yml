@@ -6,8 +6,8 @@ server:
   port: 8080
 web:
   cors:
-    allowed-origin: "*"
-    allowed-methods: OPTIONS, HEAD, POST, PUT
+    allow-origin: "*"
+    allow-methods: OPTIONS, HEAD, POST, PUT
 logging:
   level:
     su.opencode.digsigcik.synapi: INFO
