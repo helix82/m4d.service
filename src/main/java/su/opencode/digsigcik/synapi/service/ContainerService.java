@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.api.model.StampPosition;
@@ -23,12 +24,12 @@ public interface ContainerService {
             @NotNull MultipartFile containerFile,
             @NotNull RegistrationData regData);
 
-    Map<String, byte[]> getContainerData(
+    Map<String, ContainerPart> getContainerData(
             @NotNull MultipartFile containerFile,
             @NotNull List<ContainerSelector> selectors,
             boolean reverify);
 
-    byte[] getContainerData(
+    ContainerPart getContainerPart(
             @NotNull MultipartFile containerFile,
             @NotNull ContainerSelector selector,
             boolean reverify);

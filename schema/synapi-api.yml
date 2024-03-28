@@ -2,7 +2,7 @@ openapi: 3.0.3 # TODO: upgrade to v3.1 as soon as openapi-codegen add support fo
 info:
   title: SynAPI schema
   description: SynAPI schema
-  version: 0.0.2
+  version: 0.0.3
 servers:
   - url: '{protocol}://cik-sep.o-code.ru:{port}/api/v1'
     description: Development server
@@ -103,7 +103,7 @@ paths:
                   description: Verify signatures affecting selected data again (not persistent)
       responses:
         200:
-          description: Compound result of all processing actions
+          description: Selected container data
           content:
             application/json:
               schema:
@@ -132,7 +132,7 @@ paths:
                   description: Verify signatures affecting selected data again (not persistent)
       responses:
         200:
-          description: Compound result of all processing actions
+          description: Selected part of the container data, Content-Type actually depends on the params
           content:
             application/octet-stream:
               schema:
@@ -145,8 +145,8 @@ paths:
 components:
   schemas:
     StampPosition:
-      type: object
       description: Position of the stamp
+      type: object
       properties:
         page:
           type: integer
@@ -159,8 +159,8 @@ components:
           type: integer
           description: y-offset from top left corner, in mm; bottomRightY-height by default
     RegistrationData:
-      type: object
       description: Document registration data
+      type: object
       required: [number, date]
       properties:
         number:
@@ -193,8 +193,18 @@ components:
         - poaDescription
         - description
     ContainerData:
-      type: object
       description: Keys are ContainerSelectorCode variants and values are base64 encoded files
+      type: object
       additionalProperties:
-        type: string
-        format: byte
+        $ref: "#/components/schemas/ContainerPart"
+    ContainerPart:
+      description: Part of the container
+      type: object
+      required: [contentType, data]
+      properties:
+        contentType:
+          type: string
+          description: MIME type
+        data:
+          type: string
+          format: byte

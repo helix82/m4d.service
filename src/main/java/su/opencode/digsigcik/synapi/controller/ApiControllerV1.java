@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.api.model.StampPosition;
@@ -32,7 +33,8 @@ public class ApiControllerV1 {
             @RequestPart("sourceFile") MultipartFile sourceFile,
             @RequestPart("sourceSig") MultipartFile sourceSig,
             @RequestPart("createSigStamp") boolean createSigStamp,
-            @RequestPart(value = "sigStampPosition", required = false) StampPosition stampPosition
+            @RequestPart(value = "sigStampPosition",
+                         required = false) StampPosition stampPosition
     ) {
         var res = containerService.createPdfContainer(
                 sourceFile, sourceSig, createSigStamp, stampPosition);
@@ -57,13 +59,14 @@ public class ApiControllerV1 {
 
     @PostMapping(value = "/get-container-data",
                  produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Map<String, byte[]>> getContainerData(
+    public ResponseEntity<Map<String, ContainerPart>> getContainerData(
             @RequestPart("container") MultipartFile container,
             @RequestPart("selectors") List<ContainerSelector> selectors,
             @RequestPart(value = "reverify", required = false) Boolean reverify
     ) {
         if (reverify == null) reverify = Boolean.FALSE;
-        var res = containerService.getContainerData(container, selectors, reverify);
+        var res = containerService.getContainerData(
+                container, selectors, reverify);
         if (res == null) {
             return ResponseEntity.internalServerError().build();
         }
@@ -78,17 +81,28 @@ public class ApiControllerV1 {
             @RequestPart(value = "reverify", required = false) Boolean reverify
     ) {
         if (reverify == null) reverify = Boolean.FALSE;
-        var res = containerService.getContainerData(container, selector, reverify);
+        var res = containerService.getContainerPart(
+                container, selector, reverify);
         if (res == null) {
             return ResponseEntity.internalServerError().build();
         }
+        var resource = new ByteArrayResource(res.getData());
+        var contentType = mediaType(res.getContentType());
         var filename = filename(container, selector.getCode().getValue());
-        var resource = new ByteArrayResource(res);
-        return resourceOctetStreamOrInternal(resource, filename);
+        return resourceOctetStreamOrInternal(resource, contentType, filename);
     }
 
     private static ResponseEntity<Resource> resourceOctetStreamOrInternal(
             @NotNull Resource resource,
+            @NotNull String filename
+    ) {
+        var contentType = MediaType.APPLICATION_OCTET_STREAM;
+        return resourceOctetStreamOrInternal(resource, contentType, filename);
+    }
+
+    private static ResponseEntity<Resource> resourceOctetStreamOrInternal(
+            @NotNull Resource resource,
+            @NotNull MediaType contentType,
             @NotNull String filename
     ) {
         try {
@@ -97,7 +111,7 @@ public class ApiControllerV1 {
                     .build();
             return ResponseEntity.ok()
                     .contentLength(resource.contentLength())
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentType(contentType)
                     .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
                     .body(resource);
         } catch (IOException e) {
@@ -122,5 +136,13 @@ public class ApiControllerV1 {
     private static String addPrefix(@NotNull String s,
                                     @Nullable String prefix) {
         return prefix == null ? s : String.join("_", prefix, s);
+    }
+
+    private static MediaType mediaType(@NotNull String type) {
+        try {
+            return MediaType.valueOf(type);
+        } catch (InvalidMediaTypeException e) {
+            throw new IllegalStateException("Invalid media type: " + type);
+        }
     }
 }

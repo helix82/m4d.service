@@ -7,18 +7,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.InvalidMimeTypeException;
 import org.springframework.web.multipart.MultipartFile;
-import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
-import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
-import su.opencode.digsigcik.synapi.api.model.RegistrationData;
-import su.opencode.digsigcik.synapi.api.model.StampPosition;
+import su.opencode.digsigcik.synapi.api.model.*;
 import su.opencode.digsigcik.synapi.dscp.*;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 // TODO: add proper error handling, likely with exception handlers
 @Service
@@ -53,17 +51,12 @@ public class ContainerServiceImpl implements ContainerService {
     }
 
     @Override
-    public Map<String, byte[]> getContainerData(@NotNull MultipartFile containerFile,
-                                                @NotNull List<ContainerSelector> selectors,
-                                                boolean reverify) {
-        byte[] containerBytes = toBytes(containerFile);
-        Container container;
-        try {
-            container = ContainerUtils.createContainer(containerBytes);
-        } catch (DscpContainerException e) {
-            LOG.error(e.getMessage(), e);
-            throw new IllegalStateException(e.getMessage());
-        }
+    public Map<String, ContainerPart> getContainerData(
+            @NotNull MultipartFile containerFile,
+            @NotNull List<ContainerSelector> selectors,
+            boolean reverify
+    ) {
+        var container = toContainer(containerFile);
         if (reverify && shouldVerify(selectors)) {
             doReverify(container);
         }
@@ -85,20 +78,28 @@ public class ContainerServiceImpl implements ContainerService {
             throw new IllegalStateException(e);
         }
 
-        var res = new HashMap<String, byte[]>();
+        var res = new HashMap<String, ContainerPart>();
         for (var rd : rds) {
             if (rd == null) continue; // mandatory=false semantics
-            var type = rd.getResultType();
-            res.put(type.getCode(), rd.getContent());
+            var resultType = rd.getResultType();
+            var contentType = toContentType(resultType, container);
+            var data = rd.getContent();
+            var containerPart = new ContainerPart()
+                    .contentType(contentType)
+                    .data(data);
+            res.put(resultType.getCode(), containerPart);
         }
         return res;
     }
 
     @Override
-    public byte[] getContainerData(@NotNull MultipartFile containerFile,
-                                   @NotNull ContainerSelector selector,
-                                   boolean reverify) {
-        var res = getContainerData(containerFile,
+    public ContainerPart getContainerPart(
+            @NotNull MultipartFile containerFile,
+            @NotNull ContainerSelector selector,
+            boolean reverify
+    ) {
+        var res = getContainerData(
+                containerFile,
                 Collections.singletonList(selector),
                 reverify);
         return res.get(selector.getCode().getValue());
@@ -113,6 +114,26 @@ public class ContainerServiceImpl implements ContainerService {
     private Container doReverify(Container container) {
         // TODO:
         throw new IllegalArgumentException("Operation not supported yet");
+    }
+
+    private String toContentType(ResultTypeEnum resultType, Container container) {
+        var defaultContentType = "application/octet-stream";
+        try {
+            var contentType = resultType.getContentType(container);
+            return contentType != null ? contentType : defaultContentType;
+        } catch (DscpContainerException | InvalidMimeTypeException e) {
+            return defaultContentType;
+        }
+    }
+
+    private static Container toContainer(MultipartFile file) {
+        byte[] containerBytes = toBytes(file);
+        try {
+            return ContainerUtils.createContainer(containerBytes);
+        } catch (DscpContainerException e) {
+            LOG.error(e.getMessage(), e);
+            throw new IllegalStateException(e.getMessage());
+        }
     }
 
     private static byte[] toBytes(MultipartFile file) {

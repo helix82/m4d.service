@@ -86,7 +86,7 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 		return file != null;
 	}
 
-	String getContentType(Container container) throws DscpContainerException {
+	public String getContentType(Container container) throws DscpContainerException {
 		if (contentType != null) return contentType;
 		else if (contentTypeMeta != null) return container.getProperties().getMetaAsString(contentTypeMeta);
 		else return null;
