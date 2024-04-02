@@ -26,6 +26,13 @@ final class MetaAttribute {
 	static final MetaAttribute SIGNATURE_TYPE = new MetaAttribute(MetaObjectEnum.SIGNATURE_TYPE, "code");
 	static final MetaAttribute ENHANCE_TYPE = new MetaAttribute(MetaObjectEnum.SIGNATURE_TYPE, "enhance");
 	static final MetaAttribute ATTACHED_TYPE = new MetaAttribute(MetaObjectEnum.SIGNATURE_TYPE, "attachedType");
+	//Stamp
+	static final MetaAttribute STAMP_SIGN_PAGE = new MetaAttribute(MetaObjectEnum.STAMP, "signPage");
+	static final MetaAttribute STAMP_SIGN_X = new MetaAttribute(MetaObjectEnum.STAMP, "signX");
+	static final MetaAttribute STAMP_SIGN_Y = new MetaAttribute(MetaObjectEnum.STAMP, "signY");
+	static final MetaAttribute STAMP_REG_PAGE = new MetaAttribute(MetaObjectEnum.STAMP, "regPage");
+	static final MetaAttribute STAMP_REG_X = new MetaAttribute(MetaObjectEnum.STAMP, "regX");
+	static final MetaAttribute STAMP_REG_Y = new MetaAttribute(MetaObjectEnum.STAMP, "regY");
 
 
 	private final MetaObjectEnum object;

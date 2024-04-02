@@ -5,7 +5,8 @@ enum MetaObjectEnum implements HasCode<MetaObjectEnum> {
 	CONTAINER_TYPE("containerType"),
 	SIGNATURE_TYPE("signatureType"),
 	MAIN_FILE("mainFile"),
-	CONTAINER_DESCRIPTION("containerDescription");
+	CONTAINER_DESCRIPTION("containerDescription"),
+	STAMP("stamp");
 
 	static {
 		InvariantUtils.fillCodes(MetaObjectEnum.class);

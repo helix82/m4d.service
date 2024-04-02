@@ -2,10 +2,10 @@ package su.opencode.digsigcik.synapi.dscp;
 
 public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 
-	SIGN_CHECK("signCheck", "text/plain"),
-	CERT_DATA("certData", "text/plain"),
-	POA_CHECK("poaCheck", "text/plain"),
-	CHECK_HISTORY("checkHistory", "text/plain", ContainerFileEnum.CHECK_HISTORY, "_check_history", "txt"),
+	SIGN_CHECK("signCheck", "application/json", ContainerFileEnum.LAST_SIGN_CHECK, "_sign_check", "json"),
+	CERT_DATA("certData", "application/json", ContainerFileEnum.LAST_CERT_DATA, "_cert_data", "json"),
+	POA_CHECK("poaCheck", "application/json", ContainerFileEnum.LAST_POA_CHECK, "_poa_check", "json"),
+	CHECK_HISTORY("checkHistory", "application/json", ContainerFileEnum.CHECK_HISTORY, "_check_history", "json"),
 	SOURCE_FILE("sourceFile", MetaAttribute.MAIN_FILE_CONTENT_TYPE, ContainerFileEnum.MAIN_FILE, "", MetaAttribute.MAIN_FILE_EXTENSION),
 	PREVIEW("preview", "application/pdf", ContainerFileEnum.PREVIEW, "_preview", "pdf"),
 	DETACHED_SIGN("detachedSign", "application/octet-stream"),
@@ -15,7 +15,13 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	POA_CONTAINER("poaContainer", "application/octet-stream", ContainerFileEnum.POA_DSCP, "_poa", "dscp"),
 	POA_DESCRIPTION("poaDescription", "application/json", ContainerFileEnum.POA_DESCRIPTION, "_poa", "json"),
 	MEDO("medo", "application/zip"),
-	DESCRIPTION("description", "text/plain", MetaAttribute.CONTAINER_DESCRIPTION);
+	DESCRIPTION("description", "text/plain", MetaAttribute.CONTAINER_DESCRIPTION),
+	STAMP_SIGN_PAGE("stampSignPage", "text/plain", MetaAttribute.STAMP_SIGN_PAGE),
+	STAMP_SIGN_X("stampSignX", "text/plain", MetaAttribute.STAMP_SIGN_X),
+	STAMP_SIGN_Y("stampSignY", "text/plain", MetaAttribute.STAMP_SIGN_Y),
+	STAMP_REG_PAGE("stampRegPage", "text/plain", MetaAttribute.STAMP_REG_PAGE),
+	STAMP_REG_X("stampRegX", "text/plain", MetaAttribute.STAMP_REG_X),
+	STAMP_REG_Y("stampRegY", "text/plain", MetaAttribute.STAMP_REG_Y);
 
 	static {
 		InvariantUtils.fillCodes(ResultTypeEnum.class);

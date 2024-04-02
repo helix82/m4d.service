@@ -20,10 +20,10 @@ enum ContainerFileEnum {
 	MEDO_SIGN_STAMP("medo/sign_stamp.png", false, true, null, null),
 	POA_DSCP("poa/poa.dscp", false, true, null, null),
 	POA_DESCRIPTION("poa/poa.json", false, true, null, null),
-	LAST_SIGN_CHECK("txt/lastSignCheck.txt", false, true, null, null),
-	LAST_CERT_DATA("txt/lastCertData.txt", false, true, null, null),
-	LAST_POA_CHECK("txt/lastPoaCheck", false, true, null, null),
-	CHECK_HISTORY("txt/checkHistory.txt", false, true, null, null);
+	LAST_SIGN_CHECK("check/lastSignCheck.json", false, true, null, null),
+	LAST_CERT_DATA("check/lastCertData.json", false, true, null, null),
+	LAST_POA_CHECK("check/lastPoaCheck.json", false, true, null, null),
+	CHECK_HISTORY("check/checkHistory.json", false, true, null, null);
 
 	public static ContainerFileEnum byAttachedSignatureType(AttachedSignatureTypeEnum attachedSignatureType) {
 		return Arrays.stream(values())
