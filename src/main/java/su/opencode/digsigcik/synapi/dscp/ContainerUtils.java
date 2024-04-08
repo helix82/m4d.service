@@ -1,15 +1,17 @@
 package su.opencode.digsigcik.synapi.dscp;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import su.opencode.digsigcik.synapi.crypto.BasicSecurityProvider;
 import su.opencode.digsigcik.synapi.crypto.SecurityProvider;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public final class ContainerUtils {
 
+	private static final Log LOG = LogFactory.getLog(ContainerUtils.class);
 	private static final BasicSecurityProvider BASIC_SECURITY_PROVIDER = new SimpleSecurityProvider();
 
 	private ContainerUtils() {
@@ -76,6 +78,40 @@ public final class ContainerUtils {
 		} catch (IOException e) {
 			throw DscpContainerException.ioCause(e, false);
 		}
+	}
+
+	public static void fillContainer(Container container, Map<ContainerFileEnum, byte[]> filContentMap) {
+		fillContainer(container, filContentMap, Collections.emptyMap());
+	}
+
+	public static void fillContainer(Container container,
+	                                 Map<ContainerFileEnum, byte[]> fileContentMap,
+	                                 Map<MetaAttribute, String> metaDataMap) {
+		//TODO: add implementation
+	}
+
+	public static void fillContainer(Container container, ContainerFileEnum fileType, byte[] fileContent) {
+		fillContainer(container, Collections.singletonMap(fileType, fileContent));
+	}
+
+	public static void fillContainerByResult(Container container, Map<ResultTypeEnum, byte[]> resultContent) {
+		Map<ContainerFileEnum, byte[]> fileContentMap = new EnumMap<>(ContainerFileEnum.class);
+		Map<MetaAttribute, String> metaDataMap = new HashMap<>(resultContent.size());
+		ContainerFileEnum file;
+		MetaAttribute metaAttribute;
+		for (Map.Entry<ResultTypeEnum, byte[]> entry : resultContent.entrySet()) {
+			byte[] content = entry.getValue() == null || entry.getValue().length <= 0 ? null : entry.getValue();
+			if ((file = entry.getKey().getFileType()) != null) {
+				fileContentMap.put(file, content);
+			} else if ((metaAttribute = entry.getKey().getContentMeta()) != null) {
+				String metaValue = content == null ? null : new String(content, StandardCharsets.UTF_8);
+				metaDataMap.put(metaAttribute, metaValue);
+			} else {
+				String length = content == null ? null : String.valueOf(content.length);
+				LOG.warn(String.format("Invalid result type given %s, for set content with length of %s", entry.getKey(), length));
+			}
+		}
+		fillContainer(container, fileContentMap, metaDataMap);
 	}
 
 }

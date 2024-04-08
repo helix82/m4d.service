@@ -1,27 +1,30 @@
 package su.opencode.digsigcik.synapi.dscp;
 
+import org.springframework.http.MediaType;
+
 public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 
-	SIGN_CHECK("signCheck", "application/json", ContainerFileEnum.LAST_SIGN_CHECK, "_sign_check", "json"),
-	CERT_DATA("certData", "application/json", ContainerFileEnum.LAST_CERT_DATA, "_cert_data", "json"),
-	POA_CHECK("poaCheck", "application/json", ContainerFileEnum.LAST_POA_CHECK, "_poa_check", "json"),
-	CHECK_HISTORY("checkHistory", "application/json", ContainerFileEnum.CHECK_HISTORY, "_check_history", "json"),
+	SIGN_CHECK("signCheck", MediaType.APPLICATION_JSON, ContainerFileEnum.LAST_SIGN_CHECK, "_sign_check", "json"),
+	CERT_DATA("certData", MediaType.APPLICATION_JSON, ContainerFileEnum.LAST_CERT_DATA, "_cert_data", "json"),
+	POA_CHECK("poaCheck", MediaType.APPLICATION_JSON, ContainerFileEnum.LAST_POA_CHECK, "_poa_check", "json"),
+	CHECK_HISTORY("checkHistory", MediaType.APPLICATION_JSON, ContainerFileEnum.CHECK_HISTORY, "_check_history", "json"),
 	SOURCE_FILE("sourceFile", MetaAttribute.MAIN_FILE_CONTENT_TYPE, ContainerFileEnum.MAIN_FILE, "", MetaAttribute.MAIN_FILE_EXTENSION),
-	PREVIEW("preview", "application/pdf", ContainerFileEnum.PREVIEW, "_preview", "pdf"),
-	DETACHED_SIGN("detachedSign", "application/octet-stream"),
+	PREVIEW("preview", MediaType.APPLICATION_PDF, ContainerFileEnum.PREVIEW, "_preview", "pdf"),
+	DETACHED_SIGN("detachedSign", MediaType.APPLICATION_OCTET_STREAM),
 	ATTACHED_SIGN("attachedSign", MetaAttribute.MAIN_FILE_CONTENT_TYPE),
-	HASH_TYPE("hashType", "text/plain", MetaAttribute.MAIN_FILE_HASH_TYPE),
-	HASH("hash", "text/plain", MetaAttribute.MAIN_FILE_HASH),
-	POA_CONTAINER("poaContainer", "application/octet-stream", ContainerFileEnum.POA_DSCP, "_poa", "dscp"),
-	POA_DESCRIPTION("poaDescription", "application/json", ContainerFileEnum.POA_DESCRIPTION, "_poa", "json"),
-	MEDO("medo", "application/zip"),
-	DESCRIPTION("description", "text/plain", MetaAttribute.CONTAINER_DESCRIPTION),
-	STAMP_SIGN_PAGE("stampSignPage", "text/plain", MetaAttribute.STAMP_SIGN_PAGE),
-	STAMP_SIGN_X("stampSignX", "text/plain", MetaAttribute.STAMP_SIGN_X),
-	STAMP_SIGN_Y("stampSignY", "text/plain", MetaAttribute.STAMP_SIGN_Y),
-	STAMP_REG_PAGE("stampRegPage", "text/plain", MetaAttribute.STAMP_REG_PAGE),
-	STAMP_REG_X("stampRegX", "text/plain", MetaAttribute.STAMP_REG_X),
-	STAMP_REG_Y("stampRegY", "text/plain", MetaAttribute.STAMP_REG_Y);
+	HASH_TYPE("hashType", MediaType.TEXT_PLAIN, MetaAttribute.MAIN_FILE_HASH_TYPE),
+	HASH("hash", MediaType.TEXT_PLAIN, MetaAttribute.MAIN_FILE_HASH),
+	POA_CONTAINER("poaContainer", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.POA_DSCP, "_poa", "dscp"),
+	POA_DESCRIPTION("poaDescription", MediaType.APPLICATION_JSON, ContainerFileEnum.POA_DESCRIPTION, "_poa", "json"),
+	DESCRIPTION("description", MediaType.TEXT_PLAIN, MetaAttribute.CONTAINER_DESCRIPTION),
+	STAMP_SIGN_PAGE("stampSignPage", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_SIGN_PAGE),
+	STAMP_SIGN_X("stampSignX", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_SIGN_X),
+	STAMP_SIGN_Y("stampSignY", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_SIGN_Y),
+	STAMP_REG_PAGE("stampRegPage", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_REG_PAGE),
+	STAMP_REG_X("stampRegX", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_REG_X),
+	STAMP_REG_Y("stampRegY", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_REG_Y),
+	STAMP_SIGN_IMG("stampSignImage", MediaType.IMAGE_PNG, ContainerFileEnum.SIGN_STAMP, "_sign_stamp", "png"),
+	STAMP_REG_IMG("stampSignImage", MediaType.IMAGE_PNG, ContainerFileEnum.REG_STAMP, "_reg_stamp", "png");
 
 	static {
 		InvariantUtils.fillCodes(ResultTypeEnum.class);
@@ -35,7 +38,7 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	/**
 	 * Static content type of the result
 	 */
-	private final String contentType;
+	private final MediaType contentType;
 
 	/**
 	 * From wich metadata content type should be got if not static
@@ -52,11 +55,11 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	 */
 	private final File file;
 
-	ResultTypeEnum(String code, String contentType) {
+	ResultTypeEnum(String code, MediaType contentType) {
 		this(code, contentType, (MetaAttribute)null, null, null);
 	}
 
-	ResultTypeEnum(String code, String contentType, MetaAttribute contentFromMeta) {
+	ResultTypeEnum(String code, MediaType contentType, MetaAttribute contentFromMeta) {
 		this(code, contentType, null, contentFromMeta, null);
 	}
 
@@ -68,11 +71,11 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 		this(code, null, contentTypeMeta, null, new File(fileType, fileNamePostfix, extensionMeta));
 	}
 
-	ResultTypeEnum(String code, String contentType, ContainerFileEnum fileType, String fileNamePostfix, String extension) {
+	ResultTypeEnum(String code, MediaType contentType, ContainerFileEnum fileType, String fileNamePostfix, String extension) {
 		this(code, contentType, null, null, new File(fileType, fileNamePostfix, extension));
 	}
 
-	ResultTypeEnum(String code, String contentType, MetaAttribute contentTypeMeta, MetaAttribute contentMeta, File file) {
+	ResultTypeEnum(String code, MediaType contentType, MetaAttribute contentTypeMeta, MetaAttribute contentMeta, File file) {
 		this.code = code;
 		this.contentType = contentType;
 		this.contentTypeMeta = contentTypeMeta;
@@ -92,10 +95,15 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 		return file != null;
 	}
 
-	public String getContentType(Container container) throws DscpContainerException {
-		if (contentType != null) return contentType;
-		else if (contentTypeMeta != null) return container.getProperties().getMetaAsString(contentTypeMeta);
-		else return null;
+	public MediaType getContentType(Container container) throws DscpContainerException {
+		if (contentType != null) {
+			return contentType;
+		} else if (contentTypeMeta != null) {
+			String contentTypeStr = container.getProperties().getMetaAsString(contentTypeMeta);
+			return new MediaType(contentTypeStr);
+		} else {
+			return null;
+		}
 	}
 
 	ContainerFileEnum getFileType() {
@@ -112,7 +120,11 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 		}
 	}
 
-	String getMeta(Container container) throws DscpContainerException {
+	MetaAttribute getContentMeta() {
+		return contentMeta;
+	}
+
+	String getContentMetaValue(Container container) throws DscpContainerException {
 		if (contentMeta == null) return null;
 		else return container.getProperties().getMetaAsString(contentMeta);
 	}

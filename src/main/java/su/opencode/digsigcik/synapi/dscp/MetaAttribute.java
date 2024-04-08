@@ -54,4 +54,22 @@ final class MetaAttribute {
 	public String getPropertyKey() {
 		return object.getCode() + PROPERTY_DELIMITER + attribute;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof MetaAttribute)) return false;
+
+		MetaAttribute that = (MetaAttribute) o;
+
+		if (object != that.object) return false;
+		return attribute.equals(that.attribute);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = object.hashCode();
+		result = 31 * result + attribute.hashCode();
+		return result;
+	}
 }

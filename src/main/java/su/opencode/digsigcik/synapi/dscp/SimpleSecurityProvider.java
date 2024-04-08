@@ -17,7 +17,7 @@ class SimpleSecurityProvider implements BasicSecurityProvider {
 	@Override
 	public ResultFileDescription provideSecurityAction(Container container, ResultTypeEnum resultType, SecurityProvider provider) throws DscpContainerException {
 		try {
-			String contentType = resultType.getContentType(container);
+			String contentType = resultType.getContentType(container).toString();
 			String fileName = resultType.getFileName(container);
 
 			if (resultType.isDirectFile()) {
@@ -27,7 +27,7 @@ class SimpleSecurityProvider implements BasicSecurityProvider {
 
 			if (resultType.isFromMeta()) {
 				//Is directly from metadata file
-				String metaData = resultType.getMeta(container);
+				String metaData = resultType.getContentMetaValue(container);
 				if (StringUtils.isBlank(metaData)) return null;
 				byte[] content = metaData.getBytes(StandardCharsets.UTF_8);
 				log.debug(String.format("Result type %s is a returning of direct meta data string with symbols length of %d chars",
