@@ -5,7 +5,7 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-public class DscpContainerException extends Exception { //TODO: maybe runtime exception
+public class DscpContainerException extends RuntimeException {
 
 	private final Type type;
 	private final ContainerFileEnum problemWithFile;
