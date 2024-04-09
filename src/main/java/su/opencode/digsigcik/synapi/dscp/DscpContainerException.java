@@ -18,6 +18,18 @@ public class DscpContainerException extends RuntimeException {
 		return new DscpContainerException("IOException while " + action + " container", cause, Type.IO, null, null, null, null);
 	}
 
+	static DscpContainerException fillContentProblem(String message, ContainerFileEnum fileType, byte[] content) {
+		message = String.format("Problems with fill %s for fileType %s. %s",
+			content == null || content.length <= 0 ? " null content" : " content of " + content.length + " length",
+			fileType, message);
+		return fillContentProblem(message, fileType);
+	}
+
+	static DscpContainerException fillContentProblem(String message, ContainerFileEnum fileType) {
+		String fileName = fileType == null ? null : fileType.getPath();
+		return new DscpContainerException(message, null, Type.INPUT, fileType, fileName, null, null);
+	}
+
 	static DscpContainerException containerFileProblem(IOException cause, ContainerFileEnum fileType, String fileName) {
 		return new DscpContainerException("IOException while reading container with file " + fileType + " path='" + fileName + "'", cause, Type.IO, fileType, fileName, null, null);
 	}
@@ -94,6 +106,6 @@ public class DscpContainerException extends RuntimeException {
 	}
 
 	public enum Type {
-		IO, FORMAT, SECURITY, RESULT
+		IO, FORMAT, SECURITY, RESULT, INPUT
 	}
 }
