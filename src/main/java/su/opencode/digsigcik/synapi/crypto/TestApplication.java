@@ -12,7 +12,7 @@ import java.util.Date;
 public class TestApplication {
 	public static void main(String[] args) throws Exception {
 		String filePath = args[0];
-		Container container = ContainerUtils.createContainer(new File(filePath));
+		Container container = ContainerUtils.readContainer(new File(filePath));
 		System.out.println(container);
 
 		int pointIndex = filePath.lastIndexOf('.');

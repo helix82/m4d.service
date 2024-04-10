@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.InvalidMimeTypeException;
 import org.springframework.web.multipart.MultipartFile;
@@ -129,7 +128,7 @@ public class ContainerServiceImpl implements ContainerService {
     private static Container toContainer(MultipartFile file) {
         byte[] containerBytes = toBytes(file);
         try {
-            return ContainerUtils.createContainer(containerBytes);
+            return ContainerUtils.readContainer(containerBytes);
         } catch (DscpContainerException e) {
             LOG.error(e.getMessage(), e);
             throw new IllegalStateException(e.getMessage());

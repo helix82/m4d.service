@@ -133,7 +133,9 @@ public class Container {
 		}
 	}
 
-	void fillContent(Map<ContainerFileEnum, byte[]> fileContentMap, Map<MetaAttribute, String> metaDataMap) throws DscpContainerException {
+	void fillContent(Map<ContainerFileEnum, byte[]> fileContentMap, Map<MetaAttribute, String> metaDataMap)
+		throws DscpContainerException {
+
 		checkFillContentParams(fileContentMap, metaDataMap);
 
 		JSONArray history = getCheckHistory();

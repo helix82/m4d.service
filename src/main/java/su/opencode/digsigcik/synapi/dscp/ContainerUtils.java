@@ -18,27 +18,27 @@ public final class ContainerUtils {
 		throw new UnsupportedOperationException();
 	}
 
-	public static Container createContainer(File filePath) throws DscpContainerException {
-		try(InputStream in = new FileInputStream(filePath)) {
+	public static Container readContainer(File filePath) throws DscpContainerException {
+		try (InputStream in = new FileInputStream(filePath)) {
 			return new Container(in);
 		} catch (IOException e) {
 			throw DscpContainerException.ioCause(e, true);
 		}
 	}
 
-	public static Container createContainer(String filePath) throws DscpContainerException {
-		return createContainer(new File(filePath));
+	public static Container readContainer(String filePath) throws DscpContainerException {
+		return readContainer(new File(filePath));
 	}
 
-	public static Container createContainer(byte[] containerContent) throws DscpContainerException {
-		try(InputStream in = new ByteArrayInputStream(containerContent)) {
-			return new Container(in);
+	public static Container readContainer(byte[] containerContent) throws DscpContainerException {
+		try (InputStream in = new ByteArrayInputStream(containerContent)) {
+			return readContainer(in);
 		} catch (IOException e) {
 			throw DscpContainerException.ioCause(e, true);
 		}
 	}
 
-	public static Container createContainer(InputStream in) throws DscpContainerException {
+	public static Container readContainer(InputStream in) throws DscpContainerException {
 		return new Container(in);
 	}
 
@@ -71,7 +71,7 @@ public final class ContainerUtils {
 		container.write(out);
 	}
 
-	public static byte[] getContainerContent(Container container) throws DscpContainerException {
+	public static byte[] containerContent(Container container) throws DscpContainerException {
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 			writeContainer(out, container);
 			return out.toByteArray();
@@ -80,21 +80,21 @@ public final class ContainerUtils {
 		}
 	}
 
-	public static void fillContainer(Container container, Map<ContainerFileEnum, byte[]> filContentMap) {
+	public static void fillContainer(Container container, Map<ContainerFileEnum, byte[]> filContentMap) throws DscpContainerException {
 		fillContainer(container, filContentMap, Collections.emptyMap());
 	}
 
 	public static void fillContainer(Container container,
 	                                 Map<ContainerFileEnum, byte[]> fileContentMap,
-	                                 Map<MetaAttribute, String> metaDataMap) {
+	                                 Map<MetaAttribute, String> metaDataMap) throws DscpContainerException {
 		container.fillContent(fileContentMap, metaDataMap);
 	}
 
-	public static void fillContainer(Container container, ContainerFileEnum fileType, byte[] fileContent) {
+	public static void fillContainer(Container container, ContainerFileEnum fileType, byte[] fileContent) throws DscpContainerException {
 		fillContainer(container, Collections.singletonMap(fileType, fileContent));
 	}
 
-	public static void fillContainerByResult(Container container, Map<ResultTypeEnum, byte[]> resultContent) {
+	public static void fillContainerByResult(Container container, Map<ResultTypeEnum, byte[]> resultContent) throws DscpContainerException {
 		Map<ContainerFileEnum, byte[]> fileContentMap = new EnumMap<>(ContainerFileEnum.class);
 		Map<MetaAttribute, String> metaDataMap = new HashMap<>(resultContent.size());
 		ContainerFileEnum file;
