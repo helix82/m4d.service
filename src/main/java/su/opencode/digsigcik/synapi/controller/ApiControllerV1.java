@@ -1,6 +1,8 @@
 package su.opencode.digsigcik.synapi.controller;
 
 import lombok.AllArgsConstructor;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.core.io.ByteArrayResource;
@@ -23,6 +25,8 @@ import java.util.Optional;
 @RequestMapping("/api/v1")
 @AllArgsConstructor
 public class ApiControllerV1 {
+    private static final Log log = LogFactory.getLog(ApiControllerV1.class);
+
     private static final String DEFAULT_FILENAME = "container.dscp";
 
     private final ContainerService containerService;
@@ -73,8 +77,7 @@ public class ApiControllerV1 {
         return ResponseEntity.ok(res);
     }
 
-    @PostMapping(value = "/get-container-part",
-                 produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/get-container-part")
     public ResponseEntity<Resource> getContainerPart(
             @RequestPart("container") MultipartFile container,
             @RequestPart("selector") ContainerSelector selector,
@@ -115,7 +118,8 @@ public class ApiControllerV1 {
                     .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
                     .body(resource);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Could not create octet-stream from resource: "
+                    + "resource cannot be resolved", e);
             return ResponseEntity.internalServerError().build();
         }
     }
