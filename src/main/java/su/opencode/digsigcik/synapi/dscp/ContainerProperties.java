@@ -20,20 +20,27 @@ public class ContainerProperties {
 	private final AttachedSignatureTypeEnum attachedSignatureType;
 
 	ContainerProperties(byte[] metaContentByte) throws DscpContainerException {
+		this(doMakeJsonObject(metaContentByte));
+	}
 
+	ContainerProperties(JSONObject metaContentJson) throws DscpContainerException {
+		this.metaContentJson = metaContentJson;
+		this.sourceFileName = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_FULL_NAME, false);
+		this.sourceFileContentType = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_CONTENT_TYPE, false);
+		this.containerDescription = doGetMetaAsString(metaContentJson, MetaAttribute.CONTAINER_DESCRIPTION, true);
+		this.detached = doGetMetaAsBoolean(metaContentJson, MetaAttribute.IS_DETACHED);
+		this.hasPoa = doGetMetaAsBoolean(metaContentJson, MetaAttribute.HAS_POA);
+		this.hasPreview = doGetMetaAsBoolean(metaContentJson, MetaAttribute.HAS_PREVIEW);
+		this.containerType = doGetMetaAsEnum(metaContentJson, MetaAttribute.CONTAINER_TYPE, ContainerTypeEnum.class);
+		this.signatureType = doGetMetaAsEnum(metaContentJson, MetaAttribute.SIGNATURE_TYPE, SignatureTypeEnum.class);
+		this.enhanceType = doGetMetaAsEnum(metaContentJson, MetaAttribute.ENHANCE_TYPE, EnhanceTypeEnum.class);
+		this.attachedSignatureType = doGetMetaAsEnum(metaContentJson, MetaAttribute.ATTACHED_TYPE, AttachedSignatureTypeEnum.class, true);
+	}
+
+	private static JSONObject doMakeJsonObject(byte[] metaContentByte) {
 		try {
 			String metaContentStr = new String(metaContentByte, StandardCharsets.UTF_8);
-			metaContentJson = new JSONObject(metaContentStr);
-			this.sourceFileName = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_FULL_NAME, false);
-			this.sourceFileContentType = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_CONTENT_TYPE, false);
-			this.containerDescription = doGetMetaAsString(metaContentJson, MetaAttribute.CONTAINER_DESCRIPTION, true);
-			this.detached = doGetMetaAsBoolean(metaContentJson, MetaAttribute.IS_DETACHED);
-			this.hasPoa = doGetMetaAsBoolean(metaContentJson, MetaAttribute.HAS_POA);
-			this.hasPreview = doGetMetaAsBoolean(metaContentJson, MetaAttribute.HAS_PREVIEW);
-			this.containerType = doGetMetaAsEnum(metaContentJson, MetaAttribute.CONTAINER_TYPE, ContainerTypeEnum.class);
-			this.signatureType = doGetMetaAsEnum(metaContentJson, MetaAttribute.SIGNATURE_TYPE, SignatureTypeEnum.class);
-			this.enhanceType = doGetMetaAsEnum(metaContentJson, MetaAttribute.ENHANCE_TYPE, EnhanceTypeEnum.class);
-			this.attachedSignatureType = doGetMetaAsEnum(metaContentJson, MetaAttribute.ATTACHED_TYPE, AttachedSignatureTypeEnum.class, true);
+			return new JSONObject(metaContentStr);
 		} catch (JSONException e) {
 			//Not a valid JSON format of meta.json
 			throw DscpContainerException.internalFormatFileProblem("Not valid metadata json format", e, ContainerFileEnum.META);
@@ -94,6 +101,10 @@ public class ContainerProperties {
 
 	long getMetaAsLong(MetaAttribute attribute) throws DscpContainerException {
 		return doGetMetaAsLong(metaContentJson, attribute);
+	}
+
+	JSONObject getMetaContentJson() {
+		return metaContentJson;
 	}
 
 	//=============================private==============================================================================

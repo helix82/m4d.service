@@ -72,4 +72,9 @@ final class MetaAttribute {
 		result = 31 * result + attribute.hashCode();
 		return result;
 	}
+
+	@Override
+	public String toString() {
+		return getPropertyKey();
+	}
 }

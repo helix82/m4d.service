@@ -87,7 +87,7 @@ public final class ContainerUtils {
 	public static void fillContainer(Container container,
 	                                 Map<ContainerFileEnum, byte[]> fileContentMap,
 	                                 Map<MetaAttribute, String> metaDataMap) {
-		//TODO: add implementation
+		container.fillContent(fileContentMap, metaDataMap);
 	}
 
 	public static void fillContainer(Container container, ContainerFileEnum fileType, byte[] fileContent) {
