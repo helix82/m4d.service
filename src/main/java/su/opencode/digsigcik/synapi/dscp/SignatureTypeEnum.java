@@ -1,10 +1,11 @@
 package su.opencode.digsigcik.synapi.dscp;
 
-public enum SignatureTypeEnum implements HasCode<SignatureTypeEnum>{
+public enum SignatureTypeEnum implements HasCode<SignatureTypeEnum> {
 
 	SIMPLE("simple"),
 	UNQUALIFIED("unqualified"),
-	QUALIFIED("qualified");
+	QUALIFIED("qualified"),
+	UNKNOWN("unknown");
 
 	static {
 		InvariantUtils.fillCodes(SignatureTypeEnum.class);

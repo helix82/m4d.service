@@ -14,6 +14,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
+import su.opencode.digsigcik.synapi.dscp.Container;
+import su.opencode.digsigcik.synapi.dscp.ContainerUtils;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -32,19 +34,19 @@ class ApiControllerV1IT {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    @Disabled
-    @Test
-    void createPdfContainer() throws Exception {
-        // todo: use actual files from resources dir - but which ones?
-        byte[] fileContent = "test main file".getBytes(StandardCharsets.UTF_8);
-        ByteArrayResource sourceFile = new ByteArrayResource(fileContent) {
-            @Override
-            public String getFilename() {
-                return "main.txt";
-            }
-        };
-        ByteArrayResource sourceSig = new ByteArrayResource(fileContent) {
-            @Override
+	@Disabled
+	@Test
+	void readPdfContainer() throws Exception {
+		// todo: use actual files from resources dir - but which ones?
+		byte[] fileContent = "test main file".getBytes(StandardCharsets.UTF_8);
+		ByteArrayResource sourceFile = new ByteArrayResource(fileContent) {
+			@Override
+			public String getFilename() {
+				return "main.txt";
+			}
+		};
+		ByteArrayResource sourceSig = new ByteArrayResource(fileContent) {
+			@Override
             public String getFilename() {
                 return "source.sig";
             }
@@ -56,20 +58,20 @@ class ApiControllerV1IT {
         body.add("sourceSig", sourceSig);
         body.add("createSigStamp", false);
         var req = new HttpEntity<>(body, headers);
-        ResponseEntity<Resource> response = restTemplate.postForEntity(
-                url(EndpointPaths.CREATE_PDF_CONTAINER), req, Resource.class);
+		ResponseEntity<Resource> response = restTemplate.postForEntity(
+			url(EndpointPaths.CREATE_PDF_CONTAINER), req, Resource.class);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode(), "unexpected HTTP status");
-        MediaType contentType = response.getHeaders().getContentType();
-        assertEquals(MediaType.APPLICATION_OCTET_STREAM, contentType, "content type mismatch");
+		assertEquals(HttpStatus.OK, response.getStatusCode(), "unexpected HTTP status");
+		MediaType contentType = response.getHeaders().getContentType();
+		assertEquals(MediaType.APPLICATION_OCTET_STREAM, contentType, "content type mismatch");
 
-        assertNotNull(response.getBody(), "response body is null");
+		assertNotNull(response.getBody(), "response body is null");
 
-        // FIXME: doesn't work - Container content do not match: expected size is 646328 bytes, current size is 582793 bytes
-//        byte[] bodyBytes = response.getBody().getInputStream().readAllBytes();
-//        var container = ContainerUtils.readContainer(bodyBytes);
-//        assertNotNull(container, "container is null");
-    }
+		// FIXME: doesn't work - Container content do not match: expected size is 646328 bytes, current size is 582793 bytes
+		byte[] bodyBytes = response.getBody().getInputStream().readAllBytes();
+		Container container = ContainerUtils.readContainer(bodyBytes);
+		assertNotNull(container, "container is null");
+	}
 
     @Test
     void updatePdfContainerRegData() {

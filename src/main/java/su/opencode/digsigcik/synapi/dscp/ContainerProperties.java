@@ -1,9 +1,13 @@
 package su.opencode.digsigcik.synapi.dscp;
 
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Map;
 
 public class ContainerProperties {
 	private final JSONObject metaContentJson;
@@ -35,6 +39,72 @@ public class ContainerProperties {
 		this.signatureType = doGetMetaAsEnum(metaContentJson, MetaAttribute.SIGNATURE_TYPE, SignatureTypeEnum.class);
 		this.enhanceType = doGetMetaAsEnum(metaContentJson, MetaAttribute.ENHANCE_TYPE, EnhanceTypeEnum.class);
 		this.attachedSignatureType = doGetMetaAsEnum(metaContentJson, MetaAttribute.ATTACHED_TYPE, AttachedSignatureTypeEnum.class, true);
+	}
+
+	ContainerProperties(
+		ContainerTypeEnum containerType, String srcFileFullName, String srcFileContentType,
+		long srcFileSize, String hashType, String hash) throws DscpContainerException {
+
+		this.metaContentJson = new JSONObject();
+		this.containerType = containerType;
+		this.sourceFileName = srcFileFullName;
+		this.sourceFileContentType = srcFileContentType;
+		this.detached = containerType.isDetached();
+		this.hasPoa = false; //By default is false
+		this.hasPreview = false; //By default is false
+		this.signatureType = SignatureTypeEnum.UNKNOWN;
+		this.enhanceType = EnhanceTypeEnum.ADES_BES; //By default no enhance
+		this.containerDescription = null; //No description by default
+		if (this.containerType == ContainerTypeEnum.PDF_ATTACHED)
+			this.attachedSignatureType = AttachedSignatureTypeEnum.PDF;
+		else if (this.containerType == ContainerTypeEnum.DOCX_ATTACHED)
+			this.attachedSignatureType = AttachedSignatureTypeEnum.DOCX;
+		else if (this.containerType == ContainerTypeEnum.XML_DSIG)
+			this.attachedSignatureType = AttachedSignatureTypeEnum.XML;
+		else this.attachedSignatureType = null;
+
+		Map<MetaObjectEnum, JSONObject> parts = new EnumMap<>(MetaObjectEnum.class);
+		Arrays.stream(MetaObjectEnum.values()).forEach(item -> {
+			JSONObject part = new JSONObject();
+			this.metaContentJson.put(item.getCode(), part);
+			parts.put(item, part);
+		});
+
+
+		doSetMeta(parts, MetaAttribute.CONTAINER_TYPE, this.containerType);
+		doSetMeta(parts, MetaAttribute.MAIN_FILE_FULL_NAME, this.sourceFileName);
+		int dotPos = srcFileFullName.lastIndexOf('.');
+		if (dotPos < 0) {
+			doSetMeta(parts, MetaAttribute.MAIN_FILE_NAME, this.sourceFileName);
+			doSetMeta(parts, MetaAttribute.MAIN_FILE_EXTENSION, "");
+		} else {
+			doSetMeta(parts, MetaAttribute.MAIN_FILE_NAME, this.sourceFileName.substring(0, dotPos));
+			doSetMeta(parts, MetaAttribute.MAIN_FILE_EXTENSION, this.sourceFileName.substring(dotPos + 1).toLowerCase());
+		}
+		doSetMeta(parts, MetaAttribute.MAIN_FILE_CONTENT_TYPE, this.sourceFileContentType);
+		doSetMeta(parts, MetaAttribute.IS_DETACHED, this.detached);
+		doSetMeta(parts, MetaAttribute.HAS_POA, this.hasPoa);
+		doSetMeta(parts, MetaAttribute.HAS_PREVIEW, this.hasPreview);
+		doSetMeta(parts, MetaAttribute.SIGNATURE_TYPE, SignatureTypeEnum.UNKNOWN);
+		doSetMeta(parts, MetaAttribute.ENHANCE_TYPE, EnhanceTypeEnum.ADES_BES);
+		doSetMeta(parts, MetaAttribute.SIGNATURE_TYPE, this.attachedSignatureType);
+		doSetMeta(parts, MetaAttribute.MAIN_FILE_SIZE, srcFileSize);
+		doSetMeta(parts, MetaAttribute.MAIN_FILE_HASH_TYPE, hashType);
+		doSetMeta(parts, MetaAttribute.MAIN_FILE_HASH, hash);
+		doSetMeta(parts, MetaAttribute.CONTAINER_SIZE, srcFileSize);
+		doSetMeta(parts, MetaAttribute.CONTAINER_HASH_TYPE, hashType);
+		doSetMeta(parts, MetaAttribute.CONTAINER_HASH, hash);
+	}
+
+	@SuppressWarnings("rawtypes")
+	private static void doSetMeta(Map<MetaObjectEnum, JSONObject> parts, MetaAttribute attr, @Nullable HasCode value) {
+		doSetMeta(parts, attr, value == null ? null : value.getCode());
+	}
+
+	private static void doSetMeta(Map<MetaObjectEnum, JSONObject> parts, MetaAttribute attr, @Nullable Object value) {
+		JSONObject obj = parts.get(attr.getObject());
+		assert obj != null;
+		obj.put(attr.getAttribute(), value);
 	}
 
 	private static JSONObject doMakeJsonObject(byte[] metaContentByte) {

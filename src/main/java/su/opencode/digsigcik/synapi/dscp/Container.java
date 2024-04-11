@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.http.MediaType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,6 +62,21 @@ public class Container {
 			"Container content do not match: ");
 
 
+	}
+
+	Container(ContainerTypeEnum type, byte[] mainFileContent, String fileName, MediaType mediaType) {
+		this(type, mainFileContent, fileName, mediaType, null);
+	}
+
+	Container(ContainerTypeEnum type, byte[] mainFileContent, String fileName, MediaType mediaType, String hashType) {
+		if (StringUtils.isBlank(hashType)) hashType = DEFAULT_HASH_ALG;
+		mainFiles.put(ContainerFileEnum.MAIN_FILE, mainFileContent);
+		HashResult mainFileHash = calculateHash(mainFiles, hashType, Collections.singletonList(ContainerFileEnum.MAIN_FILE));
+		properties = new ContainerProperties(type, fileName, mediaType.toString(), mainFileHash.size, mainFileHash.hashType, mainFileHash.hash);
+		String metaStr = properties.getMetaContentJson().toString();
+		byte[] metaContent = metaStr.getBytes(StandardCharsets.UTF_8);
+		assert metaContent.length > 0;
+		mainFiles.put(ContainerFileEnum.META, metaContent);
 	}
 
 	public ContainerProperties getProperties() {
@@ -179,7 +195,8 @@ public class Container {
 
 		//Rebuild container checksum if needed
 		if (fileChanged) {
-			HashResult rebuildResult = calculateHash(mainFiles, properties, MetaAttribute.CONTAINER_HASH_TYPE, null);
+			String hashType = properties.getMetaAsString(MetaAttribute.CONTAINER_HASH_TYPE);
+			HashResult rebuildResult = calculateHash(mainFiles, hashType);
 			metaDataMap = ensureMutableMap(metaDataMap);
 			metaDataMap.put(MetaAttribute.CONTAINER_SIZE, String.valueOf(rebuildResult.size));
 			metaDataMap.put(MetaAttribute.CONTAINER_HASH_TYPE, String.valueOf(rebuildResult.hashType));
@@ -285,7 +302,8 @@ public class Container {
 	                                        String messagePrefix) throws DscpContainerException {
 
 
-		HashResult hashResult = calculateHash(mainFiles, properties, hashTypeMeta, filesToCheck);
+		String hashType = properties.getMetaAsString(hashTypeMeta);
+		HashResult hashResult = calculateHash(mainFiles, hashType, filesToCheck);
 
 		long expectedLength = properties.getMetaAsLong(sizeMeta);
 		if (hashResult.size != expectedLength) {
@@ -297,9 +315,12 @@ public class Container {
 		}
 	}
 
-	private static HashResult calculateHash(Map<ContainerFileEnum, byte[]> mainFiles, ContainerProperties properties,
-	                                        MetaAttribute hashTypeMeta, List<ContainerFileEnum> filesToCheck) throws DscpContainerException {
-		String hashType = properties.getMetaAsString(hashTypeMeta);
+	private static HashResult calculateHash(Map<ContainerFileEnum, byte[]> mainFiles, String hashType) throws DscpContainerException {
+		return calculateHash(mainFiles, hashType, null);
+	}
+
+	private static HashResult calculateHash(Map<ContainerFileEnum, byte[]> mainFiles, String hashType,
+	                                        List<ContainerFileEnum> filesToCheck) throws DscpContainerException {
 		if (filesToCheck == null) {
 			filesToCheck = Arrays.stream(ContainerFileEnum.values())
 				.filter(ContainerFileEnum::isCalculateDigest)

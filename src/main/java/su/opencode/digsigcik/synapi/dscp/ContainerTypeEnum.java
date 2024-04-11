@@ -1,14 +1,12 @@
 package su.opencode.digsigcik.synapi.dscp;
 
-public enum ContainerTypeEnum implements HasCode<ContainerTypeEnum>{
+public enum ContainerTypeEnum implements HasCode<ContainerTypeEnum> {
 
 	SIMPLE_DETACHED("simpleDetached", true),
 	PDF_DETACHED("pdfDetached", true),
-	PDF_DETACHED_WITH_TS("pdfDetachedWithTS", true),
-	MEDO("medo", true),
 	DOCX_ATTACHED("docxAttached", false),
 	PDF_ATTACHED("pdfAttached", false),
-	XML_DSIG("xmlDsig", true),
+	XML_DSIG("xmlDsig", false),
 	POA("poa", true);
 
 	static {

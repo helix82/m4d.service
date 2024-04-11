@@ -30,9 +30,13 @@ final class MetaAttribute {
 	static final MetaAttribute STAMP_SIGN_PAGE = new MetaAttribute(MetaObjectEnum.STAMP, "signPage");
 	static final MetaAttribute STAMP_SIGN_X = new MetaAttribute(MetaObjectEnum.STAMP, "signX");
 	static final MetaAttribute STAMP_SIGN_Y = new MetaAttribute(MetaObjectEnum.STAMP, "signY");
+	static final MetaAttribute STAMP_SIGN_DIMENSION_W = new MetaAttribute(MetaObjectEnum.STAMP, "signDimensionW");
+	static final MetaAttribute STAMP_SIGN_DIMENSION_H = new MetaAttribute(MetaObjectEnum.STAMP, "signDimensionH");
 	static final MetaAttribute STAMP_REG_PAGE = new MetaAttribute(MetaObjectEnum.STAMP, "regPage");
 	static final MetaAttribute STAMP_REG_X = new MetaAttribute(MetaObjectEnum.STAMP, "regX");
 	static final MetaAttribute STAMP_REG_Y = new MetaAttribute(MetaObjectEnum.STAMP, "regY");
+	static final MetaAttribute STAMP_REG_DIMENSION_W = new MetaAttribute(MetaObjectEnum.STAMP, "regDimensionW");
+	static final MetaAttribute STAMP_REG_DIMENSION_H = new MetaAttribute(MetaObjectEnum.STAMP, "regDimensionH");
 
 
 	private final MetaObjectEnum object;

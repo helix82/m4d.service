@@ -20,9 +20,13 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	STAMP_SIGN_PAGE("stampSignPage", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_SIGN_PAGE),
 	STAMP_SIGN_X("stampSignX", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_SIGN_X),
 	STAMP_SIGN_Y("stampSignY", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_SIGN_Y),
+	STAMP_SIGN_DIM_W("stampSignDimensionW", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_SIGN_DIMENSION_W),
+	STAMP_SIGN_DIM_H("stampSignDimensionH", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_SIGN_DIMENSION_H),
 	STAMP_REG_PAGE("stampRegPage", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_REG_PAGE),
 	STAMP_REG_X("stampRegX", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_REG_X),
 	STAMP_REG_Y("stampRegY", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_REG_Y),
+	STAMP_REG_DIMENSION_W("stampSignDimensionW", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_REG_DIMENSION_W),
+	STAMP_REG_DIMENSION_H("stampSignDimensionH", MediaType.TEXT_PLAIN, MetaAttribute.STAMP_REG_DIMENSION_H),
 	STAMP_SIGN_IMG("stampSignImage", MediaType.IMAGE_PNG, ContainerFileEnum.SIGN_STAMP, "_sign_stamp", "png"),
 	STAMP_REG_IMG("stampSignImage", MediaType.IMAGE_PNG, ContainerFileEnum.REG_STAMP, "_reg_stamp", "png");
 
