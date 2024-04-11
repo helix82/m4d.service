@@ -16,12 +16,13 @@ import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dscp.Container;
 import su.opencode.digsigcik.synapi.dscp.ContainerUtils;
+import su.opencode.digsigcik.synapi.dscp.ResultTypeEnum;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
@@ -42,7 +43,7 @@ class ApiControllerV1IT {
 		ByteArrayResource sourceFile = new ByteArrayResource(fileContent) {
 			@Override
 			public String getFilename() {
-				return "main.txt";
+				return "myFile.pdf";
 			}
 		};
 		ByteArrayResource sourceSig = new ByteArrayResource(fileContent) {
@@ -67,10 +68,23 @@ class ApiControllerV1IT {
 
 		assertNotNull(response.getBody(), "response body is null");
 
-		// FIXME: doesn't work - Container content do not match: expected size is 646328 bytes, current size is 582793 bytes
 		byte[] bodyBytes = response.getBody().getInputStream().readAllBytes();
 		Container container = ContainerUtils.readContainer(bodyBytes);
 		assertNotNull(container, "container is null");
+
+        var res = ContainerUtils.getFromContainer(
+                container, List.of(ResultTypeEnum.SOURCE_FILE), true, null);
+        assertNotNull(res, "getFromContainer result is null");
+        assertFalse(res.isEmpty(), "getFromContainer result is empty");
+        var fd = res.get(0);
+        assertNotNull(fd, "getFromContainer result is a list of nulls");
+        assertEquals(ResultTypeEnum.SOURCE_FILE, fd.getResultType(), "unexpected ResultType");
+        assertEquals(MediaType.APPLICATION_PDF, fd.getResultType().getContentType(container), "unexpected ContentType");
+        assertEquals(MediaType.APPLICATION_PDF_VALUE, fd.getContentType(), "unexpected ContentType");
+        assertEquals("myFile.pdf", fd.getFileName(), "name from container doesn't match the initial one");
+        assertEquals(fd.getResultCode(), fd.getResultType().getCode(), "unexpected ResultCode");
+        assertEquals(sourceFile.getByteArray(), fd.getContent(),
+                "source file from container doesn't match the initial one");
 	}
 
     @Test
@@ -94,16 +108,18 @@ class ApiControllerV1IT {
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("container", containerFile);
             body.add("selector", selector);
-            // FIXME: doesn't work - Container content do not match: expected size is 646328 bytes, current size is 582793 bytes
-//            var req = new HttpEntity<>(body, headers);
-//            ResponseEntity<Resource> response = restTemplate.postForEntity(
-//                    url(EndpointPaths.GET_CONTAINER_PART), req, Resource.class);
-//
-//            assertEquals(HttpStatus.OK, response.getStatusCode(), "unexpected HTTP status");
-//            MediaType contentType = response.getHeaders().getContentType();
-//            assertEquals(MediaType.APPLICATION_PDF, contentType, "content type mismatch");
-//
-//            assertNotNull(response.getBody(), "response body is null");
+            var req = new HttpEntity<>(body, headers);
+            ResponseEntity<Resource> response = restTemplate.postForEntity(
+                    url(EndpointPaths.GET_CONTAINER_PART), req, Resource.class);
+
+            if (response.getStatusCode().isError()) {
+                System.out.printf("Body: %s\n", response.getBody());
+            }
+            assertEquals(HttpStatus.OK, response.getStatusCode(), "unexpected HTTP status");
+            MediaType contentType = response.getHeaders().getContentType();
+            assertEquals(MediaType.APPLICATION_PDF, contentType, "content type mismatch");
+
+            assertNotNull(response.getBody(), "response body is null");
         }
     }
 
