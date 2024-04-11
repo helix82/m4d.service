@@ -14,18 +14,15 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
-import su.opencode.digsigcik.synapi.config.kafka.base.KafkaProps;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = {
-                KafkaProps.KAFKA_REQUIRED + "=false",
-        }
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 class ApiControllerV1IT {
 
@@ -39,7 +36,7 @@ class ApiControllerV1IT {
     @Test
     void createPdfContainer() throws Exception {
         // todo: use actual files from resources dir - but which ones?
-        byte[] fileContent = "test main file".getBytes();
+        byte[] fileContent = "test main file".getBytes(StandardCharsets.UTF_8);
         ByteArrayResource sourceFile = new ByteArrayResource(fileContent) {
             @Override
             public String getFilename() {
