@@ -72,7 +72,7 @@ public class Container {
 		if (StringUtils.isBlank(hashType)) hashType = DEFAULT_HASH_ALG;
 		mainFiles.put(ContainerFileEnum.MAIN_FILE, mainFileContent);
 		HashResult mainFileHash = calculateHash(mainFiles, hashType, Collections.singletonList(ContainerFileEnum.MAIN_FILE));
-		properties = new ContainerProperties(type, fileName, mediaType.toString(), mainFileHash.size, mainFileHash.hashType, mainFileHash.hash);
+		properties = new ContainerProperties(type, fileName, mediaType, mainFileHash.size, mainFileHash.hashType, mainFileHash.hash);
 		String metaStr = properties.getMetaContentJson().toString();
 		byte[] metaContent = metaStr.getBytes(StandardCharsets.UTF_8);
 		assert metaContent.length > 0;
@@ -104,10 +104,6 @@ public class Container {
 	}
 
 	//=================================package==========================================================================
-
-	byte[] getMainFile(ContainerFileEnum fileType) {
-		return mainFiles.get(fileType);
-	}
 
 	void write(OutputStream out) throws DscpContainerException {
 		Set<String> directories = new HashSet<>();
@@ -233,6 +229,31 @@ public class Container {
 			} catch (JSONException e) {
 				throw DscpContainerException.internalFormatFileProblem("Internal JSON format problemm for container metadata", e, ContainerFileEnum.META);
 			}
+		}
+	}
+
+	ResultFileDescription getResultPart(ResultTypeEnum resultType) {
+
+		if (resultType.isDirectFile()) {
+			//Return file
+			byte[] content = mainFiles.get(resultType.getFileType());
+			if (content == null || content.length <= 0) return null;
+			MediaType contentType = resultType.getContentType() == null
+				? properties.getSourceFileContentType() : resultType.getContentType();
+			String fileName = resultType.getFileName() == null
+				? properties.getMetaAsString(MetaAttribute.MAIN_FILE_NAME) : resultType.getFileName();
+			String fileExtension = resultType.getFileNameExtension() == null
+				? properties.getMetaAsString(MetaAttribute.MAIN_FILE_EXTENSION) : resultType.getFileNameExtension();
+			String fullName = fileName + resultType.getFileNamePostfix() + "." + fileExtension;
+			return new ResultFileDescription(resultType, fullName, contentType, content);
+		} else if (resultType.isFromMeta()) {
+			//Return metadata
+			String content = properties.getMetaAsString(resultType.getContentMeta(), true);
+			if (StringUtils.isBlank(content)) return null;
+			String fullName = resultType.getFileName() + resultType.getFileNamePostfix() + "." + resultType.getFileNameExtension();
+			return new ResultFileDescription(resultType, fullName, resultType.getContentType(), content.getBytes(StandardCharsets.UTF_8));
+		} else {
+			throw new UnsupportedOperationException("This result type " + resultType + " is neither direct file, nor from metadata. Is not supported yet");
 		}
 	}
 

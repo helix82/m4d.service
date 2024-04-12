@@ -10,7 +10,7 @@ web:
     allow-methods: OPTIONS, HEAD, POST, PUT
 logging:
   level:
-    su.opencode.digsigcik.synapi: INFO
+    su.opencode.digsigcik.synapi: DEBUG
 ---
 spring:
   config.activate.on-profile: local

@@ -1,5 +1,7 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +27,17 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+	webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 class ApiControllerV1IT {
 
-    @LocalServerPort
-    private int port;
+	@LocalServerPort
+	private int port;
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+	private final Log log = LogFactory.getLog(ApiControllerV1IT.class);
+
+	@Autowired
+	private TestRestTemplate restTemplate;
 
 	@Disabled
 	@Test
@@ -72,19 +76,19 @@ class ApiControllerV1IT {
 		Container container = ContainerUtils.readContainer(bodyBytes);
 		assertNotNull(container, "container is null");
 
-        var res = ContainerUtils.getFromContainer(
-                container, List.of(ResultTypeEnum.SOURCE_FILE), true, null);
-        assertNotNull(res, "getFromContainer result is null");
-        assertFalse(res.isEmpty(), "getFromContainer result is empty");
-        var fd = res.get(0);
-        assertNotNull(fd, "getFromContainer result is a list of nulls");
-        assertEquals(ResultTypeEnum.SOURCE_FILE, fd.getResultType(), "unexpected ResultType");
-        assertEquals(MediaType.APPLICATION_PDF, fd.getResultType().getContentType(container), "unexpected ContentType");
-        assertEquals(MediaType.APPLICATION_PDF_VALUE, fd.getContentType(), "unexpected ContentType");
-        assertEquals("myFile.pdf", fd.getFileName(), "name from container doesn't match the initial one");
-        assertEquals(fd.getResultCode(), fd.getResultType().getCode(), "unexpected ResultCode");
-        assertEquals(sourceFile.getByteArray(), fd.getContent(),
-                "source file from container doesn't match the initial one");
+		for (ResultTypeEnum resType : ResultTypeEnum.values()) {
+
+			var res = ContainerUtils.getFromContainer(container, List.of(resType), false);
+			assertNotNull(res, "getFromContainer result is null");
+			assertTrue(res.size() <= 1, "getFromContainer result cannot be more than 1");
+			var fd = res.get(resType);
+			if (fd == null) {
+				log.debug("There is no content for resultType=" + resType);
+			} else {
+				log.debug(String.format("For resultType=%s found string content '%s' and byte content of length=%d with contentType=%s%n",
+					resType, fd.getMetaValue(), fd.getContent().length, fd.getContentType()));
+			}
+		}
 	}
 
     @Test

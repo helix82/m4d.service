@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.dscp;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.http.MediaType;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -13,7 +14,7 @@ public class ContainerProperties {
 	private final JSONObject metaContentJson;
 
 	private final String sourceFileName;
-	private final String sourceFileContentType;
+	private final MediaType sourceFileContentType;
 	private final String containerDescription;
 	private final boolean detached;
 	private final boolean hasPreview;
@@ -30,7 +31,10 @@ public class ContainerProperties {
 	ContainerProperties(JSONObject metaContentJson) throws DscpContainerException {
 		this.metaContentJson = metaContentJson;
 		this.sourceFileName = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_FULL_NAME, false);
-		this.sourceFileContentType = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_CONTENT_TYPE, false);
+		String sourceFileContentTypeStr = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_CONTENT_TYPE, false);
+		assert sourceFileContentTypeStr != null;
+		String[] sourceFileContentTypeStrSplit = sourceFileContentTypeStr.split("/");
+		this.sourceFileContentType = new MediaType(sourceFileContentTypeStrSplit[0], sourceFileContentTypeStrSplit[1]);
 		this.containerDescription = doGetMetaAsString(metaContentJson, MetaAttribute.CONTAINER_DESCRIPTION, true);
 		this.detached = doGetMetaAsBoolean(metaContentJson, MetaAttribute.IS_DETACHED);
 		this.hasPoa = doGetMetaAsBoolean(metaContentJson, MetaAttribute.HAS_POA);
@@ -42,7 +46,7 @@ public class ContainerProperties {
 	}
 
 	ContainerProperties(
-		ContainerTypeEnum containerType, String srcFileFullName, String srcFileContentType,
+		ContainerTypeEnum containerType, String srcFileFullName, MediaType srcFileContentType,
 		long srcFileSize, String hashType, String hash) throws DscpContainerException {
 
 		this.metaContentJson = new JSONObject();
@@ -81,7 +85,7 @@ public class ContainerProperties {
 			doSetMeta(parts, MetaAttribute.MAIN_FILE_NAME, this.sourceFileName.substring(0, dotPos));
 			doSetMeta(parts, MetaAttribute.MAIN_FILE_EXTENSION, this.sourceFileName.substring(dotPos + 1).toLowerCase());
 		}
-		doSetMeta(parts, MetaAttribute.MAIN_FILE_CONTENT_TYPE, this.sourceFileContentType);
+		doSetMeta(parts, MetaAttribute.MAIN_FILE_CONTENT_TYPE, this.sourceFileContentType.toString());
 		doSetMeta(parts, MetaAttribute.IS_DETACHED, this.detached);
 		doSetMeta(parts, MetaAttribute.HAS_POA, this.hasPoa);
 		doSetMeta(parts, MetaAttribute.HAS_PREVIEW, this.hasPreview);
@@ -123,7 +127,7 @@ public class ContainerProperties {
 		return sourceFileName;
 	}
 
-	public String getSourceFileContentType() {
+	public MediaType getSourceFileContentType() {
 		return sourceFileContentType;
 	}
 

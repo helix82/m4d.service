@@ -10,7 +10,10 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.*;
-import su.opencode.digsigcik.synapi.dscp.*;
+import su.opencode.digsigcik.synapi.dscp.Container;
+import su.opencode.digsigcik.synapi.dscp.ContainerUtils;
+import su.opencode.digsigcik.synapi.dscp.InvariantUtils;
+import su.opencode.digsigcik.synapi.dscp.ResultTypeEnum;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -60,29 +63,29 @@ public class ContainerServiceImpl implements ContainerService {
             doReverify(container);
         }
 
-        var returnParts = new ArrayList<ResultTypeEnum>(selectors.size());
-        for (var s : selectors) {
-            var rt = SELECTOR_MAP.get(s.getCode());
-            if (rt == null) {
-                throw new IllegalArgumentException("Invalid selector code " + s.getCode());
-            }
-            returnParts.add(rt);
-        }
+	    var returnParts = new ArrayList<ResultTypeEnum>(selectors.size());
+	    for (var s : selectors) {
+		    var rt = SELECTOR_MAP.get(s.getCode());
+		    if (rt == null) {
+			    throw new IllegalArgumentException("Invalid selector code " + s.getCode());
+		    }
+		    returnParts.add(rt);
+	    }
 
-        List<ResultFileDescription> rds = ContainerUtils.getFromContainer(
-                container, returnParts,false, null);
-        var res = new HashMap<String, ContainerPart>();
-        for (var rd : rds) {
-            if (rd == null) continue; // mandatory=false semantics
-            var resultType = rd.getResultType();
-            var contentType = rd.getContentType();
-            var data = rd.getContent();
-            var containerPart = new ContainerPart()
-                    .contentType(contentType)
-                    .data(data);
-            res.put(resultType.getCode(), containerPart);
-        }
-        return res;
+	    var rds = ContainerUtils.getFromContainer(container, returnParts, false);
+
+	    var res = new HashMap<String, ContainerPart>();
+	    for (var rd : rds.entrySet()) {
+
+		    var resultType = rd.getValue().getResultType();
+		    var contentType = rd.getValue().getContentType();
+		    var data = rd.getValue().getContent();
+		    var containerPart = new ContainerPart()
+			    .contentType(contentType.toString())
+			    .data(data);
+		    res.put(resultType.getCode(), containerPart);
+	    }
+	    return res;
     }
 
     @Override

@@ -2,8 +2,6 @@ package su.opencode.digsigcik.synapi.dscp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import su.opencode.digsigcik.synapi.crypto.BasicSecurityProvider;
-import su.opencode.digsigcik.synapi.crypto.SecurityProvider;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +10,6 @@ import java.util.*;
 public final class ContainerUtils {
 
 	private static final Log LOG = LogFactory.getLog(ContainerUtils.class);
-	private static final BasicSecurityProvider BASIC_SECURITY_PROVIDER = new SimpleSecurityProvider();
 
 	private ContainerUtils() {
 		throw new UnsupportedOperationException();
@@ -42,27 +39,23 @@ public final class ContainerUtils {
 		return new Container(in);
 	}
 
-	public static List<ResultFileDescription> getFromContainer(
-		Container container, List<ResultTypeEnum> returnParts,
-		boolean mandatory, SecurityProvider provider) throws DscpContainerException {
+	public static Map<ResultTypeEnum, ResultFileDescription> getFromContainer(Container container, Collection<ResultTypeEnum> returnParts) throws DscpContainerException {
+		return getFromContainer(container, returnParts, true);
+	}
 
-		if (returnParts == null || returnParts.isEmpty()) return Collections.emptyList();
-		List<ResultFileDescription> res = new ArrayList<>(returnParts.size());
-		for (ResultTypeEnum returnPart : returnParts) {
-			if (returnPart == null) {
-				if (mandatory) throw new IllegalStateException("This is an empty returnPart (maybe there is no such a code)");
-				res.add(null);
-				continue;
-			}
+	public static Map<ResultTypeEnum, ResultFileDescription> getFromContainer(
+		Container container, Collection<ResultTypeEnum> returnParts, boolean mandatory) throws DscpContainerException {
 
-			ResultFileDescription resFile = BASIC_SECURITY_PROVIDER.provideSecurityAction(container, returnPart, provider);
-			if (resFile != null) {
-				res.add(resFile);
-			} else if (!mandatory) {
-				res.add(null);
-			} else {
-				throw DscpContainerException.resultCauseException("Cannot find mandatory part of result " + returnPart, returnPart, null);
-			}
+		if (returnParts == null || returnParts.isEmpty()) return Collections.emptyMap();
+
+		Map<ResultTypeEnum, ResultFileDescription> res = new EnumMap<>(ResultTypeEnum.class);
+		for (ResultTypeEnum resType : returnParts) {
+			if (resType == null || res.containsKey(resType)) continue;
+			ResultFileDescription resItem = container.getResultPart(resType);
+			if (resItem != null) res.put(resType, resItem);
+			else if (mandatory) throw DscpContainerException.resultCauseException(resType, null);
+			else
+				LOG.debug(String.format("No content found in container for '%s' for resultType=%s", container.getProperties().getSourceFileName(), resType));
 		}
 		return res;
 	}
