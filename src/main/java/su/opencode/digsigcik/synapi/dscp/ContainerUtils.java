@@ -87,20 +87,6 @@ public final class ContainerUtils {
 		}
 	}
 
-	public static void fillContainer(Container container, Map<ContainerFileEnum, byte[]> filContentMap) throws DscpContainerException {
-		fillContainer(container, filContentMap, Collections.emptyMap());
-	}
-
-	public static void fillContainer(Container container,
-	                                 Map<ContainerFileEnum, byte[]> fileContentMap,
-	                                 Map<MetaAttribute, String> metaDataMap) throws DscpContainerException {
-		container.fillContent(fileContentMap, metaDataMap);
-	}
-
-	public static void fillContainer(Container container, ContainerFileEnum fileType, byte[] fileContent) throws DscpContainerException {
-		fillContainer(container, Collections.singletonMap(fileType, fileContent));
-	}
-
 	public static void fillContainerByResult(Container container, Map<ResultTypeEnum, byte[]> resultContent) throws DscpContainerException {
 		Map<ContainerFileEnum, byte[]> fileContentMap = new EnumMap<>(ContainerFileEnum.class);
 		Map<MetaAttribute, String> metaDataMap = new HashMap<>(resultContent.size());
@@ -119,6 +105,20 @@ public final class ContainerUtils {
 			}
 		}
 		fillContainer(container, fileContentMap, metaDataMap);
+	}
+
+	static void fillContainer(Container container, Map<ContainerFileEnum, byte[]> filContentMap) throws DscpContainerException {
+		fillContainer(container, filContentMap, Collections.emptyMap());
+	}
+
+	static void fillContainer(Container container,
+	                          Map<ContainerFileEnum, byte[]> fileContentMap,
+	                          Map<MetaAttribute, String> metaDataMap) throws DscpContainerException {
+		container.fillContent(fileContentMap, metaDataMap);
+	}
+
+	static void fillContainer(Container container, ContainerFileEnum fileType, byte[] fileContent) throws DscpContainerException {
+		fillContainer(container, Collections.singletonMap(fileType, fileContent));
 	}
 
 }
