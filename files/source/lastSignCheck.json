@@ -1,0 +1,15 @@
+{
+  "type": "CHECK_TYPE_ENUM_VARIANT_WIP",
+  "date": "2024-04-01T12:00:00Z",
+  "result": {
+    "valid": true,
+    "errors": [
+      {
+        "code": "CHECK_ERROR_CODE_ENUM_VARIANT_WIP",
+        "description": "Error description from enum variant",
+        "severity": "ERROR|WARN",
+        "message": "Error description from exception, if any"
+      }
+    ]
+  }
+}

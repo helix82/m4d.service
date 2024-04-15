@@ -2,6 +2,8 @@ package su.opencode.digsigcik.synapi.dscp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.http.MediaType;
+import su.opencode.digsigcik.synapi.util.CommonUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +15,18 @@ public final class ContainerUtils {
 
 	private ContainerUtils() {
 		throw new UnsupportedOperationException();
+	}
+
+	public static Container createContainer(
+		ContainerTypeEnum type, byte[] content, String fileName) throws DscpContainerException {
+		return new Container(type, content, fileName, null);
+	}
+
+	public static Container createContainer(
+		ContainerTypeEnum type, byte[] content, String fileName, MediaType contentType) throws DscpContainerException {
+
+		return new Container(type, content, fileName,
+			contentType == null ? CommonUtils.toMediaType(content) : contentType);
 	}
 
 	public static Container readContainer(File filePath) throws DscpContainerException {

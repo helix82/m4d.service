@@ -15,10 +15,11 @@ import java.util.Map;
 public interface ContainerService {
 
     Resource createPdfContainer(
-            @NotNull MultipartFile sourceFile,
-            @NotNull MultipartFile sourceSig,
-            boolean createSigStamp,
-            @Nullable StampPosition stampPosition);
+	    @NotNull MultipartFile srcFile,
+	    @NotNull MultipartFile sigFile,
+	    boolean createSigStamp,
+	    @Nullable StampPosition signPosition,
+	    @Nullable StampPosition regPosition);
 
     Resource updatePdfContainerRegData(
             @NotNull MultipartFile containerFile,

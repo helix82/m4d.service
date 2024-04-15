@@ -1,0 +1,18 @@
+{
+  "type": "CHECK_TYPE_ENUM_VARIANT_WIP",
+  "date": "2024-04-12T12:00:00Z",
+  "result": {
+    "valid": true,
+    "data": {
+      "_cadesCertificate": {
+        "objid": 6
+      },
+      "name": "Баканов Илья",
+      "issuerName": "CN=CRYPTO-PRO Test Center 2, O=CRYPTO-PRO LLC, L=Moscow, C=RU, E=support@cryptopro.ru",
+      "subjectName": "CN=Баканов Илья, SN=Баканов, G=Илья, T=Директор департамента, STREET=ул. Ивановская 99, OU=Отдел маркетинга, O=\"ОАО \"\"Серьезные люди\"\"\", L=г. Москва, S=77 г. Москва, C=RU, E=example@domain.ru, ИНН=000000000076, ОГРН=0000000000024, СНИЛС=00000000052",
+      "thumbprint": "EF34C29DE807EB43D77C78648391760525E96FCC",
+      "validFrom": "2024-03-20T11:24:27.000Z",
+      "validTo": "2024-05-26T07:34:05.000Z"
+    }
+  }
+}

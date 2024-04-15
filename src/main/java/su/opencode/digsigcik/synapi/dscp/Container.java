@@ -28,7 +28,7 @@ public class Container {
 
 	private static final char ZIP_PATH_DELIMITER = '/';
 	private static final Log LOG = LogFactory.getLog(Container.class);
-	private static final String DEFAULT_HASH_ALG = "SHA256";
+	private static final String DEFAULT_HASH_ALG = "SHA-256";
 	private static final Set<ContainerFileEnum> NEED_HISTORY_ADD = Collections.unmodifiableSet(
 		EnumSet.of(ContainerFileEnum.LAST_SIGN_CHECK, ContainerFileEnum.LAST_CERT_DATA, ContainerFileEnum.LAST_POA_CHECK));
 
@@ -154,6 +154,8 @@ public class Container {
 
 		//Fill files content
 		boolean fileChanged = false;
+		Boolean hasPoa = null;
+		Boolean hasPreview = null;
 		for (Map.Entry<ContainerFileEnum, byte[]> fileEntry : fileContentMap.entrySet()) {
 			if (fileEntry.getValue() == null || fileEntry.getValue().length <= 0) {
 				//Delete content
@@ -161,6 +163,10 @@ public class Container {
 				if (oldValue != null && oldValue.length > 0) {
 					fileChanged |= fileEntry.getKey().isCalculateDigest();
 					LOG.debug(String.format("File type %s content of length %d was removed", fileEntry.getKey(), oldValue.length));
+					if (fileEntry.getKey() == ContainerFileEnum.POA_DSCP)
+						hasPoa = Boolean.FALSE; //Should change HAS_POA to false
+					else if (fileEntry.getKey() == ContainerFileEnum.PREVIEW)
+						hasPreview = Boolean.FALSE; //Should change HAS_PREVIEW to false
 				}
 			} else {
 				//Insert or change content
@@ -170,6 +176,10 @@ public class Container {
 					LOG.debug(String.format("File type %s content of length %d was replaced with content of length %d", fileEntry.getKey(), oldValue.length, fileEntry.getValue().length));
 				} else {
 					LOG.debug(String.format("File type %s content of length %d is added", fileEntry.getKey(), fileEntry.getValue().length));
+					if (fileEntry.getKey() == ContainerFileEnum.POA_DSCP)
+						hasPoa = Boolean.TRUE; //Should change HAS_POA to true
+					else if (fileEntry.getKey() == ContainerFileEnum.PREVIEW)
+						hasPreview = Boolean.TRUE; //Should change HAS_PREVIEW to true
 				}
 
 				if (NEED_HISTORY_ADD.contains(fileEntry.getKey())) {
@@ -189,14 +199,23 @@ public class Container {
 			fileChanged |= ContainerFileEnum.CHECK_HISTORY.isCalculateDigest();
 		}
 
-		//Rebuild container checksum if needed
-		if (fileChanged) {
-			String hashType = properties.getMetaAsString(MetaAttribute.CONTAINER_HASH_TYPE);
-			HashResult rebuildResult = calculateHash(mainFiles, hashType);
+		//Some markets changed
+		if (fileChanged || hasPoa != null || hasPreview != null) {
+
 			metaDataMap = ensureMutableMap(metaDataMap);
-			metaDataMap.put(MetaAttribute.CONTAINER_SIZE, String.valueOf(rebuildResult.size));
-			metaDataMap.put(MetaAttribute.CONTAINER_HASH_TYPE, String.valueOf(rebuildResult.hashType));
-			metaDataMap.put(MetaAttribute.CONTAINER_HASH, String.valueOf(rebuildResult.hash));
+
+			if (hasPoa != null) metaDataMap.put(MetaAttribute.HAS_POA, hasPoa.toString());
+
+			if (hasPreview != null) metaDataMap.put(MetaAttribute.HAS_PREVIEW, hasPreview.toString());
+
+			//Rebuild container checksum if needed
+			if (fileChanged) {
+				String hashType = properties.getMetaAsString(MetaAttribute.CONTAINER_HASH_TYPE);
+				HashResult rebuildResult = calculateHash(mainFiles, hashType);
+				metaDataMap.put(MetaAttribute.CONTAINER_SIZE, String.valueOf(rebuildResult.size));
+				metaDataMap.put(MetaAttribute.CONTAINER_HASH_TYPE, String.valueOf(rebuildResult.hashType));
+				metaDataMap.put(MetaAttribute.CONTAINER_HASH, String.valueOf(rebuildResult.hash));
+			}
 		}
 
 		//Rebuild meta
@@ -206,7 +225,7 @@ public class Container {
 				for (Map.Entry<MetaAttribute, String> metaEntry : metaDataMap.entrySet()) {
 					MetaAttribute attr = metaEntry.getKey();
 					JSONObject part = metaJson.getJSONObject(attr.getObject().getCode());
-					if (part == null || part.isEmpty()) {
+					if (part == null) {
 						throw DscpContainerException.internalFormatFileProblem(
 							String.format("Cannot get mandatory meta json part '%s'", attr.getObject().getCode()),
 							ContainerFileEnum.META);

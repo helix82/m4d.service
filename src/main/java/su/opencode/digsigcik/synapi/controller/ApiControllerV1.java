@@ -34,14 +34,13 @@ public class ApiControllerV1 {
     @PostMapping(value = "/create-pdf-container",
                  produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createPdfContainer(
-            @RequestPart("sourceFile") MultipartFile sourceFile,
-            @RequestPart("sourceSig") MultipartFile sourceSig,
-            @RequestPart("createSigStamp") boolean createSigStamp,
-            @RequestPart(value = "sigStampPosition",
-                         required = false) StampPosition stampPosition
+	    @RequestPart("srcFile") MultipartFile sourceFile,
+	    @RequestPart("sigFile") MultipartFile sourceSig,
+	    @RequestPart(value = "createSigStamp") boolean createSigStamp,
+	    @RequestPart(value = "sigStampPosition", required = false) StampPosition signPosition,
+	    @RequestPart(value = "regStampPosition", required = false) StampPosition regPosition
     ) {
-        var res = containerService.createPdfContainer(
-                sourceFile, sourceSig, createSigStamp, stampPosition);
+	    var res = containerService.createPdfContainer(sourceFile, sourceSig, createSigStamp, signPosition, regPosition);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }

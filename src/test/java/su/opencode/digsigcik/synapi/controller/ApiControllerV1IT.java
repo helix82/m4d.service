@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.http.*;
@@ -19,9 +18,9 @@ import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dscp.Container;
 import su.opencode.digsigcik.synapi.dscp.ContainerUtils;
 import su.opencode.digsigcik.synapi.dscp.ResultTypeEnum;
+import su.opencode.digsigcik.synapi.util.StubUtils;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,30 +40,19 @@ class ApiControllerV1IT {
 
 	@Disabled
 	@Test
-	void readPdfContainer() throws Exception {
-		// todo: use actual files from resources dir - but which ones?
-		byte[] fileContent = "test main file".getBytes(StandardCharsets.UTF_8);
-		ByteArrayResource sourceFile = new ByteArrayResource(fileContent) {
-			@Override
-			public String getFilename() {
-				return "myFile.pdf";
-			}
-		};
-		ByteArrayResource sourceSig = new ByteArrayResource(fileContent) {
-			@Override
-            public String getFilename() {
-                return "source.sig";
-            }
-        };
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("sourceFile", sourceFile);
-        body.add("sourceSig", sourceSig);
-        body.add("createSigStamp", false);
-        var req = new HttpEntity<>(body, headers);
-		ResponseEntity<Resource> response = restTemplate.postForEntity(
-			url(EndpointPaths.CREATE_PDF_CONTAINER), req, Resource.class);
+	void createPdfContainer() throws Exception {
+
+		Resource srcFile = StubUtils.getStubFileResource("source/Тестовый документ для подписи.pdf");
+		Resource sigFile = StubUtils.getStubFileResource("source/pkcs7file.sig");
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+		MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+		body.add("srcFile", srcFile);
+		body.add("sigFile", sigFile);
+		body.add("createSigStamp", false);
+		var req = new HttpEntity<>(body, headers);
+		ResponseEntity<Resource> response = restTemplate.postForEntity(url(EndpointPaths.CREATE_PDF_CONTAINER), req, Resource.class);
 
 		assertEquals(HttpStatus.OK, response.getStatusCode(), "unexpected HTTP status");
 		MediaType contentType = response.getHeaders().getContentType();
@@ -91,15 +79,37 @@ class ApiControllerV1IT {
 		}
 	}
 
-    @Test
-    void updatePdfContainerRegData() {
-    }
+	@Disabled
+	@Test
+	void readPdfConainer() throws Exception {
+		byte[] bodyBytes = StubUtils.getStubFileContent("dscp/No_01_01_41_20_02_2024.zip");
+		Container container = ContainerUtils.readContainer(bodyBytes);
+		assertNotNull(container, "container is null");
 
-    @Test
-    void getContainerData() {
-    }
+		for (ResultTypeEnum resType : ResultTypeEnum.values()) {
 
-    @Test
+			var res = ContainerUtils.getFromContainer(container, List.of(resType), false);
+			assertNotNull(res, "getFromContainer result is null");
+			assertTrue(res.size() <= 1, "getFromContainer result cannot be more than 1");
+			var fd = res.get(resType);
+			if (fd == null) {
+				log.debug("There is no content for resultType=" + resType);
+			} else {
+				log.debug(String.format("For resultType=%s found string content '%s' and byte content of length=%d with contentType=%s%n",
+					resType, fd.getMetaValue(), fd.getContent().length, fd.getContentType()));
+			}
+		}
+	}
+
+	@Test
+	void updatePdfContainerRegData() {
+	}
+
+	@Test
+	void getContainerData() {
+	}
+
+	@Test
     void getContainerPart() {
         var containerFile = pdfContainer();
         ContainerSelectorCode[] selectorCodes = {

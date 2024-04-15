@@ -2,7 +2,7 @@ package su.opencode.digsigcik.synapi.dscp;
 
 import java.util.Arrays;
 
-enum ContainerFileEnum {
+public enum ContainerFileEnum {
 
 	META("meta.json", true, false, null),
 	PREVIEW("preview/preview.pdf", false, true, null),

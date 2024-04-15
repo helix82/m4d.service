@@ -1,22 +1,25 @@
 package su.opencode.digsigcik.synapi.service;
 
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.*;
-import su.opencode.digsigcik.synapi.dscp.Container;
-import su.opencode.digsigcik.synapi.dscp.ContainerUtils;
-import su.opencode.digsigcik.synapi.dscp.InvariantUtils;
-import su.opencode.digsigcik.synapi.dscp.ResultTypeEnum;
+import su.opencode.digsigcik.synapi.dscp.*;
+import su.opencode.digsigcik.synapi.util.CommonUtils;
+import su.opencode.digsigcik.synapi.util.StubUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 // TODO: add proper error handling, likely with exception handlers
@@ -37,13 +40,56 @@ public class ContainerServiceImpl implements ContainerService {
         }
     }
 
-    @Override
-    public Resource createPdfContainer(@NotNull MultipartFile sourceFile,
-                                       @NotNull MultipartFile sourceSig,
-                                       boolean createSigStamp,
-                                       @Nullable StampPosition stampPosition) {
-        return getStaticPdf();
-    }
+	@Override
+	public Resource createPdfContainer(
+		@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
+		boolean createSigStamp, @Nullable StampPosition signPosition, @Nullable StampPosition regPosition) {
+
+		String fileName = srcFile.getOriginalFilename();
+		String contentTypeStr = srcFile.getContentType();
+		MediaType contentType = StringUtils.isBlank(contentTypeStr)
+			|| MediaType.APPLICATION_OCTET_STREAM_VALUE.equals(contentTypeStr)
+			? null
+			: CommonUtils.toMediaType(contentTypeStr);
+		byte[] sourceFileContent;
+		try {
+			sourceFileContent = srcFile.getBytes();
+		} catch (IOException e) {
+			throw new IllegalStateException("Cannot get source file content", e);
+		}
+		byte[] sigFileContent;
+		try {
+			sigFileContent = sigFile.getBytes();
+		} catch (IOException e) {
+			throw new IllegalStateException("Cannot get sig file content", e);
+		}
+
+
+		Container container = ContainerUtils.createContainer(ContainerTypeEnum.PDF_DETACHED, sourceFileContent, fileName, contentType);
+		if (signPosition == null) signPosition = StubUtils.createStampPosition(); //TODO: stub must be replaced
+		assert signPosition != null;
+		if (regPosition == null) regPosition = StubUtils.createStampPosition(); //TODO: stub must be replaced
+		assert regPosition != null;
+		byte[] certData = StubUtils.getStubFileContent("source/lastCertData.json"); //TODO: stub must be replaced
+		assert certData != null && certData.length > 0;
+		byte[] signCheckData = StubUtils.getStubFileContent("source/lastSignCheck.json"); //TODO: stub must be replaced
+		assert signCheckData != null && signCheckData.length > 0;
+
+		Map<ResultTypeEnum, byte[]> params = Map.of(
+			ResultTypeEnum.DETACHED_SIGN, sigFileContent,
+			ResultTypeEnum.STAMP_SIGN_PAGE, String.valueOf(signPosition.getPage()).getBytes(StandardCharsets.UTF_8),
+			ResultTypeEnum.STAMP_SIGN_X, String.valueOf(signPosition.getTopLeftX()).getBytes(StandardCharsets.UTF_8),
+			ResultTypeEnum.STAMP_SIGN_Y, String.valueOf(signPosition.getTopLeftY()).getBytes(StandardCharsets.UTF_8),
+			ResultTypeEnum.STAMP_REG_PAGE, String.valueOf(regPosition.getPage()).getBytes(StandardCharsets.UTF_8),
+			ResultTypeEnum.STAMP_REG_X, String.valueOf(regPosition.getTopLeftX()).getBytes(StandardCharsets.UTF_8),
+			ResultTypeEnum.STAMP_REG_Y, String.valueOf(regPosition.getTopLeftY()).getBytes(StandardCharsets.UTF_8),
+			ResultTypeEnum.SIGN_CHECK, signCheckData,
+			ResultTypeEnum.CERT_DATA, certData
+		);
+		ContainerUtils.fillContainerByResult(container, params);
+
+		return new ByteArrayResource(ContainerUtils.containerContent(container));
+	}
 
     @Override
     public Resource updatePdfContainerRegData(@NotNull MultipartFile containerFile,

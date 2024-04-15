@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.http.MediaType;
+import su.opencode.digsigcik.synapi.util.CommonUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -33,8 +34,8 @@ public class ContainerProperties {
 		this.sourceFileName = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_FULL_NAME, false);
 		String sourceFileContentTypeStr = doGetMetaAsString(metaContentJson, MetaAttribute.MAIN_FILE_CONTENT_TYPE, false);
 		assert sourceFileContentTypeStr != null;
-		String[] sourceFileContentTypeStrSplit = sourceFileContentTypeStr.split("/");
-		this.sourceFileContentType = new MediaType(sourceFileContentTypeStrSplit[0], sourceFileContentTypeStrSplit[1]);
+
+		this.sourceFileContentType = CommonUtils.toMediaType(sourceFileContentTypeStr);
 		this.containerDescription = doGetMetaAsString(metaContentJson, MetaAttribute.CONTAINER_DESCRIPTION, true);
 		this.detached = doGetMetaAsBoolean(metaContentJson, MetaAttribute.IS_DETACHED);
 		this.hasPoa = doGetMetaAsBoolean(metaContentJson, MetaAttribute.HAS_POA);
@@ -89,9 +90,9 @@ public class ContainerProperties {
 		doSetMeta(parts, MetaAttribute.IS_DETACHED, this.detached);
 		doSetMeta(parts, MetaAttribute.HAS_POA, this.hasPoa);
 		doSetMeta(parts, MetaAttribute.HAS_PREVIEW, this.hasPreview);
+		doSetMeta(parts, MetaAttribute.ATTACHED_TYPE, this.attachedSignatureType);
 		doSetMeta(parts, MetaAttribute.SIGNATURE_TYPE, SignatureTypeEnum.UNKNOWN);
 		doSetMeta(parts, MetaAttribute.ENHANCE_TYPE, EnhanceTypeEnum.ADES_BES);
-		doSetMeta(parts, MetaAttribute.SIGNATURE_TYPE, this.attachedSignatureType);
 		doSetMeta(parts, MetaAttribute.MAIN_FILE_SIZE, srcFileSize);
 		doSetMeta(parts, MetaAttribute.MAIN_FILE_HASH_TYPE, hashType);
 		doSetMeta(parts, MetaAttribute.MAIN_FILE_HASH, hash);
