@@ -6,4 +6,6 @@ import su.opencode.digsigcik.synapi.model.Representative;
 
 @Repository
 public interface RepresentativeRepository extends JpaRepository<Representative, Long> {
+    void deleteById(Long id);
+    Representative findRepresentativeById(Long id);
 }

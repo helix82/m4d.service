@@ -6,4 +6,6 @@ import su.opencode.digsigcik.synapi.model.Credential;
 
 @Repository
 public interface CredentialRepository extends JpaRepository<Credential, Long> {
+    void deleteById(Long id);
+    Credential findCredentialById(Long id);
 }

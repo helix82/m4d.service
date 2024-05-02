@@ -1,10 +1,10 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Data;
+import lombok.*;
 
 import javax.persistence.*;
 
-@Data
+@Getter
 @Entity
 @Table(name="credential")
 // Полномочия

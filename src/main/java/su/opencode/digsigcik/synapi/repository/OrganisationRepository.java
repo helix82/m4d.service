@@ -6,4 +6,6 @@ import su.opencode.digsigcik.synapi.model.Organisation;
 
 @Repository
 public interface OrganisationRepository extends JpaRepository<Organisation, Long> {
+    void deleteById(Long id);
+    Organisation findOrganisationById(Long id);
 }

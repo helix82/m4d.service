@@ -1,13 +1,13 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Data;
+import lombok.*;
 import org.joda.time.DateTime;
 
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
 @Entity
 @Table(name="principal")
 // Доверитель

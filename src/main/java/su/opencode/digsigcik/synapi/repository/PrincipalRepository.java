@@ -6,4 +6,6 @@ import su.opencode.digsigcik.synapi.model.Principal;
 
 @Repository
 public interface PrincipalRepository extends JpaRepository<Principal, Long> {
+    void deleteById(Long id);
+    Principal findPrincipalById(Long id);
 }

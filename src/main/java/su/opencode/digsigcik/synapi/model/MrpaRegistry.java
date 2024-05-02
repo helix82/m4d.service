@@ -1,11 +1,11 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Data;
+import lombok.*;
 import org.joda.time.DateTime;
 
 import javax.persistence.*;
 
-@Data
+@Getter
 @Entity
 @Table(name="mrpa_registry")
 // Реестр МЧД
@@ -28,7 +28,7 @@ public class MrpaRegistry {
     private DateTime startDate;
     private DateTime endDate;
     private String status;
-    private String fixRegistration;
+    private String ftxRegistration;
     private String sigPath;
     private String mrpaXmlPath;
     private String recalledXmlPath;
