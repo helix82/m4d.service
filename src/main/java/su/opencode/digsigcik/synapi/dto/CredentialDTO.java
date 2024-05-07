@@ -1,8 +1,12 @@
 package su.opencode.digsigcik.synapi.dto;
 
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class CredentialDTO {
+    @JsonProperty("name")
     private String name;
 }

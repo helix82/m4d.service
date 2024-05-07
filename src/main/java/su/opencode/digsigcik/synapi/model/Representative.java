@@ -14,7 +14,6 @@ import java.util.Set;
 public class Representative {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "representative_id")
     private Long id;
     private String name;
     private Integer inn;
@@ -22,6 +21,6 @@ public class Representative {
     private Integer snils;
     private DateTime birthDate;
 
-    @OneToMany(mappedBy = "representative")
+    @OneToMany(mappedBy = "representative_name")
     private Set<MrpaRegistry> mrpaRegistry = new HashSet<>();
 }

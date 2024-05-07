@@ -13,7 +13,6 @@ import java.util.Set;
 public class Organisation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "organisation_id")
     private Long id;
     private String name;
     private Integer inn;
@@ -21,6 +20,6 @@ public class Organisation {
     private Integer ogrn;
     private String jobTitle;
 
-    @OneToMany(mappedBy = "organisation")
+    @OneToMany(mappedBy = "organisation_name")
     private Set<MrpaRegistry> mrpaRegistry = new HashSet<>();
 }
