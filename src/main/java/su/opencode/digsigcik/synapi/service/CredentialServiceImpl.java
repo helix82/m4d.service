@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.model.Credential;
 import su.opencode.digsigcik.synapi.repository.CredentialRepository;
 
@@ -12,7 +11,6 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 @Primary
-@Transactional
 public class CredentialServiceImpl implements CredentialService {
     private final CredentialRepository repository;
 
@@ -37,7 +35,6 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    @Transactional
     public void deleteCredential(Long id) {
         repository.deleteById(id);
     }

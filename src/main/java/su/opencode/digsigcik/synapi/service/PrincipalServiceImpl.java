@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.model.Principal;
 import su.opencode.digsigcik.synapi.repository.PrincipalRepository;
 
@@ -12,7 +11,6 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 @Primary
-@Transactional
 public class PrincipalServiceImpl implements PrincipalService{
     private final PrincipalRepository repository;
 
@@ -37,7 +35,6 @@ public class PrincipalServiceImpl implements PrincipalService{
     }
 
     @Override
-    @Transactional
     public void deletePrincipal(Long id) {
         repository.deleteById(id);
     }
