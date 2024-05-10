@@ -12,7 +12,11 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import su.opencode.digsigcik.synapi.api.model.*;
+import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
+import su.opencode.digsigcik.synapi.api.model.RegistrationData;
+import su.opencode.digsigcik.synapi.api.model.StampPosition;
+import su.opencode.digsigcik.synapi.api.model.ContainerPart;
+import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.dscp.*;
 import su.opencode.digsigcik.synapi.util.CommonUtils;
 import su.opencode.digsigcik.synapi.util.StubUtils;
@@ -42,8 +46,8 @@ public class ContainerServiceImpl implements ContainerService {
 
 	@Override
 	public Resource createPdfContainer(
-		@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
-		boolean createSigStamp, @Nullable StampPosition signPosition, @Nullable StampPosition regPosition) {
+			@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
+			boolean createSigStamp, @Nullable StampPosition signPosition, @Nullable StampPosition regPosition) {
 
 		String fileName = srcFile.getOriginalFilename();
 		String contentTypeStr = srcFile.getContentType();
