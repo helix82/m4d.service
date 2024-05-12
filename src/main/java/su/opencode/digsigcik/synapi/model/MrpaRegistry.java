@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.model;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.FtxRegistrationTypeEnum;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
@@ -11,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Getter
+@Setter
 @Entity
 @Table(name="mrpa_registry")
 @Transactional
@@ -54,136 +56,11 @@ public class MrpaRegistry {
     )
     private Set<Credential> credentials  = new HashSet<>();
 
-    public MrpaRegistry() {
-
-    }
-
-    public MrpaRegistry(Long id, String guid, String internalNumber, Long organisationId, Long principalId, Long representativeId, Timestamp startDate, Timestamp endDate, StatusTypeEnum status, FtxRegistrationTypeEnum ftxRegistration, String sigPath, String mrpaXmlPath, String recalledXmlPath, Set<Credential> credentials) {
-        this.id = id;
-        this.guid = guid;
-        this.internalNumber = internalNumber;
-        this.organisationId = organisationId;
-        this.principalId = principalId;
-        this.representativeId = representativeId;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.status = status;
-        this.ftxRegistration = ftxRegistration;
-        this.sigPath = sigPath;
-        this.mrpaXmlPath = mrpaXmlPath;
-        this.recalledXmlPath = recalledXmlPath;
-        this.credentials = credentials;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getGuid() {
-        return guid;
-    }
-
-    public void setGuid(String guid) {
-        this.guid = guid;
-    }
-
-    public String getInternalNumber() {
-        return internalNumber;
-    }
-
-    public void setInternalNumber(String internalNumber) {
-        this.internalNumber = internalNumber;
-    }
-
-    public Long getOrganisationId() {
-        return organisationId;
-    }
-
-    public void setOrganisationId(Long organisationId) {
-        this.organisationId = organisationId;
-    }
-
-    public Long getPrincipalId() {
-        return principalId;
-    }
-
-    public void setPrincipalId(Long principalId) {
-        this.principalId = principalId;
-    }
-
-    public Long getRepresentativeId() {
-        return representativeId;
-    }
-
-    public void setRepresentativeId(Long representativeId) {
-        this.representativeId = representativeId;
-    }
-
-    public Timestamp getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(Timestamp startDate) {
-        this.startDate = startDate;
-    }
-
-    public Timestamp getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(Timestamp endDate) {
-        this.endDate = endDate;
-    }
-
-    public StatusTypeEnum getStatus() {
-        return status;
-    }
-
-    public void setStatus(StatusTypeEnum status) {
-        this.status = status;
-    }
-
-    public FtxRegistrationTypeEnum getFtxRegistration() {
-        return ftxRegistration;
-    }
-
-    public void setFtxRegistration(FtxRegistrationTypeEnum ftxRegistration) {
-        this.ftxRegistration = ftxRegistration;
-    }
-
-    public String getSigPath() {
-        return sigPath;
-    }
-
-    public void setSigPath(String sigPath) {
-        this.sigPath = sigPath;
-    }
-
-    public String getMrpaXmlPath() {
-        return mrpaXmlPath;
-    }
-
-    public void setMrpaXmlPath(String mrpaXmlPath) {
-        this.mrpaXmlPath = mrpaXmlPath;
-    }
-
-    public String getRecalledXmlPath() {
-        return recalledXmlPath;
-    }
-
-    public void setRecalledXmlPath(String recalledXmlPath) {
-        this.recalledXmlPath = recalledXmlPath;
-    }
-
-    public Set<Credential> getCredentials() {
+    public Set<Credential> getAssignedCredentials() {
         return credentials;
     }
 
-    public void setCredentials(Set<Credential> credentials) {
-        this.credentials = credentials;
+    public void setAssignedCredentials(Set<Credential> credentialSet) {
+        this.credentials = credentialSet;
     }
 }

@@ -38,4 +38,9 @@ public class MrpaRegistryController {
         service.deleteMrpaRegistry(id);
     }
 
+    @PutMapping("/{mrpaId}/credential/{credentialId}")
+    public MrpaRegistry assignCredentialToMrpaRegistry(@PathVariable Long mrpaId, @PathVariable Long credentialId) {
+        return service.assignCredentialToMrpaRegistry(mrpaId, credentialId);
+    }
+
 }

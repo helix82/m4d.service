@@ -10,4 +10,6 @@ public interface MrpaRegistryService {
     MrpaRegistry findByMrpaRegistryId(Long id);
     MrpaRegistry updateMrpaRegistry(MrpaRegistry mrpaRegistry);
     void deleteMrpaRegistry(Long id);
+
+    MrpaRegistry assignCredentialToMrpaRegistry(Long mrpaId, Long credentialId);
 }
