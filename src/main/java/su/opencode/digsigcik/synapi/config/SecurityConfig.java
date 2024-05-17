@@ -21,9 +21,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.CorsProcessor;
 import org.springframework.web.cors.DefaultCorsProcessor;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import su.opencode.digsigcik.synapi.auth.filters.JwtRequestFilter;
-import su.opencode.digsigcik.synapi.auth.service.UserService;
-
+import su.opencode.digsigcik.synapi.filters.JwtRequestFilter;
+import su.opencode.digsigcik.synapi.service.UserService;
+//TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor

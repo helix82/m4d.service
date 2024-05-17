@@ -1,4 +1,4 @@
-package su.opencode.digsigcik.synapi.auth.filters;
+package su.opencode.digsigcik.synapi.filters;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.NonNull;
@@ -9,7 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import su.opencode.digsigcik.synapi.auth.util.JwtTokenUtils;
+import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.stream.Collectors;
-
+//TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Component
 @RequiredArgsConstructor
 @Slf4j

@@ -1,14 +1,14 @@
-package su.opencode.digsigcik.synapi.auth.util;
+package su.opencode.digsigcik.synapi.util;
 
 import lombok.Getter;
-import su.opencode.digsigcik.synapi.auth.dto.UserDto;
+import su.opencode.digsigcik.synapi.dto.UserDto;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
 import su.opencode.digsigcik.synapi.enums.RoleEnum;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-
+//TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Getter
 public final class UsersInfoUtils {
     private final Set<UserDto> usersInfo = new HashSet<>();
@@ -17,21 +17,21 @@ public final class UsersInfoUtils {
         fillUsersInfo();
     }
 
-    public Optional<UserDto> getUserByUsername(String username) {
+    public Optional<UserDto> getUserByUserLogin(String login) {
         return usersInfo.stream()
-                .filter(userDto -> userDto.getUsername().equals(username))
+                .filter(userDto -> userDto.getLogin().equals(login))
                 .findFirst();
     }
 
-    public boolean isUserPasswordCorrect(String username, String password) {
+    public boolean isUserPasswordCorrect(String login, String password) {
         return usersInfo.stream()
-                .anyMatch(userDto -> userDto.getUsername().equals(username) && userDto.getPassword().equals(password));
+                .anyMatch(userDto -> userDto.getLogin().equals(login) && userDto.getPassword().equals(password));
     }
     private void fillUsersInfo() {
-        UserDto ivanov = createUserDto("ivanov", "12345678", PositionEnum.WORKER, RoleEnum.USER);
-        UserDto petrov = createUserDto("petrov", "123456789", PositionEnum.WORKER, RoleEnum.USER);
-        UserDto sokolov = createUserDto("sokolov", "12345678", PositionEnum.DIRECTOR, RoleEnum.ADMIN);
-        UserDto gudkov = createUserDto("gudkov", "123456789", PositionEnum.WORKER, RoleEnum.USER);
+        UserDto ivanov = createUserDto("ivanov", "12345678", PositionEnum.SEP_USER, RoleEnum.USER);
+        UserDto petrov = createUserDto("petrov", "123456789", PositionEnum.SEP_ADMIN, RoleEnum.USER);
+        UserDto sokolov = createUserDto("sokolov", "12345678", PositionEnum.TLS_ADMIN, RoleEnum.ADMIN);
+        UserDto gudkov = createUserDto("gudkov", "123456789", PositionEnum.IOK_OBJECTS_ADMIN, RoleEnum.ADMIN);
 
         usersInfo.add(addUserFullName(ivanov, "Иван", "Иванов", "Иванович"));
         usersInfo.add(addUserFullName(petrov, "Петр", "Петров", "Петрович"));
@@ -39,10 +39,10 @@ public final class UsersInfoUtils {
         usersInfo.add(addUserFullName(gudkov, "Владимир", "Гудков", "Алексеевич"));
     }
 
-    private UserDto createUserDto(String username, String password, PositionEnum position, RoleEnum role) {
-        String email = String.format("%s@gmail.com", username);
+    private UserDto createUserDto(String login, String password, PositionEnum position, RoleEnum role) {
+        String email = String.format("%s@gmail.com", login);
         return UserDto.builder()
-                .username(username)
+                .login(login)
                 .password(password)
                 .email(email)
                 .position(position)

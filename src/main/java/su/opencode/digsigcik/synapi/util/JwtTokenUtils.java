@@ -1,4 +1,4 @@
-package su.opencode.digsigcik.synapi.auth.util;
+package su.opencode.digsigcik.synapi.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -9,12 +9,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+//TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Component
 public class JwtTokenUtils {
     @Value("${jwt.secret}")
@@ -46,7 +50,7 @@ public class JwtTokenUtils {
     }
 
     public List<String> getRoles(String token) {
-        return getAllClaimsFromToken(token).get("roles", List.class);
+        return CastUtils.castList(String.class, getAllClaimsFromToken(token).get("roles", List.class));
     }
 
     private Claims getAllClaimsFromToken(String token) {

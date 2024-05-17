@@ -1,16 +1,17 @@
-package su.opencode.digsigcik.synapi.auth.service;
+package su.opencode.digsigcik.synapi.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import su.opencode.digsigcik.synapi.auth.dto.JwtRequestDto;
-import su.opencode.digsigcik.synapi.auth.dto.JwtResponseDto;
-import su.opencode.digsigcik.synapi.auth.exception.UserAuthException;
-import su.opencode.digsigcik.synapi.auth.util.JwtTokenUtils;
-import su.opencode.digsigcik.synapi.auth.util.UsersInfoUtils;
+import su.opencode.digsigcik.synapi.dto.JwtRequestDto;
+import su.opencode.digsigcik.synapi.dto.JwtResponseDto;
+import su.opencode.digsigcik.synapi.exception.UserAuthException;
+import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
+import su.opencode.digsigcik.synapi.util.UsersInfoUtils;
 
+//TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -25,25 +26,25 @@ public class AuthServiceImpl implements AuthService {
         if (authRequest == null) {
             throw new UserAuthException("Request body is empty!");
         }
-        String username = authRequest.getUsername();
+        String login = authRequest.getLogin();
         String password = authRequest.getPassword();
 
-        if (username == null || username.isEmpty()) {
-            throw new UserAuthException(String.format("Username %s", IS_NULL_OR_EMPTY_ERROR_MESSAGE));
+        if (login == null || login.isEmpty()) {
+            throw new UserAuthException(String.format("Login %s", IS_NULL_OR_EMPTY_ERROR_MESSAGE));
         }
         if (password == null || password.isEmpty()) {
             throw new UserAuthException(String.format("Password %s", IS_NULL_OR_EMPTY_ERROR_MESSAGE));
         }
-        if (usersInfo.getUserByUsername(username).isEmpty()) {
-            throw new UserAuthException(String.format("User with username %s not found!", username));
+        if (usersInfo.getUserByUserLogin(login).isEmpty()) {
+            throw new UserAuthException(String.format("User with login %s not found!", login));
         }
-        if (!usersInfo.isUserPasswordCorrect(username, password)) {
+        if (!usersInfo.isUserPasswordCorrect(login, password)) {
             throw new UserAuthException(String.format("User password %s incorrect!", password));
         }
 
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login, password));
 
-        UserDetails userDetails = userService.loadUserByUsername(username);
+        UserDetails userDetails = userService.loadUserByUsername(login);
         String token = jwtTokenUtils.generateToken(userDetails);
         return JwtResponseDto.builder().token(token).build();
     }

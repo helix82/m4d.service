@@ -1,4 +1,4 @@
-package su.opencode.digsigcik.synapi.auth.validation.annotation;
+package su.opencode.digsigcik.synapi.validation.annotation;
 
 import org.springframework.stereotype.Component;
 
