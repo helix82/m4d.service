@@ -8,6 +8,6 @@ if [ $# -eq 0 ]
 fi
 source profile.sh
 
-docker-compose -f $FOLDER/docker-compose-$PROFILE.yml stop "$@"
+docker compose -f $FOLDER/docker-compose-$PROFILE.yml stop "$@"
 
 

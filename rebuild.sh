@@ -9,6 +9,6 @@ if [ $# -eq 0 ]
 fi
 source profile.sh
 
-docker-compose -f $FOLDER/docker-compose-$PROFILE.yml up -d --no-deps --build $1
-docker-compose -f $FOLDER/docker-compose-$PROFILE.yml restart $1
+docker compose -f $FOLDER/docker-compose-$PROFILE.yml up -d --no-deps --build $1
+docker compose -f $FOLDER/docker-compose-$PROFILE.yml restart $1
 
