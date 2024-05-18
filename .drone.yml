@@ -1,0 +1,70 @@
+kind: pipeline
+name: default
+type: docker
+
+steps:
+  - name: publish synapi
+    image: plugins/docker
+    environment:
+      DOCKER_BUILDKIT: 1
+    settings:
+      username:
+        from_secret: docker_login
+      password:
+        from_secret: docker_pass
+      registry: nexus.essocode.ru:5001
+      repo: nexus.essocode.ru:5001/ess/synapi
+      cache: true
+      tags:
+        - latest
+        - ${DRONE_SOURCE_BRANCH/\//-}
+        - ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
+      cache_from:
+        - nexus.essocode.ru:5001/ess/synapi:master
+        - nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
+      dockerfile: migrator/Dockerfile
+      context: .
+      build_args:
+        - BUILDKIT_INLINE_CACHE=1
+
+  - name: synapi
+    image: nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
+    volumes:
+      - name: out
+        path: /out
+    pull: always
+    detach: true
+    commands:
+      - cd /app
+      - java -Dspring.profiles.active=ci -jar synapi-0.0.1-SNAPSHOT.jar
+    depends_on:
+      - publish synapi
+
+  - name: curl synapi
+    image: curlimages/curl
+    environment:
+      MIGRATOR_URL: http://synapi:8080
+    commands:
+      - while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' $MIGRATOR_URL/swagger-ui/index.html#)" != "200" ]]; do sleep 5; done
+    depends_on:
+      - synapi
+
+image_pull_secrets:
+  - dockerconfig
+
+node:
+  node: 10.8.0.25
+
+trigger:
+  event:
+    include:
+      - push
+      - tag
+      - pull_request
+      - rollback
+
+
+volumes:
+  - name: out
+    temp: {}
+

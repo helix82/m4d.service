@@ -16,7 +16,7 @@ spec:
         app: synapi
     spec:
       containers:
-        - image: nexus.essocode.ru:5000/synapi:master
+        - image: nexus.essocode.ru:5000/ess/synapi:master
           command:
             - java
             - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
