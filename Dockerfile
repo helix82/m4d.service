@@ -5,10 +5,8 @@ COPY pom.xml /app
 RUN mkdir -p /root/.m2/repository
 #COPY settings.xml /usr/share/maven/conf/
 COPY ./ /app/
-# RUN --mount=type=cache,target=/root/.m2/repository mvn dependency:go-offline -B
-# RUN --mount=type=cache,target=/root/.m2/repository mvn clean package -Dmaven.test.skip=true
-RUN mvn dependency:go-offline -B
-RUN mvn clean package -Dmaven.test.skip=true
+RUN --mount=type=cache,target=/root/.m2/repository mvn dependency:go-offline -B
+RUN --mount=type=cache,target=/root/.m2/repository mvn clean package -Dmaven.test.skip=true
 #FROM nexus.essocode.ru:5000/liberica-openjdk-alpine:11
 FROM bellsoft/liberica-openjdk-alpine:11
 ARG JAR_FILE=synapi-0.0.1-SNAPSHOT.jar
