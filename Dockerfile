@@ -7,6 +7,7 @@ RUN mkdir -p /root/.m2/repository
 # COPY settings.xml /root/.m2/
 # RUN --mount=type=cache,target=/root/.m2/repository mvn dependency:go-offline -B
 # RUN --mount=type=cache,target=/root/.m2/repository mvn clean package -Dmaven.test.skip=true
+RUN ln -s ${MAVEN_HOME}/bin/mvn /usr/bin/mvn
 RUN mvn dependency:go-offline -B
 RUN mvn clean package -Dmaven.test.skip=true
 #FROM nexus.essocode.ru:5000/liberica-openjdk-alpine:11
