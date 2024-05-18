@@ -3,18 +3,17 @@ name: default
 type: docker
 
 steps:
+
   - name: publish synapi
     image: plugins/docker
     environment:
       DOCKER_BUILDKIT: 1
     settings:
-      username:
-        from_secret: docker_login
-      password:
-        from_secret: docker_pass
       registry: nexus.essocode.ru:5001
       repo: nexus.essocode.ru:5001/ess/synapi
+      pull: true
       cache: true
+      insecure: true
       tags:
         - latest
         - ${DRONE_SOURCE_BRANCH/\//-}
@@ -22,12 +21,19 @@ steps:
       cache_from:
         - nexus.essocode.ru:5001/ess/synapi:master
         - nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
-      dockerfile: migrator/Dockerfile
-      context: .
+      dockerfile: Dockerfile
+      username:
+        from_secret: docker_login
+      password:
+        from_secret: docker_pass
+      config:
+        from_secret: dockerconfig
       build_args:
         - BUILDKIT_INLINE_CACHE=1
 
   - name: synapi
+    settings:
+      insecure: true
     image: nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
     volumes:
       - name: out
@@ -36,24 +42,44 @@ steps:
     detach: true
     commands:
       - cd /app
-      - java -Dspring.profiles.active=ci -jar synapi-0.0.1-SNAPSHOT.jar
+      - java -Dspring.profiles.active=k8s -jar synapi-0.0.1-SNAPSHOT.jar
     depends_on:
       - publish synapi
 
   - name: curl synapi
     image: curlimages/curl
     environment:
-      MIGRATOR_URL: http://synapi:8080
+      SYNAPI_URL: http://synapi:8080
     commands:
-      - while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' $MIGRATOR_URL/swagger-ui/index.html#)" != "200" ]]; do sleep 5; done
+      - while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' $SYNAPI_URL/swagger-ui/index.html#)" != "200" ]]; do sleep 5; done
     depends_on:
       - synapi
+      - postgres
+
+  - name: deploy dev
+    image: ghcr.io/bh90210/dron8s:latest
+    settings:
+      yaml: ./k8s-synapi-ocode-dev.yaml
+      kubeconfig:
+        from_secret: kubeconfig
+    depends_on:
+      - curl synapi
+    when:
+      branch:
+        - develop
+
+  - name: discord notification
+    image: appleboy/drone-discord
+    settings:
+      webhook_id: 1242396061843324968
+      webhook_token: sNi5O33aIMyIcBMHu_4v8-yFMwkKe3xys5faPxqmmOP9Gfs695ymrWeDiwqaKtEKe62W
+
 
 image_pull_secrets:
   - dockerconfig
 
 node:
-  node: 10.8.0.25
+  node: 188.120.226.58
 
 trigger:
   event:
@@ -63,8 +89,16 @@ trigger:
       - pull_request
       - rollback
 
+services:
+  - name: postgres
+    image: postgres:14.8-alpine3.18
+    ports:
+      - 5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: synapi_test
 
 volumes:
   - name: out
     temp: {}
-
