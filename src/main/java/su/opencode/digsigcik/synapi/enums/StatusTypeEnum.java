@@ -1,5 +1,10 @@
 package su.opencode.digsigcik.synapi.enums;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@AllArgsConstructor
+@Getter
 public enum StatusTypeEnum {
 //Не подписана доверителем, Действительна, Просрочена, Отозвана
     NOT_SIGNED("Не подписана доверителем"),
@@ -8,13 +13,5 @@ public enum StatusTypeEnum {
     WITHDRAWN("Отозвана"),
     UNKNOWN("Неизвестный статус");
 
-    private String title;
-
-    StatusTypeEnum(String title) {
-        this.title = title;
-    }
-
-    public String getTitle() {
-        return title;
-    }
+    private final String title;
 }

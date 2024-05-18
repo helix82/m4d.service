@@ -24,11 +24,6 @@ public class Credential {
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JsonIgnore
-    /*@JoinTable(
-            name = "mrpa_registry_credential",
-            joinColumns = @JoinColumn(name = "credential_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "mrpa_registry_id", referencedColumnName = "id")
-    )*/
     private Set<MrpaRegistry> mrpaRegistryes = new HashSet<>();
 
 }

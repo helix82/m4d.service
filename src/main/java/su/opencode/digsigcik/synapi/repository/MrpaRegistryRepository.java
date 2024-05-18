@@ -6,6 +6,5 @@ import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 
 @Repository
 public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long> {
-    void deleteById(Long id);
     MrpaRegistry findMrpaRegistryById(Long id);
 }
