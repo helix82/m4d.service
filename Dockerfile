@@ -1,13 +1,12 @@
 #FROM nexus.essocode.ru:5000/maven:3.9.6-eclipse-temurin-11 AS maven
 FROM maven:3.9.6-eclipse-temurin-11 AS maven
-
 WORKDIR /app
-COPY ./ /app/
+COPY pom.xml /app
 RUN mkdir -p /root/.m2/repository
-# COPY settings.xml /root/.m2/
+#COPY settings.xml /usr/share/maven/conf/
+COPY ./ /app/
 # RUN --mount=type=cache,target=/root/.m2/repository mvn dependency:go-offline -B
 # RUN --mount=type=cache,target=/root/.m2/repository mvn clean package -Dmaven.test.skip=true
-RUN ln -s ${MAVEN_HOME}/bin/mvn /usr/bin/mvn
 RUN mvn dependency:go-offline -B
 RUN mvn clean package -Dmaven.test.skip=true
 #FROM nexus.essocode.ru:5000/liberica-openjdk-alpine:11
