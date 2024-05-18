@@ -12,8 +12,14 @@ logging:
   level:
     su.opencode.digsigcik.synapi: DEBUG
 ---
+
 spring:
   config.activate.on-profile: local
+#  hotfix for running swagger in spring boot 2
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
 logging:
   level:
     su.opencode.digsigcik.synapi: TRACE
@@ -21,3 +27,4 @@ logging:
 jwt:
   secret: $2a$12$HmLdYNemJ6B6tFTC9InU.OoF5hB3w.3109Pb4sc.Fthvm4X3TZz4i
   lifetime: 40m
+
