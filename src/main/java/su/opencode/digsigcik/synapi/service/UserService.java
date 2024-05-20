@@ -34,7 +34,7 @@ public class UserService implements UserDetailsService {
             return new User(
                     userLogin,
                     passwordEncoder.encode(userDto.getPassword()),
-                    List.of(new SimpleGrantedAuthority(userDto.getRole().name()))
+                    List.of(new SimpleGrantedAuthority(userDto.getPosition().name()))
             );
         } else {
             String message = String.format("User with login %s not found!", userLogin);

@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import su.opencode.digsigcik.synapi.dto.PdDto;
+import su.opencode.digsigcik.synapi.dto.ResourceAccessDto;
+import su.opencode.digsigcik.synapi.dto.RolesDto;
+import su.opencode.digsigcik.synapi.dto.UserDto;
 
 import java.time.Duration;
 import java.util.Date;
@@ -24,18 +28,23 @@ public class JwtTokenUtils {
     @Value("${jwt.lifetime}")
     private Duration jwtLifetime;
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, UserDto userDto) {
         Map<String, Object> claims = new HashMap<>();
         List<String> rolesList = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
-        claims.put("roles", rolesList);
+        ResourceAccessDto resourceAccessDto = new ResourceAccessDto(new PdDto(new RolesDto(rolesList)));
+
+        claims.put("resource_access", resourceAccessDto.getPdDto());
+        claims.put("preferred_username", userDetails.getUsername());
+        claims.put("firstname", userDto.getFirstName());
+        claims.put("lastname", userDto.getLastName());
+        claims.put("patronymic", userDto.getPatronymic());
 
         Date issuedDate = new Date();
         Date expiredDate = new Date(issuedDate.getTime() + jwtLifetime.toMillis());
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userDetails.getUsername())
                 .setIssuedAt(issuedDate)
                 .setExpiration(expiredDate)
                 .signWith(SignatureAlgorithm.HS256, secret)
