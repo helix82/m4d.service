@@ -14,7 +14,6 @@ spring:
     username: sa
     password:
 
-
   jpa:
     hibernate:
       ddl-auto: update
