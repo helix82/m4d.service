@@ -19,7 +19,7 @@ steps:
         - ${DRONE_SOURCE_BRANCH/\//-}
         - ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       cache_from:
-        - nexus.essocode.ru:5001/ess/synapi:master
+        - nexus.essocode.ru:5001/ess/synapi:develop
         - nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
       dockerfile: Dockerfile
       username:
