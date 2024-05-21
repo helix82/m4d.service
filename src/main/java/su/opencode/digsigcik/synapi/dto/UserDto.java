@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
 import su.opencode.digsigcik.synapi.enums.RoleEnum;
+
+import java.util.Date;
+
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Getter
 @Setter
@@ -22,4 +25,8 @@ public class UserDto {
     private String patronymic;
     private PositionEnum position;
     private RoleEnum role;
+    private String pinCodeHash;
+    private String fileHash;
+    private Long operationId;
+    private Date operationDate;
 }
