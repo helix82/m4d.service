@@ -59,13 +59,10 @@ steps:
   - name: deploy dev
     image: ghcr.io/bh90210/dron8s:latest
     settings:
-#      yaml: ./k8s-synapi-ocode-dev.yaml
-#      tag: ${DRONE_COMMIT}
+      yaml: ./k8s-synapi-ocode-dev.yaml
+      tag: ${DRONE_COMMIT}
       kubeconfig:
         from_secret: kubeconfig
-    commands:
-      - kubectl apply -f k8s-synapi-ocode-dev.yaml
-      - kubectl rollout restart deployment -n ocode-dev synapi-ocode-dev-deployment
     depends_on:
       - curl synapi
     when:

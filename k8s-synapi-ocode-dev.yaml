@@ -29,7 +29,7 @@ metadata:
   name: synapi-ocode-dev-deployment
   namespace: ocode-dev
   labels:
-    app: synapi-ocode-dev
+    app: {{.tag}}
 spec:
   replicas: 1
   selector:
