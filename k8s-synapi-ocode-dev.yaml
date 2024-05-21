@@ -29,7 +29,7 @@ metadata:
   name: synapi-ocode-dev-deployment
   namespace: ocode-dev
   labels:
-    app: {{.tag}}
+    app: synapi-ocode-dev
 spec:
   replicas: 1
   selector:
@@ -49,7 +49,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: synapi-dev
-          image: nexus.essocode.ru/ess/synapi:latest
+          image: nexus.essocode.ru/ess/synapi:{{.tag}}
           imagePullPolicy: "Always"
           command:
             - java

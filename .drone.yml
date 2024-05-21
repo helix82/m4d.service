@@ -60,7 +60,7 @@ steps:
     image: ghcr.io/bh90210/dron8s:latest
     settings:
       yaml: ./k8s-synapi-ocode-dev.yaml
-      tag: ${DRONE_COMMIT}
+      tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       kubeconfig:
         from_secret: kubeconfig
     depends_on:

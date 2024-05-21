@@ -29,7 +29,7 @@ public class SwaggerConfig {
         return new ApiInfoBuilder().title("API Documentation")
                 .description("Describing the purpose of the API")
                 .contact(new Contact("Dev-Team", "https://www.o-code.ru/", "vereschagina@o-code.ru"))
-                .version("1.0.2")
+                .version("1.0.3")
                 .build();
     }
 }
