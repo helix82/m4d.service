@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.util;
 
 import lombok.Getter;
+import org.springframework.stereotype.Component;
 import su.opencode.digsigcik.synapi.dto.UserDto;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
 import su.opencode.digsigcik.synapi.enums.RoleEnum;
@@ -10,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Getter
+@Component
 public final class UsersInfoUtils {
     private final Set<UserDto> usersInfo = new HashSet<>();
 
