@@ -1,9 +1,12 @@
 package su.opencode.digsigcik.synapi.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -18,12 +21,13 @@ public class SesController {
     private final SimpleElectronicSigService sigService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> createSes(@RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.status(HttpStatus.OK).body(sigService.getOperationId(pinCode, file));
+    public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
+                                       @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.status(HttpStatus.OK).body(sigService.getOperationId(pinCode, file, authToken));
     }
 
-    @PostMapping("/verify")
-    public ResponseEntity<?> verifySes(@RequestParam String login) {
-        return ResponseEntity.status(HttpStatus.OK).body(sigService.verifySes(login));
+    @GetMapping("/verify")
+    public ResponseEntity<?> verifySes(@RequestParam String operationId, @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.status(HttpStatus.OK).body(sigService.verifySes(operationId, file));
     }
 }

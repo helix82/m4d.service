@@ -14,15 +14,19 @@ import su.opencode.digsigcik.synapi.util.UsersInfoUtils;
 
 import java.util.List;
 import java.util.Optional;
+
+import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
+
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Service
 public class UserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
-    private final UsersInfoUtils usersInfo = new UsersInfoUtils();
+    private final UsersInfoUtils usersInfo;
 
     @Autowired
-    public UserService(@Lazy PasswordEncoder passwordEncoder) {
+    public UserService(@Lazy PasswordEncoder passwordEncoder, UsersInfoUtils usersInfo) {
         this.passwordEncoder = passwordEncoder;
+        this.usersInfo = usersInfo;
     }
 
     @Override
@@ -37,7 +41,7 @@ public class UserService implements UserDetailsService {
                     List.of(new SimpleGrantedAuthority(userDto.getPosition().name()))
             );
         } else {
-            String message = String.format("User with login %s not found!", userLogin);
+            String message = String.format(USER_NOT_FOUND, userLogin);
             throw new UserAuthException(message);
         }
     }
