@@ -13,6 +13,7 @@ import su.opencode.digsigcik.synapi.dto.RolesDto;
 import su.opencode.digsigcik.synapi.dto.UserDto;
 
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +50,12 @@ public class JwtTokenUtils {
                 .setExpiration(expiredDate)
                 .signWith(SignatureAlgorithm.HS256, secret)
                 .compact();
+    }
+
+    public String getPayloadJwtToken(String token) {
+        String[] tokenElements = token.split("\\.");
+        Base64.Decoder decoder = Base64.getUrlDecoder();
+        return new String(decoder.decode(tokenElements[1]));
     }
 
     public String getUsername(String token) {

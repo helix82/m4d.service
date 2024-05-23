@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.util;
 
 import lombok.Getter;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.dto.SigHashDto;
 import su.opencode.digsigcik.synapi.dto.UserDto;
@@ -15,13 +16,16 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import static su.opencode.digsigcik.synapi.util.Constant.EMPTY_BYTE_ARRAY_ERROR;
+
 //TODO @vitalik.sahnov Временное решение. Удалить все, что касается авторизации после интеграции авторизации
 /*TODO @vitalik.sahnov переделать все что касается ПЭП:
    1 - создать таблицу Operation (id, fileHash, login, operationDate)
    2 - добавить в БД для пользоваателя хэш пинкода и хэш файла
 * */
 @Getter
-public final class UsersInfoUtils {
+@Component
+public class UsersInfoUtils {
     private final Set<UserDto> usersInfo = new HashSet<>();
 
     public UsersInfoUtils() {
@@ -40,6 +44,16 @@ public final class UsersInfoUtils {
                 .findFirst();
     }
 
+    public Optional<UserDto> getUserByOperationId(Long operationId) {
+        return usersInfo.stream()
+                .filter(userDto -> userDto.getOperationId().equals(operationId))
+                .findFirst();
+    }
+
+    public boolean isUserWithPinCodeHashNotExist(String pinCodeHash) {
+        return getUserByUserPinCodeHash(pinCodeHash).isEmpty();
+    }
+
     public boolean isUserPasswordCorrect(String login, String password) {
         return usersInfo.stream()
                 .anyMatch(userDto -> userDto.getLogin().equals(login) && userDto.getPassword().equals(password));
@@ -53,16 +67,17 @@ public final class UsersInfoUtils {
                     .fileHash(HashUtils.getSha1Hash(file.getBytes()))
                     .build();
         } catch (IOException e) {
-            throw new SesException("Empty byte array!", e.getCause());
+            throw new SesException(EMPTY_BYTE_ARRAY_ERROR, e.getCause());
         }
         return sigHashDto;
     }
 
     public void setUserFileHashWithPinCodeHash(String pinCodeHash, String fileHash) {
-        Optional<UserDto> userDto = getUserByUserPinCodeHash(pinCodeHash);
-        if (userDto.isPresent()) {
-            UserDto user = userDto.get();
-            user.setFileHash(user.getPinCodeHash().concat(fileHash));
+        for (UserDto userDto : usersInfo) {
+            if (userDto.getPinCodeHash().equals(pinCodeHash)) {
+                userDto.setFileHash(pinCodeHash.concat(fileHash));
+                break;
+            }
         }
     }
 
@@ -77,11 +92,14 @@ public final class UsersInfoUtils {
         final String gudkovPinCode = "01421652";
         UserDto ivanov = createUserDto("ivanov", "12345678", PositionEnum.SEP_USER,
                 RoleEnum.USER, HashUtils.getSha1Hash(ivanovPinCode.getBytes(StandardCharsets.UTF_8)));
-        UserDto petrov = createUserDto("petrov", "123456789", PositionEnum.SEP_ADMIN,
+
+        UserDto petrov = createUserDto("petrov", "12345678", PositionEnum.SEP_ADMIN,
                 RoleEnum.USER, HashUtils.getSha1Hash(petrovPinCode.getBytes(StandardCharsets.UTF_8)));
+
         UserDto sokolov = createUserDto("sokolov", "12345678", PositionEnum.TLS_ADMIN,
                 RoleEnum.ADMIN, HashUtils.getSha1Hash(sokolovPinCode.getBytes(StandardCharsets.UTF_8)));
-        UserDto gudkov = createUserDto("gudkov", "123456789", PositionEnum.IOK_OBJECTS_ADMIN,
+
+        UserDto gudkov = createUserDto("gudkov", "12345678", PositionEnum.IOK_OBJECTS_ADMIN,
                 RoleEnum.ADMIN, HashUtils.getSha1Hash(gudkovPinCode.getBytes(StandardCharsets.UTF_8)));
 
         usersInfo.add(addUserFullNameAndOperationId(ivanov, "Иван", "Иванов",
