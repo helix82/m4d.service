@@ -14,6 +14,9 @@ import su.opencode.digsigcik.synapi.util.UsersInfoUtils;
 
 import java.util.List;
 import java.util.Optional;
+
+import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
+
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Service
 public class UserService implements UserDetailsService {
@@ -37,8 +40,7 @@ public class UserService implements UserDetailsService {
                     List.of(new SimpleGrantedAuthority(userDto.getPosition().name()))
             );
         } else {
-            String message = String.format("User with login %s not found!", userLogin);
-            throw new UserAuthException(message);
+            throw new UserAuthException(USER_NOT_FOUND);
         }
     }
 }
