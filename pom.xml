@@ -245,6 +245,12 @@
             <version>2.2.224</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.shredzone.acme4j/acme4j-client -->
+        <dependency>
+            <groupId>org.shredzone.acme4j</groupId>
+            <artifactId>acme4j-client</artifactId>
+            <version>3.3.0</version>
+        </dependency>
 
     </dependencies>
 
