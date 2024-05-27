@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.model.CA;
 import su.opencode.digsigcik.synapi.repository.CARepository;
-import su.opencode.digsigcik.synapi.repository.CertificateRepository;
-import su.opencode.digsigcik.synapi.repository.RevokedCertificateRepository;
 
 import java.util.List;
 
@@ -16,7 +14,7 @@ public class CAServiceImpl implements CAService {
     private final CARepository caRepository;
 
     @Autowired
-    public CAServiceImpl(CARepository caRepository, CertificateRepository certificateRepository, RevokedCertificateRepository revokedCertificateRepository) {
+    public CAServiceImpl(CARepository caRepository) {
         this.caRepository = caRepository;
     }
 
@@ -44,4 +42,5 @@ public class CAServiceImpl implements CAService {
     public void deleteCA(Long id) {
         this.caRepository.deleteById(id);
     }
+
 }

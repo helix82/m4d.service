@@ -19,7 +19,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public List<Certificate> findAllCertificates() {
+    public List<Certificate> findAllCertificate() {
         return this.certificateRepository.findAll();
     }
 
