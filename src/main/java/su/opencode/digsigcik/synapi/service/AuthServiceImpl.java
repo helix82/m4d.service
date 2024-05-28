@@ -34,10 +34,10 @@ public class AuthServiceImpl implements AuthService {
             return createJwtResponseDto(PASSWORD_ERROR_MESSAGE, HttpStatus.UNAUTHORIZED);
         }
         if (usersInfo.getUserByUserLogin(login).isEmpty()) {
-            return createJwtResponseDto(String.format(USER_NOT_FOUND, login), HttpStatus.NOT_FOUND);
+            return createJwtResponseDto(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
         }
         if (!usersInfo.isUserPasswordCorrect(login, password)) {
-            return createJwtResponseDto(String.format("User password %s incorrect!", password), HttpStatus.UNAUTHORIZED);
+            return createJwtResponseDto("User password incorrect!", HttpStatus.UNAUTHORIZED);
         }
 
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login, password));
