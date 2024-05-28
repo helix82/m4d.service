@@ -11,8 +11,9 @@ import su.opencode.digsigcik.synapi.exception.SesException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -62,9 +63,12 @@ public class UsersInfoUtils {
     public SigHashDto generateHashForPinCodeAndFile(String pinCode, MultipartFile file) {
         SigHashDto sigHashDto;
         try {
+            String pinCodeHash = HashUtils.getSha1Hash(pinCode.getBytes(StandardCharsets.UTF_8));
+            String fileHash = HashUtils.getSha1Hash(file.getBytes());
+
             sigHashDto = SigHashDto.builder()
-                    .pinCodeHash(HashUtils.getSha1Hash(pinCode.getBytes(StandardCharsets.UTF_8)))
-                    .fileHash(HashUtils.getSha1Hash(file.getBytes()))
+                    .pinCodeHash(pinCodeHash)
+                    .fileHash(fileHash)
                     .build();
         } catch (IOException e) {
             throw new SesException(EMPTY_BYTE_ARRAY_ERROR, e.getCause());
@@ -72,16 +76,16 @@ public class UsersInfoUtils {
         return sigHashDto;
     }
 
-    public void setUserFileHashWithPinCodeHash(String pinCodeHash, String fileHash) {
+    public void setSignature(String userLogin, String signature) {
         for (UserDto userDto : usersInfo) {
-            if (userDto.getPinCodeHash().equals(pinCodeHash)) {
-                userDto.setFileHash(pinCodeHash.concat(fileHash));
+            if (userDto.getLogin().equals(userLogin)) {
+                userDto.setSignature(signature);
                 break;
             }
         }
     }
 
-    public void setUserOperationDate(Date operationDate, String userLogin) {
+    public void setUserOperationDate(LocalDate operationDate, String userLogin) {
         getUserByUserLogin(userLogin).get().setOperationDate(operationDate);
     }
 

@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.synapi.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -7,11 +8,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.dto.PdDto;
 import su.opencode.digsigcik.synapi.dto.ResourceAccessDto;
 import su.opencode.digsigcik.synapi.dto.RolesDto;
 import su.opencode.digsigcik.synapi.dto.UserDto;
+import su.opencode.digsigcik.synapi.exception.UserAuthException;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
@@ -19,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static su.opencode.digsigcik.synapi.util.Constant.TOKEN_ERROR_MESSAGE;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Component
@@ -56,6 +62,17 @@ public class JwtTokenUtils {
         String[] tokenElements = token.split("\\.");
         Base64.Decoder decoder = Base64.getUrlDecoder();
         return new String(decoder.decode(tokenElements[1]));
+    }
+
+    public JwtPayloadDto parseJwtPayload(String token) {
+        String authPayloadToken = getPayloadJwtToken(token.substring(7));
+        JwtPayloadDto jwtPayloadDto;
+        try {
+            jwtPayloadDto = new ObjectMapper().readValue(authPayloadToken.getBytes(), JwtPayloadDto.class);
+        } catch (IOException e) {
+            throw new UserAuthException(TOKEN_ERROR_MESSAGE, e.getCause());
+        }
+        return jwtPayloadDto;
     }
 
     public String getUsername(String token) {
