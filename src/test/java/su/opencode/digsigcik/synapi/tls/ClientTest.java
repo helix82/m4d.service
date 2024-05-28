@@ -71,7 +71,7 @@ public class ClientTest {
     // Set the Connection URI of your CA here. For testing purposes, use a staging
     // server if possible. Example: "acme://letsencrypt.org/staging" for the Let's
     // Encrypt staging server.
-    private static final String CA_URI = "acme://pebble/192.168.0.53";
+    private static final String CA_URI = "https://192.168.0.53:4433/acme/acme/directory";
 
     // E-Mail address to be associated with the account. Optional, null if not used.
     private static final String ACCOUNT_EMAIL = null;
@@ -504,7 +504,7 @@ public class ClientTest {
 //        }
 
         LOG.info("Starting up...");
-        String testDomain="mydomain.test";
+        String testDomain="example.com";
         Security.addProvider(new BouncyCastleProvider());
 
         Collection<String> domains = List.of(testDomain);
