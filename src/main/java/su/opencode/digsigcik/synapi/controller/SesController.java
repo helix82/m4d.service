@@ -12,22 +12,26 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import su.opencode.digsigcik.synapi.service.SimpleElectronicSigService;
+import su.opencode.digsigcik.synapi.dto.SesResponseDto;
+import su.opencode.digsigcik.synapi.service.SesService;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/ses")
 public class SesController {
-    private final SimpleElectronicSigService sigService;
+    private final SesService sesService;
 
     @PostMapping("/create")
     public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                        @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.status(HttpStatus.OK).body(sigService.getOperationId(pinCode, file, authToken));
+        SesResponseDto sesResponseDto = sesService.generateSesXmlFile(pinCode, file, authToken);
+        return sesResponseDto.getResponseSesXml() == null ?
+                new ResponseEntity<>(sesResponseDto.getError(), sesResponseDto.getStatus()) :
+                new ResponseEntity<>(sesResponseDto.getResponseSesXml(), HttpStatus.OK);
     }
 
     @GetMapping("/verify")
     public ResponseEntity<?> verifySes(@RequestParam String operationId, @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.status(HttpStatus.OK).body(sigService.verifySes(operationId, file));
+        return ResponseEntity.status(HttpStatus.OK).body(sesService.verifySes(operationId, file));
     }
 }
