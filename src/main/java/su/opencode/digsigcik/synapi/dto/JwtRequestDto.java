@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import su.opencode.digsigcik.synapi.validation.annotation.Password;
+
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Getter
 @Setter
