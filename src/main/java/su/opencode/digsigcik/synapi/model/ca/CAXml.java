@@ -3,6 +3,9 @@ package su.opencode.digsigcik.synapi.model.ca;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.xml.bind.annotation.*;
 import java.util.List;
 
@@ -72,7 +75,11 @@ public class CAXml {
                             @Data
                             @XmlRootElement
                             @XmlAccessorType(XmlAccessType.FIELD)
+                            @Entity
+                            @Table(name="Certificate_data")
                             public static class CertificateData{
+                                @Id
+                                private Long id;
                                 @XmlElement(name = "КомуВыдан")
                                 private String issuedTo;
                                 @XmlElement(name = "ПериодДействияС")
