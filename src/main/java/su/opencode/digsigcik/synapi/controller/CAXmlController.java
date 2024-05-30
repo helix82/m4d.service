@@ -1,9 +1,8 @@
 package su.opencode.digsigcik.synapi.controller;
 
 import lombok.AllArgsConstructor;
-import org.springframework.core.io.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -11,10 +10,16 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.model.ca.CAXml;
+import su.opencode.digsigcik.synapi.service.CAService;
+import su.opencode.digsigcik.synapi.service.CertificateDataService;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
@@ -23,12 +28,29 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 @AllArgsConstructor
 public class CAXmlController {
 
+    @Autowired
+    private CAService caService;
+
+    @Autowired
+    private CertificateDataService certificateDataService;
+
     @PostMapping(value = "/upload", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<Resource> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, JAXBException {
+    public List<String> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, JAXBException, InvocationTargetException, IllegalAccessException {
         String content = new String(sourceFile.getBytes());
         Document document = convertStringToDocument(content);
+        assert document != null;
         CAXml caXml = XMLUtil.unmarshal(document, CAXml.class);
-        System.out.println(caXml);
+
+        List<CAXml.CA.SHSystems.SHSystem.KeysAuthPersons.KeyAuthPerson.Certificates.CertificateData> result2 = (caXml.getCa().stream().map(x->x.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()
+                .stream().map(z->z.getCertificates().getCertificateData()).collect(Collectors.toList())).collect(Collectors.toList())).collect(Collectors.toList())).stream()
+                .flatMap(Collection::stream).flatMap(Collection::stream).flatMap(Collection::stream).collect(Collectors.toList());
+
+        System.out.println(result2);
+
+        for(CAXml.CA.SHSystems.SHSystem.KeysAuthPersons.KeyAuthPerson.Certificates.CertificateData cert : result2){
+            certificateDataService.saveCertificateData(cert);
+        }
         return null;
     }
+
 }

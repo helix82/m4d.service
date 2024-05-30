@@ -11,12 +11,14 @@ import java.sql.Timestamp;
 public class CertificateDTO {
     @JsonProperty("certCentrNameId")
     private Long certCentrNameId;
-    @JsonProperty("validityPeriod")
-    private Timestamp validityPeriod;
+    @JsonProperty("dateStart")
+    private Timestamp dateStart;
+    @JsonProperty("dateEnd")
+    private Timestamp dateEnd;
     @JsonProperty("typeOfAddition")
     private String typeOfAddition;
     @JsonProperty("certCenterType")
     private String certCenterType;
-    @JsonProperty("filePath")
-    private String filePath;
+    @JsonProperty("certificateData")
+    private String certificateData;
 }
