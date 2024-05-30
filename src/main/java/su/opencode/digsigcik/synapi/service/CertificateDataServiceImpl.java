@@ -2,7 +2,7 @@ package su.opencode.digsigcik.synapi.service;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import su.opencode.digsigcik.synapi.model.ca.CAXml;
+import su.opencode.digsigcik.synapi.model.ca.CertificateData;
 import su.opencode.digsigcik.synapi.repository.CertificateDataRepository;
 
 @Service
@@ -15,7 +15,7 @@ public class CertificateDataServiceImpl implements CertificateDataService{
     }
 
     @Override
-    public void saveCertificateData(CAXml.CA.SHSystems.SHSystem.KeysAuthPersons.KeyAuthPerson.Certificates.CertificateData certificateData) {
+    public void saveCertificateData(CertificateData certificateData) {
         this.repository.save(certificateData);
     }
 }
