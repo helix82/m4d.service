@@ -16,13 +16,14 @@ public class Organisation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "name", columnDefinition = "VARCHAR(50)")
+    @Column(name = "name", columnDefinition = "VARCHAR(100)")
     private String name;
     private Long inn;
     private Long kpp;
     private Long ogrn;
-    @Column(name = "job_title", columnDefinition = "VARCHAR(50)")
-    private String jobTitle;
+    @Column(name = "legal_address", columnDefinition = "TEXT")
+    private String legalAddress;
+    private Long regionCode;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "organisation_id")
