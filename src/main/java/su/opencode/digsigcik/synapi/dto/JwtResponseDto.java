@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JwtResponseDto {
-    private String responseMessage;
-    private HttpStatus responseStatus;
+    private JwtErrorDto errorDto;
+    private HttpStatus status;
     private JwtTokenDto token;
 }
