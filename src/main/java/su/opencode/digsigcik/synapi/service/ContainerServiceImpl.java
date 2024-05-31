@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -18,12 +17,18 @@ import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.api.model.StampPosition;
 import su.opencode.digsigcik.synapi.dscp.*;
+import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 import su.opencode.digsigcik.synapi.util.CommonUtils;
-import su.opencode.digsigcik.synapi.util.StubUtils;
+import su.opencode.digsigcik.synapi.util.FileUtils;
 
 import javax.annotation.PostConstruct;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 
 // TODO: add proper error handling, likely with exception handlers
@@ -44,56 +49,52 @@ public class ContainerServiceImpl implements ContainerService {
         }
     }
 
-	@Override
-	public Resource createPdfContainer(
-		@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
-		boolean createSigStamp, @Nullable StampPosition signPosition, @Nullable StampPosition regPosition) {
+    @Override
+    public Resource createPdfContainer(@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
+                                       @NotNull ContainerUserInfoDto containerUserInfo) {
+        String fileName = srcFile.getOriginalFilename();
+        String contentTypeStr = srcFile.getContentType();
+        MediaType contentType = StringUtils.isBlank(contentTypeStr)
+                || MediaType.APPLICATION_OCTET_STREAM_VALUE.equals(contentTypeStr)
+                ? null
+                : CommonUtils.toMediaType(contentTypeStr);
+        byte[] sourceFileContent;
+        try {
+            sourceFileContent = srcFile.getBytes();
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot get source file content", e);
+        }
+        byte[] sigFileContent;
+        try {
+            sigFileContent = sigFile.getBytes();
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot get sig file content", e);
+        }
 
-		String fileName = srcFile.getOriginalFilename();
-		String contentTypeStr = srcFile.getContentType();
-		MediaType contentType = StringUtils.isBlank(contentTypeStr)
-			|| MediaType.APPLICATION_OCTET_STREAM_VALUE.equals(contentTypeStr)
-			? null
-			: CommonUtils.toMediaType(contentTypeStr);
-		byte[] sourceFileContent;
-		try {
-			sourceFileContent = srcFile.getBytes();
-		} catch (IOException e) {
-			throw new IllegalStateException("Cannot get source file content", e);
-		}
-		byte[] sigFileContent;
-		try {
-			sigFileContent = sigFile.getBytes();
-		} catch (IOException e) {
-			throw new IllegalStateException("Cannot get sig file content", e);
-		}
+        Container container = ContainerUtils.createContainer(ContainerTypeEnum.SIMPLE_DETACHED, sourceFileContent, fileName, contentType);
 
+        byte[] login = containerUserInfo.getLogin().getBytes(StandardCharsets.UTF_8);
+        byte[] firstname = containerUserInfo.getFirstname().getBytes(StandardCharsets.UTF_8);
+        byte[] lastname = containerUserInfo.getLastname().getBytes(StandardCharsets.UTF_8);
+        byte[] patronymic = containerUserInfo.getPatronymic().getBytes(StandardCharsets.UTF_8);
+        byte[] timestamp = containerUserInfo.getTimestamp().getBytes(StandardCharsets.UTF_8);
 
-		Container container = ContainerUtils.createContainer(ContainerTypeEnum.PDF_DETACHED, sourceFileContent, fileName, contentType);
-		if (signPosition == null) signPosition = StubUtils.createStampPosition(); //TODO: stub must be replaced
-		assert signPosition != null;
-		if (regPosition == null) regPosition = StubUtils.createStampPosition(); //TODO: stub must be replaced
-		assert regPosition != null;
-		byte[] certData = StubUtils.getStubFileContent("source/lastCertData.json"); //TODO: stub must be replaced
-		assert certData != null && certData.length > 0;
-		byte[] signCheckData = StubUtils.getStubFileContent("source/lastSignCheck.json"); //TODO: stub must be replaced
-		assert signCheckData != null && signCheckData.length > 0;
+        Map<ResultTypeEnum, byte[]> params = new HashMap<>();
+        params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
+        params.put(ResultTypeEnum.LOGIN, login);
+        params.put(ResultTypeEnum.FIRSTNAME, firstname);
+        params.put(ResultTypeEnum.LASTNAME, lastname);
+        params.put(ResultTypeEnum.PATRONYMIC, patronymic);
+        params.put(ResultTypeEnum.TIMESTAMP, timestamp);
 
-		Map<ResultTypeEnum, byte[]> params = Map.of(
-			ResultTypeEnum.DETACHED_SIGN, sigFileContent,
-			ResultTypeEnum.STAMP_SIGN_PAGE, String.valueOf(signPosition.getPage()).getBytes(StandardCharsets.UTF_8),
-			ResultTypeEnum.STAMP_SIGN_X, String.valueOf(signPosition.getTopLeftX()).getBytes(StandardCharsets.UTF_8),
-			ResultTypeEnum.STAMP_SIGN_Y, String.valueOf(signPosition.getTopLeftY()).getBytes(StandardCharsets.UTF_8),
-			ResultTypeEnum.STAMP_REG_PAGE, String.valueOf(regPosition.getPage()).getBytes(StandardCharsets.UTF_8),
-			ResultTypeEnum.STAMP_REG_X, String.valueOf(regPosition.getTopLeftX()).getBytes(StandardCharsets.UTF_8),
-			ResultTypeEnum.STAMP_REG_Y, String.valueOf(regPosition.getTopLeftY()).getBytes(StandardCharsets.UTF_8),
-			ResultTypeEnum.SIGN_CHECK, signCheckData,
-			ResultTypeEnum.CERT_DATA, certData
-		);
-		ContainerUtils.fillContainerByResult(container, params);
+        ContainerUtils.fillContainerByResult(container, params);
 
-		return new ByteArrayResource(ContainerUtils.containerContent(container));
-	}
+        byte[] containerBytes = ContainerUtils.containerContent(container);
+        String containerPath = String.format("./files/dscp/container-%s.dscp", containerUserInfo.getTimestamp());
+        FileUtils.createFile(containerPath, containerBytes);
+
+        return new ByteArrayResource(containerBytes);
+    }
 
     @Override
     public Resource updatePdfContainerRegData(@NotNull MultipartFile containerFile,
@@ -113,29 +114,29 @@ public class ContainerServiceImpl implements ContainerService {
             doReverify(container);
         }
 
-	    var returnParts = new ArrayList<ResultTypeEnum>(selectors.size());
-	    for (var s : selectors) {
-		    var rt = SELECTOR_MAP.get(s.getCode());
-		    if (rt == null) {
-			    throw new IllegalArgumentException("Invalid selector code " + s.getCode());
-		    }
-		    returnParts.add(rt);
-	    }
+        var returnParts = new ArrayList<ResultTypeEnum>(selectors.size());
+        for (var s : selectors) {
+            var rt = SELECTOR_MAP.get(s.getCode());
+            if (rt == null) {
+                throw new IllegalArgumentException("Invalid selector code " + s.getCode());
+            }
+            returnParts.add(rt);
+        }
 
-	    var rds = ContainerUtils.getFromContainer(container, returnParts, false);
+        var rds = ContainerUtils.getFromContainer(container, returnParts, false);
 
-	    var res = new HashMap<String, ContainerPart>();
-	    for (var rd : rds.entrySet()) {
+        var res = new HashMap<String, ContainerPart>();
+        for (var rd : rds.entrySet()) {
 
-		    var resultType = rd.getValue().getResultType();
-		    var contentType = rd.getValue().getContentType();
-		    var data = rd.getValue().getContent();
-		    var containerPart = new ContainerPart()
-			    .contentType(contentType.toString())
-			    .data(data);
-		    res.put(resultType.getCode(), containerPart);
-	    }
-	    return res;
+            var resultType = rd.getValue().getResultType();
+            var contentType = rd.getValue().getContentType();
+            var data = rd.getValue().getContent();
+            var containerPart = new ContainerPart()
+                    .contentType(contentType.toString())
+                    .data(data);
+            res.put(resultType.getCode(), containerPart);
+        }
+        return res;
     }
 
     @Override

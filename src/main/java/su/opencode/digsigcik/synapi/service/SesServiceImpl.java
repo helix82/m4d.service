@@ -1,27 +1,32 @@
 package su.opencode.digsigcik.synapi.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.ErrorDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.dto.ResponseErrorDto;
+import su.opencode.digsigcik.synapi.dto.SesContainerFileDto;
+import su.opencode.digsigcik.synapi.dto.SesDto;
 import su.opencode.digsigcik.synapi.dto.SesResponseDto;
-import su.opencode.digsigcik.synapi.dto.SesVerifyDto;
-import su.opencode.digsigcik.synapi.dto.SesXmlDto;
+import su.opencode.digsigcik.synapi.dto.SesVerifyResponseDto;
 import su.opencode.digsigcik.synapi.dto.SigHashDto;
 import su.opencode.digsigcik.synapi.dto.UserDto;
 import su.opencode.digsigcik.synapi.exception.SesException;
-import su.opencode.digsigcik.synapi.util.HashUtils;
+import su.opencode.digsigcik.synapi.model.Ses;
+import su.opencode.digsigcik.synapi.model.SesContainer;
+import su.opencode.digsigcik.synapi.repository.SesRepository;
+import su.opencode.digsigcik.synapi.util.FileUtils;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 import su.opencode.digsigcik.synapi.util.UsersInfoUtils;
 
-import java.io.IOException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
-import static su.opencode.digsigcik.synapi.util.Constant.EMPTY_BYTE_ARRAY_ERROR;
 import static su.opencode.digsigcik.synapi.util.Constant.FILE_ERROR_MESSAGE;
 import static su.opencode.digsigcik.synapi.util.Constant.OPERATION_ID_ERROR_MESSAGE;
 import static su.opencode.digsigcik.synapi.util.Constant.PIN_CODE_ERROR_MESSAGE;
@@ -31,11 +36,14 @@ import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
 @Service
 @RequiredArgsConstructor
 public class SesServiceImpl implements SesService {
+    private final SesContainerService sesContainerService;
+    private final ContainerService containerService;
     private final UsersInfoUtils usersInfo;
     private final JwtTokenUtils jwtTokenUtils;
+    private final SesRepository sesRepository;
 
     @Override
-    public SesResponseDto generateSesXmlFile(String pinCode, MultipartFile file, String token) {
+    public SesResponseDto getContainerPath(String pinCode, MultipartFile srcFile, String token) {
         //todo спросить за варианты ответа, какое сообщение будет для ошибки
         if (isParameterNullOrIsEmpty(pinCode)) {
             return createSesResponseDto(PIN_CODE_ERROR_MESSAGE, HttpStatus.BAD_REQUEST);
@@ -43,11 +51,11 @@ public class SesServiceImpl implements SesService {
         if (isParameterNullOrIsEmpty(token)) {
             return createSesResponseDto(TOKEN_ERROR_MESSAGE, HttpStatus.BAD_REQUEST);
         }
-        if (isParameterNullOrIsEmpty(file)) {
+        if (isParameterNullOrIsEmpty(srcFile)) {
             return createSesResponseDto(FILE_ERROR_MESSAGE, HttpStatus.BAD_REQUEST);
         }
 
-        //todo добавить методы в JwtTokenUtils для получения полей токена
+        //получаем поля токена из payload
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
         String userLogin = jwtPayloadDto.getPreferredUsername();
 
@@ -55,59 +63,116 @@ public class SesServiceImpl implements SesService {
         if (userDto.isEmpty()) {
             return createSesResponseDto(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
         }
-        UserDto user = userDto.get();
 
-
-        /*todo работа с хэшами:
-            1 - сравнить хэш пиндока который приходит с тем что записан для юзера
-            2 - сгенерировать хэш документа (pin_hash.doc_hash)
-            3 - сгенирировать хэш сигнатуры (pin_hash.doc_hash.timestamp)
+        /*  1 - сравниваем хэш пиндока который приходит с тем что записан для юзера
+            2 - генерируем хэш документа (pin_hash.doc_hash)
+            3 - генирируем хэш сигнатуры (pin_hash.doc_hash.timestamp)
         */
-        SigHashDto sigHashDto = usersInfo.generateHashForPinCodeAndFile(pinCode, file);
+        SigHashDto sigHashDto = usersInfo.generateHashForPinCodeAndFile(pinCode, srcFile);
         String pinCodeHash = sigHashDto.getPinCodeHash();
         if (usersInfo.isUserWithPinCodeHashNotExist(pinCodeHash)) {
             return createSesResponseDto("Invalid PIN code!", HttpStatus.NOT_FOUND);
         }
+        UserDto user = userDto.get();
+        Long operationId = user.getOperationId();
 
-        LocalDate operationDate = LocalDate.now();
+        LocalDateTime date = LocalDateTime.now();
+        String operationDate = date.toString();
+        String formattedOperationDate = formatDate(date);
+
+        String fileHash = sigHashDto.getFileHash();
+        String signature = generateSignature(sigHashDto.getPinCodeHash(), fileHash, operationDate);
+
         usersInfo.setUserOperationDate(operationDate, userLogin);
-
-        String signature = generateSignature(pinCodeHash, sigHashDto.getFileHash(), operationDate);
+        usersInfo.setFileHash(userLogin, fileHash);
         usersInfo.setSignature(userLogin, signature);
 
-        /*todo работа с xml(название файла - ses-дата.xml):
-            1 - сформировать ses-дата.xml
-            2 - добавить поля токена в ses-дата.xml файл
+        // создаем файл SHA256sig.sig в который записываем signature
+        String sigFilePathName = "./files/source/SHA256sig.sig";
+        FileUtils.createFile(sigFilePathName, signature.getBytes());
+
+        MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
+        ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+                .login(userLogin)
+                .firstname(jwtPayloadDto.getFirstName())
+                .lastname(jwtPayloadDto.getLastName())
+                .patronymic(jwtPayloadDto.getPatronymic())
+                .timestamp(formattedOperationDate)
+                .build();
+
+        Resource containerResource = containerService.createPdfContainer(srcFile, sigMultipartFile, containerUserInfo);
+
+        FileUtils.deleteFile(sigFilePathName);
+
+        /*  - добавляем в таблицу sesContainer новую запись
+            - добавляем в таблицу ses новую запись
         */
-
-        /*todo работа с БД:
-            1 - добавить в таблицу sesSig новую запись:
-                - сгенерировать UUID
-                - добавить UUID, ses-дата.xml
-            2 - добавить новую запись в таблицу ses:
-                - указать id либо UUID для поля "sesXmlSig"
-                - указать operationId, userlogin, signature
-            3 - седлать controller, который возвращает ses-дата.xml по его уникальному UUID:
-                принимает UUID, возвращает ses-дата.xml
-        */
-
-        //todo сформировать SesResponseDto для успешного ответа(json)
-
-        //todo добавить работу с контейнером, класть в контейнер ses-дата.xml этот метод будет возращать контейнер
+        String containerPath = String.format("./files/dscp/container-%s.dscp", formattedOperationDate);
+        SesContainer sesContainer = addNewSesContainer(containerPath);
+        SesDto sesDto = SesDto.builder()
+                .operationId(operationId)
+                .userLogin(userLogin)
+                .fileHash(fileHash)
+                .signature(signature)
+                .sesContainerFileId(sesContainer.getId())
+                .build();
+        boolean isSesCreated = createSes(sesDto);
+        if (!isSesCreated) {
+            throw new SesException("Ses not created!");
+        }
 
         return SesResponseDto.builder()
-                .responseSesXml(new SesXmlDto())
+                .containerPath(containerPath)
                 .build();
     }
 
     @Override
-    public SesVerifyDto verifySes(String operationId, MultipartFile file) {
+    public SesVerifyResponseDto verifySes(String operationId, MultipartFile container) {
         throwExceptionWhenParameterNullOrIsEmpty(operationId, OPERATION_ID_ERROR_MESSAGE);
-//        throwExceptionWhenFileNullOrIsEmpty(file);
-        return getVerifyResultDto(operationId, file);
+        return getVerifyResultDto(operationId);
     }
 
-    private String generateSignature(String pinCodeHash, String fileHash, LocalDate operationDate) {
+    @Override
+    public boolean createSes(SesDto sesDto) {
+        boolean sesIsSaved = false;
+        if (sesDto != null) {
+            Ses ses = new Ses();
+            ses.setOperationId(sesDto.getOperationId());
+            ses.setUserLogin(sesDto.getUserLogin());
+            ses.setFileHash(sesDto.getFileHash());
+            ses.setSignature(sesDto.getSignature());
+            ses.setContainerId(sesDto.getSesContainerFileId());
+            sesRepository.save(ses);
+            sesIsSaved = true;
+        }
+        return sesIsSaved;
+    }
+
+    @Override
+    public Ses findSesById(Long id) {
+        return sesRepository.findSesById(id);
+    }
+
+    @Override
+    public boolean updateSes(SesDto ses) {
+        return createSes(ses);
+    }
+
+    @Override
+    public void deleteSes(Long id) {
+        sesRepository.deleteById(id);
+    }
+
+    private SesContainer addNewSesContainer(String sesContainerPath) {
+        UUID xmlUUID = UUID.randomUUID();
+        SesContainerFileDto sesContainerFileDto = SesContainerFileDto.builder()
+                .uuid(xmlUUID)
+                .sesContainerPath(sesContainerPath)
+                .build();
+        return sesContainerService.createSesContainer(sesContainerFileDto);
+    }
+
+    private String generateSignature(String pinCodeHash, String fileHash, String operationDate) {
         return String.format("%s.%s.%s", pinCodeHash, fileHash, operationDate);
     }
 
@@ -119,6 +184,7 @@ public class SesServiceImpl implements SesService {
                 .status(responseStatus)
                 .build();
     }
+
     private void throwExceptionWhenParameterNullOrIsEmpty(String parameter, String errorMessage) {
         if (parameter == null || parameter.isEmpty()) {
             throw new SesException(errorMessage);
@@ -133,32 +199,18 @@ public class SesServiceImpl implements SesService {
         return file == null || file.isEmpty();
     }
 
-    private SesVerifyDto getVerifyResultDto(String operationId, MultipartFile file) {
+    private String formatDate(LocalDateTime operationDate) {
+        return String.format("%s-%s-%sT%s.%s.%s",
+                operationDate.getYear(), operationDate.getMonthValue(), operationDate.getDayOfMonth(),
+                operationDate.getHour(), operationDate.getMinute(), operationDate.getSecond());
+    }
+
+    private SesVerifyResponseDto getVerifyResultDto(String operationId) {
         //todo нужно сначала брать пользователя по логину а потом у него уже сравнивать id операции с тем который передаем
         Optional<UserDto> user = usersInfo.getUserByOperationId(Long.valueOf(operationId));
         if (user.isEmpty()) {
             throw new SesException("Operation not found!");
         }
-
-        SesVerifyDto sesVerifyDto = new SesVerifyDto();
-        String userPinCodeHash = user.get().getPinCodeHash();
-        for (UserDto userDto : usersInfo.getUsersInfo()) {
-            if (userDto.getPinCodeHash().equals(userPinCodeHash)){
-                try {
-                    String fileHash = HashUtils.getSha1Hash(file.getBytes());
-                    if (userDto.getSignature().equals(userPinCodeHash.concat(fileHash))) {
-                        sesVerifyDto.setVerifyResultMessage("Подпись верна.");
-                        sesVerifyDto.setUserLogin(user.get().getLogin());
-                        sesVerifyDto.setOperationDate(user.get().getOperationDate());
-                        break;
-                    } else {
-                        throw new SesException("Подпись не верна.");
-                    }
-                } catch (IOException e) {
-                    throw new SesException(EMPTY_BYTE_ARRAY_ERROR, e.getCause());
-                }
-            }
-        }
-        return sesVerifyDto;
+        return new SesVerifyResponseDto();
     }
 }
