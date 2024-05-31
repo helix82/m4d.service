@@ -9,4 +9,6 @@ import lombok.Setter;
 public class CredentialDTO {
     @JsonProperty("name")
     private String name;
+    @JsonProperty("code")
+    private String code;
 }
