@@ -192,6 +192,11 @@ components:
         - poaContainer
         - poaDescription
         - description
+        - userFirstname
+        - userLastname
+        - userPatronymic
+        - timestamp
+        - userLogin
     ContainerData:
       description: Keys are ContainerSelectorCode variants and values are base64 encoded files
       type: object
