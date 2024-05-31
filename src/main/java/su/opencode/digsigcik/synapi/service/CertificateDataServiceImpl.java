@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.model.ca.CertificateData;
 import su.opencode.digsigcik.synapi.repository.CertificateDataRepository;
 
+import java.util.List;
+
 @Service
 @Primary
 public class CertificateDataServiceImpl implements CertificateDataService{
@@ -15,7 +17,27 @@ public class CertificateDataServiceImpl implements CertificateDataService{
     }
 
     @Override
-    public void saveCertificateData(CertificateData certificateData) {
-        this.repository.save(certificateData);
+    public CertificateData saveCertificateData(CertificateData certificateData) {
+        return this.repository.save(certificateData);
+    }
+
+    @Override
+    public List<CertificateData> findAllCertificateData() {
+        return this.repository.findAll();
+    }
+
+    @Override
+    public CertificateData findByCertificateDataId(Long id) {
+        return this.repository.findCertificateDataById(id);
+    }
+
+    @Override
+    public CertificateData updateCertificateData(CertificateData certificateData) {
+        return this.repository.save(certificateData);
+    }
+
+    @Override
+    public void deleteCertificateData(Long id) {
+        this.repository.deleteById(id);
     }
 }

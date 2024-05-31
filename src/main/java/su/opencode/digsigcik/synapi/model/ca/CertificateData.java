@@ -27,4 +27,8 @@ public class CertificateData {
         @XmlElement(name = "Данные")
         @Column(columnDefinition = "Text")
         private String certificate;
+        @Column(name = "type_input")
+        private String typeInput;
+        @Column(name = "accreditation_status")
+        private String accreditationStatus;
 }

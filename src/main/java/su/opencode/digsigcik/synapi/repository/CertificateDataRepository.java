@@ -6,5 +6,5 @@ import su.opencode.digsigcik.synapi.model.ca.CertificateData;
 
 @Repository
 public interface CertificateDataRepository extends JpaRepository<CertificateData, Long> {
-
+    CertificateData findCertificateDataById(Long id);
 }
