@@ -11,7 +11,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.Lob;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.HashSet;
@@ -21,18 +20,17 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name="ses_sig")
+@Table(name="container")
 @Transactional
-public class SesSig {
+public class SesContainer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "uuid")
     private UUID uuid;
-    @Lob
-    @Column(name = "ses_xml_sig_file")
-    private String sesXmlSigFile;
+    @Column(name = "container_path")
+    private String sesContainerPath;
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "ses_xml_sig_id")
+    @JoinColumn(name = "container_id")
     private Set<Ses> ses = new HashSet<>();
 }

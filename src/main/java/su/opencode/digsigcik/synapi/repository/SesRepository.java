@@ -6,4 +6,5 @@ import su.opencode.digsigcik.synapi.model.Ses;
 
 @Repository
 public interface SesRepository extends JpaRepository<Ses, Long> {
+    Ses findSesById(Long id);
 }

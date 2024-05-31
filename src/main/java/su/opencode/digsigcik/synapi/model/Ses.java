@@ -24,8 +24,10 @@ public class Ses {
     private Long operationId;
     @Column(name = "user_login", columnDefinition = "VARCHAR(50)")
     private String userLogin;
-    @Column(name = "signature", columnDefinition = "VARCHAR(100)")
+    @Column(name = "file_hash", columnDefinition = "VARCHAR(64)")
+    private String fileHash;
+    @Column(name = "signature", columnDefinition = "VARCHAR(194)")
     private String signature;
-    @Column(name = "ses_xml_sig_id")
-    private Long sesXmlSig;
+    @Column(name = "container_id")
+    private Long containerId;
 }

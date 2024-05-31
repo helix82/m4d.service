@@ -14,9 +14,13 @@ import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.api.model.StampPosition;
+import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
+import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.service.ContainerService;
+import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,21 +30,25 @@ import java.util.Optional;
 @AllArgsConstructor
 public class ApiControllerV1 {
     private static final Log log = LogFactory.getLog(ApiControllerV1.class);
-
     private static final String DEFAULT_FILENAME = "container.dscp";
-
     private final ContainerService containerService;
+    private final JwtTokenUtils jwtTokenUtils;
 
     @PostMapping(value = "/create-pdf-container",
-                 produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createPdfContainer(
-	    @RequestPart("srcFile") MultipartFile sourceFile,
-	    @RequestPart("sigFile") MultipartFile sourceSig,
-	    @RequestPart(value = "createSigStamp") boolean createSigStamp,
-	    @RequestPart(value = "sigStampPosition", required = false) StampPosition signPosition,
-	    @RequestPart(value = "regStampPosition", required = false) StampPosition regPosition
-    ) {
-	    var res = containerService.createPdfContainer(sourceFile, sourceSig, createSigStamp, signPosition, regPosition);
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            @RequestPart("srcFile") MultipartFile sourceFile,
+            @RequestPart("sigFile") MultipartFile sourceSig) {
+        JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
+
+        ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+                .firstname(jwtPayloadDto.getFirstName())
+                .lastname(jwtPayloadDto.getLastName())
+                .patronymic(jwtPayloadDto.getPatronymic())
+                .timestamp(LocalDateTime.now().toString())
+                .build();
+        var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
@@ -48,7 +56,7 @@ public class ApiControllerV1 {
     }
 
     @PutMapping(value = "/update-pdf-container-regdata",
-                produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> updatePdfContainerRegData(
             @RequestPart("container") MultipartFile container,
             @RequestPart("regData") RegistrationData regData
@@ -61,7 +69,7 @@ public class ApiControllerV1 {
     }
 
     @PostMapping(value = "/get-container-data",
-                 produces = MediaType.APPLICATION_JSON_VALUE)
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, ContainerPart>> getContainerData(
             @RequestPart("container") MultipartFile container,
             @RequestPart("selectors") List<ContainerSelector> selectors,
