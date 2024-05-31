@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.dto.SesResponseDto;
+import su.opencode.digsigcik.synapi.dto.SesVerifyResponseDto;
 import su.opencode.digsigcik.synapi.service.SesService;
 
 @RestController
@@ -24,14 +25,17 @@ public class SesController {
     @PostMapping("/create")
     public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                        @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
-        SesResponseDto sesResponseDto = sesService.generateSesXmlFile(pinCode, file, authToken);
-        return sesResponseDto.getResponseSesXml() == null ?
+        SesResponseDto sesResponseDto = sesService.getContainerPath(pinCode, file, authToken);
+        return sesResponseDto.getContainerPath() == null ?
                 new ResponseEntity<>(sesResponseDto.getError(), sesResponseDto.getStatus()) :
-                new ResponseEntity<>(sesResponseDto.getResponseSesXml(), HttpStatus.OK);
+                new ResponseEntity<>(sesResponseDto.getContainerPath(), HttpStatus.OK);
     }
 
     @GetMapping("/verify")
     public ResponseEntity<?> verifySes(@RequestParam String operationId, @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.status(HttpStatus.OK).body(sesService.verifySes(operationId, file));
+        SesVerifyResponseDto sesVerifyResponse = sesService.verifySes(operationId, file);
+        return sesVerifyResponse.getSesVerifyJsonDto() == null ?
+                new ResponseEntity<>(sesVerifyResponse.getError(), sesVerifyResponse.getStatus()) :
+                new ResponseEntity<>(sesVerifyResponse.getSesVerifyJsonDto(), HttpStatus.OK);
     }
 }

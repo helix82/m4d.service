@@ -30,7 +30,12 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	STAMP_REG_DIMENSION_W("stampSignDimensionW", MetaAttribute.STAMP_REG_DIMENSION_W),
 	STAMP_REG_DIMENSION_H("stampSignDimensionH", MetaAttribute.STAMP_REG_DIMENSION_H),
 	STAMP_SIGN_IMG("stampSignImage", MediaType.IMAGE_PNG, ContainerFileEnum.SIGN_STAMP, "_sign_stamp", "png"),
-	STAMP_REG_IMG("stampSignImage", MediaType.IMAGE_PNG, ContainerFileEnum.REG_STAMP, "_reg_stamp", "png");
+	STAMP_REG_IMG("stampSignImage", MediaType.IMAGE_PNG, ContainerFileEnum.REG_STAMP, "_reg_stamp", "png"),
+	FIRSTNAME("userFirstname", MetaAttribute.USER_FIRSTNAME),
+	LASTNAME("userLastname", MetaAttribute.USER_LASTNAME),
+	PATRONYMIC("userPatronymic", MetaAttribute.USER_PATRONYMIC),
+	TIMESTAMP("timestamp", MetaAttribute.SIGNATURE_TIMESTAMP),
+	LOGIN("userLogin", MetaAttribute.USER_LOGIN);
 
 	static {
 		InvariantUtils.fillCodes(ResultTypeEnum.class);
