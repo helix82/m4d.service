@@ -11,9 +11,7 @@ import su.opencode.digsigcik.synapi.exception.SesException;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -63,8 +61,8 @@ public class UsersInfoUtils {
     public SigHashDto generateHashForPinCodeAndFile(String pinCode, MultipartFile file) {
         SigHashDto sigHashDto;
         try {
-            String pinCodeHash = HashUtils.getSha1Hash(pinCode.getBytes(StandardCharsets.UTF_8));
-            String fileHash = HashUtils.getSha1Hash(file.getBytes());
+            String pinCodeHash = HashUtils.getSha256Hash(pinCode.getBytes(StandardCharsets.UTF_8));
+            String fileHash = HashUtils.getSha256Hash(file.getBytes());
 
             sigHashDto = SigHashDto.builder()
                     .pinCodeHash(pinCodeHash)
@@ -85,8 +83,22 @@ public class UsersInfoUtils {
         }
     }
 
-    public void setUserOperationDate(LocalDate operationDate, String userLogin) {
-        getUserByUserLogin(userLogin).get().setOperationDate(operationDate);
+    public void setFileHash(String userLogin, String fileHash) {
+        for (UserDto userDto : usersInfo) {
+            if (userDto.getLogin().equals(userLogin)) {
+                userDto.setFileHash(fileHash);
+                break;
+            }
+        }
+    }
+
+    public void setUserOperationDate(String operationDate, String userLogin) {
+        for (UserDto userDto : usersInfo) {
+            if (userDto.getLogin().equals(userLogin)) {
+                userDto.setOperationDate(operationDate);
+                break;
+            }
+        }
     }
 
     private void fillUsersInfo() {
@@ -95,16 +107,16 @@ public class UsersInfoUtils {
         final String sokolovPinCode = "91159207";
         final String gudkovPinCode = "01421652";
         UserDto ivanov = createUserDto("ivanov", "12345678", PositionEnum.SEP_USER,
-                RoleEnum.USER, HashUtils.getSha1Hash(ivanovPinCode.getBytes(StandardCharsets.UTF_8)));
+                RoleEnum.USER, HashUtils.getSha256Hash(ivanovPinCode.getBytes(StandardCharsets.UTF_8)));
 
         UserDto petrov = createUserDto("petrov", "12345678", PositionEnum.SEP_ADMIN,
-                RoleEnum.USER, HashUtils.getSha1Hash(petrovPinCode.getBytes(StandardCharsets.UTF_8)));
+                RoleEnum.USER, HashUtils.getSha256Hash(petrovPinCode.getBytes(StandardCharsets.UTF_8)));
 
         UserDto sokolov = createUserDto("sokolov", "12345678", PositionEnum.TLS_ADMIN,
-                RoleEnum.ADMIN, HashUtils.getSha1Hash(sokolovPinCode.getBytes(StandardCharsets.UTF_8)));
+                RoleEnum.ADMIN, HashUtils.getSha256Hash(sokolovPinCode.getBytes(StandardCharsets.UTF_8)));
 
         UserDto gudkov = createUserDto("gudkov", "12345678", PositionEnum.IOK_OBJECTS_ADMIN,
-                RoleEnum.ADMIN, HashUtils.getSha1Hash(gudkovPinCode.getBytes(StandardCharsets.UTF_8)));
+                RoleEnum.ADMIN, HashUtils.getSha256Hash(gudkovPinCode.getBytes(StandardCharsets.UTF_8)));
 
         usersInfo.add(addUserFullNameAndOperationId(ivanov, "Иван", "Иванов",
                 "Иванович", 1L));
