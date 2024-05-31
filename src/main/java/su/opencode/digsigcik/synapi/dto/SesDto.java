@@ -6,20 +6,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Date;
-
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SesXmlDto {
+public class SesDto {
+    private Long id;
     private Long operationId;
-    private String login;
-    private String firstName;
-    private String lastName;
-    private String patronymic;
-    private String position;
-    private Date timestamp;
+    private String userLogin;
+    private String fileHash;
     private String signature;
+    private Long sesContainerFileId;
 }

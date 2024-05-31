@@ -6,15 +6,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SesVerifyDto {
-    private String verifyResultMessage;
-    private String userLogin;
-    private LocalDate operationDate;
+public class SesContainerFileDto {
+    private Long id;
+    private UUID uuid;
+    private String sesContainerPath;
 }

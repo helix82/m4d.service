@@ -15,5 +15,6 @@ import org.springframework.http.HttpStatus;
 public class SesResponseDto {
     private ErrorDto error;
     private HttpStatus status;
-    private SesXmlDto responseSesXml;
+    private String containerPath;
+    private SesJsonDto responseSesJson;
 }
