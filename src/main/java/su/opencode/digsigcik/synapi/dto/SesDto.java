@@ -17,5 +17,7 @@ public class SesDto {
     private String userLogin;
     private String fileHash;
     private String signature;
+    private String operationDate;
+    private Long containerId;
     private Long sesContainerFileId;
 }

@@ -15,21 +15,25 @@ import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
-import su.opencode.digsigcik.synapi.api.model.StampPosition;
-import su.opencode.digsigcik.synapi.dscp.*;
+import su.opencode.digsigcik.synapi.dscp.Container;
+import su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum;
+import su.opencode.digsigcik.synapi.dscp.ContainerUtils;
+import su.opencode.digsigcik.synapi.dscp.InvariantUtils;
+import su.opencode.digsigcik.synapi.dscp.ResultTypeEnum;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 import su.opencode.digsigcik.synapi.util.CommonUtils;
+import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.FileUtils;
 
 import javax.annotation.PostConstruct;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 // TODO: add proper error handling, likely with exception handlers
 @Service
@@ -77,7 +81,7 @@ public class ContainerServiceImpl implements ContainerService {
         byte[] firstname = containerUserInfo.getFirstname().getBytes(StandardCharsets.UTF_8);
         byte[] lastname = containerUserInfo.getLastname().getBytes(StandardCharsets.UTF_8);
         byte[] patronymic = containerUserInfo.getPatronymic().getBytes(StandardCharsets.UTF_8);
-        byte[] timestamp = containerUserInfo.getTimestamp().getBytes(StandardCharsets.UTF_8);
+        byte[] timestamp = containerUserInfo.getTimestamp().toString().getBytes(StandardCharsets.UTF_8);
 
         Map<ResultTypeEnum, byte[]> params = new HashMap<>();
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
@@ -90,7 +94,8 @@ public class ContainerServiceImpl implements ContainerService {
         ContainerUtils.fillContainerByResult(container, params);
 
         byte[] containerBytes = ContainerUtils.containerContent(container);
-        String containerPath = String.format("./files/dscp/container-%s.dscp", containerUserInfo.getTimestamp());
+
+        String containerPath = String.format("./files/dscp/container-%s.dscp", DateUtils.formatDate(containerUserInfo.getTimestamp()));
         FileUtils.createFile(containerPath, containerBytes);
 
         return new ByteArrayResource(containerBytes);

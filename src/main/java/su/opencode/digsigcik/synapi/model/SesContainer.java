@@ -26,10 +26,13 @@ public class SesContainer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "uuid")
     private UUID uuid;
+
     @Column(name = "container_path")
     private String sesContainerPath;
+
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "container_id")
     private Set<Ses> ses = new HashSet<>();

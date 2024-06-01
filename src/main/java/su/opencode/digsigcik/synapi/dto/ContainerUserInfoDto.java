@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Builder
@@ -16,5 +18,5 @@ public class ContainerUserInfoDto {
     private String firstname;
     private String lastname;
     private String patronymic;
-    private String timestamp;
+    private LocalDateTime timestamp;
 }

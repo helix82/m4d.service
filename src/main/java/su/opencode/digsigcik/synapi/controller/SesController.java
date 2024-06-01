@@ -21,19 +21,21 @@ import su.opencode.digsigcik.synapi.service.SesService;
 @RequestMapping("/api/v1/ses")
 public class SesController {
     private final SesService sesService;
-
+    //todo добавить обратку исключений с помощью ExceptionHandler
     @PostMapping("/create")
     public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                        @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
         SesResponseDto sesResponseDto = sesService.getContainerPath(pinCode, file, authToken);
+
         return sesResponseDto.getContainerPath() == null ?
                 new ResponseEntity<>(sesResponseDto.getError(), sesResponseDto.getStatus()) :
                 new ResponseEntity<>(sesResponseDto.getContainerPath(), HttpStatus.OK);
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<?> verifySes(@RequestParam String operationId, @RequestPart("file") MultipartFile file) {
+    public ResponseEntity<?> verifySes(@RequestParam(value = "operationId") String operationId, @RequestPart("file") MultipartFile file) {
         SesVerifyResponseDto sesVerifyResponse = sesService.verifySes(operationId, file);
+
         return sesVerifyResponse.getSesVerifyJsonDto() == null ?
                 new ResponseEntity<>(sesVerifyResponse.getError(), sesVerifyResponse.getStatus()) :
                 new ResponseEntity<>(sesVerifyResponse.getSesVerifyJsonDto(), HttpStatus.OK);

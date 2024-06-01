@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
-import su.opencode.digsigcik.synapi.api.model.StampPosition;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.service.ContainerService;
@@ -46,7 +45,7 @@ public class ApiControllerV1 {
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
-                .timestamp(LocalDateTime.now().toString())
+                .timestamp(LocalDateTime.now())
                 .build();
         var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
         if (res == null) {
