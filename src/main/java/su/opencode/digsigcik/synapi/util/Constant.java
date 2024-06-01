@@ -11,4 +11,5 @@ public final class Constant {
     public static final String DOCUMENT_ERROR_MESSAGE = String.format("Document %s", IS_NULL_OR_EMPTY_ERROR_MESSAGE);
     public static final String USER_NOT_FOUND = "User not found!";
     public static final String EMPTY_BYTE_ARRAY_ERROR = "Empty byte array!";
+    public static final String AUTH_ERROR = "Authorisation Error!";
 }

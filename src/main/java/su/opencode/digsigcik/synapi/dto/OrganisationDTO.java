@@ -15,6 +15,8 @@ public class OrganisationDTO {
     private Integer kpp;
     @JsonProperty("ogrn")
     private Integer ogrn;
-    @JsonProperty("jobTitle")
-    private String jobTitle;
+    @JsonProperty("legalAddress")
+    private String legalAddress;
+    @JsonProperty("regionCode")
+    private Long regionCode;
 }

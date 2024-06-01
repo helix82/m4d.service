@@ -41,8 +41,7 @@ public class UserService implements UserDetailsService {
                     List.of(new SimpleGrantedAuthority(userDto.getPosition().name()))
             );
         } else {
-            String message = String.format(USER_NOT_FOUND, userLogin);
-            throw new UserAuthException(message);
+            throw new UserAuthException(USER_NOT_FOUND);
         }
     }
 }

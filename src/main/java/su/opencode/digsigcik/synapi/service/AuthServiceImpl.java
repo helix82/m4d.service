@@ -6,15 +6,15 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.dto.JwtErrorDto;
 import su.opencode.digsigcik.synapi.dto.JwtResponseDto;
+import su.opencode.digsigcik.synapi.dto.JwtResponseErrorDto;
 import su.opencode.digsigcik.synapi.dto.JwtTokenDto;
 import su.opencode.digsigcik.synapi.exception.UserAuthException;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 import su.opencode.digsigcik.synapi.util.UsersInfoUtils;
 
-import static su.opencode.digsigcik.synapi.util.Constant.LOGIN_ERROR_MESSAGE;
-import static su.opencode.digsigcik.synapi.util.Constant.PASSWORD_ERROR_MESSAGE;
-import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constant.AUTH_ERROR;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Service
@@ -28,16 +28,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public JwtResponseDto createAuthToken(String login, String password) throws UserAuthException {
         if (login == null || login.isEmpty()) {
-            return createJwtResponseDto(LOGIN_ERROR_MESSAGE, HttpStatus.UNAUTHORIZED);
+            return createJwtResponseDto(HttpStatus.UNAUTHORIZED);
         }
         if (password == null || password.isEmpty()) {
-            return createJwtResponseDto(PASSWORD_ERROR_MESSAGE, HttpStatus.UNAUTHORIZED);
+            return createJwtResponseDto(HttpStatus.UNAUTHORIZED);
         }
         if (usersInfo.getUserByUserLogin(login).isEmpty()) {
-            return createJwtResponseDto(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            return createJwtResponseDto(HttpStatus.NOT_FOUND);
         }
         if (!usersInfo.isUserPasswordCorrect(login, password)) {
-            return createJwtResponseDto("User password incorrect!", HttpStatus.UNAUTHORIZED);
+            return createJwtResponseDto(HttpStatus.UNAUTHORIZED);
         }
 
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login, password));
@@ -48,10 +48,12 @@ public class AuthServiceImpl implements AuthService {
         return JwtResponseDto.builder().token(new JwtTokenDto(token)).build();
     }
 
-    private JwtResponseDto createJwtResponseDto(String responseMessage, HttpStatus responseStatus) {
+    private JwtResponseDto createJwtResponseDto(HttpStatus responseStatus) {
         return JwtResponseDto.builder()
-                .responseMessage(responseMessage)
-                .responseStatus(responseStatus)
+                .errorDto(JwtErrorDto.builder()
+                        .error(new JwtResponseErrorDto(AUTH_ERROR, responseStatus.value()))
+                        .build())
+                .status(responseStatus)
                 .build();
     }
 }

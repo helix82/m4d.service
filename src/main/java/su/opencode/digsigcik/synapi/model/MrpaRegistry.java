@@ -41,11 +41,11 @@ public class MrpaRegistry {
     @Enumerated(EnumType.STRING)
     @Column(name = "ftx_registration", columnDefinition = "VARCHAR(50)")
     private FtxRegistrationTypeEnum ftxRegistration;
-    @Column(name = "sig_path", columnDefinition = "VARCHAR(50)")
+    @Column(name = "sig_path", columnDefinition = "TEXT")
     private String sigPath;
-    @Column(name = "mrpa_xml_path", columnDefinition = "VARCHAR(50)")
+    @Column(name = "mrpa_xml_path", columnDefinition = "TEXT")
     private String mrpaXmlPath;
-    @Column(name = "recalled_xml_path", columnDefinition = "VARCHAR(50)")
+    @Column(name = "recalled_xml_path", columnDefinition = "TEXT")
     private String recalledXmlPath;
 
     @ManyToMany(cascade = CascadeType.ALL)
