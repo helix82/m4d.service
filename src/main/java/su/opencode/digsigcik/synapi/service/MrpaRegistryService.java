@@ -8,6 +8,7 @@ public interface MrpaRegistryService {
     List<MrpaRegistry> findAllMrpaRegistry();
     MrpaRegistry saveMrpaRegistry(MrpaRegistry mrpaRegistry);
     MrpaRegistry findByMrpaRegistryId(Long id);
+    MrpaRegistry findByMrpaRegistryUserId(Long userId);
     MrpaRegistry updateMrpaRegistry(MrpaRegistry mrpaRegistry);
     void deleteMrpaRegistry(Long id);
 

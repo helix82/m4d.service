@@ -28,6 +28,11 @@ public class MrpaRegistryController {
         return service.findByMrpaRegistryId(id);
     }
 
+    @GetMapping("user_id/{id}")
+    public MrpaRegistry findByMrpaRegistryUserId(@PathVariable Long userId) {
+        return service.findByMrpaRegistryUserId(userId);
+    }
+
     @PutMapping("update")
     public MrpaRegistry updateMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
         return service.updateMrpaRegistry(mrpaRegistry);

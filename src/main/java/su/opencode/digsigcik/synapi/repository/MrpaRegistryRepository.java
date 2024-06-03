@@ -7,4 +7,5 @@ import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 @Repository
 public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long> {
     MrpaRegistry findMrpaRegistryById(Long id);
+    MrpaRegistry findMrpaRegistriesByUserId(Long userId);
 }

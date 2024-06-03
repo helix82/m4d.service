@@ -40,6 +40,9 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     }
 
     @Override
+    public MrpaRegistry findByMrpaRegistryUserId(Long userId) { return this.repository.findMrpaRegistriesByUserId(userId); }
+
+    @Override
     public MrpaRegistry updateMrpaRegistry(MrpaRegistry mrpaRegistry) {
         return this.repository.save(mrpaRegistry);
     }

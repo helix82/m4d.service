@@ -18,6 +18,8 @@ public class MrpaRegistry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "user_id")
+    private Long userId;
     @Column(name = "guid", columnDefinition = "VARCHAR(50)")
     private String guid;
     @Column(name = "internal_number", columnDefinition = "VARCHAR(50)")

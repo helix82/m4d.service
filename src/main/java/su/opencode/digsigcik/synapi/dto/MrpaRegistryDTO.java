@@ -2,10 +2,11 @@ package su.opencode.digsigcik.synapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import org.joda.time.DateTime;
 
 @Data
 public class MrpaRegistryDTO {
+    @JsonProperty("userId")
+    private Long userId;
     @JsonProperty("guid")
     private String guid;
     @JsonProperty("internalNumber")
@@ -17,9 +18,9 @@ public class MrpaRegistryDTO {
     @JsonProperty("representative")
     private String representative;
     @JsonProperty("startDate")
-    private DateTime startDate;
+    private String startDate;
     @JsonProperty("endDate")
-    private DateTime endDate;
+    private String endDate;
     @JsonProperty("status")
     private String status;
     @JsonProperty("fitRegistration")
