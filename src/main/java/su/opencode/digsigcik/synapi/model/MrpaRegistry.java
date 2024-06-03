@@ -1,18 +1,15 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.FtxRegistrationTypeEnum;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name="mrpa_registry")
 @Transactional
@@ -32,9 +29,9 @@ public class MrpaRegistry {
     @Column(name = "representative_id")
     private Long representativeId;
     @Column(name = "start_date")
-    private Timestamp startDate;
+    private String startDate;
     @Column(name = "end_date")
-    private Timestamp endDate;
+    private String endDate;
     @Enumerated(EnumType.STRING)
     @Column(name = "status", columnDefinition = "VARCHAR(50)")
     private StatusTypeEnum status;

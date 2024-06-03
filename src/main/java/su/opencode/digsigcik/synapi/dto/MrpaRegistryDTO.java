@@ -1,12 +1,10 @@
 package su.opencode.digsigcik.synapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.joda.time.DateTime;
 
-@Getter
-@Setter
+@Data
 public class MrpaRegistryDTO {
     @JsonProperty("guid")
     private String guid;

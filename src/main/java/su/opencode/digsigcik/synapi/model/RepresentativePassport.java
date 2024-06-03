@@ -1,11 +1,11 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 
-@Getter
+@Data
 @Entity
 @Table(name="representative")
 @Transactional

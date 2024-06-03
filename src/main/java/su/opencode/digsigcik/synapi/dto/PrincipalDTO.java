@@ -1,11 +1,9 @@
 package su.opencode.digsigcik.synapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class PrincipalDTO {
     @JsonProperty("name")
     private String name;
@@ -14,9 +12,9 @@ public class PrincipalDTO {
     @JsonProperty("patronymic")
     private String patronymic;
     @JsonProperty("inn")
-    private Integer inn;
+    private String inn;
     @JsonProperty("snils")
-    private Integer snils;
+    private String snils;
     @JsonProperty("jobTitle")
     private String jobTitle;
 }
