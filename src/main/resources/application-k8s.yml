@@ -3,7 +3,7 @@ server:
 web:
   cors:
     allow-origin: "*"
-    allow-methods: OPTIONS, HEAD, POST, PUT
+    allow-methods: OPTIONS, HEAD, POST, PUT, GET
 logging:
   level:
     su.opencode.digsigcik.synapi: DEBUG
