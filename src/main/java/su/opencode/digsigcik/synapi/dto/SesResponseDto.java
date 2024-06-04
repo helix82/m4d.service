@@ -13,8 +13,8 @@ import org.springframework.http.HttpStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SesResponseDto {
-    private ErrorDto error;
-    private HttpStatus status;
+//    private ErrorDto error;
+//    private HttpStatus status;
     private String containerPath;
     private SesJsonDto responseSesJson;
 }

@@ -13,6 +13,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class SesVerifyJsonDto {
     private String verifyResultMessage;
-    private String userLogin;
-    private String operationDate;
+    private ContainerUserInfoDto userInfoDto;
 }
