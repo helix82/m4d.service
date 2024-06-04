@@ -12,32 +12,31 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.annotation.SesExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.SesResponseDto;
-import su.opencode.digsigcik.synapi.dto.SesVerifyResponseDto;
+import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
 import su.opencode.digsigcik.synapi.service.SesService;
 
 @RestController
+@SesExceptionHandler
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/ses")
 public class SesController {
     private final SesService sesService;
-    //todo добавить обратку исключений с помощью ExceptionHandler
+
     @PostMapping("/create")
     public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                        @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
         SesResponseDto sesResponseDto = sesService.getContainerPath(pinCode, file, authToken);
 
-        return sesResponseDto.getContainerPath() == null ?
-                new ResponseEntity<>(sesResponseDto.getError(), sesResponseDto.getStatus()) :
-                new ResponseEntity<>(sesResponseDto.getContainerPath(), HttpStatus.OK);
+        return new ResponseEntity<>(sesResponseDto.getContainerPath(), HttpStatus.OK);
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<?> verifySes(@RequestParam(value = "operationId") String operationId, @RequestPart("file") MultipartFile file) {
-        SesVerifyResponseDto sesVerifyResponse = sesService.verifySes(operationId, file);
+    public ResponseEntity<?> verifySes(@RequestParam(value = "operationId") String operationId,
+                                       @RequestPart("file") MultipartFile file) {
+        SesVerifyJsonDto sesVerifyResponse = sesService.verifySes(operationId, file);
 
-        return sesVerifyResponse.getSesVerifyJsonDto() == null ?
-                new ResponseEntity<>(sesVerifyResponse.getError(), sesVerifyResponse.getStatus()) :
-                new ResponseEntity<>(sesVerifyResponse.getSesVerifyJsonDto(), HttpStatus.OK);
+        return new ResponseEntity<>(sesVerifyResponse, HttpStatus.OK);
     }
 }

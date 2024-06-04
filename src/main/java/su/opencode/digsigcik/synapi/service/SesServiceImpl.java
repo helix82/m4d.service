@@ -5,24 +5,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
-import su.opencode.digsigcik.synapi.dto.ErrorDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
-import su.opencode.digsigcik.synapi.dto.ResponseErrorDto;
 import su.opencode.digsigcik.synapi.dto.SesContainerFileDto;
 import su.opencode.digsigcik.synapi.dto.SesDto;
 import su.opencode.digsigcik.synapi.dto.SesResponseDto;
 import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
-import su.opencode.digsigcik.synapi.dto.SesVerifyResponseDto;
 import su.opencode.digsigcik.synapi.dto.SigHashDto;
 import su.opencode.digsigcik.synapi.dto.UserDto;
+import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.SesException;
+import su.opencode.digsigcik.synapi.exception.SesVerifyException;
 import su.opencode.digsigcik.synapi.model.Ses;
 import su.opencode.digsigcik.synapi.model.SesContainer;
 import su.opencode.digsigcik.synapi.repository.SesRepository;
@@ -32,6 +30,7 @@ import su.opencode.digsigcik.synapi.util.HashUtils;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 import su.opencode.digsigcik.synapi.util.UsersInfoUtils;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -56,15 +55,14 @@ public class SesServiceImpl implements SesService {
 
     @Override
     public SesResponseDto getContainerPath(String pinCode, MultipartFile srcFile, String token) {
-        //todo спросить за варианты ответа, какое сообщение будет для ошибки
-        if (isParameterNullOrIsEmpty(pinCode)) {
-            return createSesResponseDto(PIN_CODE_ERROR_MESSAGE, HttpStatus.BAD_REQUEST);
+        if (isParameterNullOrEmpty(pinCode)) {
+            throw new SesException(PIN_CODE_ERROR_MESSAGE);
         }
-        if (isParameterNullOrIsEmpty(token)) {
-            return createSesResponseDto(TOKEN_ERROR_MESSAGE, HttpStatus.BAD_REQUEST);
+        if (isParameterNullOrEmpty(token)) {
+            throw new BadRequestException(TOKEN_ERROR_MESSAGE);
         }
-        if (isParameterNullOrIsEmpty(srcFile)) {
-            return createSesResponseDto(FILE_ERROR_MESSAGE, HttpStatus.BAD_REQUEST);
+        if (isParameterNullOrEmpty(srcFile)) {
+            throw new BadRequestException(FILE_ERROR_MESSAGE);
         }
 
         //получаем поля токена из payload
@@ -73,7 +71,7 @@ public class SesServiceImpl implements SesService {
 
         Optional<UserDto> userDto = usersInfo.getUserByUserLogin(userLogin);
         if (userDto.isEmpty()) {
-            return createSesResponseDto(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            throw new SesException(USER_NOT_FOUND);
         }
 
         /*  1 - сравниваем хэш пиндока который приходит с тем что записан для юзера
@@ -83,7 +81,7 @@ public class SesServiceImpl implements SesService {
         SigHashDto sigHashDto = usersInfo.generateHashForPinCodeAndFile(pinCode, srcFile);
         String pinCodeHash = sigHashDto.getPinCodeHash();
         if (usersInfo.isUserWithPinCodeHashNotExist(pinCodeHash)) {
-            return createSesResponseDto("Invalid PIN code!", HttpStatus.NOT_FOUND);
+            throw new SesException(PIN_CODE_ERROR_MESSAGE);
         }
         UserDto user = userDto.get();
         Long operationId = user.getOperationId();
@@ -113,7 +111,11 @@ public class SesServiceImpl implements SesService {
 
         Resource containerResource = containerService.createPdfContainer(srcFile, sigMultipartFile, containerUserInfo);
 
-        FileUtils.deleteFile(sigFilePathName);
+
+        File sigFile = new File(sigFilePathName);
+        if (sigFile.exists()) {
+            FileUtils.deleteFile(sigFilePathName);
+        }
 
         /*  - добавляем в таблицу sesContainer новую запись
             - добавляем в таблицу ses новую запись
@@ -139,20 +141,20 @@ public class SesServiceImpl implements SesService {
     }
 
     @Override
-    public SesVerifyResponseDto verifySes(String operationId, @NotNull MultipartFile container) {
+    public SesVerifyJsonDto verifySes(String operationId, @NotNull MultipartFile container) {
         if (operationId == null || operationId.isEmpty()) {
-            return createErrorSesVerifyResponse(OPERATION_ID_ERROR_MESSAGE, HttpStatus.BAD_REQUEST);
+            throw new SesVerifyException(OPERATION_ID_ERROR_MESSAGE);
         }
 
         if (container.isEmpty()) {
-            return createErrorSesVerifyResponse("Container is empty!", HttpStatus.BAD_REQUEST);
+            throw new SesVerifyException("Container is empty!");
         }
 
         Map<String, ContainerPart> containerData = containerService.getContainerData(
                 container, generateContainerSelectors(), false);
 
         if (containerData == null) {
-            return createErrorSesVerifyResponse("Verify ses error!", HttpStatus.BAD_REQUEST);
+            throw new SesVerifyException("Verify ses error!");
         }
         return getVerifyResultDto(Long.valueOf(operationId), containerData);
     }
@@ -182,7 +184,6 @@ public class SesServiceImpl implements SesService {
 
     @Override
     public SesDto findSesByUserLogin(String login) {
-
         return new ObjectMapper().convertValue(this.sesRepository.findSesByUserLogin(login), SesDto.class);
     }
 
@@ -227,24 +228,15 @@ public class SesServiceImpl implements SesService {
         return String.format("%s.%s.%s", pinCodeHash, fileHash, operationDate);
     }
 
-    private SesResponseDto createSesResponseDto(String errorMessage, HttpStatus responseStatus) {
-        return SesResponseDto.builder()
-                .error(ErrorDto.builder()
-                        .error(new ResponseErrorDto(errorMessage, responseStatus.value()))
-                        .build())
-                .status(responseStatus)
-                .build();
-    }
-
-    private boolean isParameterNullOrIsEmpty(String parameter) {
+    private boolean isParameterNullOrEmpty(String parameter) {
         return parameter == null || parameter.isEmpty();
     }
 
-    private boolean isParameterNullOrIsEmpty(MultipartFile file) {
+    private boolean isParameterNullOrEmpty(MultipartFile file) {
         return file == null || file.isEmpty();
     }
 
-    private SesVerifyResponseDto getVerifyResultDto(Long operationId, Map<String, ContainerPart> containerData) {
+    private SesVerifyJsonDto getVerifyResultDto(Long operationId, Map<String, ContainerPart> containerData) {
         String userFirstname = new String(containerData.get("userFirstname").getData(), StandardCharsets.UTF_8);
         String userLastname = new String(containerData.get("userLastname").getData(), StandardCharsets.UTF_8);
         String userPatronymic = new String(containerData.get("userPatronymic").getData(), StandardCharsets.UTF_8);
@@ -255,12 +247,12 @@ public class SesServiceImpl implements SesService {
 
         Optional<UserDto> user = usersInfo.getUserByUserLogin(userLogin);
         if (user.isEmpty()) {
-            return createErrorSesVerifyResponse(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+            throw new SesVerifyException(USER_NOT_FOUND);
         }
 
-        UserDto userDto =  user.get();
+        UserDto userDto = user.get();
         if (!userDto.getOperationId().equals(operationId)) {
-            return createErrorSesVerifyResponse("User with operation id not found!", HttpStatus.NOT_FOUND);
+            throw new SesVerifyException("User with operation id not found!");
         }
 
         SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
@@ -274,30 +266,21 @@ public class SesServiceImpl implements SesService {
 
                 if (userSignature.equals(signature)) {
                     sesVerifyJsonDto.setVerifyResultMessage("The signature is correct!");
-                    sesVerifyJsonDto.setUserLogin(userLogin);
-                    sesVerifyJsonDto.setOperationDate(timestamp);
+                    sesVerifyJsonDto.setUserInfoDto(
+                            ContainerUserInfoDto.builder()
+                            .login(userLogin)
+                            .firstname(userFirstname)
+                            .lastname(userLastname)
+                            .patronymic(userPatronymic)
+                            .timestamp(LocalDateTime.parse(timestamp))
+                            .build()
+                    );
                     break;
                 } else {
-                    return createErrorSesVerifyResponse("The signature is not correct!",
-                            HttpStatus.INTERNAL_SERVER_ERROR
-                    );
+                    throw new SesVerifyException("The signature is not correct!");
                 }
             }
         }
-
-        return SesVerifyResponseDto.builder()
-                .sesVerifyJsonDto(sesVerifyJsonDto)
-                .build();
-    }
-
-    private SesVerifyResponseDto createErrorSesVerifyResponse(String errorMessage, HttpStatus status) {
-        return SesVerifyResponseDto.builder()
-                .error(new ErrorDto(ResponseErrorDto.builder()
-                        .message(errorMessage)
-                        .code(status.value())
-                        .build())
-                )
-                .status(status)
-                .build();
+        return sesVerifyJsonDto;
     }
 }
