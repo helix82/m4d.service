@@ -3,12 +3,14 @@ package su.opencode.digsigcik.synapi.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
 import su.opencode.digsigcik.synapi.model.Credential;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.repository.CredentialRepository;
 import su.opencode.digsigcik.synapi.repository.MrpaRegistryRepository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -35,12 +37,12 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     }
 
     @Override
-    public MrpaRegistry findByMrpaRegistryId(Long id) {
+    public List<Map<String, Object>> findByMrpaRegistryId(Long id) {
         return this.repository.findMrpaRegistryById(id);
     }
 
     @Override
-    public MrpaRegistry findByMrpaRegistryUserId(Long userId) { return this.repository.findMrpaRegistriesByUserId(userId); }
+    public List<MrpaRegistryFullDTO> findByMrpaRegistryUserId(Long userId) { return this.repository.findMrpaRegistriesByUserId(userId); }
 
     @Override
     public MrpaRegistry updateMrpaRegistry(MrpaRegistry mrpaRegistry) {
@@ -54,7 +56,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     @Override
     public MrpaRegistry assignCredentialToMrpaRegistry(Long mrpaId, Long credentialId) {
         Set<Credential> credentialSet;
-        MrpaRegistry mrpaRegistry = this.repository.findMrpaRegistryById(mrpaId);
+        MrpaRegistry mrpaRegistry = (MrpaRegistry) this.repository.findMrpaRegistryById(mrpaId);
         Credential credential = this.credentialRepository.findCredentialById(credentialId);
         credentialSet = mrpaRegistry.getAssignedCredentials();
         credentialSet.add(credential);

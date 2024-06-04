@@ -23,8 +23,8 @@ public class MrpaRegistryDTO {
     private String endDate;
     @JsonProperty("status")
     private String status;
-    @JsonProperty("fitRegistration")
-    private String fitRegistration;
+    @JsonProperty("ftxRegistration")
+    private String ftxRegistration;
     @JsonProperty("sigPath")
     private String sigPath;
     @JsonProperty("mrpaXmlPath")

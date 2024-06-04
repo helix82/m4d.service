@@ -7,7 +7,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name="representative")
+@Table(name="representative_passport")
 @Transactional
 // Паспорт представителя
 public class RepresentativePassport {
