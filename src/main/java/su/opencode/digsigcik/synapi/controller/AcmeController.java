@@ -29,12 +29,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.net.http.HttpResponse;
 import java.security.KeyPair;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -99,6 +104,128 @@ public class AcmeController {
         }
 
         throw new AcmeException("Too many update attempts, status did not change");
+    }
+
+    private void doChallenge(String domain, String uploadPath, Http01Challenge challenge ) {
+        try {
+            URL url = new URL("http://"+domain + uploadPath + "/" + challenge.getToken());
+            HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+            httpCon.setDoOutput(true);
+            httpCon.setRequestMethod("PUT");
+            OutputStreamWriter out = new OutputStreamWriter(httpCon.getOutputStream());
+            out.write(challenge.getAuthorization());
+            out.close();
+            httpCon.getInputStream();
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void clearChallenge(String domain, String uploadPath, Http01Challenge challenge) {
+        try {
+            URL url = new URL("http://"+domain + uploadPath + "/" + challenge.getToken());
+            HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+            httpCon.setDoOutput(true);
+            httpCon.setRequestMethod("DELETE");
+            httpCon.getInputStream();
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    @PostMapping("/orders")
+    public String orders(HttpSession httpSession,
+                      @RequestParam("domain") String domain,
+                      @RequestPart(value = "userKey") MultipartFile userKey) {
+String ret = "1:";
+        try {
+            Session session = new Session(CA_URI);
+            KeyPair userKeyPair = null;
+            userKeyPair = makeKeyPair(userKey);
+            Account acct = new AccountBuilder()
+                    .useKeyPair(userKeyPair)
+                    .create(session);
+
+
+            Iterator<Order> it = acct.getOrders();
+            while(it.hasNext()) {
+                Order o = it.next();
+                ret += o.toString();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (AcmeException e) {
+            e.printStackTrace();
+        }
+return ret;
+    }
+
+
+
+    @PostMapping("/auto")
+    public Map auto(HttpSession httpSession,
+                     @RequestParam("domain") String domain,
+                     @RequestPart(value = "userKey") MultipartFile userKey,
+                     @RequestPart("domainKey") MultipartFile domainKey) {
+        HashMap<String, String> ret = new HashMap<>();
+        try {
+            Session session = new Session(CA_URI);
+            KeyPair userKeyPair = makeKeyPair(userKey);
+            Account acct = new AccountBuilder()
+                    .useKeyPair(userKeyPair)
+                    .create(session);
+            Order order = acct
+                    .newOrder()
+                    .domain(domain)
+                    .create();
+
+            Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
+            if(challenge==null) {
+                // авторизация уже прошла или испытание выполнено
+                ret.put("result", "done");
+                ret.put("description", "Auth and challenge done");
+                return ret;
+            }
+            doChallenge(domain, "/upload", challenge);
+
+            challenge.trigger();
+
+            KeyPair domainKeyPair = makeKeyPair(domainKey);
+
+            order.execute(domainKeyPair);
+
+            // Wait for the order to complete
+            Status status = waitForCompletion(order::getStatus, order::fetch);
+            if (status != Status.VALID) {
+                throw new AcmeException("Order failed... Giving up.");
+            }
+
+            clearChallenge(domain, "/upload", challenge);
+
+
+            Certificate certificate = order.getCertificate();
+            StringWriter writer = new StringWriter();
+            certificate.writeCertificate(writer);
+            ret.put("url", certificate.getLocation().toString());
+            ret.put("content", writer.toString());
+            return ret;
+        } catch (IOException e) {
+            ret.put("error", "io exception");
+            return ret;
+        } catch (AcmeException e) {
+            ret.put("error", "acme exception");
+            return ret;
+        }
     }
 
 
