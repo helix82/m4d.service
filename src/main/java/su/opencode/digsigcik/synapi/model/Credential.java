@@ -21,6 +21,8 @@ public class Credential {
     private Long id;
     @Column(name = "name", columnDefinition = "VARCHAR(50)")
     private String name;
+    @Column(name = "code", columnDefinition = "VARCHAR(50)")
+    private String code;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JsonIgnore

@@ -10,10 +10,12 @@ import org.joda.time.DateTime;
 public class RepresentativeDTO {
     @JsonProperty("name")
     private String name;
+    @JsonProperty("surname")
+    private String surname;
+    @JsonProperty("patronymic")
+    private String patronymic;
     @JsonProperty("inn")
     private Integer inn;
-    @JsonProperty("kpp")
-    private Integer kpp;
     @JsonProperty("snils")
     private Integer snils;
     @JsonProperty("birthDate")

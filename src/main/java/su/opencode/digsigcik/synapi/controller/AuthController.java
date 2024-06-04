@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import su.opencode.digsigcik.synapi.dto.JwtRequestDto;
 import su.opencode.digsigcik.synapi.dto.JwtResponseDto;
+import su.opencode.digsigcik.synapi.dto.JwtResponseErrorDto;
 import su.opencode.digsigcik.synapi.service.AuthService;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
@@ -21,13 +22,18 @@ public class AuthController {
     @PostMapping("/auth")
     public ResponseEntity<?> createAuthToken(@RequestBody JwtRequestDto authRequest) {
         if (authRequest == null) {
-            return new ResponseEntity<>("Request body is empty!", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(JwtResponseErrorDto.builder()
+                    .message("Request body is empty!")
+                    .code(HttpStatus.BAD_REQUEST.value())
+                    .build(),
+                    HttpStatus.BAD_REQUEST
+            );
         }
         String login = authRequest.getLogin();
         String password = authRequest.getPassword();
         JwtResponseDto response = authService.createAuthToken(login, password);
         return response.getToken() == null ?
-                new ResponseEntity<>(response.getResponseMessage(), response.getResponseStatus()) :
+                new ResponseEntity<>(response.getErrorDto(), response.getStatus()) :
                 new ResponseEntity<>(response.getToken(), HttpStatus.OK);
     }
 }
