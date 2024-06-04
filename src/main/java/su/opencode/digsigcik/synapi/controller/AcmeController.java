@@ -6,6 +6,7 @@ import org.shredzone.acme4j.Account;
 import org.shredzone.acme4j.AccountBuilder;
 import org.shredzone.acme4j.Authorization;
 import org.shredzone.acme4j.Certificate;
+import org.shredzone.acme4j.Login;
 import org.shredzone.acme4j.Order;
 import org.shredzone.acme4j.Problem;
 import org.shredzone.acme4j.Session;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.model.Organisation;
+import su.opencode.digsigcik.synapi.service.AccountService;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -28,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -52,10 +56,15 @@ public class AcmeController {
     private static final String CA_URI = "https://acme.server:4433/acme/acme/directory";
     private static final int MAX_ATTEMPTS = 50;
 
+    private final AccountService accountService;
 
     private KeyPair makeKeyPair(MultipartFile userFile) throws IOException {
         return KeyPairUtils.readKeyPair(new BufferedReader(new InputStreamReader(userFile.getInputStream())));
     }
+    private KeyPair makeKeyPair(String key) throws IOException {
+        return KeyPairUtils.readKeyPair(new StringReader(key));
+    }
+
     private Http01Challenge challenge(Authorization auth) throws AcmeException {
         if (auth.getStatus() == Status.VALID) {
             // авторизация уже выполнена
@@ -170,62 +179,129 @@ String ret = "1:";
 return ret;
     }
 
+    @PostMapping("/login")
+    public Map login(HttpSession httpSession,
+                    @RequestPart(value = "externalKey") String externalKey) {
+        HashMap<String, String> ret = new HashMap<>();
+        su.opencode.digsigcik.synapi.model.Account account = accountService.findByExternalKey(externalKey);
+        if(account != null) {
+            Session session = new Session(CA_URI);
+            try {
+                KeyPair userKeyPair = makeKeyPair(account.getAccountPrivateKey());
+                Login login = new AccountBuilder()
+                        .onlyExisting()         // Do not create a new account
+                        .agreeToTermsOfService()
+                        .useKeyPair(userKeyPair)
+                        .createLogin(session);
+                httpSession.setAttribute("login", login);
+                ret.put("result", "done");
+            } catch (IOException e) {
+                ret.put("error", "io exception");
+                ret.put("exception", e.getMessage());
+            } catch (AcmeException e) {
+                ret.put("error", "acme exception");
+                ret.put("exception", e.getMessage());
+            }
+        }
+        return ret;
+    }
 
+    @PostMapping("/register")
+    public Map register(HttpSession httpSession,
+                     @RequestPart(value = "externalKey") String externalKey) {
+        HashMap<String, String> ret = new HashMap<>();
+        su.opencode.digsigcik.synapi.model.Account account = accountService.findByExternalKey(externalKey);
+        if(account != null) {
+            Session session = new Session(CA_URI);
+            try {
+                KeyPair userKeyPair = makeKeyPair(account.getAccountPrivateKey());
+                Account acct = new AccountBuilder()
+                        .addContact("mailto:acme@example.com")
+                        .agreeToTermsOfService()
+                        .useKeyPair(userKeyPair)
+                        .create(session);
+                Login login = session.login(acct.getLocation(), userKeyPair);
+                httpSession.setAttribute("login", login);
+                account.setAccountUrl(acct.getLocation().toString());
+                accountService.saveAccount(account);
+                ret.put("result", "done");
+            } catch (IOException e) {
+                ret.put("error", "io exception");
+                ret.put("exception", e.getMessage());
+            } catch (AcmeException e) {
+                ret.put("error", "acme exception");
+                ret.put("exception", e.getMessage());
+            }
+        }
+        return ret;
+    }
 
-    @PostMapping("/auto")
+    @PostMapping("/logout")
+    public Map logout(HttpSession httpSession) {
+        HashMap<String, String> ret = new HashMap<>();
+        httpSession.removeAttribute("login");
+        ret.put("result", "done");
+        return ret;
+    }
+
+    @PostMapping("/certificate")
     public Map auto(HttpSession httpSession,
                      @RequestParam("domain") String domain,
-                     @RequestPart(value = "userKey") MultipartFile userKey,
                      @RequestPart("domainKey") MultipartFile domainKey) {
         HashMap<String, String> ret = new HashMap<>();
-        try {
-            Session session = new Session(CA_URI);
-            KeyPair userKeyPair = makeKeyPair(userKey);
-            Account acct = new AccountBuilder()
-                    .useKeyPair(userKeyPair)
-                    .create(session);
-            Order order = acct
-                    .newOrder()
-                    .domain(domain)
-                    .create();
+        Login login = (Login)httpSession.getAttribute("login");
+        if(login!=null) {
+            Account account = login.getAccount();
+            if(account.getStatus() != Status.VALID){
+                ret.put("error", "invalid status");
+            } else {
 
-            Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
-            if(challenge==null) {
-                // авторизация уже прошла или испытание выполнено
-                ret.put("result", "done");
-                ret.put("description", "Auth and challenge done");
-                return ret;
+                try {
+                    Order order = account
+                            .newOrder()
+                            .domain(domain)
+                            .create();
+
+                    Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
+                    if(challenge==null) {
+                        // авторизация уже прошла или испытание выполнено
+                        ret.put("result", "done");
+                        ret.put("description", "Auth and challenge done");
+                        return ret;
+                    }
+                    doChallenge(domain, "/upload", challenge);
+
+                    challenge.trigger();
+
+                    KeyPair domainKeyPair = makeKeyPair(domainKey);
+
+                    order.execute(domainKeyPair);
+
+                    // Wait for the order to complete
+                    Status status = waitForCompletion(order::getStatus, order::fetch);
+                    if (status != Status.VALID) {
+                        throw new AcmeException("Order failed... Giving up.");
+                    }
+                    clearChallenge(domain, "/upload", challenge);
+
+                    Certificate certificate = order.getCertificate();
+                    StringWriter writer = new StringWriter();
+                    certificate.writeCertificate(writer);
+                    ret.put("url", certificate.getLocation().toString());
+                    ret.put("content", writer.toString());
+                    return ret;
+                } catch (AcmeException e) {
+                    ret.put("error", "acme exception");
+                    ret.put("exception", e.getMessage());
+                } catch (IOException e) {
+                    ret.put("error", "io exception");
+                    ret.put("exception", e.getMessage());
+                }
             }
-            doChallenge(domain, "/upload", challenge);
-
-            challenge.trigger();
-
-            KeyPair domainKeyPair = makeKeyPair(domainKey);
-
-            order.execute(domainKeyPair);
-
-            // Wait for the order to complete
-            Status status = waitForCompletion(order::getStatus, order::fetch);
-            if (status != Status.VALID) {
-                throw new AcmeException("Order failed... Giving up.");
-            }
-
-            clearChallenge(domain, "/upload", challenge);
-
-
-            Certificate certificate = order.getCertificate();
-            StringWriter writer = new StringWriter();
-            certificate.writeCertificate(writer);
-            ret.put("url", certificate.getLocation().toString());
-            ret.put("content", writer.toString());
-            return ret;
-        } catch (IOException e) {
-            ret.put("error", "io exception");
-            return ret;
-        } catch (AcmeException e) {
-            ret.put("error", "acme exception");
-            return ret;
+        } else {
+            ret.put("error", "no login");
         }
+        return ret;
     }
 
 
@@ -267,7 +343,7 @@ return ret;
 
 
 
-    @PostMapping("/certificate")
+    @PostMapping("/certificate1")
     public Map certificate(HttpSession httpSession,
                       @RequestParam("domain") String domain,
                       @RequestPart("domainKey") MultipartFile domainKey) {
