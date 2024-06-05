@@ -17,9 +17,20 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class FileUtils {
+    public static byte[] getFileContentByPath(String filePathName) {
+        Path filePath = Paths.get(filePathName);
+        byte[] fileContent;
+        try {
+            fileContent = Files.readAllBytes(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return fileContent;
+    }
+
     public static void createFile(String filePathName, byte[] content) {
-        Path sigPath = Paths.get(filePathName);
-        try (OutputStream os = Files.newOutputStream(sigPath)) {
+        Path filePath = Paths.get(filePathName);
+        try (OutputStream os = Files.newOutputStream(filePath)) {
             os.write(content);
         } catch (IOException e) {
             throw DscpContainerException.ioCause(e, false);
@@ -29,7 +40,7 @@ public class FileUtils {
     public static MultipartFile mapFileToMultipart(String filePathName) {
         MultipartFile multipartFile;
         File file = new File(filePathName);
-        try(InputStream input = new FileInputStream(file)) {
+        try (InputStream input = new FileInputStream(file)) {
             FileItem fileItem = new DiskFileItem("file", Files.probeContentType(file.toPath()),
                     false, file.getName(), (int) file.length(), file.getParentFile());
             OutputStream outputStream = fileItem.getOutputStream();
