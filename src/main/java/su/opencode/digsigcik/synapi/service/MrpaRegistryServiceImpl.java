@@ -4,26 +4,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
-import su.opencode.digsigcik.synapi.model.Credential;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
-import su.opencode.digsigcik.synapi.repository.CredentialRepository;
 import su.opencode.digsigcik.synapi.repository.MrpaRegistryRepository;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Service
 @Primary
 public class MrpaRegistryServiceImpl implements MrpaRegistryService{
 
     private final MrpaRegistryRepository repository;
-    private final CredentialRepository credentialRepository;
 
     @Autowired
-    public MrpaRegistryServiceImpl(CredentialRepository credentialRepository, MrpaRegistryRepository repository) {
+    public MrpaRegistryServiceImpl(MrpaRegistryRepository repository) {
         this.repository = repository;
-        this.credentialRepository = credentialRepository;
     }
 
     @Override
@@ -53,14 +48,4 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     public void deleteMrpaRegistry(Long id) { this.repository.deleteById(id);
     }
 
-    @Override
-    public MrpaRegistry assignCredentialToMrpaRegistry(Long mrpaId, Long credentialId) {
-        Set<Credential> credentialSet;
-        MrpaRegistry mrpaRegistry = (MrpaRegistry) this.repository.findMrpaRegistryById(mrpaId);
-        Credential credential = this.credentialRepository.findCredentialById(credentialId);
-        credentialSet = mrpaRegistry.getAssignedCredentials();
-        credentialSet.add(credential);
-        mrpaRegistry.setAssignedCredentials(credentialSet);
-        return this.repository.save(mrpaRegistry);
-    }
 }

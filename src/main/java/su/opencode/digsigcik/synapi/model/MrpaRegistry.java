@@ -47,19 +47,7 @@ public class MrpaRegistry {
     @Column(name = "recalled_xml_path", columnDefinition = "TEXT")
     private String recalledXmlPath;
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "mrpa_registry_credential",
-            joinColumns = @JoinColumn(name = "mrpa_registry_id", referencedColumnName="id"),
-            inverseJoinColumns = @JoinColumn(name = "credential_id", referencedColumnName="id")
-    )
-    private Set<Credential> credentials  = new HashSet<>();
-
-    public Set<Credential> getAssignedCredentials() {
-        return credentials;
-    }
-
-    public void setAssignedCredentials(Set<Credential> credentialSet) {
-        this.credentials = credentialSet;
-    }
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "mrpa_registry_id")
+    private Set<MrpaRegistryCredential> mrpaRegistryCredentials = new HashSet<>();
 }

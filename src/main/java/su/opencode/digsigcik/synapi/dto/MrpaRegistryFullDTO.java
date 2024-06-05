@@ -50,6 +50,8 @@ public class MrpaRegistryFullDTO {
         private String surname;
         private String patronymic;
         private String name;
+
+        private RepresentativePassportDTO representativePassport;
     }
 
     @Data
@@ -59,7 +61,6 @@ public class MrpaRegistryFullDTO {
         private String dateIssue;
         private String whoIssue;
         private String departmentCode;
-        private RepresentativeDTO representativeDTO;
     }
 
     private String startDate;
@@ -69,14 +70,23 @@ public class MrpaRegistryFullDTO {
     private String sigPath;
     private String mrpaXmlPath;
     private String recalledXmlPath;
-    //TODO @helix82 Дополнить классом Credentials;
+
+    private CredentialDTO credential;
+
+    @Data
+    private static class CredentialDTO {
+        private Long id;
+        private String code;
+        private String name;
+    }
 
     public MrpaRegistryFullDTO(Long id, Long userId, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status,
                                @NotNull FtxRegistrationTypeEnum ftxRegistration, String sigPath, String mrpaXmlPath, String recalledXmlPath,
                                Long principal_id, String principal_inn, String principal_snils, String principal_jobTitle, String principal_name, String principal_surname, String principal_patronymic,
                                Long representative_id, String representative_inn, String representative_snils, String representative_birthDate, String representative_name, String representative_surname, String representative_patronymic,
-                               //TODO @helix82 Строка с параметрами Паспортных данных: Long representativePassport_id, String representativePassport_dateIssue, String representativePassport_whoIssue, String representativePassport_seriesNumber, String representativePassport_departmentCode,
-                               Long organisation_id, String organisation_inn, String organisation_kpp, String organisation_ogrn, String organisation_name, String organisation_regionCode, String organisation_legalAddress) {
+                               Long representativePassport_id, String representativePassport_dateIssue, String representativePassport_whoIssue, String representativePassport_seriesNumber, String representativePassport_departmentCode,
+                               Long organisation_id, String organisation_inn, String organisation_kpp, String organisation_ogrn, String organisation_name, String organisation_regionCode, String organisation_legalAddress,
+                               Long credential_id, String credential_code, String credential_name) {
         super();
         this.id = id;
         this.userId = userId;
@@ -110,14 +120,13 @@ public class MrpaRegistryFullDTO {
         representativeDTO.patronymic = representative_patronymic;
         this.representative = representativeDTO;
 
-        //TODO @helix82 Заполнение сущности Паспортные данные представителя
-//        MrpaRegistryFullDTO.RepresentativePassportDTO representativePassportDTO = new RepresentativePassportDTO();
-//        representativePassportDTO.id = representativePassport_id;
-//        representativePassportDTO.seriesNumber = representativePassport_seriesNumber;
-//        representativePassportDTO.dateIssue = representativePassport_dateIssue;
-//        representativePassportDTO.whoIssue = representativePassport_whoIssue;
-//        representativePassportDTO.departmentCode = representativePassport_departmentCode;
-//        representativePassportDTO.representativeDTO = representativeDTO;
+        MrpaRegistryFullDTO.RepresentativePassportDTO representativePassportDTO = new RepresentativePassportDTO();
+        representativePassportDTO.id = representativePassport_id;
+        representativePassportDTO.seriesNumber = representativePassport_seriesNumber;
+        representativePassportDTO.dateIssue = representativePassport_dateIssue;
+        representativePassportDTO.whoIssue = representativePassport_whoIssue;
+        representativePassportDTO.departmentCode = representativePassport_departmentCode;
+        this.representative.representativePassport = representativePassportDTO;
 
         MrpaRegistryFullDTO.OrganizationDTO organizationDTO = new OrganizationDTO();
         organizationDTO.id = organisation_id;
@@ -128,6 +137,12 @@ public class MrpaRegistryFullDTO {
         organizationDTO.regionCode = organisation_regionCode;
         organizationDTO.legalAddress = organisation_legalAddress;
         this.organization = organizationDTO;
+
+        MrpaRegistryFullDTO.CredentialDTO credentialDTO = new CredentialDTO();
+        credentialDTO.id = credential_id;
+        credentialDTO.code = credential_code;
+        credentialDTO.name = credential_name;
+        this.credential = credentialDTO;
     }
 
 }

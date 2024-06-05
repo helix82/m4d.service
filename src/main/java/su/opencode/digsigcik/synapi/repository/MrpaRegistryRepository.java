@@ -20,12 +20,16 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
     List<Map<String, Object>> findMrpaRegistryById(Long id);
 
     //TODO @helix82 Дополнить Паспортными данными представителя и Полномочиями
-    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, " +
-            "p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic, o.id, o.inn, o.kpp, o.ogrn, o.name, o.regionCode, o.legalAddress) "
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, "
+            + "p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic, rp.id, rp.dateIssue, rp.whoIssue, rp.seriesNumber, rp.departmentCode, o.id, o.inn, o.kpp, o.ogrn, o.name, o.regionCode, o.legalAddress, "
+            + " c.id, c.code, c.name)"
             + " from MrpaRegistry mr"
             + " left join Principal p on p.id=mr.principalId"
-            + " left join Representative r on r.id=mr.representativeId "
             + " left join Organisation o on o.id=mr.organisationId"
+            + " left join Representative r on r.id=mr.representativeId "
+            + " left join RepresentativePassport rp on rp.representativeId=r.id"
+            + " left join MrpaRegistryCredential mrc on mrc.mrpaRegistryId=mr.id"
+            + " left join Credential c on c.id=mrc.credentialId"
             + " where mr.userId=?1 ")
     List<MrpaRegistryFullDTO> findMrpaRegistriesByUserId(Long userId);
 }

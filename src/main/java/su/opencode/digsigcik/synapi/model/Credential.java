@@ -1,6 +1,5 @@
 package su.opencode.digsigcik.synapi.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,8 +21,7 @@ public class Credential {
     @Column(name = "code", columnDefinition = "VARCHAR(50)")
     private String code;
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Set<MrpaRegistry> mrpaRegistryes = new HashSet<>();
-
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "credential_id")
+    private Set<MrpaRegistryCredential> mrpaRegistryCredentials = new HashSet<>();
 }

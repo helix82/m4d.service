@@ -34,4 +34,5 @@ public class Representative {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "representative_id")
     private Set<RepresentativePassport> representativePassports = new HashSet<>();
+
 }

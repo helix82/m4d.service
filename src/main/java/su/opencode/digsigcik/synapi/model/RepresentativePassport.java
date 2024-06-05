@@ -22,4 +22,6 @@ public class RepresentativePassport {
     private String whoIssue;
     @Column(name = "department_code", columnDefinition = "VARCHAR(50)")
     private String departmentCode;
+    @Column(name = "representative_id")
+    private Long representativeId;
 }
