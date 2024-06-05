@@ -19,10 +19,10 @@ import java.util.Set;
 
 @Getter
 @Entity
-@Table(name="account")
+@Table(name="acmeaccount")
 @Transactional
-// Account settings for acme
-public class Account {
+// AcmeAccount settings for acme
+public class AcmeAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -42,11 +42,55 @@ public class Account {
     @Column(name = "deleted", columnDefinition = "BOOLEAN")
     private Boolean deleted;
 
-    public void setAccountUrl(String accountUrl) {
-        this.accountUrl = accountUrl;
+    public AcmeAccount() {
+    }
+
+    public AcmeAccount(String name, String externalKey) {
+        this.name = name;
+        this.externalKey = externalKey;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getExternalKey() {
+        return externalKey;
     }
 
     public String getAccountPrivateKey() {
         return accountPrivateKey;
+    }
+
+    public String getAccountUrl() {
+        return accountUrl;
+    }
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setExternalKey(String externalKey) {
+        this.externalKey = externalKey;
+    }
+
+    public void setAccountPrivateKey(String accountPrivateKey) {
+        this.accountPrivateKey = accountPrivateKey;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public void setAccountUrl(String accountUrl) {
+        this.accountUrl = accountUrl;
     }
 }
