@@ -12,10 +12,10 @@ import java.util.Map;
 @Repository
 public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long> {
     @Query(value = "SELECT mr.*, concat(p.surname, ' ', p.name, ' ', p.patronymic) as principal_fio,  concat(r.surname, ' ', r.name, ' ', r.patronymic) as representative_fio "
-            + " from mrpa_registry mr, principal p , representative r "
-            + " where p.id=mr.principal_id "
-            + " and r.id=mr.representative_id "
-            + " and mr.id=?1 "
+            + " from mrpa_registry mr "
+            + " left join principal p on p.id=mr.principal_id"
+            + " left join representative r on r.id=mr.representative_id"
+            + " where mr.id=?1 "
             , nativeQuery = true)
     List<Map<String, Object>> findMrpaRegistryById(Long id);
 
