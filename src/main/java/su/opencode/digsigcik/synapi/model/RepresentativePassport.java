@@ -1,13 +1,13 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 
-@Getter
+@Data
 @Entity
-@Table(name="representative")
+@Table(name="representative_passport")
 @Transactional
 // Паспорт представителя
 public class RepresentativePassport {
@@ -22,4 +22,6 @@ public class RepresentativePassport {
     private String whoIssue;
     @Column(name = "department_code", columnDefinition = "VARCHAR(50)")
     private String departmentCode;
+    @Column(name = "representative_id")
+    private Long representativeId;
 }

@@ -1,13 +1,13 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
+@Data
 @Entity
 @Table(name="principal")
 @Transactional
@@ -22,8 +22,8 @@ public class Principal {
     private String surname;
     @Column(name = "patronymic", columnDefinition = "VARCHAR(50)")
     private String patronymic;
-    private Long inn;
-    private Long snils;
+    private String inn;
+    private String snils;
     @Column(name = "job_title", columnDefinition = "VARCHAR(50)")
     private String jobTitle;
 

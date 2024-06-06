@@ -1,14 +1,13 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
+@Data
 @Entity
 @Table(name="representative")
 @Transactional
@@ -23,10 +22,10 @@ public class Representative {
     private String surname;
     @Column(name = "patronymic", columnDefinition = "VARCHAR(50)")
     private String patronymic;
-    private Long inn;
-    private Long snils;
+    private String inn;
+    private String snils;
     @Column(name = "birth_date")
-    private Timestamp birthDate;
+    private String birthDate;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "representative_id")
@@ -35,4 +34,5 @@ public class Representative {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "representative_id")
     private Set<RepresentativePassport> representativePassports = new HashSet<>();
+
 }

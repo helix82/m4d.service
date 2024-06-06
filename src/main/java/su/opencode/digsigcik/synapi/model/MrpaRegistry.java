@@ -1,18 +1,15 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.FtxRegistrationTypeEnum;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name="mrpa_registry")
 @Transactional
@@ -21,6 +18,8 @@ public class MrpaRegistry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "user_id")
+    private Long userId;
     @Column(name = "guid", columnDefinition = "VARCHAR(50)")
     private String guid;
     @Column(name = "internal_number", columnDefinition = "VARCHAR(50)")
@@ -32,9 +31,9 @@ public class MrpaRegistry {
     @Column(name = "representative_id")
     private Long representativeId;
     @Column(name = "start_date")
-    private Timestamp startDate;
+    private String startDate;
     @Column(name = "end_date")
-    private Timestamp endDate;
+    private String endDate;
     @Enumerated(EnumType.STRING)
     @Column(name = "status", columnDefinition = "VARCHAR(50)")
     private StatusTypeEnum status;
@@ -48,19 +47,7 @@ public class MrpaRegistry {
     @Column(name = "recalled_xml_path", columnDefinition = "TEXT")
     private String recalledXmlPath;
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "mrpa_registry_credential",
-            joinColumns = @JoinColumn(name = "mrpa_registry_id", referencedColumnName="id"),
-            inverseJoinColumns = @JoinColumn(name = "credential_id", referencedColumnName="id")
-    )
-    private Set<Credential> credentials  = new HashSet<>();
-
-    public Set<Credential> getAssignedCredentials() {
-        return credentials;
-    }
-
-    public void setAssignedCredentials(Set<Credential> credentialSet) {
-        this.credentials = credentialSet;
-    }
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "mrpa_registry_id")
+    private Set<MrpaRegistryCredential> mrpaRegistryCredentials = new HashSet<>();
 }

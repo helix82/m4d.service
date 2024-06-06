@@ -1,16 +1,13 @@
 package su.opencode.digsigcik.synapi.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name="credential")
 @Transactional
@@ -24,8 +21,7 @@ public class Credential {
     @Column(name = "code", columnDefinition = "VARCHAR(50)")
     private String code;
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JsonIgnore
-    private Set<MrpaRegistry> mrpaRegistryes = new HashSet<>();
-
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "credential_id")
+    private Set<MrpaRegistryCredential> mrpaRegistryCredentials = new HashSet<>();
 }
