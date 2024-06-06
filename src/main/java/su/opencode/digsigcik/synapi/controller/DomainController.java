@@ -80,13 +80,13 @@ public class DomainController {
     }
 
     @DeleteMapping("/domains/{id}")
-    public ResponseEntity<HttpStatus> deleteComment(@PathVariable("id") long id) {
+    public ResponseEntity<HttpStatus> deleteDomain(@PathVariable("id") long id) {
         domainRepository.deleteById(id);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @DeleteMapping("/accounts/{accountId}/doamins")
+    @DeleteMapping("/accounts/{accountId}/domains")
     public ResponseEntity<List<AcmeDomain>> deleteAllDomainsOfAccount(@PathVariable(value = "accountId") Long accountId) {
         if (!accountRepository.existsById(accountId)) {
             throw new ResourceNotFoundException("Not found Account with id = " + accountId);

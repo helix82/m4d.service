@@ -21,8 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.model.AcmeAccount;
+import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.repository.AccountRepository;
+import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
 
 import javax.servlet.http.HttpSession;
@@ -58,7 +60,10 @@ public class AcmeController {
     AccountRepository accountRepository;
 
     @Autowired
-    private DomainRepository domainRepository;
+    DomainRepository domainRepository;
+
+    @Autowired
+    CertificateRepository certificateRepository;
 
     private KeyPair makeKeyPair(MultipartFile userFile) throws IOException {
         return KeyPairUtils.readKeyPair(new BufferedReader(new InputStreamReader(userFile.getInputStream())));
@@ -225,13 +230,11 @@ public class AcmeController {
     }
 
 
-    @PostMapping("/accounts/{accountId}/domains/{domainId}/certificate")
-    public Map logout(HttpSession httpSession,
-                      @PathVariable(value = "accountId") Long accountId,
+    @PostMapping("/domains/{domainId}/certificate")
+    public Map certificate(HttpSession httpSession,
                       @PathVariable(value = "domainId") Long domainId
                       ) {
         HashMap<String, String> ret = new HashMap<>();
-        AcmeAccount acmeAccount = accountRepository.findAccountById(accountId);
         AcmeDomain acmeDomain= domainRepository.findDomainById(domainId);
 
         Login login = (Login)httpSession.getAttribute("login");
@@ -270,10 +273,14 @@ public class AcmeController {
                     clearChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
 
                     Certificate certificate = order.getCertificate();
+
                     StringWriter writer = new StringWriter();
                     certificate.writeCertificate(writer);
+
+                    AcmeCertificate _acmeCert = new AcmeCertificate(acmeDomain, writer.toString());
+                    certificateRepository.save(_acmeCert);
+
                     ret.put("url", certificate.getLocation().toString());
-                    ret.put("content", writer.toString());
                     return ret;
                 } catch (AcmeException e) {
                     ret.put("error", "acme exception");
