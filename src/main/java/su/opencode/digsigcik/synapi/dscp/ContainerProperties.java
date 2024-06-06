@@ -91,7 +91,7 @@ public class ContainerProperties {
 		doSetMeta(parts, MetaAttribute.HAS_POA, this.hasPoa);
 		doSetMeta(parts, MetaAttribute.HAS_PREVIEW, this.hasPreview);
 		doSetMeta(parts, MetaAttribute.ATTACHED_TYPE, this.attachedSignatureType);
-		doSetMeta(parts, MetaAttribute.SIGNATURE_TYPE, SignatureTypeEnum.UNKNOWN);
+		doSetMeta(parts, MetaAttribute.SIGNATURE_TYPE, SignatureTypeEnum.SIMPLE);
 		doSetMeta(parts, MetaAttribute.ENHANCE_TYPE, EnhanceTypeEnum.ADES_BES);
 		doSetMeta(parts, MetaAttribute.MAIN_FILE_SIZE, srcFileSize);
 		doSetMeta(parts, MetaAttribute.MAIN_FILE_HASH_TYPE, hashType);

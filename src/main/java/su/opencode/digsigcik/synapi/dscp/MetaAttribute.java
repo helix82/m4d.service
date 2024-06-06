@@ -37,6 +37,12 @@ final class MetaAttribute {
 	static final MetaAttribute STAMP_REG_Y = new MetaAttribute(MetaObjectEnum.STAMP, "regY");
 	static final MetaAttribute STAMP_REG_DIMENSION_W = new MetaAttribute(MetaObjectEnum.STAMP, "regDimensionW");
 	static final MetaAttribute STAMP_REG_DIMENSION_H = new MetaAttribute(MetaObjectEnum.STAMP, "regDimensionH");
+	// Signature data
+	static final MetaAttribute USER_LOGIN = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userLogin");
+	static final MetaAttribute USER_FIRSTNAME = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userFirstname");
+	static final MetaAttribute USER_LASTNAME = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userLastname");
+	static final MetaAttribute USER_PATRONYMIC = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userPatronymic");
+	static final MetaAttribute SIGNATURE_TIMESTAMP = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "timestamp");
 
 
 	private final MetaObjectEnum object;

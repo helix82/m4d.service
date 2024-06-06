@@ -1,4 +1,4 @@
-package su.opencode.digsigcik.synapi.validation.annotation;
+package su.opencode.digsigcik.synapi.annotation.validation;
 
 import org.springframework.stereotype.Component;
 
@@ -27,9 +27,6 @@ public class PasswordValidator implements ConstraintValidator<Password, String> 
             return false;
         }
 
-        if (!Pattern.matches(regex, password) && this.containsOnlyLettersAndDigits) {
-            return false;
-        }
-        return true;
+        return Pattern.matches(regex, password) || !this.containsOnlyLettersAndDigits;
     }
 }

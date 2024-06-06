@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.synapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,5 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RolesDto {
+    @JsonSetter("roles")
     private List<String> roles;
 }

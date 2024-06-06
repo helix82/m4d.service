@@ -13,7 +13,7 @@ public class DscpContainerException extends RuntimeException {
 	private final String problemWithMetaKey;
 	private final String problemWithFileName;
 
-	static DscpContainerException ioCause(IOException cause, boolean reading) {
+	public static DscpContainerException ioCause(IOException cause, boolean reading) {
 		String action = reading ? "reading" : "writing";
 		return new DscpContainerException("IOException while " + action + " container", cause, Type.IO, null, null, null, null);
 	}

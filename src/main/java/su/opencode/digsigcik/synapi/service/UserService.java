@@ -21,11 +21,12 @@ import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
 @Service
 public class UserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
-    private final UsersInfoUtils usersInfo = new UsersInfoUtils();
+    private final UsersInfoUtils usersInfo;
 
     @Autowired
-    public UserService(@Lazy PasswordEncoder passwordEncoder) {
+    public UserService(@Lazy PasswordEncoder passwordEncoder, UsersInfoUtils usersInfo) {
         this.passwordEncoder = passwordEncoder;
+        this.usersInfo = usersInfo;
     }
 
     @Override

@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import su.opencode.digsigcik.synapi.validation.annotation.Password;
+import su.opencode.digsigcik.synapi.annotation.validation.Password;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Getter
