@@ -22,8 +22,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     }
 
     @Override
-    public List<MrpaRegistry> findAllMrpaRegistry() {
-        return this.repository.findAll();
+    public List<Map<String, Object>>  findAllMrpaRegistry() {
+        return this.repository.findAllMrpaRegistries();
     }
 
     @Override

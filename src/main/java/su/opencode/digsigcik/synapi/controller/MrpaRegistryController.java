@@ -19,7 +19,7 @@ public class MrpaRegistryController {
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
 
     @GetMapping()
-    public List<MrpaRegistry> findAllMrpaRegistry() {
+    public List<Map<String, Object>>  findAllMrpaRegistry() {
         return service.findAllMrpaRegistry();
     }
 

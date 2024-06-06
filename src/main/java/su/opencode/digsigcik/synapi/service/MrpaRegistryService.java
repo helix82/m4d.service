@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface MrpaRegistryService {
-    List<MrpaRegistry> findAllMrpaRegistry();
+    List<Map<String, Object>>  findAllMrpaRegistry();
     MrpaRegistry saveMrpaRegistry(MrpaRegistry mrpaRegistry);
     List<Map<String, Object>> findByMrpaRegistryId(Long id);
     List<Map<String, Object>> findAllByMrpaRegistryUserId(Long userId);
