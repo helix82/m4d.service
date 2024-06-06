@@ -37,6 +37,11 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     }
 
     @Override
+    public List<Map<String, Object>> findAllByMrpaRegistryUserId(Long userId) {
+        return this.repository.findAllMrpaRegistriesByUserId(userId);
+    }
+
+    @Override
     public List<MrpaRegistryFullDTO> findByMrpaRegistryUserId(Long userId) { return this.repository.findMrpaRegistriesByUserId(userId); }
 
     @Override

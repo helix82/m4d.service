@@ -16,15 +16,15 @@ public class Principal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "name", columnDefinition = "VARCHAR(50)")
+    @Column(name = "name", columnDefinition = "VARCHAR(255)")
     private String name;
-    @Column(name = "surname", columnDefinition = "VARCHAR(50)")
+    @Column(name = "surname", columnDefinition = "VARCHAR(255)")
     private String surname;
-    @Column(name = "patronymic", columnDefinition = "VARCHAR(50)")
+    @Column(name = "patronymic", columnDefinition = "VARCHAR(255)")
     private String patronymic;
     private String inn;
     private String snils;
-    @Column(name = "job_title", columnDefinition = "VARCHAR(50)")
+    @Column(name = "job_title", columnDefinition = "VARCHAR(255)")
     private String jobTitle;
 
     @OneToMany(cascade = CascadeType.ALL)
