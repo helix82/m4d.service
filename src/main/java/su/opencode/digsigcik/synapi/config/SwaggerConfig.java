@@ -27,9 +27,10 @@ public class SwaggerConfig {
     private ApiInfo apiInfoMetaData() {
 
         return new ApiInfoBuilder().title("API Documentation")
-                .description("Describing the purpose of the API")
+                .description("Tasks: https://docs.google.com/spreadsheets/d/1Ar7tm0XzfUVps_dgAeHr3h2oxnoTOY88QKNwPBGYxxg/edit#gid=864053792")
                 .contact(new Contact("Dev-Team", "https://www.o-code.ru/", "vereschagina@o-code.ru"))
-                .version("1.0.3")
+                .version("SEP0002, SEP0003, SEP0009, SEP0011, SEP0013, SEP0017, SEP0018, SEP0019, SEP0020, SEP0021, SEP0022, " +
+                        "SEP0023, SEP0040, SEP0045, SEP0046, SEP0077, SEP0078, SEP0079, SEP0080, SEP0081, SEP0082, SEP0083, SEP0084, SEP0085, SEP0086")
                 .build();
     }
 }
