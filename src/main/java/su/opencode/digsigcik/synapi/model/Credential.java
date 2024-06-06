@@ -16,9 +16,9 @@ public class Credential {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "name", columnDefinition = "VARCHAR(50)")
+    @Column(name = "name", columnDefinition = "VARCHAR(255)")
     private String name;
-    @Column(name = "code", columnDefinition = "VARCHAR(50)")
+    @Column(name = "code", columnDefinition = "VARCHAR(255)")
     private String code;
 
     @OneToMany(cascade = CascadeType.ALL)

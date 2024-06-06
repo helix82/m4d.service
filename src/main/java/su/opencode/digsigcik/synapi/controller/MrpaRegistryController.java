@@ -23,6 +23,11 @@ public class MrpaRegistryController {
         return service.findAllMrpaRegistry();
     }
 
+    @GetMapping("list/{userId}")
+    public List<Map<String, Object>> findListMrpaRegistryByUserId(@PathVariable Long userId) {
+        return service.findAllByMrpaRegistryUserId(userId);
+    }
+
     @PostMapping("save")
     public MrpaRegistry saveMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
         return service.saveMrpaRegistry(mrpaRegistry);

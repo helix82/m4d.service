@@ -20,9 +20,9 @@ public class MrpaRegistry {
     private Long id;
     @Column(name = "user_id")
     private Long userId;
-    @Column(name = "guid", columnDefinition = "VARCHAR(50)")
+    @Column(name = "guid", columnDefinition = "VARCHAR(255)")
     private String guid;
-    @Column(name = "internal_number", columnDefinition = "VARCHAR(50)")
+    @Column(name = "internal_number", columnDefinition = "VARCHAR(255)")
     private String internalNumber;
     @Column(name = "organisation_id")
     private Long organisationId;
@@ -35,10 +35,10 @@ public class MrpaRegistry {
     @Column(name = "end_date")
     private String endDate;
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", columnDefinition = "VARCHAR(50)")
+    @Column(name = "status", columnDefinition = "VARCHAR(255)")
     private StatusTypeEnum status;
     @Enumerated(EnumType.STRING)
-    @Column(name = "ftx_registration", columnDefinition = "VARCHAR(50)")
+    @Column(name = "ftx_registration", columnDefinition = "VARCHAR(255)")
     private FtxRegistrationTypeEnum ftxRegistration;
     @Column(name = "sig_path", columnDefinition = "TEXT")
     private String sigPath;

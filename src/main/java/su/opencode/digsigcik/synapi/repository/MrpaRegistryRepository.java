@@ -19,7 +19,6 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             , nativeQuery = true)
     List<Map<String, Object>> findMrpaRegistryById(Long id);
 
-    //TODO @helix82 Дополнить Паспортными данными представителя и Полномочиями
     @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, "
             + "p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic, rp.id, rp.dateIssue, rp.whoIssue, rp.seriesNumber, rp.departmentCode, o.id, o.inn, o.kpp, o.ogrn, o.name, o.regionCode, o.legalAddress, "
             + " c.id, c.code, c.name)"
@@ -32,4 +31,12 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join Credential c on c.id=mrc.credentialId"
             + " where mr.userId=?1 ")
     List<MrpaRegistryFullDTO> findMrpaRegistriesByUserId(Long userId);
+
+    @Query(value = "SELECT mr.*, concat(p.surname, ' ', p.name, ' ', p.patronymic) as principal_fio,  concat(r.surname, ' ', r.name, ' ', r.patronymic) as representative_fio "
+            + " from mrpa_registry mr "
+            + " left join principal p on p.id=mr.principal_id"
+            + " left join representative r on r.id=mr.representative_id"
+            + " where mr.user_id=?1 "
+            , nativeQuery = true)
+    List<Map<String, Object>> findAllMrpaRegistriesByUserId(Long userId);
 }
