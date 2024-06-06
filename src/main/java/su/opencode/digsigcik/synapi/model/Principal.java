@@ -1,29 +1,31 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
+@Data
 @Entity
 @Table(name="principal")
 @Transactional
-// Доверитель
+// Единоличный исполнительный орган
 public class Principal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "name", columnDefinition = "VARCHAR(50)")
     private String name;
-    private Long inn;
-    private Long kpp;
-    private Long snils;
-    @Column(name = "birth_date")
-    private Timestamp birthDate;
+    @Column(name = "surname", columnDefinition = "VARCHAR(50)")
+    private String surname;
+    @Column(name = "patronymic", columnDefinition = "VARCHAR(50)")
+    private String patronymic;
+    private String inn;
+    private String snils;
+    @Column(name = "job_title", columnDefinition = "VARCHAR(50)")
+    private String jobTitle;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "principal_id")

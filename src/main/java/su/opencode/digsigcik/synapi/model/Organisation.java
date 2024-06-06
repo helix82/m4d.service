@@ -1,13 +1,13 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
+@Data
 @Entity
 @Table(name="organisation")
 @Transactional
@@ -16,13 +16,14 @@ public class Organisation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "name", columnDefinition = "VARCHAR(50)")
+    @Column(name = "name", columnDefinition = "VARCHAR(100)")
     private String name;
-    private Long inn;
-    private Long kpp;
-    private Long ogrn;
-    @Column(name = "job_title", columnDefinition = "VARCHAR(50)")
-    private String jobTitle;
+    private String inn;
+    private String kpp;
+    private String ogrn;
+    @Column(name = "legal_address", columnDefinition = "TEXT")
+    private String legalAddress;
+    private String regionCode;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "organisation_id")

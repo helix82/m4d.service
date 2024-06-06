@@ -1,20 +1,20 @@
 package su.opencode.digsigcik.synapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 public class OrganisationDTO {
     @JsonProperty("name")
     private String name;
     @JsonProperty("inn")
-    private Integer inn;
+    private String inn;
     @JsonProperty("kpp")
-    private Integer kpp;
+    private String kpp;
     @JsonProperty("ogrn")
-    private Integer ogrn;
-    @JsonProperty("jobTitle")
-    private String jobTitle;
+    private String ogrn;
+    @JsonProperty("legalAddress")
+    private String legalAddress;
+    @JsonProperty("regionCode")
+    private String regionCode;
 }
