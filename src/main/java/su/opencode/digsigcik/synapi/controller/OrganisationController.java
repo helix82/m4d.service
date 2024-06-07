@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/organisation")
-@Tag(name = "Организации", description = "API управления организациями")
 @AllArgsConstructor
 public class OrganisationController {
     private final OrganisationService service;
