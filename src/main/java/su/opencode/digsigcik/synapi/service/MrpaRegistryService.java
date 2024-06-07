@@ -14,5 +14,5 @@ public interface MrpaRegistryService {
     List<MrpaRegistryFullDTO> findByMrpaRegistryUserId(Long userId);
     MrpaRegistry updateMrpaRegistry(MrpaRegistry mrpaRegistry);
     void deleteMrpaRegistry(Long id);
-
+    List<Map<String, Object>> findByMrpaRegistryPrincipalInn(String inn);
 }

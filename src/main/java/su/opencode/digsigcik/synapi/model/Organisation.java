@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.synapi.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,14 +16,21 @@ import java.util.Set;
 public class Organisation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("id")
     private Long id;
     @Column(name = "name", columnDefinition = "VARCHAR(255)")
+    @JsonProperty("name")
     private String name;
+    @JsonProperty("inn")
     private String inn;
+    @JsonProperty("kpp")
     private String kpp;
+    @JsonProperty("ogrn")
     private String ogrn;
     @Column(name = "legal_address", columnDefinition = "TEXT")
+    @JsonProperty("legalAddress")
     private String legalAddress;
+    @JsonProperty("regionCode")
     private String regionCode;
 
     @OneToMany(cascade = CascadeType.ALL)

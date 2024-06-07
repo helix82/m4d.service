@@ -34,12 +34,12 @@ public class MrpaRegistryController {
     }
 
     @GetMapping("/{id}")
-    public List<Map<String, Object>> findByMrpaRegistryId(@PathVariable Long id) {
+    public List<Map<String, Object>> findMrpaRegistryById(@PathVariable Long id) {
         return service.findByMrpaRegistryId(id);
     }
 
     @GetMapping("user_id/{id}")
-    public List<MrpaRegistryFullDTO> findByMrpaRegistryUserId(@PathVariable Long id) {
+    public List<MrpaRegistryFullDTO> findMrpaRegistryByUserId(@PathVariable Long id) {
         return service.findByMrpaRegistryUserId(id);
     }
 
@@ -59,6 +59,11 @@ public class MrpaRegistryController {
         mrpaRegistryCredential.setMrpaRegistryId(mrpaId);
         mrpaRegistryCredential.setCredentialId(credentialId);
         return mrpaRegistryCredentialService.saveMrpaRegistryCredential(mrpaRegistryCredential);
+    }
+
+    @GetMapping("principal_inn/{inn}")
+    public List<Map<String, Object>> findMrpaRegistryByPrincipalInn(@PathVariable String inn) {
+        return service.findByMrpaRegistryPrincipalInn(inn);
     }
 
 }
