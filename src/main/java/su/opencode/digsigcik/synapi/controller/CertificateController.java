@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,47 @@ public class CertificateController {
         return new ResponseEntity<>(certificates, HttpStatus.OK);
     }
 
+
+    private Map certInfo(AcmeCertificate certificate) {
+        HashMap<String, Object> ret = new HashMap<>();
+
+        CertificateFactory fac = null;
+        try {
+            fac = CertificateFactory.getInstance("X509");
+            AcmeDomain domain = certificate.getDomain();
+            X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(certificate.getContent().getBytes()));
+
+            ret.put("id", certificate.getId());
+
+            ret.put("deleted", certificate.getDeleted());
+            ret.put("revoked", certificate.getRevoked());
+
+            ret.put("issuerDN", String.valueOf(cert.getIssuerDN()));
+            ret.put("type", String.valueOf(cert.getType()));
+            ret.put("domain", String.valueOf(domain.getDomainUrl()));
+            ret.put("algName", String.valueOf(cert.getSigAlgName()));
+            ret.put("notBefore", cert.getNotBefore());
+            ret.put("notAfter", cert.getNotAfter());
+            ret.put("serialNumber", String.valueOf(cert.getSerialNumber()));
+
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        }
+
+
+        return ret;
+    }
+
+    @GetMapping("/certificates")
+    public ResponseEntity<List<Map>> getAllCertificates() {
+        ArrayList<Map> list = new ArrayList<>();
+        List<AcmeCertificate> certificates = certificateRepository.findAll();
+        for(AcmeCertificate certificate:certificates) {
+            list.add(certInfo(certificate));
+        }
+        return new ResponseEntity<>(list, HttpStatus.OK);
+    }
+
     @GetMapping("/certificates/{id}")
     public ResponseEntity<AcmeCertificate> getCertificateBylId(@PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
@@ -62,23 +104,9 @@ public class CertificateController {
     @GetMapping("/certificates/{id}/info")
     public ResponseEntity<Map> getCertificateInfoBylId(HttpServletResponse httpResponse,
                                                             @PathVariable(value = "id") Long id) {
-        HashMap<String, String> ret = new HashMap<>();
-        try {
-            AcmeCertificate certificate = certificateRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
-
-            CertificateFactory fac = null;
-            fac = CertificateFactory.getInstance("X509");
-
-
-            X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(certificate.getContent().getBytes()));
-            ret.put("number", String.valueOf(cert.getSerialNumber()));
-
-
-        } catch (CertificateException e) {
-            ret.put("error", "no X509 factory");
-        }
-        return new ResponseEntity<>(ret, HttpStatus.OK);
+        AcmeCertificate certificate = certificateRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
+        return new ResponseEntity<>(certInfo(certificate), HttpStatus.OK);
     }
 
     @GetMapping("/certificates/{id}/download")
@@ -93,8 +121,10 @@ public class CertificateController {
 
     @DeleteMapping("/certificates/{id}")
     public ResponseEntity<HttpStatus> deleteCertificate(@PathVariable("id") long id) {
-        certificateRepository.deleteById(id);
-
+        AcmeCertificate certificate = certificateRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
+        certificate.setDeleted(true);
+        certificateRepository.save(certificate);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -103,8 +133,11 @@ public class CertificateController {
         if (!domainRepository.existsById(domainId)) {
             throw new ResourceNotFoundException("Not found Domain with id = " + domainId);
         }
-
-        certificateRepository.deleteByDomainId(domainId);
+        List<AcmeCertificate> certificates = certificateRepository.findByDomainId(domainId);
+        for(AcmeCertificate certificate: certificates) {
+            certificate.setDeleted(true);
+            certificateRepository.save(certificate);
+        }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

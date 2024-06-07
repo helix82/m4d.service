@@ -30,6 +30,9 @@ public class AcmeAccount {
     @Column(name = "name", columnDefinition = "VARCHAR(50)")
     private String name;
 
+    @Column(name = "email", columnDefinition = "VARCHAR(200)")
+    private String email;
+
     @Column(name = "external_key", columnDefinition = "VARCHAR(2000)")
     private String externalKey;
 
@@ -58,6 +61,10 @@ public class AcmeAccount {
         return name;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public String getExternalKey() {
         return externalKey;
     }
@@ -76,6 +83,10 @@ public class AcmeAccount {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public void setExternalKey(String externalKey) {

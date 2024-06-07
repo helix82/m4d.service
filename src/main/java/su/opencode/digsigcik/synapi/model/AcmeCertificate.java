@@ -14,9 +14,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.sql.Date;
 
 @Getter
 @Entity
@@ -34,6 +34,17 @@ public class AcmeCertificate {
     @JsonIgnore
     private AcmeDomain domain;
 
+
+    @Column(name = "certificate_url", columnDefinition = "VARCHAR(2000)")
+    private String certificateUrl;
+
+    @Column(name = "deleted", columnDefinition = "BOOLEAN")
+    private Boolean deleted;
+
+    @Column(name = "revoked", columnDefinition = "BOOLEAN")
+    private Boolean revoked;
+
+    @JsonIgnore
     @Column(name = "content", columnDefinition = "VARCHAR(16000)")
     private String content;
 
@@ -65,4 +76,27 @@ public class AcmeCertificate {
         this.content = content;
     }
 
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public Boolean getRevoked() {
+        return revoked;
+    }
+
+    public void setRevoked(Boolean revoked) {
+        this.revoked = revoked;
+    }
+
+    public String getCertificateUrl() {
+        return certificateUrl;
+    }
+
+    public void setCertificateUrl(String certificateUrl) {
+        this.certificateUrl = certificateUrl;
+    }
 }

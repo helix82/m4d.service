@@ -8,6 +8,7 @@ import org.shredzone.acme4j.Authorization;
 import org.shredzone.acme4j.Certificate;
 import org.shredzone.acme4j.Login;
 import org.shredzone.acme4j.Order;
+import org.shredzone.acme4j.RevocationReason;
 import org.shredzone.acme4j.Session;
 import org.shredzone.acme4j.Status;
 import org.shredzone.acme4j.challenge.Http01Challenge;
@@ -29,6 +30,7 @@ import su.opencode.digsigcik.synapi.repository.DomainRepository;
 
 import javax.servlet.http.HttpSession;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -39,6 +41,9 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.security.KeyPair;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
@@ -165,6 +170,12 @@ public class AcmeController {
         if(acmeAccount != null) {
             Session session = new Session(CA_URI);
             try {
+                if(acmeAccount.getAccountPrivateKey()==null) {
+                    StringWriter sw = new StringWriter();
+                    KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
+                    acmeAccount.setAccountPrivateKey(sw.toString());
+                    accountRepository.save(acmeAccount);
+                }
                 KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
                 Login login = new AccountBuilder()
                         .onlyExisting()         // Do not create a new acmeAccount
@@ -194,9 +205,15 @@ public class AcmeController {
         if(acmeAccount != null) {
             Session session = new Session(CA_URI);
             try {
+                if(acmeAccount.getAccountPrivateKey()==null) {
+                    StringWriter sw = new StringWriter();
+                    KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
+                    acmeAccount.setAccountPrivateKey(sw.toString());
+                    accountRepository.save(acmeAccount);
+                }
                 KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
                 Account acct = new AccountBuilder()
-                        .addContact("mailto:acme@example.com")
+                        .addContact("mailto:"+acmeAccount.getEmail())
                         .agreeToTermsOfService()
                         .useKeyPair(userKeyPair)
                         .create(session);
@@ -261,6 +278,12 @@ public class AcmeController {
 
                     challenge.trigger();
 
+                    if(acmeDomain.getDomainPrivateKey()==null) {
+                        StringWriter sw = new StringWriter();
+                        KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(4096), sw);
+                        acmeDomain.setDomainPrivateKey(sw.toString());
+                        domainRepository.save(acmeDomain);
+                    }
                     KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
 
                     order.execute(domainKeyPair);
@@ -277,8 +300,9 @@ public class AcmeController {
                     StringWriter writer = new StringWriter();
                     certificate.writeCertificate(writer);
 
-                    AcmeCertificate _acmeCert = new AcmeCertificate(acmeDomain, writer.toString());
-                    certificateRepository.save(_acmeCert);
+                    AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
+                    acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
+                    certificateRepository.save(acmeCertificate);
 
                     ret.put("url", certificate.getLocation().toString());
                     return ret;
@@ -287,6 +311,44 @@ public class AcmeController {
                     ret.put("exception", e.getMessage());
                 } catch (IOException e) {
                     ret.put("error", "io exception");
+                    ret.put("exception", e.getMessage());
+                }
+            }
+        } else {
+            ret.put("error", "no login");
+        }
+        return ret;
+    }
+
+    @PostMapping("/certificates/{id}/revoke")
+    public Map revoke(HttpSession httpSession,
+                           @PathVariable(value = "id") Long id
+    ) {
+        HashMap<String, String> ret = new HashMap<>();
+        AcmeCertificate acmeCertificate= certificateRepository.findCertificateById(id);
+
+        Login login = (Login)httpSession.getAttribute("login");
+        if(login!=null) {
+            Account account = login.getAccount();
+            if(account.getStatus() != Status.VALID){
+                ret.put("error", "invalid status");
+            } else {
+                try {
+                    CertificateFactory fac = null;
+                    fac = CertificateFactory.getInstance("X509");
+                    X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(acmeCertificate.getContent().getBytes()));
+
+                    Certificate.revoke(login, cert, RevocationReason.KEY_COMPROMISE);
+
+                    acmeCertificate.setRevoked(true);
+                    certificateRepository.save(acmeCertificate);
+                    ret.put("result", "done");
+                    return ret;
+                } catch (AcmeException e) {
+                    ret.put("error", "acme exception");
+                    ret.put("exception", e.getMessage());
+                } catch (CertificateException e) {
+                    ret.put("error", "cert exception");
                     ret.put("exception", e.getMessage());
                 }
             }
