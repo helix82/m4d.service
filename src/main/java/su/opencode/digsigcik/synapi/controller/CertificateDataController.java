@@ -1,5 +1,9 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +24,17 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
 @RestController
 @RequestMapping("/api/v1/certificate-data")
+@Tag(name = "Сетификаты УЦ", description = "API управления сертификатами УЦ")
 @AllArgsConstructor
 public class CertificateDataController {
 
     private final CertificateDataService certificateDataService;
 
+    @Operation(summary = "Загрузить аккредитованные УЦ из XML-файла", description = "Возвращает статус выполнения загрузки")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно загружено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
     @PostMapping(value = "/upload", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public String upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, JAXBException {
         String content = new String(sourceFile.getBytes());
@@ -52,27 +62,52 @@ public class CertificateDataController {
         return "OK";
     }
 
+    @Operation(summary = "Получить список аккредитованных УЦ", description = "Возвращает список аккредитованных УЦ")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно получено"),
+            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+    })
     @GetMapping()
     public List<CertificateData> findAllCertificateData() {
         return certificateDataService.findAllCertificateData();
     }
 
+    @Operation(summary = "Сохранить новую запись аккредитованных УЦ", description = "Возвращает сохраненную запись аккредитованной УЦ")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно сохранено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
     @PostMapping("save")
     public CertificateData saveCertificateData(@RequestBody CertificateData certificateData) {
         certificateData.setTypeInput("Вручную");
         return certificateDataService.saveCertificateData(certificateData);
     }
 
+    @Operation(summary = "Получить запись аккредитованной УЦ по ИД", description = "Возвращает запись аккредитованной УЦ")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно получено"),
+            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+    })
     @GetMapping("/{id}")
     public CertificateData findByCertificateDataId(@PathVariable Long id) {
         return certificateDataService.findByCertificateDataId(id);
     }
 
+    @Operation(summary = "Сохранить изменения аккредитованной УЦ", description = "Возвращает запись аккредитованной УЦ")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно изменено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
     @PutMapping("update")
     public CertificateData updateCertificateData(@RequestBody CertificateData certificateData) {
         return certificateDataService.updateCertificateData(certificateData);
     }
 
+    @Operation(summary = "Удалить запись аккредитованной УЦ по ИД", description = "Ничего не возвращает")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно удалено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
     @DeleteMapping("delete/{id}")
     public void deleteCertificateData(@PathVariable Long id) {
         certificateDataService.deleteCertificateData(id);
