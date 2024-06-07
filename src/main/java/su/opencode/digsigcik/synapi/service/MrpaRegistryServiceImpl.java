@@ -4,11 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.repository.MrpaRegistryRepository;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Primary
@@ -22,7 +22,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     }
 
     @Override
-    public List<Map<String, Object>>  findAllMrpaRegistry() {
+    public List<MrpaRegistryWithFioDTO>  findAllMrpaRegistry() {
         return this.repository.findAllMrpaRegistries();
     }
 
@@ -32,12 +32,12 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     }
 
     @Override
-    public List<Map<String, Object>> findByMrpaRegistryId(Long id) {
+    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryId(Long id) {
         return this.repository.findMrpaRegistryById(id);
     }
 
     @Override
-    public List<Map<String, Object>> findAllByMrpaRegistryUserId(Long userId) {
+    public List<MrpaRegistryWithFioDTO> findAllByMrpaRegistryUserId(Long userId) {
         return this.repository.findAllMrpaRegistriesByUserId(userId);
     }
 
@@ -54,7 +54,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     }
 
     @Override
-    public List<Map<String, Object>> findByMrpaRegistryPrincipalInn(String inn) {
+    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryPrincipalInn(String inn) {
         return this.repository.findMrpaRegistriesByPrincipalInn(inn);
     }
 }
