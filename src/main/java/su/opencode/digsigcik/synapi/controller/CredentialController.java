@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/credential")
-@Tag(name = "Полномочия", description = "API управления полномочиями")
 @AllArgsConstructor
 public class CredentialController {
     private final CredentialService service;

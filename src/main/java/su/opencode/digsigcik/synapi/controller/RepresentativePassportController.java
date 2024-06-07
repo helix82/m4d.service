@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.model.RepresentativePassport;
@@ -13,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/representative_passport")
-@Tag(name = "Паспорт представителя", description = "API управления паспортом представителя")
 @AllArgsConstructor
 public class RepresentativePassportController {
     private final RepresentativePassportService service;

@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
@@ -18,7 +17,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/mrpa_registry")
-@Tag(name = "МЧД", description = "API управления машиночитаемыми доверенностями")
 @AllArgsConstructor
 public class MrpaRegistryController {
     private final MrpaRegistryService service;

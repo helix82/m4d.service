@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/principal")
-@Tag(name = "Доверители", description = "API управления доверителями")
 @AllArgsConstructor
 public class PrincipalController {
     private final PrincipalService service;

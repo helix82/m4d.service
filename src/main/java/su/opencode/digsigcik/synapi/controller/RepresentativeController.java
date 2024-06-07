@@ -13,7 +13,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/representative")
-@Tag(name = "Представители", description = "API управления представителями")
 @AllArgsConstructor
 public class RepresentativeController {
     private final RepresentativeService service;

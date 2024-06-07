@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +23,6 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
 @RestController
 @RequestMapping("/api/v1/certificate-data")
-@Tag(name = "Сетификаты УЦ", description = "API управления сертификатами УЦ")
 @AllArgsConstructor
 public class CertificateDataController {
 
