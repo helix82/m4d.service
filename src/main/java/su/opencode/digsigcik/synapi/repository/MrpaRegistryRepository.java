@@ -46,4 +46,12 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join representative r on r.id=mr.representative_id"
             , nativeQuery = true)
     List<Map<String, Object>> findAllMrpaRegistries();
+
+    @Query(value = "SELECT mr.*, concat(p.surname, ' ', p.name, ' ', p.patronymic) as principal_fio,  concat(r.surname, ' ', r.name, ' ', r.patronymic) as representative_fio "
+            + " from mrpa_registry mr "
+            + " left join principal p on p.id=mr.principal_id"
+            + " left join representative r on r.id=mr.representative_id"
+            + " where p.inn=?1 "
+            , nativeQuery = true)
+    List<Map<String, Object>> findMrpaRegistriesByPrincipalInn(String inn);
 }

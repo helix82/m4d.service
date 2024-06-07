@@ -53,4 +53,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService{
     public void deleteMrpaRegistry(Long id) { this.repository.deleteById(id);
     }
 
+    @Override
+    public List<Map<String, Object>> findByMrpaRegistryPrincipalInn(String inn) {
+        return this.repository.findMrpaRegistriesByPrincipalInn(inn);
+    }
 }

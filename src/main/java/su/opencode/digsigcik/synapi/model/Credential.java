@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.synapi.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,10 +16,13 @@ import java.util.Set;
 public class Credential {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("id")
     private Long id;
     @Column(name = "name", columnDefinition = "VARCHAR(255)")
+    @JsonProperty("name")
     private String name;
     @Column(name = "code", columnDefinition = "VARCHAR(255)")
+    @JsonProperty("code")
     private String code;
 
     @OneToMany(cascade = CascadeType.ALL)
