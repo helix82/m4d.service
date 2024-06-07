@@ -33,8 +33,9 @@ public class MrpaRegistryController {
 
     @Operation(summary = "Сохранить данные по МЧД в БД", description = "Возвращает данные по созданному МЧД")
     @PostMapping("save")
-    public MrpaRegistry saveMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
-        return service.saveMrpaRegistry(mrpaRegistry);
+    public List<MrpaRegistryWithFioDTO> saveMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
+        MrpaRegistry mrpaRegistrySaved = service.saveMrpaRegistry(mrpaRegistry);
+        return service.findByMrpaRegistryId(mrpaRegistrySaved.getId());
     }
 
     @Operation(summary = "Получить МЧД с ФИО представителя и ФИО доверителя по ИД МЧД", description = "Возвращает МЧД с ФИО представителя и ФИО доверителя")
@@ -51,14 +52,16 @@ public class MrpaRegistryController {
 
     @Operation(summary = "Изменить данные по МЧД", description = "Возвращает основные данные по МЧД")
     @PutMapping("update")
-    public MrpaRegistry updateMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
-        return service.updateMrpaRegistry(mrpaRegistry);
+    public List<MrpaRegistryWithFioDTO> updateMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
+        MrpaRegistry mrpaRegistryUpdated = service.updateMrpaRegistry(mrpaRegistry);
+        return service.findByMrpaRegistryId(mrpaRegistryUpdated.getId());
     }
 
-    @Operation(summary = "Удалить данные по МЧД", description = "Ничего не возвращает")
+    @Operation(summary = "Удалить данные по МЧД", description = "Возвращает список МЧД с ФИО представителя и ФИО доверителя")
     @DeleteMapping("delete/{id}")
-    public void deleteMrpaRegistry(@PathVariable Long id) {
+    public List<MrpaRegistryWithFioDTO> deleteMrpaRegistry(@PathVariable Long id) {
         service.deleteMrpaRegistry(id);
+        return service.findAllMrpaRegistry();
     }
 
     @Operation(summary = "Привязать полномочия к МЧД", description = "Возвращает данные о привязке полномочий к МЧД")
