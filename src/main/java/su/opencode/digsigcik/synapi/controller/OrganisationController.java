@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.model.Organisation;
@@ -27,13 +26,17 @@ public class OrganisationController {
         return service.findAllOrganisation();
     }
 
-    @Operation(summary = "Сохранить организацию", description = "Возвращает сохраненную организацию")
+    @Operation(summary = "Сохранить организацию", description = "Если указанной организации нет в базе, создаем её и возвращаем, иначе возвращаем уже существующую организацию")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно сохранено"),
             @ApiResponse(code = 404, message = "Not found")
     })
     @PostMapping("save")
     public Organisation saveCredential(@RequestBody Organisation organisation) {
+        Organisation existsOrganisation = service.findByOrganisationInn(organisation.getInn());
+        if(existsOrganisation != null) {
+            return existsOrganisation;
+        }
         return service.saveOrganisation(organisation);
     }
 
@@ -66,4 +69,5 @@ public class OrganisationController {
     public void deleteCredential(@PathVariable Long id) {
         service.deleteOrganisation(id);
     }
+
 }

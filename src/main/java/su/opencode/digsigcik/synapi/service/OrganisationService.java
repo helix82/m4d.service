@@ -8,6 +8,7 @@ public interface OrganisationService {
     List<Organisation> findAllOrganisation();
     Organisation saveOrganisation(Organisation organisation);
     Organisation findByOrganisationId(Long id);
+    Organisation findByOrganisationInn(String inn);
     Organisation updateOrganisation(Organisation organisation);
     void deleteOrganisation(Long id);
 }
