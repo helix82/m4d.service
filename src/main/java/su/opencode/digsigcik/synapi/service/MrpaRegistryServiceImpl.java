@@ -1,51 +1,89 @@
 package su.opencode.digsigcik.synapi.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.repository.MrpaRegistryRepository;
+import su.opencode.digsigcik.synapi.repository.OrganisationRepository;
+import su.opencode.digsigcik.synapi.repository.PrincipalRepository;
+import su.opencode.digsigcik.synapi.repository.RepresentativeRepository;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
+import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
+
 @Service
 @Primary
-public class MrpaRegistryServiceImpl implements MrpaRegistryService{
-
-    private final MrpaRegistryRepository repository;
-
-    @Autowired
-    public MrpaRegistryServiceImpl(MrpaRegistryRepository repository) {
-        this.repository = repository;
-    }
+@RequiredArgsConstructor
+public class MrpaRegistryServiceImpl implements MrpaRegistryService {
+    private final String ERROR_MESSAGE = "Can`t %s mrpa registry because %s with id=%d does not exist!";
+    private final MrpaRegistryRepository mrpaRegistryRepository;
+    private final OrganisationRepository organisationRepository;
+    private final PrincipalRepository principalRepository;
+    private final RepresentativeRepository representativeRepository;
 
     @Override
     public List<MrpaRegistry> findAllMrpaRegistry() {
-        return this.repository.findAll();
+        return this.mrpaRegistryRepository.findAll();
     }
 
     @Override
-    public MrpaRegistry saveMrpaRegistry(MrpaRegistry mrpaRegistry) {
-        return this.repository.save(mrpaRegistry);
+    public MrpaRegistry saveMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
+        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "create");
+        return this.mrpaRegistryRepository.save(mrpaRegistry);
     }
 
     @Override
-    public List<Map<String, Object>> findByMrpaRegistryId(Long id) {
-        return this.repository.findMrpaRegistryById(id);
+    public List<Map<String, Object>> findByMrpaRegistryId(@NotNull Long id) {
+        List<Map<String, Object>> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry.isEmpty()) {
+            throw new MchdException(String.format("Mrpa registry %s", NOT_FOUND));
+        }
+        return mrpaRegistry;
     }
 
     @Override
-    public List<MrpaRegistryFullDTO> findByMrpaRegistryUserId(Long userId) { return this.repository.findMrpaRegistriesByUserId(userId); }
-
-    @Override
-    public MrpaRegistry updateMrpaRegistry(MrpaRegistry mrpaRegistry) {
-        return this.repository.save(mrpaRegistry);
+    public List<MrpaRegistryFullDTO> findByMrpaRegistryUserId(@NotNull Long userId) {
+        List<MrpaRegistryFullDTO> mrpaRegistryFullDto = this.mrpaRegistryRepository.findMrpaRegistriesByUserId(userId);
+        if (mrpaRegistryFullDto.isEmpty()) {
+            throw new MchdException(String.format("Mrpa registry full dto list %s", NOT_FOUND));
+        }
+        return mrpaRegistryFullDto;
     }
 
     @Override
-    public void deleteMrpaRegistry(Long id) { this.repository.deleteById(id);
+    public MrpaRegistry updateMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
+        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "update");
+        return this.mrpaRegistryRepository.save(mrpaRegistry);
     }
 
+    @Override
+    public void deleteMrpaRegistry(@NotNull Long id) {
+        List<Map<String, Object>> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry.isEmpty()) {
+            throw new MchdException(String.format("Can`t delete mrpa registry because mrpa registry %s", NOT_FOUND));
+        }
+        this.mrpaRegistryRepository.deleteById(id);
+    }
+
+    private void throwExceptionIfRecordWithIdNotExist(MrpaRegistry mrpaRegistry, String operationType) {
+        Long organisationId = mrpaRegistry.getOrganisationId();
+        Long principalId = mrpaRegistry.getPrincipalId();
+        Long representativeId = mrpaRegistry.getRepresentativeId();
+
+        if (organisationRepository.findOrganisationById(organisationId) == null) {
+            throw new MchdException(String.format(ERROR_MESSAGE, operationType, "organisation", organisationId));
+        }
+        if (principalRepository.findPrincipalById(principalId) == null) {
+            throw new MchdException(String.format(ERROR_MESSAGE, operationType, "principal", principalId));
+        }
+        if (representativeRepository.findRepresentativeById(representativeId) == null) {
+            throw new MchdException(String.format(ERROR_MESSAGE, operationType, "representative", representativeId));
+        }
+    }
 }
