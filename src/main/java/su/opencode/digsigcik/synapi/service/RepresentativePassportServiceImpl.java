@@ -1,45 +1,65 @@
 package su.opencode.digsigcik.synapi.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.RepresentativePassport;
 import su.opencode.digsigcik.synapi.repository.RepresentativePassportRepository;
+import su.opencode.digsigcik.synapi.repository.RepresentativeRepository;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
+
+import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 
 @Service
 @Primary
+@RequiredArgsConstructor
 public class RepresentativePassportServiceImpl implements RepresentativePassportService{
-    private final RepresentativePassportRepository repository;
-
-    @Autowired
-    public RepresentativePassportServiceImpl(RepresentativePassportRepository repository) {
-        this.repository = repository;
-    }
+    private final RepresentativePassportRepository representativePassportRepository;
+    private final RepresentativeRepository representativeRepository;
 
     @Override
     public List<RepresentativePassport> findAllRepresentativePassport() {
-        return this.repository.findAll();
+        return this.representativePassportRepository.findAll();
     }
 
     @Override
-    public RepresentativePassport saveRepresentativePassport(RepresentativePassport representativePassport) {
-        return this.repository.save(representativePassport);
+    public RepresentativePassport saveRepresentativePassport(@NotNull RepresentativePassport representativePassport) {
+        Long representativeId = representativePassport.getRepresentativeId();
+        if (representativeId == null){
+            throw new MchdException("Can`t create representative passport because representative id null!");
+        }
+        if (representativeRepository.findRepresentativeById(representativeId) == null) {
+            throw new MchdException(String.format("Can`t create representative passport because representative " +
+                            "with id=%d %s", representativeId, NOT_FOUND)
+            );
+        }
+        return this.representativePassportRepository.save(representativePassport);
     }
 
     @Override
-    public RepresentativePassport findByRepresentativePassportId(Long id) {
-        return this.repository.findRepresentativePassportById(id);
+    public RepresentativePassport findByRepresentativePassportId(@NotNull Long id) {
+        RepresentativePassport representativePassport = this.representativePassportRepository.findRepresentativePassportById(id);
+        if (representativePassport == null) {
+            throw new MchdException(String.format("Representative passport %s", NOT_FOUND));
+        }
+        return representativePassport;
     }
 
     @Override
-    public RepresentativePassport updateRepresentativePassport(RepresentativePassport representativePassport) {
-        return this.repository.save(representativePassport);
+    public RepresentativePassport updateRepresentativePassport(@NotNull RepresentativePassport representativePassport) {
+        return this.representativePassportRepository.save(representativePassport);
     }
 
     @Override
-    public void deleteRepresentativePassport(Long id) {
-        this.repository.deleteById(id);
+    public void deleteRepresentativePassport(@NotNull Long id) {
+        RepresentativePassport representativePassport = this.representativePassportRepository.findRepresentativePassportById(id);
+        if (representativePassport == null) {
+            throw new MchdException(String.format("Can`t delete representative passport " +
+                    "because representative passport %s", NOT_FOUND));
+        }
+        this.representativePassportRepository.deleteById(id);
     }
 }
