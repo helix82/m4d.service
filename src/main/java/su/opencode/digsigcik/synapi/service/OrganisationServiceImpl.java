@@ -1,22 +1,22 @@
 package su.opencode.digsigcik.synapi.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.Organisation;
 import su.opencode.digsigcik.synapi.repository.OrganisationRepository;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
+
+import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 
 @Service
 @Primary
+@RequiredArgsConstructor
 public class OrganisationServiceImpl implements OrganisationService{
     private final OrganisationRepository repository;
-
-    @Autowired
-    public OrganisationServiceImpl(OrganisationRepository repository) {
-        this.repository = repository;
-    }
 
     @Override
     public List<Organisation> findAllOrganisation() {
@@ -24,22 +24,30 @@ public class OrganisationServiceImpl implements OrganisationService{
     }
 
     @Override
-    public Organisation saveOrganisation(Organisation organisation) {
+    public Organisation saveOrganisation(@NotNull Organisation organisation) {
         return this.repository.save(organisation);
     }
 
     @Override
-    public Organisation findByOrganisationId(Long id) {
-        return this.repository.findOrganisationById(id);
+    public Organisation findByOrganisationId(@NotNull Long id) {
+        Organisation organisation = this.repository.findOrganisationById(id);
+        if (organisation == null) {
+            throw new MchdException(String.format("Organisation %s", NOT_FOUND));
+        }
+        return organisation;
     }
 
     @Override
-    public Organisation updateOrganisation(Organisation organisation) {
+    public Organisation updateOrganisation(@NotNull Organisation organisation) {
         return this.repository.save(organisation);
     }
 
     @Override
-    public void deleteOrganisation(Long id) {
+    public void deleteOrganisation(@NotNull Long id) {
+        Organisation organisation = this.repository.findOrganisationById(id);
+        if (organisation == null) {
+            throw new MchdException(String.format("Can`t delete organisation, because organisation %s", NOT_FOUND));
+        }
         this.repository.deleteById(id);
     }
 }
