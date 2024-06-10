@@ -1,22 +1,22 @@
 package su.opencode.digsigcik.synapi.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.Representative;
 import su.opencode.digsigcik.synapi.repository.RepresentativeRepository;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
+
+import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 
 @Service
 @Primary
+@RequiredArgsConstructor
 public class RepresentativeServiceImpl implements RepresentativeService {
     private final RepresentativeRepository repository;
-
-    @Autowired
-    public RepresentativeServiceImpl(RepresentativeRepository repository) {
-        this.repository = repository;
-    }
 
     @Override
     public List<Representative> findAllRepresentative() {
@@ -24,22 +24,30 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     }
 
     @Override
-    public Representative saveRepresentative(Representative representative) {
+    public Representative saveRepresentative(@NotNull Representative representative) {
         return this.repository.save(representative);
     }
 
     @Override
-    public Representative findByRepresentativeId(Long id) {
-        return this.repository.findRepresentativeById(id);
+    public Representative findByRepresentativeId(@NotNull Long id) {
+        Representative representative = this.repository.findRepresentativeById(id);
+        if (representative == null) {
+            throw new MchdException(String.format("Representative %s", NOT_FOUND));
+        }
+        return representative;
     }
 
     @Override
-    public Representative updateRepresentative(Representative representative) {
+    public Representative updateRepresentative(@NotNull Representative representative) {
         return this.repository.save(representative);
     }
 
     @Override
-    public void deleteRepresentative(Long id) {
+    public void deleteRepresentative(@NotNull Long id) {
+        Representative representative = this.repository.findRepresentativeById(id);
+        if (representative == null) {
+            throw new MchdException(String.format("Can`t delete representative because representative %s", NOT_FOUND));
+        }
         this.repository.deleteById(id);
     }
 }
