@@ -2,16 +2,22 @@ package su.opencode.digsigcik.synapi.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.springframework.http.HttpStatus;
 
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResponseErrorDto {
     private String message;
     private Integer code;
+
+    public static ResponseErrorDto createResponseErrorDto(String message, HttpStatus status) {
+        return ResponseErrorDto.builder()
+                .code(status.value())
+                .message(message)
+                .build();
+    }
 }
