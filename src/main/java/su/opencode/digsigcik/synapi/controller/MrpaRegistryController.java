@@ -76,7 +76,6 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        //todo добавить проверку для списка
         List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
