@@ -16,7 +16,7 @@ import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 @Service
 @Primary
 @RequiredArgsConstructor
-public class RepresentativePassportServiceImpl implements RepresentativePassportService{
+public class RepresentativePassportServiceImpl implements RepresentativePassportService {
     private final RepresentativePassportRepository representativePassportRepository;
     private final RepresentativeRepository representativeRepository;
 
@@ -28,12 +28,12 @@ public class RepresentativePassportServiceImpl implements RepresentativePassport
     @Override
     public RepresentativePassport saveRepresentativePassport(@NotNull RepresentativePassport representativePassport) {
         Long representativeId = representativePassport.getRepresentativeId();
-        if (representativeId == null){
-            throw new MchdException("Can`t create representative passport because representative id null!");
+        if (representativeId == null) {
+            throw new MchdException("Can`t create representative passport because representative id null!" );
         }
         if (representativeRepository.findRepresentativeById(representativeId) == null) {
             throw new MchdException(String.format("Can`t create representative passport because representative " +
-                            "with id=%d %s", representativeId, NOT_FOUND)
+                    "with id=%d %s", representativeId, NOT_FOUND)
             );
         }
         return this.representativePassportRepository.save(representativePassport);
@@ -50,6 +50,25 @@ public class RepresentativePassportServiceImpl implements RepresentativePassport
 
     @Override
     public RepresentativePassport updateRepresentativePassport(@NotNull RepresentativePassport representativePassport) {
+        Long representativePassportId = representativePassport.getId();
+        if (representativePassportId == null) {
+            throw new MchdException("Can`t update representative passport because id null!" );
+        }
+
+        RepresentativePassport existRepresentativePassport =
+                this.representativePassportRepository.findRepresentativePassportById(representativePassportId);
+        if (existRepresentativePassport == null) {
+            throw new MchdException(String.format("Can`t update. Representative passport with id=%d %s",
+                    representativePassportId, NOT_FOUND)
+            );
+        }
+
+        Long representativeId = representativePassport.getRepresentativeId();
+        if (representativeRepository.findRepresentativeById(representativeId) == null) {
+            throw new MchdException(String.format("Can`t update representative passport because representative " +
+                    "with id=%d %s", representativeId, NOT_FOUND)
+            );
+        }
         return this.representativePassportRepository.save(representativePassport);
     }
 

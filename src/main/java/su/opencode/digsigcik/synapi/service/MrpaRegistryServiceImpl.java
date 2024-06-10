@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
-import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
+import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.repository.MrpaRegistryRepository;
 import su.opencode.digsigcik.synapi.repository.OrganisationRepository;
@@ -27,10 +27,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     private final RepresentativeRepository representativeRepository;
 
     @Override
-    public List<MrpaRegistry> findAllMrpaRegistry() {
-        return this.mrpaRegistryRepository.findAll();
-    public List<MrpaRegistryWithFioDTO>  findAllMrpaRegistry() {
-        return this.repository.findAllMrpaRegistries();
+    public List<MrpaRegistryWithFioDTO> findAllMrpaRegistry() {
+        return this.mrpaRegistryRepository.findAllMrpaRegistries();
     }
 
     @Override
@@ -40,10 +38,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
-    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryId(Long id) {
-        return this.repository.findMrpaRegistryById(id);
-    public List<Map<String, Object>> findByMrpaRegistryId(@NotNull Long id) {
-        List<Map<String, Object>> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryId(@NotNull Long id) {
+        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
         if (mrpaRegistry.isEmpty()) {
             throw new MchdException(String.format("Mrpa registry %s", NOT_FOUND));
         }
@@ -52,7 +48,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public List<MrpaRegistryWithFioDTO> findAllByMrpaRegistryUserId(Long userId) {
-        return this.repository.findAllMrpaRegistriesByUserId(userId);
+        return this.mrpaRegistryRepository.findAllMrpaRegistriesByUserId(userId);
     }
 
     @Override
@@ -67,12 +63,23 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     @Override
     public MrpaRegistry updateMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
         throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "update" );
+        Long mrpaRegistryId = mrpaRegistry.getId();
+
+        if (mrpaRegistryId == null) {
+            throw new MchdException("Can`t update mrpa registry because id null!" );
+        }
+
+        List<MrpaRegistryWithFioDTO> existMrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(mrpaRegistryId);
+        if (existMrpaRegistry.isEmpty()) {
+            throw new MchdException(String.format("Can`t update. Mrpa registry with id=%d %s", mrpaRegistryId, NOT_FOUND));
+        }
+
         return this.mrpaRegistryRepository.save(mrpaRegistry);
     }
 
     @Override
     public void deleteMrpaRegistry(@NotNull Long id) {
-        List<Map<String, Object>> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
         if (mrpaRegistry.isEmpty()) {
             throw new MchdException(String.format("Can`t delete mrpa registry because mrpa registry %s", NOT_FOUND));
         }
@@ -81,8 +88,9 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public List<MrpaRegistryWithFioDTO> findByMrpaRegistryPrincipalInn(String inn) {
-        return this.repository.findMrpaRegistriesByPrincipalInn(inn);
+        return this.mrpaRegistryRepository.findMrpaRegistriesByPrincipalInn(inn);
     }
+
     private void throwExceptionIfRecordWithIdNotExist(MrpaRegistry mrpaRegistry, String operationType) {
         Long organisationId = mrpaRegistry.getOrganisationId();
         Long principalId = mrpaRegistry.getPrincipalId();
@@ -100,3 +108,4 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         }
     }
 }
+

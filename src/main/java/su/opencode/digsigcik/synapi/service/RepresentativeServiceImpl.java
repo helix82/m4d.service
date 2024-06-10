@@ -39,6 +39,15 @@ public class RepresentativeServiceImpl implements RepresentativeService {
 
     @Override
     public Representative updateRepresentative(@NotNull Representative representative) {
+        Long representativeId = representative.getId();
+        if (representativeId == null) {
+            throw new MchdException("Can`t update representative because id null!" );
+        }
+
+        Representative existRepresentative = this.repository.findRepresentativeById(representativeId);
+        if (existRepresentative == null) {
+            throw new MchdException(String.format("Can`t update. Representative with id=%d %s", representativeId, NOT_FOUND));
+        }
         return this.repository.save(representative);
     }
 

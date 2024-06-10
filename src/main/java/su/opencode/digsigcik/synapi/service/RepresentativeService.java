@@ -7,8 +7,12 @@ import java.util.List;
 
 public interface RepresentativeService {
     List<Representative> findAllRepresentative();
+
     Representative saveRepresentative(@NotNull Representative representative);
+
     Representative findByRepresentativeId(@NotNull Long id);
+
     Representative updateRepresentative(@NotNull Representative representative);
+
     void deleteRepresentative(@NotNull Long id);
 }

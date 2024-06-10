@@ -15,7 +15,7 @@ import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 @Service
 @Primary
 @RequiredArgsConstructor
-public class OrganisationServiceImpl implements OrganisationService{
+public class OrganisationServiceImpl implements OrganisationService {
     private final OrganisationRepository repository;
 
     @Override
@@ -44,6 +44,15 @@ public class OrganisationServiceImpl implements OrganisationService{
 
     @Override
     public Organisation updateOrganisation(@NotNull Organisation organisation) {
+        Long organisationId = organisation.getId();
+        if (organisationId == null) {
+            throw new MchdException("Can`t update organisation because id null!" );
+        }
+
+        Organisation existOrganisation = this.repository.findOrganisationById(organisationId);
+        if (existOrganisation == null) {
+            throw new MchdException(String.format("Can`t update. Organisation with id=%d %s", organisationId, NOT_FOUND));
+        }
         return this.repository.save(organisation);
     }
 

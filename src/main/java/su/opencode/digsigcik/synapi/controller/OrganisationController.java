@@ -27,36 +27,35 @@ import static su.opencode.digsigcik.synapi.util.Constant.NULL;
 
 @RestController
 @MchdExceptionHandler
-@RequestMapping("/api/v1/organisation")
+@RequestMapping("/api/v1/organisation" )
 @AllArgsConstructor
 public class OrganisationController {
     private final String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
 
     private final OrganisationService service;
 
-    @Operation(summary = "Получить список организаций", description = "Возвращает список организаций")
+    @Operation(summary = "Получить список организаций", description = "Возвращает список организаций" )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = "Успешно получено" ),
+            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена" )
     })
     @GetMapping()
     public List<Organisation> findAllOrganisation() {
         return service.findAllOrganisation();
     }
 
-    @Operation(summary = "Сохранить организацию", description = "Если указанной организации нет в базе, создаем её и возвращаем, иначе возвращаем уже существующую организацию")
+    @Operation(summary = "Сохранить организацию", description = "Если указанной организации нет в базе, " +
+            "создаем её и возвращаем, иначе возвращаем уже существующую организацию" )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно сохранено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = "Успешно сохранено" ),
+            @ApiResponse(code = 404, message = "Not found" )
     })
-    @PostMapping("save")
-    public Organisation saveCredential(@RequestBody Organisation organisation) {
-        Organisation existsOrganisation = service.findByOrganisationInn(organisation.getInn());
-        if(existsOrganisation != null) {
-            return existsOrganisation;
-        }
-        return service.saveOrganisation(organisation);
+    @PostMapping("save" )
     public ResponseEntity<?> saveOrganisation(@RequestBody Organisation organisation) {
+        Organisation existsOrganisation = service.findByOrganisationInn(organisation.getInn());
+        if (existsOrganisation != null) {
+            return new ResponseEntity<>(existsOrganisation, HttpStatus.OK);
+        }
         Organisation response;
         try {
             response = service.saveOrganisation(organisation);
@@ -66,22 +65,22 @@ public class OrganisationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить организацию по ИД", description = "Возвращает запись организации")
+    @Operation(summary = "Получить организацию по ИД", description = "Возвращает запись организации" )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = "Успешно получено" ),
+            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена" )
     })
-    @GetMapping("/{id}")
+    @GetMapping("/{id}" )
     public Organisation findByOrganisationId(@PathVariable Long id) {
         return service.findByOrganisationId(id);
     }
 
-    @Operation(summary = "Изменить запись организации", description = "Возвращает измененную организацию")
+    @Operation(summary = "Изменить запись организации", description = "Возвращает измененную организацию" )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно изменено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = "Успешно изменено" ),
+            @ApiResponse(code = 404, message = "Not found" )
     })
-    @PutMapping("update")
+    @PutMapping("update" )
     public ResponseEntity<?> updateOrganisation(@RequestBody Organisation organisation) {
         Organisation response;
         try {
@@ -92,12 +91,12 @@ public class OrganisationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить организацию", description = "Ничего не возвращает")
+    @Operation(summary = "Удалить организацию", description = "Ничего не возвращает" )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно удалено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = "Успешно удалено" ),
+            @ApiResponse(code = 404, message = "Not found" )
     })
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("delete/{id}" )
     public ResponseEntity<?> deleteOrganisation(@PathVariable Long id) {
         try {
             service.deleteOrganisation(id);
@@ -106,5 +105,4 @@ public class OrganisationController {
         }
         return ResponseEntity.ok().build();
     }
-
 }

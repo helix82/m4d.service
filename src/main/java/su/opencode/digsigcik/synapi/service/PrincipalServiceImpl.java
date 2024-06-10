@@ -15,7 +15,7 @@ import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 @Service
 @Primary
 @RequiredArgsConstructor
-public class PrincipalServiceImpl implements PrincipalService{
+public class PrincipalServiceImpl implements PrincipalService {
     private final PrincipalRepository repository;
 
     @Override
@@ -39,6 +39,15 @@ public class PrincipalServiceImpl implements PrincipalService{
 
     @Override
     public Principal updatePrincipal(@NotNull Principal principal) {
+        Long principalId = principal.getId();
+        if (principalId == null) {
+            throw new MchdException("Can`t update principal because id null!" );
+        }
+
+        Principal existPrincipal = this.repository.findPrincipalById(principalId);
+        if (existPrincipal == null) {
+            throw new MchdException(String.format("Can`t update. Principal with id=%d %s", principalId, NOT_FOUND));
+        }
         return this.repository.save(principal);
     }
 

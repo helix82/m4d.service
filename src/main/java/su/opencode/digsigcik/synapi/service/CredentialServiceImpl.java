@@ -39,6 +39,15 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Credential updateCredential(@NotNull Credential credential) {
+        Long credentialId = credential.getId();
+        if (credentialId == null) {
+            throw new MchdException("Can`t update credential because id null!" );
+        }
+
+        Credential existCredential = this.repository.findCredentialById(credentialId);
+        if (existCredential == null) {
+            throw new MchdException(String.format("Can`t update. Credential with id=%d %s", credentialId, NOT_FOUND));
+        }
         return this.repository.save(credential);
     }
 
