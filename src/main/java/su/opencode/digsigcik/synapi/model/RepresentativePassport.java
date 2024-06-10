@@ -1,5 +1,7 @@
 package su.opencode.digsigcik.synapi.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,15 +15,27 @@ import javax.persistence.*;
 public class RepresentativePassport {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(name = "ИД паспорта представителя", example = "1", required = true)
+    @JsonProperty("id")
     private Long id;
-    @Column(name = "series_number", columnDefinition = "VARCHAR(50)")
+    @Column(name = "series_number", columnDefinition = "VARCHAR(255)")
+    @Schema(name = "Серия и номер паспорта представителя", example = "1234 123456", required = true)
+    @JsonProperty("seriesNumber")
     private String seriesNumber;
-    @Column(name = "date_issue", columnDefinition = "VARCHAR(50)")
+    @Column(name = "date_issue", columnDefinition = "VARCHAR(255)")
+    @Schema(name = "Дата выдачи паспорта представителя", example = "01.01.2000", required = false)
+    @JsonProperty("dateIssue")
     private String dateIssue;
-    @Column(name = "who_issue", columnDefinition = "VARCHAR(50)")
+    @Column(name = "who_issue", columnDefinition = "TEXT")
+    @Schema(name = "Кем выдан паспорт представителя", example = "", required = false)
+    @JsonProperty("whoIssue")
     private String whoIssue;
-    @Column(name = "department_code", columnDefinition = "VARCHAR(50)")
+    @Column(name = "department_code", columnDefinition = "VARCHAR(255)")
+    @Schema(name = "Код подразделения, выдавшего паспорт представителя", example = "123 123", required = false)
+    @JsonProperty("departmentCode")
     private String departmentCode;
     @Column(name = "representative_id")
+    @Schema(name = "ИД представителя", example = "1", required = false)
+    @JsonProperty("representativeId")
     private Long representativeId;
 }

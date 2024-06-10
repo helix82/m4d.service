@@ -6,10 +6,9 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum StatusTypeEnum {
-//Не подписана доверителем, Действительна, Просрочена, Отозвана
-    NOT_SIGNED("Не подписана доверителем"),
+    NOT_SIGNED("Отсутствует ЭП"),
     VALID("Действительна"),
-    EXPIRED("Просрочена"),
+    EXPIRED("Не действительна"),
     WITHDRAWN("Отозвана"),
     UNKNOWN("Неизвестный статус");
 

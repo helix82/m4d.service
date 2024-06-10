@@ -45,6 +45,7 @@ public class AccountController {
     @PostMapping("/accounts")
     public ResponseEntity<AcmeAccount> saveAccount(@RequestBody AcmeAccount acmeAccount) {
         AcmeAccount _acmeAccount = new AcmeAccount(acmeAccount.getName(), acmeAccount.getExternalKey());
+        if(acmeAccount.getEmail()!=null)_acmeAccount.setEmail(acmeAccount.getEmail());;
         if(acmeAccount.getAccountUrl()!=null)_acmeAccount.setAccountUrl(acmeAccount.getAccountUrl());
         if(acmeAccount.getAccountPrivateKey()!=null)_acmeAccount.setAccountPrivateKey(acmeAccount.getAccountPrivateKey());
         if(acmeAccount.getDeleted()!=null)acmeAccount.setDeleted(acmeAccount.getDeleted());
@@ -59,6 +60,7 @@ public class AccountController {
                 .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeAccount with id = " + id));
 
         if(acmeAccount.getName()!=null)_acmeAccount.setName(acmeAccount.getName());;
+        if(acmeAccount.getEmail()!=null)_acmeAccount.setEmail(acmeAccount.getEmail());;
         if(acmeAccount.getExternalKey()!=null)_acmeAccount.setExternalKey(acmeAccount.getExternalKey());
         if(acmeAccount.getAccountUrl()!=null)_acmeAccount.setAccountUrl(acmeAccount.getAccountUrl());
         if(acmeAccount.getAccountPrivateKey()!=null)_acmeAccount.setAccountPrivateKey(acmeAccount.getAccountPrivateKey());

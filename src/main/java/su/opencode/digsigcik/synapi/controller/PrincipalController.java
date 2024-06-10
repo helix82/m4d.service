@@ -1,5 +1,9 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +28,21 @@ public class PrincipalController {
 
     private final PrincipalService service;
 
+    @Operation(summary = "Получить список доверителей", description = "Возвращает список доверителей")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно получено"),
+            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+    })
     @GetMapping()
     public List<Principal> findAllPrincipal() {
         return service.findAllPrincipal();
     }
 
+    @Operation(summary = "Сохранить доверителя", description = "Возвращает сохраненную запись доверителя")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно сохранено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
     @PostMapping("save")
     public ResponseEntity<?> savePrincipal(@RequestBody Principal principal) {
         Principal response;
@@ -40,11 +54,21 @@ public class PrincipalController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @Operation(summary = "Получить доверителя по ИД", description = "Возвращает доверителя")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно получено"),
+            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+    })
     @GetMapping("/{id}")
     public Principal findByPrincipalId(@PathVariable Long id) {
         return service.findByPrincipalId(id);
     }
 
+    @Operation(summary = "Изменить доверителя", description = "Возвращает измененного доверителя")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно изменено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
     @PutMapping("update")
     public ResponseEntity<?> updatePrincipal(@RequestBody Principal principal) {
         Principal response;
@@ -56,6 +80,12 @@ public class PrincipalController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
+    @Operation(summary = "Удалить доверителя", description = "Ничего не возвращает")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно удалено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
     @DeleteMapping("delete/{id}")
     public ResponseEntity<?> deletePrincipal(@PathVariable Long id) {
         try {

@@ -4,22 +4,21 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 
 import java.util.List;
-import java.util.Map;
 
 @Repository
 public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long> {
-    @Query(value = "SELECT mr.*, concat(p.surname, ' ', p.name, ' ', p.patronymic) as principal_fio,  concat(r.surname, ' ', r.name, ' ', r.patronymic) as representative_fio "
-            + " from mrpa_registry mr "
-            + " left join principal p on p.id=mr.principal_id"
-            + " left join representative r on r.id=mr.representative_id"
-            + " where mr.id=?1 "
-            , nativeQuery = true)
-    List<Map<String, Object>> findMrpaRegistryById(Long id);
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, mr.organisationId, mr.principalId, mr.representativeId,"
+            + " p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
+            + " from MrpaRegistry mr"
+            + " left join Principal p on p.id=mr.principalId"
+            + " left join Representative r on r.id=mr.representativeId "
+            + " where mr.id=?1 ")
+    List<MrpaRegistryWithFioDTO> findMrpaRegistryById(Long id);
 
-    //TODO @helix82 Дополнить Паспортными данными представителя и Полномочиями
     @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, "
             + "p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic, rp.id, rp.dateIssue, rp.whoIssue, rp.seriesNumber, rp.departmentCode, o.id, o.inn, o.kpp, o.ogrn, o.name, o.regionCode, o.legalAddress, "
             + " c.id, c.code, c.name)"
@@ -32,4 +31,27 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join Credential c on c.id=mrc.credentialId"
             + " where mr.userId=?1 ")
     List<MrpaRegistryFullDTO> findMrpaRegistriesByUserId(Long userId);
+
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, mr.organisationId, mr.principalId, mr.representativeId,"
+            + "p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
+            + " from MrpaRegistry mr"
+            + " left join Principal p on p.id=mr.principalId"
+            + " left join Representative r on r.id=mr.representativeId "
+            + " where mr.userId=?1 ")
+    List<MrpaRegistryWithFioDTO> findAllMrpaRegistriesByUserId(Long userId);
+
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, mr.organisationId, mr.principalId, mr.representativeId,"
+            + "p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
+            + " from MrpaRegistry mr"
+            + " left join Principal p on p.id=mr.principalId"
+            + " left join Representative r on r.id=mr.representativeId ")
+    List<MrpaRegistryWithFioDTO> findAllMrpaRegistries();
+
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, mr.organisationId, mr.principalId, mr.representativeId,"
+            + "p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
+            + " from MrpaRegistry mr"
+            + " left join Principal p on p.id=mr.principalId"
+            + " left join Representative r on r.id=mr.representativeId "
+            + " where p.inn=?1 ")
+    List<MrpaRegistryWithFioDTO> findMrpaRegistriesByPrincipalInn(String inn);
 }

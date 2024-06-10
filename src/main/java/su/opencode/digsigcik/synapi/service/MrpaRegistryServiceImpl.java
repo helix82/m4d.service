@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
 import su.opencode.digsigcik.synapi.exception.MchdException;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.repository.MrpaRegistryRepository;
 import su.opencode.digsigcik.synapi.repository.OrganisationRepository;
@@ -13,7 +14,6 @@ import su.opencode.digsigcik.synapi.repository.RepresentativeRepository;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
-import java.util.Map;
 
 import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 
@@ -29,6 +29,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     @Override
     public List<MrpaRegistry> findAllMrpaRegistry() {
         return this.mrpaRegistryRepository.findAll();
+    public List<MrpaRegistryWithFioDTO>  findAllMrpaRegistry() {
+        return this.repository.findAllMrpaRegistries();
     }
 
     @Override
@@ -38,12 +40,19 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
+    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryId(Long id) {
+        return this.repository.findMrpaRegistryById(id);
     public List<Map<String, Object>> findByMrpaRegistryId(@NotNull Long id) {
         List<Map<String, Object>> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
         if (mrpaRegistry.isEmpty()) {
             throw new MchdException(String.format("Mrpa registry %s", NOT_FOUND));
         }
         return mrpaRegistry;
+    }
+
+    @Override
+    public List<MrpaRegistryWithFioDTO> findAllByMrpaRegistryUserId(Long userId) {
+        return this.repository.findAllMrpaRegistriesByUserId(userId);
     }
 
     @Override
@@ -70,6 +79,10 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         this.mrpaRegistryRepository.deleteById(id);
     }
 
+    @Override
+    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryPrincipalInn(String inn) {
+        return this.repository.findMrpaRegistriesByPrincipalInn(inn);
+    }
     private void throwExceptionIfRecordWithIdNotExist(MrpaRegistry mrpaRegistry, String operationType) {
         Long organisationId = mrpaRegistry.getOrganisationId();
         Long principalId = mrpaRegistry.getPrincipalId();

@@ -38,6 +38,11 @@ public class OrganisationServiceImpl implements OrganisationService{
     }
 
     @Override
+    public Organisation findByOrganisationInn(String inn) {
+        return this.repository.findOrganisationByInn(inn);
+    }
+
+    @Override
     public Organisation updateOrganisation(@NotNull Organisation organisation) {
         return this.repository.save(organisation);
     }
