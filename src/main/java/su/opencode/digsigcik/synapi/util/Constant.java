@@ -4,8 +4,6 @@ public final class Constant {
     public static final String NULL = "null";
     public static final String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);
     public static final String TOKEN_ERROR_MESSAGE = String.format("Token %s", NULL_OR_EMPTY_ERROR_MESSAGE);
-    public static final String LOGIN_ERROR_MESSAGE = String.format("Login %s", NULL_OR_EMPTY_ERROR_MESSAGE);
-    public static final String PASSWORD_ERROR_MESSAGE = String.format("Password %s", NULL_OR_EMPTY_ERROR_MESSAGE);
     public static final String PIN_CODE_ERROR_MESSAGE = "PIN code incorrect!";
     public static final String OPERATION_ID_ERROR_MESSAGE = String.format("Operation id %s", NULL_OR_EMPTY_ERROR_MESSAGE);
     public static final String FILE_ERROR_MESSAGE = String.format("File %s", NULL_OR_EMPTY_ERROR_MESSAGE);

@@ -21,7 +21,6 @@ import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 @Primary
 @RequiredArgsConstructor
 public class MrpaRegistryServiceImpl implements MrpaRegistryService {
-    private final String ERROR_MESSAGE = "Can`t %s mrpa registry because %s with id=%d does not exist!";
     private final MrpaRegistryRepository mrpaRegistryRepository;
     private final OrganisationRepository organisationRepository;
     private final PrincipalRepository principalRepository;
@@ -34,7 +33,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public MrpaRegistry saveMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
-        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "create");
+        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "create" );
         return this.mrpaRegistryRepository.save(mrpaRegistry);
     }
 
@@ -58,7 +57,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public MrpaRegistry updateMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
-        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "update");
+        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "update" );
         return this.mrpaRegistryRepository.save(mrpaRegistry);
     }
 
@@ -76,14 +75,15 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         Long principalId = mrpaRegistry.getPrincipalId();
         Long representativeId = mrpaRegistry.getRepresentativeId();
 
+        String errorMessage = "Can`t %s mrpa registry because %s with id=%d does not exist!";
         if (organisationRepository.findOrganisationById(organisationId) == null) {
-            throw new MchdException(String.format(ERROR_MESSAGE, operationType, "organisation", organisationId));
+            throw new MchdException(String.format(errorMessage, operationType, "organisation", organisationId));
         }
         if (principalRepository.findPrincipalById(principalId) == null) {
-            throw new MchdException(String.format(ERROR_MESSAGE, operationType, "principal", principalId));
+            throw new MchdException(String.format(errorMessage, operationType, "principal", principalId));
         }
         if (representativeRepository.findRepresentativeById(representativeId) == null) {
-            throw new MchdException(String.format(ERROR_MESSAGE, operationType, "representative", representativeId));
+            throw new MchdException(String.format(errorMessage, operationType, "representative", representativeId));
         }
     }
 }
