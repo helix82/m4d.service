@@ -53,7 +53,7 @@ public class CertificateController {
     }
 
 
-    private Map certInfo(AcmeCertificate certificate) {
+    public static Map certInfo(AcmeCertificate certificate) {
         HashMap<String, Object> ret = new HashMap<>();
 
         CertificateFactory fac = null;

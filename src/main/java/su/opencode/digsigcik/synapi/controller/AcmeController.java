@@ -15,10 +15,13 @@ import org.shredzone.acme4j.challenge.Http01Challenge;
 import org.shredzone.acme4j.exception.AcmeException;
 import org.shredzone.acme4j.util.KeyPairUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.model.AcmeAccount;
@@ -59,6 +62,11 @@ import java.util.function.Supplier;
 
 public class AcmeController {
     private static final String CA_URI = "https://acme.server:4433/acme/acme/directory";
+
+    private static final String ACME_ACCOUNT_NAME = "acme.account.name";
+    private static final String ACME_ACCOUNT_EMAIL = "acme@account.mail";
+    private static final String ACME_ACCOUNT_KEY = "acme.account.key";
+
     private static final int MAX_ATTEMPTS = 50;
 
     @Autowired
@@ -162,6 +170,47 @@ public class AcmeController {
     }
 
 
+    private boolean loginDefaultAccount(HttpSession httpSession) {
+        boolean ret = false;
+        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
+        if(acmeAccount != null) {
+            Session session = new Session(CA_URI);
+            try {
+                if(acmeAccount.getAccountPrivateKey()==null) {
+                    StringWriter sw = new StringWriter();
+                    KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
+                    acmeAccount.setAccountPrivateKey(sw.toString());
+                    accountRepository.save(acmeAccount);
+                }
+                KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
+                if(acmeAccount.getAccountUrl()==null) {
+                    // register on acme server
+                    Account acct = new AccountBuilder()
+                            .addContact("mailto:"+acmeAccount.getEmail())
+                            .agreeToTermsOfService()
+                            .useKeyPair(userKeyPair)
+                            .create(session);
+                    Login login = session.login(acct.getLocation(), userKeyPair);
+                    httpSession.setAttribute("login", login);
+                    acmeAccount.setAccountUrl(acct.getLocation().toString());
+                    accountRepository.save(acmeAccount);
+
+                } else {
+                    // login on acme server
+                    Login login = new AccountBuilder()
+                            .onlyExisting()         // Do not create a new acmeAccount
+                            .agreeToTermsOfService()
+                            .useKeyPair(userKeyPair)
+                            .createLogin(session);
+                    httpSession.setAttribute("login", login);
+                    ret = true;
+                }
+            } catch (IOException | AcmeException ignored) {
+            }
+        }
+        return ret;
+    }
+
     @GetMapping("/accounts/{id}/login")
     public Map login(HttpSession httpSession,
                     @PathVariable Long id) {
@@ -246,6 +295,82 @@ public class AcmeController {
         return ret;
     }
 
+    @PostMapping("/certificate")
+    public ResponseEntity<Map>  certificate(HttpSession httpSession,
+                                           @RequestParam(value = "domainName") String domainName,
+                                           @RequestParam(value = "notAfter") String notAfter
+    ) {
+        HashMap<String, String> ret = new HashMap<>();
+        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
+        if(acmeAccount==null) {
+            acmeAccount = new AcmeAccount(ACME_ACCOUNT_NAME, ACME_ACCOUNT_KEY);
+            acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
+            accountRepository.save(acmeAccount);
+        }
+        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domainName);
+        if(acmeDomain==null) {
+            acmeDomain = new AcmeDomain(acmeAccount, domainName);
+            domainRepository.save(acmeDomain);
+        }
+
+        if(loginDefaultAccount(httpSession)){
+            Login login = (Login)httpSession.getAttribute("login");
+            try {
+                Account account = login.getAccount();
+                Order order = account
+                        .newOrder()
+                        .domain(acmeDomain.getDomainUrl())
+                        .notAfter(Instant.parse(notAfter))
+                        .create();
+
+                Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
+                if(challenge==null) {
+                    // авторизация уже прошла или испытание выполнено
+                    ret.put("result", "done");
+                    ret.put("description", "Auth and challenge done");
+                    new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                }
+                doChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
+
+                challenge.trigger();
+
+                if(acmeDomain.getDomainPrivateKey()==null) {
+                    StringWriter sw = new StringWriter();
+                    KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(4096), sw);
+                    acmeDomain.setDomainPrivateKey(sw.toString());
+                    domainRepository.save(acmeDomain);
+                }
+                KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
+
+                order.execute(domainKeyPair);
+
+                // Wait for the order to complete
+                Status status = waitForCompletion(order::getStatus, order::fetch);
+                if (status != Status.VALID) {
+                    throw new AcmeException("Order failed... Giving up.");
+                }
+                clearChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
+
+                Certificate certificate = order.getCertificate();
+
+                StringWriter writer = new StringWriter();
+                certificate.writeCertificate(writer);
+
+                AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
+                acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
+                certificateRepository.save(acmeCertificate);
+
+                return new ResponseEntity<>(CertificateController.certInfo(acmeCertificate), HttpStatus.OK);
+            } catch (AcmeException e) {
+                ret.put("error", "acme exception");
+                ret.put("exception", e.getMessage());
+            } catch (IOException e) {
+                ret.put("error", "io exception");
+                ret.put("exception", e.getMessage());
+            }
+        }
+        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+    }
 
     @PostMapping("/domains/{domainId}/certificate")
     public Map certificate(HttpSession httpSession,
