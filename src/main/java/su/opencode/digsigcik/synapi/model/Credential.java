@@ -20,10 +20,12 @@ public class Credential {
     @Schema(name = "ИД полномочия", example = "1", required = true)
     @JsonProperty("id")
     private Long id;
+
     @Column(name = "name", columnDefinition = "VARCHAR(255)")
     @Schema(name = "Наименование полномочия", example = "", required = false)
     @JsonProperty("name")
     private String name;
+
     @Column(name = "code", columnDefinition = "VARCHAR(255)")
     @Schema(name = "Код полномочия", example = "EMPOWERMENT", required = false)
     @JsonProperty("code")

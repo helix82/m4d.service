@@ -10,34 +10,49 @@ import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 public class MrpaRegistryWithFioDTO {
     @JsonProperty("id")
     private Long id;
+
     @JsonProperty("guid")
     private String guid;
+
     @JsonProperty("internalNumber")
     private String internalNumber;
+
     @JsonProperty("organizationId")
     private Long organizationId;
+
     @JsonProperty("principalId")
     private Long principalId;
+
     @JsonProperty("representativeId")
     private Long representativeId;
+
     @JsonProperty("startDate")
     private String startDate;
+
     @JsonProperty("endDate")
     private String endDate;
+
     @JsonProperty("status")
     private String status;
+
     @JsonProperty("ftxRegistration")
     private String ftxRegistration;
+
     @JsonProperty("sigPath")
     private String sigPath;
+
     @JsonProperty("mrpaXmlPath")
     private String mrpaXmlPath;
+
     @JsonProperty("recalledXmlPath")
     private String recalledXmlPath;
+
     @JsonProperty("userId")
     private Long userId;
+
     @JsonProperty("principalFio")
     private String principalFio;
+
     @JsonProperty("representativeFio")
     private String representativeFio;
 

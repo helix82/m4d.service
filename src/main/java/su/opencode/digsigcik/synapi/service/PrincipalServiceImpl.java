@@ -11,6 +11,8 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constant.NULL;
+import static su.opencode.digsigcik.synapi.util.Constant.NULL_OR_EMPTY_ERROR_MESSAGE;
 
 @Service
 @Primary
@@ -25,6 +27,12 @@ public class PrincipalServiceImpl implements PrincipalService {
 
     @Override
     public Principal savePrincipal(@NotNull Principal principal) {
+        String principalSnils = principal.getSnils();
+        if (principalSnils == null || principalSnils.isEmpty()) {
+            throw new MchdException(String.format("Can`t create principal because snils %s ",
+                    NULL_OR_EMPTY_ERROR_MESSAGE)
+            );
+        }
         return this.repository.save(principal);
     }
 
@@ -41,7 +49,7 @@ public class PrincipalServiceImpl implements PrincipalService {
     public Principal updatePrincipal(@NotNull Principal principal) {
         Long principalId = principal.getId();
         if (principalId == null) {
-            throw new MchdException("Can`t update principal because id null!" );
+            throw new MchdException(String.format("Can`t update principal because id %s!", NULL));
         }
 
         Principal existPrincipal = this.repository.findPrincipalById(principalId);

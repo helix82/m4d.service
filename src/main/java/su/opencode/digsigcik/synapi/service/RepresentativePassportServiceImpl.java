@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constant.NULL_OR_EMPTY_ERROR_MESSAGE;
 
 @Service
 @Primary
@@ -29,11 +30,17 @@ public class RepresentativePassportServiceImpl implements RepresentativePassport
     public RepresentativePassport saveRepresentativePassport(@NotNull RepresentativePassport representativePassport) {
         Long representativeId = representativePassport.getRepresentativeId();
         if (representativeId == null) {
-            throw new MchdException("Can`t create representative passport because representative id null!" );
+            throw new MchdException("Can`t create representative passport because representative id null!");
         }
         if (representativeRepository.findRepresentativeById(representativeId) == null) {
             throw new MchdException(String.format("Can`t create representative passport because representative " +
                     "with id=%d %s", representativeId, NOT_FOUND)
+            );
+        }
+        String seriesNumber = representativePassport.getSeriesNumber();
+        if (seriesNumber == null || seriesNumber.isEmpty()) {
+            throw new MchdException(String.format("Can`t create representative passport because seriesNumber %s",
+                    NULL_OR_EMPTY_ERROR_MESSAGE)
             );
         }
         return this.representativePassportRepository.save(representativePassport);
@@ -52,7 +59,7 @@ public class RepresentativePassportServiceImpl implements RepresentativePassport
     public RepresentativePassport updateRepresentativePassport(@NotNull RepresentativePassport representativePassport) {
         Long representativePassportId = representativePassport.getId();
         if (representativePassportId == null) {
-            throw new MchdException("Can`t update representative passport because id null!" );
+            throw new MchdException("Can`t update representative passport because id null!");
         }
 
         RepresentativePassport existRepresentativePassport =
