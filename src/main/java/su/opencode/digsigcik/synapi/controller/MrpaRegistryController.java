@@ -31,6 +31,7 @@ import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.util.List;
 
+import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constant.NULL;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
@@ -41,6 +42,7 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 @AllArgsConstructor
 public class MrpaRegistryController {
     private final String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
+    private final String MRPA_REGISTRY_CREDENTIAL_IS_NULL = String.format("Assign Credential to Mrpa registry is %s!", NULL);
     private final MrpaRegistryService mrpaRegistryService;
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
 
@@ -60,8 +62,9 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Успешно сохранено" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @PostMapping("save" )
-    public ResponseEntity<?> saveMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
+    @PostMapping("save/credential/{id}" )
+    public ResponseEntity<?> saveMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry, @PathVariable @Parameter(name = "id",
+            description = "ИД полномочия", example = "1" ) Long id) {
         mrpaRegistry.setStatus(StatusTypeEnum.NOT_SIGNED);
         MrpaRegistry mrpaRegistrySaved;
         try {
@@ -69,6 +72,17 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
+
+        MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
+        mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
+        mrpaRegistryCredential.setCredentialId(id);
+        MrpaRegistryCredential mrpaRegistryCredentialSaved;
+        try {
+            mrpaRegistryCredentialSaved = mrpaRegistryCredentialService.saveMrpaRegistryCredential(mrpaRegistryCredential);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+        }
+        assertNotNull(mrpaRegistryCredentialSaved);
         List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
