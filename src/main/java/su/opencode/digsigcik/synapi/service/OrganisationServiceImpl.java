@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constant.NULL_OR_EMPTY_ERROR_MESSAGE;
 
 @Service
 @Primary
@@ -25,6 +26,12 @@ public class OrganisationServiceImpl implements OrganisationService {
 
     @Override
     public Organisation saveOrganisation(@NotNull Organisation organisation) {
+        String organisationInn = organisation.getInn();
+        if (organisationInn == null || organisationInn.isEmpty()){
+            throw new MchdException(String.format("Can`t create organisation because inn %s ",
+                    NULL_OR_EMPTY_ERROR_MESSAGE)
+            );
+        }
         return this.repository.save(organisation);
     }
 

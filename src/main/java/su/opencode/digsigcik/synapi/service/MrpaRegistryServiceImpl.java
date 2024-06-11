@@ -28,12 +28,23 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public List<MrpaRegistryWithFioDTO> findAllMrpaRegistry() {
-        return this.mrpaRegistryRepository.findAllMrpaRegistries();
+        List<MrpaRegistryWithFioDTO> mrpa = this.mrpaRegistryRepository.findAllMrpaRegistries();
+        return mrpa;
     }
 
     @Override
     public MrpaRegistry saveMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
-        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "create" );
+        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "create");
+        String errorMessage = "Can`t create mrpa registry because %s null!";
+        if (mrpaRegistry.getFtxRegistration() == null) {
+            throw new MchdException(String.format(errorMessage, "ftxRegistration"));
+        }
+        if (mrpaRegistry.getStatus() == null) {
+            throw new MchdException(String.format(errorMessage, "status"));
+        }
+        if (mrpaRegistry.getUserId() == null) {
+            throw new MchdException(String.format(errorMessage, "user id"));
+        }
         return this.mrpaRegistryRepository.save(mrpaRegistry);
     }
 
@@ -62,11 +73,11 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public MrpaRegistry updateMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
-        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "update" );
+        throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "update");
         Long mrpaRegistryId = mrpaRegistry.getId();
 
         if (mrpaRegistryId == null) {
-            throw new MchdException("Can`t update mrpa registry because id null!" );
+            throw new MchdException("Can`t update mrpa registry because id null!");
         }
 
         List<MrpaRegistryWithFioDTO> existMrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(mrpaRegistryId);
