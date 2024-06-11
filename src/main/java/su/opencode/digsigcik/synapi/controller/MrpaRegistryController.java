@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,10 +18,13 @@ import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.model.MrpaRegistryCredential;
+import su.opencode.digsigcik.synapi.model.ca.CAXml;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryCredentialService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
+import su.opencode.digsigcik.synapi.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.List;
 
@@ -191,5 +195,37 @@ public class MrpaRegistryController {
         }
         List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Выгрузить МЧД в XML-файл", description = "Возвращает статус выполнения загрузки")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно загружено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
+    @PostMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public String upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, JAXBException {
+        String content = new String(sourceFile.getBytes());
+        Document document = convertStringToDocument(content);
+        assert document != null;
+        CAXml caXml = XMLUtil.unmarshal(document, CAXml.class);
+
+//        for(CAXml.CA ca : caXml.getCa()){
+//            var stat = ca.getAccreditationStatus().getStatus();
+//            List<CertificateData> certData = ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()
+//                    .stream().map(z->z.getCertificates().getCertificateData()).collect(Collectors.toList())).collect(Collectors.toList()).stream().flatMap(Collection::stream).flatMap(Collection::stream).collect(Collectors.toList());
+//            for(CertificateData cert : certData){
+//
+//                var substr = cert.getIssuedTo().split(", ");
+//                for(String s : substr) {
+//                    var st = s.substring(0,3);
+//                    if (st.equals("CN="))
+//                        cert.setIssuedTo(s.substring(3));
+//                }
+//                cert.setTypeInput("Автоматически");
+//                cert.setAccreditationStatus(stat);
+//                certificateDataService.saveCertificateData(cert);
+//            }
+//        }
+        return "OK";
     }
 }
