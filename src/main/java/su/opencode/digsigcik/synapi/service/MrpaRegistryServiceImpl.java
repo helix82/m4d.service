@@ -3,8 +3,8 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
+import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.repository.MrpaRegistryRepository;
@@ -28,23 +28,12 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public List<MrpaRegistryWithFioDTO> findAllMrpaRegistry() {
-        List<MrpaRegistryWithFioDTO> mrpa = this.mrpaRegistryRepository.findAllMrpaRegistries();
-        return mrpa;
+        return this.mrpaRegistryRepository.findAllMrpaRegistries();
     }
 
     @Override
     public MrpaRegistry saveMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
         throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "create");
-        String errorMessage = "Can`t create mrpa registry because %s null!";
-        if (mrpaRegistry.getFtxRegistration() == null) {
-            throw new MchdException(String.format(errorMessage, "ftxRegistration"));
-        }
-        if (mrpaRegistry.getStatus() == null) {
-            throw new MchdException(String.format(errorMessage, "status"));
-        }
-        if (mrpaRegistry.getUserId() == null) {
-            throw new MchdException(String.format(errorMessage, "user id"));
-        }
         return this.mrpaRegistryRepository.save(mrpaRegistry);
     }
 
@@ -63,26 +52,12 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
-    public List<MrpaRegistryWithFioDTO> findAllByMrpaRegistryUserId(Long userId) {
-        return this.mrpaRegistryRepository.findAllMrpaRegistriesByUserId(userId);
-    }
-
-    @Override
-    public List<MrpaRegistryFullDTO> findByMrpaRegistryUserId(@NotNull Long userId) {
-        List<MrpaRegistryFullDTO> mrpaRegistryFullDto = this.mrpaRegistryRepository.findMrpaRegistriesByUserId(userId);
-        if (mrpaRegistryFullDto.isEmpty()) {
-            throw new MchdException(String.format("Mrpa registry full dto list %s", NOT_FOUND));
-        }
-        return mrpaRegistryFullDto;
-    }
-
-    @Override
     public MrpaRegistry updateMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
         throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "update");
         Long mrpaRegistryId = mrpaRegistry.getId();
 
         if (mrpaRegistryId == null) {
-            throw new MchdException("Can`t update mrpa registry because id null!");
+            throw new BadRequestException("Can`t update mrpa registry because id null!");
         }
 
         List<MrpaRegistryWithFioDTO> existMrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(mrpaRegistryId);
@@ -112,15 +87,15 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         Long principalId = mrpaRegistry.getPrincipalId();
         Long representativeId = mrpaRegistry.getRepresentativeId();
 
-        String errorMessage = "Can`t %s mrpa registry because %s with id=%d does not exist!";
+        String errorMessage = "Can`t %s mrpa registry because %s id null!";
         if (organisationRepository.findOrganisationById(organisationId) == null) {
-            throw new MchdException(String.format(errorMessage, operationType, "organisation", organisationId));
+            throw new BadRequestException(String.format(errorMessage, operationType, "organisation", organisationId));
         }
         if (principalRepository.findPrincipalById(principalId) == null) {
-            throw new MchdException(String.format(errorMessage, operationType, "principal", principalId));
+            throw new BadRequestException(String.format(errorMessage, operationType, "principal", principalId));
         }
         if (representativeRepository.findRepresentativeById(representativeId) == null) {
-            throw new MchdException(String.format(errorMessage, operationType, "representative", representativeId));
+            throw new BadRequestException(String.format(errorMessage, operationType, "representative", representativeId));
         }
     }
 }

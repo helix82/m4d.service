@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.Representative;
 import su.opencode.digsigcik.synapi.repository.RepresentativeRepository;
@@ -28,7 +29,7 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     public Representative saveRepresentative(@NotNull Representative representative) {
         String representativeInn = representative.getInn();
         if (representativeInn == null || representativeInn.isEmpty()) {
-            throw new MchdException(String.format("Can`t create representative because inn %s ",
+            throw new BadRequestException(String.format("Can`t create representative because inn %s ",
                     NULL_OR_EMPTY_ERROR_MESSAGE)
             );
         }
@@ -48,7 +49,7 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     public Representative updateRepresentative(@NotNull Representative representative) {
         Long representativeId = representative.getId();
         if (representativeId == null) {
-            throw new MchdException("Can`t update representative because id null!");
+            throw new BadRequestException("Can`t update representative because id null!");
         }
 
         Representative existRepresentative = this.repository.findRepresentativeById(representativeId);
