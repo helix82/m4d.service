@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.Principal;
 import su.opencode.digsigcik.synapi.repository.PrincipalRepository;
@@ -29,7 +30,7 @@ public class PrincipalServiceImpl implements PrincipalService {
     public Principal savePrincipal(@NotNull Principal principal) {
         String principalSnils = principal.getSnils();
         if (principalSnils == null || principalSnils.isEmpty()) {
-            throw new MchdException(String.format("Can`t create principal because snils %s ",
+            throw new BadRequestException(String.format("Can`t create principal because snils %s ",
                     NULL_OR_EMPTY_ERROR_MESSAGE)
             );
         }
@@ -49,7 +50,7 @@ public class PrincipalServiceImpl implements PrincipalService {
     public Principal updatePrincipal(@NotNull Principal principal) {
         Long principalId = principal.getId();
         if (principalId == null) {
-            throw new MchdException(String.format("Can`t update principal because id %s!", NULL));
+            throw new BadRequestException(String.format("Can`t update principal because id %s!", NULL));
         }
 
         Principal existPrincipal = this.repository.findPrincipalById(principalId);

@@ -7,11 +7,18 @@ import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
@@ -48,19 +55,6 @@ public class MrpaRegistryController {
         return mrpaRegistryService.findAllMrpaRegistry();
     }
 
-    @Operation(summary = "Получить список МЧД с ФИО представителя и ФИО доверителя с фильтром по пользователю",
-            description = "Возвращает список МЧД с ФИО представителя и ФИО доверителя" )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено" ),
-            @ApiResponse(code = 404, message = "Not found - Ни одна МЧД для пользователя не найдена" )
-    })
-    @GetMapping("list/{userId}" )
-    public List<MrpaRegistryWithFioDTO> findListMrpaRegistryByUserId(
-            @PathVariable @Parameter(name = "userId", description = "ИД пользователя", example = "1" ) Long userId
-    ) {
-        return mrpaRegistryService.findAllByMrpaRegistryUserId(userId);
-    }
-
     @Operation(summary = "Сохранить данные по МЧД в БД", description = "Возвращает данные по созданному МЧД" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно сохранено" ),
@@ -89,18 +83,6 @@ public class MrpaRegistryController {
     public List<MrpaRegistryWithFioDTO> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
             description = "ИД МЧД", example = "1" ) Long id) {
         return mrpaRegistryService.findByMrpaRegistryId(id);
-    }
-
-    @Operation(summary = "Получить МЧД по ИД пользователя, вся информация",
-            description = "Возвращает всю информацию по МЧД" )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено" ),
-            @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
-    })
-    @GetMapping("user_id/{id}" )
-    public List<MrpaRegistryFullDTO> findMrpaRegistryByUserId(@PathVariable @Parameter(name = "id",
-            description = "ИД пользователя", example = "1" ) Long id) {
-        return mrpaRegistryService.findByMrpaRegistryUserId(id);
     }
 
     @Operation(summary = "Изменить данные по МЧД", description = "Возвращает основные данные по МЧД" )

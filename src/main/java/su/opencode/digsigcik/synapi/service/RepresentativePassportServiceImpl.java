@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.RepresentativePassport;
 import su.opencode.digsigcik.synapi.repository.RepresentativePassportRepository;
@@ -30,7 +31,7 @@ public class RepresentativePassportServiceImpl implements RepresentativePassport
     public RepresentativePassport saveRepresentativePassport(@NotNull RepresentativePassport representativePassport) {
         Long representativeId = representativePassport.getRepresentativeId();
         if (representativeId == null) {
-            throw new MchdException("Can`t create representative passport because representative id null!");
+            throw new BadRequestException("Can`t create representative passport because representative id null!");
         }
         if (representativeRepository.findRepresentativeById(representativeId) == null) {
             throw new MchdException(String.format("Can`t create representative passport because representative " +
@@ -39,7 +40,7 @@ public class RepresentativePassportServiceImpl implements RepresentativePassport
         }
         String seriesNumber = representativePassport.getSeriesNumber();
         if (seriesNumber == null || seriesNumber.isEmpty()) {
-            throw new MchdException(String.format("Can`t create representative passport because seriesNumber %s",
+            throw new BadRequestException(String.format("Can`t create representative passport because seriesNumber %s",
                     NULL_OR_EMPTY_ERROR_MESSAGE)
             );
         }
@@ -59,7 +60,7 @@ public class RepresentativePassportServiceImpl implements RepresentativePassport
     public RepresentativePassport updateRepresentativePassport(@NotNull RepresentativePassport representativePassport) {
         Long representativePassportId = representativePassport.getId();
         if (representativePassportId == null) {
-            throw new MchdException("Can`t update representative passport because id null!");
+            throw new BadRequestException("Can`t update representative passport because id null!");
         }
 
         RepresentativePassport existRepresentativePassport =

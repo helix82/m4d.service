@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
-import su.opencode.digsigcik.synapi.enums.FtxRegistrationTypeEnum;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 
 @Data
@@ -35,9 +34,6 @@ public class MrpaRegistryWithFioDTO {
     @JsonProperty("status")
     private String status;
 
-    @JsonProperty("ftxRegistration")
-    private String ftxRegistration;
-
     @JsonProperty("sigPath")
     private String sigPath;
 
@@ -47,17 +43,14 @@ public class MrpaRegistryWithFioDTO {
     @JsonProperty("recalledXmlPath")
     private String recalledXmlPath;
 
-    @JsonProperty("userId")
-    private Long userId;
-
     @JsonProperty("principalFio")
     private String principalFio;
 
     @JsonProperty("representativeFio")
     private String representativeFio;
 
-    public MrpaRegistryWithFioDTO(Long id, Long userId, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status,
-                                  @NotNull FtxRegistrationTypeEnum ftxRegistration, String sigPath, String mrpaXmlPath, String recalledXmlPath, Long organizationId,
+    public MrpaRegistryWithFioDTO(Long id, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status,
+                                  String sigPath, String mrpaXmlPath, String recalledXmlPath, Long organizationId,
                                   Long principalId, Long representativeId, String principalSurname, String principalName, String principalPatronymic,
                                   String representativeSurname, String representativeName, String representativePatronymic) {
         super();
@@ -70,11 +63,9 @@ public class MrpaRegistryWithFioDTO {
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status.getTitle();
-        this.ftxRegistration = ftxRegistration.getTitle();
         this.sigPath = sigPath;
         this.mrpaXmlPath = mrpaXmlPath;
         this.recalledXmlPath = recalledXmlPath;
-        this.userId = userId;
         this.principalFio = principalSurname + ' ' + principalName + ' ' + principalPatronymic;
         this.representativeFio = representativeSurname + ' ' + representativeName + ' ' + representativePatronymic;
     }
