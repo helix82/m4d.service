@@ -1,22 +1,24 @@
 package su.opencode.digsigcik.synapi.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.Principal;
 import su.opencode.digsigcik.synapi.repository.PrincipalRepository;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
+
+import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constant.NULL;
+import static su.opencode.digsigcik.synapi.util.Constant.NULL_OR_EMPTY_ERROR_MESSAGE;
 
 @Service
 @Primary
-public class PrincipalServiceImpl implements PrincipalService{
+@RequiredArgsConstructor
+public class PrincipalServiceImpl implements PrincipalService {
     private final PrincipalRepository repository;
-
-    @Autowired
-    public PrincipalServiceImpl(PrincipalRepository repository) {
-        this.repository = repository;
-    }
 
     @Override
     public List<Principal> findAllPrincipal() {
@@ -24,22 +26,45 @@ public class PrincipalServiceImpl implements PrincipalService{
     }
 
     @Override
-    public Principal savePrincipal(Principal principal) {
+    public Principal savePrincipal(@NotNull Principal principal) {
+        String principalSnils = principal.getSnils();
+        if (principalSnils == null || principalSnils.isEmpty()) {
+            throw new MchdException(String.format("Can`t create principal because snils %s ",
+                    NULL_OR_EMPTY_ERROR_MESSAGE)
+            );
+        }
         return this.repository.save(principal);
     }
 
     @Override
-    public Principal findByPrincipalId(Long id) {
-        return this.repository.findPrincipalById(id);
+    public Principal findByPrincipalId(@NotNull Long id) {
+        Principal principal = this.repository.findPrincipalById(id);
+        if (principal == null) {
+            throw new MchdException(String.format("Principal %s", NOT_FOUND));
+        }
+        return principal;
     }
 
     @Override
-    public Principal updatePrincipal(Principal principal) {
+    public Principal updatePrincipal(@NotNull Principal principal) {
+        Long principalId = principal.getId();
+        if (principalId == null) {
+            throw new MchdException(String.format("Can`t update principal because id %s!", NULL));
+        }
+
+        Principal existPrincipal = this.repository.findPrincipalById(principalId);
+        if (existPrincipal == null) {
+            throw new MchdException(String.format("Can`t update. Principal with id=%d %s", principalId, NOT_FOUND));
+        }
         return this.repository.save(principal);
     }
 
     @Override
-    public void deletePrincipal(Long id) {
+    public void deletePrincipal(@NotNull Long id) {
+        Principal principal = this.repository.findPrincipalById(id);
+        if (principal == null) {
+            throw new MchdException(String.format("Can`t delete principal because principal %s", NOT_FOUND));
+        }
         this.repository.deleteById(id);
     }
 }

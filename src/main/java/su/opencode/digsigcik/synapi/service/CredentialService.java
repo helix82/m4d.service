@@ -1,13 +1,14 @@
 package su.opencode.digsigcik.synapi.service;
 
+import org.jetbrains.annotations.NotNull;
 import su.opencode.digsigcik.synapi.model.Credential;
 
 import java.util.List;
 
 public interface CredentialService {
     List<Credential> findAllCredential();
-    Credential saveCredential(Credential credential);
-    Credential findByCredentialId(Long id);
-    Credential updateCredential(Credential credential);
-    void deleteCredential(Long id);
+    Credential saveCredential(@NotNull Credential credential);
+    Credential findByCredentialId(@NotNull Long id);
+    Credential updateCredential(@NotNull Credential credential);
+    void deleteCredential(@NotNull Long id);
 }

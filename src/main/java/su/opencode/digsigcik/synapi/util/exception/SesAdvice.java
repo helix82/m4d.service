@@ -12,17 +12,17 @@ import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.exception.SesVerifyException;
 
 @ControllerAdvice(annotations = SesExceptionHandler.class)
-public class CustomAdvice {
+public class SesAdvice {
 
     @ExceptionHandler(SesException.class)
     public ResponseEntity<?> handleSesException(SesException error) {
-        ResponseErrorDto response = createResponseErrorDto(error.getMessage(), HttpStatus.OK);
+        ResponseErrorDto response = ResponseErrorDto.createResponseErrorDto(error.getMessage(), HttpStatus.OK);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<?> handleSesBadRequestException(BadRequestException error) {
-        ResponseErrorDto response = createResponseErrorDto(error.getMessage(), HttpStatus.BAD_REQUEST);
+        ResponseErrorDto response = ResponseErrorDto.createResponseErrorDto(error.getMessage(), HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
@@ -32,12 +32,5 @@ public class CustomAdvice {
                 .verifyResultMessage(error.getMessage())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
-    private ResponseErrorDto createResponseErrorDto(String message, HttpStatus status) {
-        return ResponseErrorDto.builder()
-                .code(status.value())
-                .message(message)
-                .build();
     }
 }

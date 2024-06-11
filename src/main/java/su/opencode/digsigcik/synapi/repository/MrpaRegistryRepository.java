@@ -40,6 +40,16 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " where mr.userId=?1 ")
     List<MrpaRegistryWithFioDTO> findAllMrpaRegistriesByUserId(Long userId);
 
+//    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(" +
+//            "mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, " +
+//            "mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, mr.organisationId, " +
+//            "mr.principalId, mr.representativeId,"
+//            + "p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
+//            + " from MrpaRegistry mr"
+//            + " left join Principal p on p.id=mr.principalId"
+//            + " left join Representative r on r.id=mr.representativeId ")
+//    List<MrpaRegistryWithFioDTO> findAllMrpaRegistries();
+
     @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.userId, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.ftxRegistration, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, mr.organisationId, mr.principalId, mr.representativeId,"
             + "p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
             + " from MrpaRegistry mr"
@@ -54,4 +64,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join Representative r on r.id=mr.representativeId "
             + " where p.inn=?1 ")
     List<MrpaRegistryWithFioDTO> findMrpaRegistriesByPrincipalInn(String inn);
+
+    @Query(value = "SELECT mr.* from mrpa_registry mr where mr.id=?1 ", nativeQuery = true)
+    MrpaRegistry findMrpaById(Long id);
 }
