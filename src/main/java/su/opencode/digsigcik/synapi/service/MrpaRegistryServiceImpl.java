@@ -47,6 +47,11 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
+    public MrpaRegistry findById(@NotNull Long id) {
+        return this.mrpaRegistryRepository.findMrpaById(id);
+    }
+
+    @Override
     public List<MrpaRegistryWithFioDTO> findAllByMrpaRegistryUserId(Long userId) {
         return this.mrpaRegistryRepository.findAllMrpaRegistriesByUserId(userId);
     }

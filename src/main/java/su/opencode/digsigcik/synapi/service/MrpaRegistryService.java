@@ -14,6 +14,8 @@ public interface MrpaRegistryService {
 
     List<MrpaRegistryWithFioDTO> findByMrpaRegistryId(@NotNull Long id);
 
+    MrpaRegistry findById(@NotNull Long id);
+
     List<MrpaRegistryWithFioDTO> findAllByMrpaRegistryUserId(@NotNull Long userId);
 
     List<MrpaRegistryFullDTO> findByMrpaRegistryUserId(@NotNull Long userId);
