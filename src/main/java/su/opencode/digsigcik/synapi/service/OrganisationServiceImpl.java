@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.Organisation;
 import su.opencode.digsigcik.synapi.repository.OrganisationRepository;
@@ -28,7 +29,7 @@ public class OrganisationServiceImpl implements OrganisationService {
     public Organisation saveOrganisation(@NotNull Organisation organisation) {
         String organisationInn = organisation.getInn();
         if (organisationInn == null || organisationInn.isEmpty()){
-            throw new MchdException(String.format("Can`t create organisation because inn %s ",
+            throw new BadRequestException(String.format("Can`t create organisation because inn %s ",
                     NULL_OR_EMPTY_ERROR_MESSAGE)
             );
         }
@@ -53,7 +54,7 @@ public class OrganisationServiceImpl implements OrganisationService {
     public Organisation updateOrganisation(@NotNull Organisation organisation) {
         Long organisationId = organisation.getId();
         if (organisationId == null) {
-            throw new MchdException("Can`t update organisation because id null!" );
+            throw new BadRequestException("Can`t update organisation because id null!" );
         }
 
         Organisation existOrganisation = this.repository.findOrganisationById(organisationId);

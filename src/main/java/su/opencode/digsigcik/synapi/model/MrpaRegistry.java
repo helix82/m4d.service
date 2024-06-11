@@ -4,10 +4,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
-import su.opencode.digsigcik.synapi.enums.FtxRegistrationTypeEnum;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,11 +31,6 @@ public class MrpaRegistry {
     @Schema(name = "ИД МЧД", example = "1", required = true)
     @JsonProperty("id")
     private Long id;
-
-    @Column(name = "user_id")
-    @Schema(name = "ИД пользователя", example = "1", required = true)
-    @JsonProperty("userId")
-    private Long userId;
 
     @Column(name = "guid", columnDefinition = "VARCHAR(255)")
     @Schema(name = "guid", example = "6F9619FF-8B86-D011-B42D-00CF4FC964FF", required = false)
@@ -68,12 +72,6 @@ public class MrpaRegistry {
     @Schema(name = "Статус МЧД", example = "EXPIRED", required = false)
     @JsonProperty("status")
     private StatusTypeEnum status;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "ftx_registration", columnDefinition = "VARCHAR(255)")
-    @Schema(name = "Состояние регистрации МЧД", example = "FTX_REGISTERED", required = false)
-    @JsonProperty("ftxRegistration")
-    private FtxRegistrationTypeEnum ftxRegistration;
 
     @Column(name = "sig_path", columnDefinition = "TEXT")
     @Schema(name = "Сигнатура", example = "", required = false)
