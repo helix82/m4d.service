@@ -3,10 +3,23 @@ package su.opencode.digsigcik.synapi.dto;
 import javax.xml.bind.annotation.*;
 import java.util.List;
 
-@XmlRootElement(name = "Доверенность")
+@XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Доверенность")
 public class MrpaRegistryFullXML {
+    @XmlAttribute(name = "xmlns:xsi")
+    private String xmlnsXsi; //"http://www.w3.org/2001/XMLSchema-instance"
+    @XmlAttribute(name = "xmlns:xsd")
+    private String xmlnsXsd; //"http://www.w3.org/2001/XMLSchema"
+    @XmlAttribute(name = "xmlns")
+    private String xmlns; //"urn://x-artefacts/EMCHD_1"
+    @XmlAttribute(name = "ВерсФорм")
+    private String versionFormat; //EMCHD_1
+    @XmlAttribute(name = "ПрЭлФорм")
+    private String elementsFormat; //00000000
+    @XmlAttribute(name = "ИдФайл")
+    private String idFile; //ON_EMCHD_20240516_75655b80-cc58-4a2b-b244-8334eb895a2f
+
     @XmlElement(name = "Документ")
     public List<Document> document;
 
@@ -103,7 +116,7 @@ public class MrpaRegistryFullXML {
                             @XmlAttribute(name = "ПолнЮЛ")
                             private String typeCredential; //1
 
-                            @XmlAttribute(name = "СвФл")
+                            @XmlElement(name = "СвФл")
                             public Principal principal;
 
                             @XmlRootElement
@@ -111,6 +124,31 @@ public class MrpaRegistryFullXML {
                             public static class Principal{
                                 @XmlAttribute(name = "ИННФЛ")
                                 private String inn;
+                                @XmlAttribute(name = "СНИЛС")
+                                private String snils;
+                                @XmlAttribute(name = "Должность")
+                                private String jobTitle;
+
+                                @XmlElement(name = "СведФЛ")
+                                public FioPrincipal fioPrincipal;
+
+                                @XmlRootElement
+                                @XmlAccessorType(XmlAccessType.FIELD)
+                                public static class FioPrincipal{
+                                    @XmlElement(name = "ФИО")
+                                    public Fio fio;
+
+                                    @XmlRootElement
+                                    @XmlAccessorType(XmlAccessType.FIELD)
+                                    public static class Fio{
+                                        @XmlAttribute(name = "Фамилия")
+                                        private String surname;
+                                        @XmlAttribute(name = "Имя")
+                                        private String name;
+                                        @XmlAttribute(name = "Отчество")
+                                        private String patronymic;
+                                    }
+                                }
 
                             }
                         }
@@ -118,6 +156,90 @@ public class MrpaRegistryFullXML {
                 }
             }
 
+            @XmlElement(name = "СвУпПред")
+            public InfoRepresentative infoRepresentative;
+
+            @XmlRootElement
+            @XmlAccessorType(XmlAccessType.FIELD)
+            public static class InfoRepresentative{
+                @XmlAttribute(name = "ТипПред")
+                private String typeRepresentative; //3
+
+                @XmlElement(name = "Пред")
+                public Representative representative;
+
+                @XmlRootElement
+                @XmlAccessorType(XmlAccessType.FIELD)
+                public static class Representative{
+                    @XmlElement(name = "СведФизЛ")
+                    public DetailRepresentative detailRepresentative;
+
+                    @XmlRootElement
+                    @XmlAccessorType(XmlAccessType.FIELD)
+                    public static class DetailRepresentative{
+                        @XmlAttribute(name = "ИННФЛ")
+                        private String inn;
+                        @XmlAttribute(name = "СНИЛС")
+                        private String snils;
+                        @XmlElement(name = "СведФЛ")
+                        public InfoIndividual infoIndividual;
+
+                        @XmlRootElement
+                        @XmlAccessorType(XmlAccessType.FIELD)
+                        public static class InfoIndividual{
+                            @XmlAttribute(name = "ДатаРожд")
+                            private String birthDate;
+                            @XmlElement(name = "ФИО")
+                            public FioRepresentative fioRepresentative;
+
+                            @XmlRootElement
+                            @XmlAccessorType(XmlAccessType.FIELD)
+                            public static class FioRepresentative{
+                                @XmlAttribute(name = "Фамилия")
+                                private String surname;
+                                @XmlAttribute(name = "Имя")
+                                private String name;
+                                @XmlAttribute(name = "Отчество")
+                                private String patronymic;
+                            }
+
+                            @XmlElement(name = "УдЛичнФЛ")
+                            public RepresentativePassport representativePassport;
+
+                            @XmlRootElement
+                            @XmlAccessorType(XmlAccessType.FIELD)
+                            public static class RepresentativePassport{
+                                @XmlAttribute(name = "КодВидДок")
+                                private String typeDocument; //21
+                                @XmlAttribute(name = "СерНомДок")
+                                private String seriesNumber;
+                                @XmlAttribute(name = "ДатаДок")
+                                private String dateIssue;
+                                @XmlAttribute(name = "ВыдДок")
+                                private String whoIssue;
+                                @XmlAttribute(name = "КодВыдДок")
+                                private String departmentCode;
+                            }
+                        }
+                    }
+                }
+            }
+
+            @XmlElement(name = "СвПолн")
+            public Credential credential;
+
+            @XmlRootElement
+            @XmlAccessorType(XmlAccessType.FIELD)
+            public static class Credential{
+                @XmlAttribute(name = "ТипПолн")
+                private String typeCredential; //0
+                @XmlAttribute(name = "ПрСовмПолн")
+                private String implCredential; //1
+                @XmlAttribute(name = "ПрУтрПолн")
+                private String lossCredential; //1
+                @XmlElement(name = "ТекстПолн")
+                public String name;
+            }
         }
     }
 }
