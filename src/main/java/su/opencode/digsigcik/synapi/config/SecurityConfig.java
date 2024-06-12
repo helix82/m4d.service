@@ -16,13 +16,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.CorsProcessor;
-import org.springframework.web.cors.DefaultCorsProcessor;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.*;
 import su.opencode.digsigcik.synapi.filters.JwtRequestFilter;
 import su.opencode.digsigcik.synapi.service.UserService;
+
+import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
+
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @EnableWebSecurity
 @Configuration
@@ -38,16 +37,32 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-            .authorizeRequests(rm -> rm
-                .antMatchers("/api/**").permitAll()
-                    .antMatchers("/v2/api-docs",
-                            "/configuration/ui",
-                            "/swagger-resources/**",
-                            "/configuration/security",
-                            "/swagger-ui.html",
-                            "/swagger-ui/**",
-                            "/webjars/**").permitAll()
-                .anyRequest().authenticated())
+                //TODO: remove h2 console start
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers(toH2Console())
+                        .disable()
+                )
+                .headers(headers -> headers.frameOptions()
+                        .disable())
+                //TODO: remove h2 console finish
+                .authorizeRequests(rm -> rm
+                        .antMatchers("/api/**")
+                        .permitAll()
+                        .antMatchers("/v2/api-docs",
+                                "/configuration/ui",
+                                "/swagger-resources/**",
+                                "/configuration/security",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/webjars/**",
+                                //TODO: remove h2 console start
+                                "/h2-console/**"
+                                //TODO: remove h2 console finish
+                        )
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated()
+                        .and())
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -55,6 +70,7 @@ public class SecurityConfig {
                 .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 .and()
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
