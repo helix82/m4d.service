@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
@@ -41,4 +42,8 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
 
     @Query(value = "SELECT mr.* from mrpa_registry mr where mr.id=?1 ", nativeQuery = true)
     MrpaRegistry findMrpaById(Long id);
+
+    @Modifying
+    @Query("update MrpaRegistry mr set mr.status = 'WITHDRAWN' where mr.id=?1")
+    void recallMrpaRegistryById(Long id);
 }

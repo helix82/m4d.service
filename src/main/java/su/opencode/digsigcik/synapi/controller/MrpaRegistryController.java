@@ -175,4 +175,22 @@ public class MrpaRegistryController {
         List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
+
+    @Operation(summary = "Отозвать МЧД",
+            description = "Возвращает МЧД с ФИО представителя и ФИО доверителя" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно отозвано" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @GetMapping("recall/{id}" )
+    public ResponseEntity<?> recallMrpaRegistryById(@PathVariable @Parameter(name = "id",
+            description = "ИД МЧД", example = "1" ) Long id) {
+        try {
+            mrpaRegistryService.recallMrpaRegistryById(id);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(ID_IS_NULL);
+        }
+        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findAllMrpaRegistry();
+        return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
+    }
 }
