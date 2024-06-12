@@ -20,4 +20,6 @@ public interface MrpaRegistryService {
     void deleteMrpaRegistry(@NotNull Long id);
 
     List<MrpaRegistryWithFioDTO> findByMrpaRegistryPrincipalInn(String inn);
+
+    void recallMrpaRegistryById(@NotNull Long id);
 }

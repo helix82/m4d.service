@@ -98,5 +98,14 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
             throw new BadRequestException(String.format(errorMessage, operationType, "representative", representativeId));
         }
     }
+
+    @Override
+    public void recallMrpaRegistryById(Long id) {
+        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry.isEmpty()) {
+            throw new MchdException(String.format("Can`t recall mrpa registry because mrpa registry %s", NOT_FOUND));
+        }
+        this.mrpaRegistryRepository.recallMrpaRegistryById(id);
+    }
 }
 
