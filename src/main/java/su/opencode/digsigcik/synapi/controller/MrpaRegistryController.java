@@ -201,13 +201,12 @@ public class MrpaRegistryController {
     @PutMapping("recall/{id}" )
     public ResponseEntity<?> recallMrpaRegistryById(@PathVariable @Parameter(name = "id",
             description = "ИД МЧД", example = "1" ) Long id) {
-        MrpaRegistry mrpaRegistryRecall;
         try {
-            mrpaRegistryRecall = mrpaRegistryService.recallMrpaRegistryById(id);
+            mrpaRegistryService.recallMrpaRegistryById(id);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ID_IS_NULL);
         }
-        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistryRecall.getId());
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(id);
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 }

@@ -21,5 +21,5 @@ public interface MrpaRegistryService {
 
     MrpaRegistryWithFioDTO findByMrpaRegistryPrincipalInn(String inn);
 
-    MrpaRegistry recallMrpaRegistryById(@NotNull Long id);
+    void recallMrpaRegistryById(@NotNull Long id);
 }
