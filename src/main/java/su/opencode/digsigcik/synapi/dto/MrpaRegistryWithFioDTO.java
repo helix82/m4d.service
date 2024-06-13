@@ -62,7 +62,7 @@ public class MrpaRegistryWithFioDTO {
         this.representativeId = representativeId;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.status = status.getTitle();
+        this.status = status.toString();
         this.sigPath = sigPath;
         this.mrpaXmlPath = mrpaXmlPath;
         this.recalledXmlPath = recalledXmlPath;
