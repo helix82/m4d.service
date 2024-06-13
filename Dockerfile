@@ -17,8 +17,8 @@ COPY root_ca.crt $JAVA_HOME/lib/security
 COPY intermediate_ca.crt $JAVA_HOME/lib/security
 RUN \
     cd $JAVA_HOME/lib/security \
-    && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias rootca -file root_ca.crt \
-    && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias intermediateca -file intermediate_ca.crt
+    && keytool -keystore cacerts -storepass changeit -noprompt  -importcert -alias rootca -file root_ca.crt \
+    && keytool -keystore cacerts -storepass changeit -noprompt  -importcert -alias intermediateca -file intermediate_ca.crt
 WORKDIR $PROJECT_HOME
 
 ENTRYPOINT ["java", "-jar", "synapi-0.0.1-SNAPSHOT.jar]
