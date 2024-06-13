@@ -20,7 +20,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join Principal p on p.id=mr.principalId"
             + " left join Representative r on r.id=mr.representativeId "
             + " where mr.id=?1 ")
-    List<MrpaRegistryWithFioDTO> findMrpaRegistryById(Long id);
+    MrpaRegistryWithFioDTO findMrpaRegistryById(Long id);
 
     @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.guid, " +
             "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXmlPath, " +
@@ -39,7 +39,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join Principal p on p.id=mr.principalId"
             + " left join Representative r on r.id=mr.representativeId "
             + " where p.inn=?1 ")
-    List<MrpaRegistryWithFioDTO> findMrpaRegistriesByPrincipalInn(String inn);
+    MrpaRegistryWithFioDTO findMrpaRegistriesByPrincipalInn(String inn);
 
     @Query(value = "SELECT mr.* from mrpa_registry mr where mr.id=?1 ", nativeQuery = true)
     MrpaRegistry findMrpaById(Long id);
@@ -47,5 +47,5 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
     @Modifying
     @Transactional
     @Query("update MrpaRegistry mr set mr.status = 'WITHDRAWN' where mr.id=?1")
-    void recallMrpaRegistryById(Long id);
+    MrpaRegistry recallMrpaRegistryById(Long id);
 }
