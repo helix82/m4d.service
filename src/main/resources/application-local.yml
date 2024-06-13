@@ -47,7 +47,7 @@ jwt:
 
 tls:
   ca:
-    uri: https://step-certificates.step-certificates/acme/acme/directory
+    uri: https://step-certificates.step-certificates.svc.cluster.local/acme/acme/directory
   account:
     name: acme.account.name
     mail: acme@account.mail
