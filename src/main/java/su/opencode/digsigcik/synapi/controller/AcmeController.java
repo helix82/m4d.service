@@ -2,6 +2,7 @@ package su.opencode.digsigcik.synapi.controller;
 
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.shredzone.acme4j.Account;
 import org.shredzone.acme4j.AccountBuilder;
 import org.shredzone.acme4j.Authorization;
@@ -15,6 +16,7 @@ import org.shredzone.acme4j.challenge.Http01Challenge;
 import org.shredzone.acme4j.exception.AcmeException;
 import org.shredzone.acme4j.util.KeyPairUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,19 +26,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.acme.ChallengeStore;
+import su.opencode.digsigcik.synapi.config.PropertyConfig;
 import su.opencode.digsigcik.synapi.model.AcmeAccount;
 import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.repository.AccountRepository;
 import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
+import su.opencode.digsigcik.synapi.service.AcmeService;
+import su.opencode.digsigcik.synapi.service.ContainerService;
 
 import javax.servlet.http.HttpSession;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
@@ -59,240 +64,26 @@ import java.util.function.Supplier;
 @RestController
 @RequestMapping("/api/v1")
 @AllArgsConstructor
-
+@Slf4j
 public class AcmeController {
-    private static final String CA_URI = "https://acme.server:4433/acme/acme/directory";
+    private final AcmeService acmeService;
 
-    private static final String ACME_ACCOUNT_NAME = "acme.account.name";
-    private static final String ACME_ACCOUNT_EMAIL = "acme@account.mail";
-    private static final String ACME_ACCOUNT_KEY = "acme.account.key";
-
-    private static final int MAX_ATTEMPTS = 50;
-
-    @Autowired
-    AccountRepository accountRepository;
-
-    @Autowired
-    DomainRepository domainRepository;
-
-    @Autowired
-    CertificateRepository certificateRepository;
-
-    private KeyPair makeKeyPair(MultipartFile userFile) throws IOException {
-        return KeyPairUtils.readKeyPair(new BufferedReader(new InputStreamReader(userFile.getInputStream())));
-    }
-    private KeyPair makeKeyPair(String key) throws IOException {
-        return KeyPairUtils.readKeyPair(new StringReader(key));
-    }
-
-    private Http01Challenge challenge(Authorization auth) throws AcmeException {
-        if (auth.getStatus() == Status.VALID) {
-            // авторизация уже выполнена
-            return null;
-        }
-        Http01Challenge challenge = auth.findChallenge(Http01Challenge.class)
-                .orElseThrow(() -> new AcmeException("Found no " + Http01Challenge.TYPE
-                        + " challenge, don't know what to do..."));
-
-        // If the challenge is already verified, there's no need to execute it again.
-        if (challenge.getStatus() == Status.VALID) {
-            // испытание же пройдено
-            return null;
-        }
-        return challenge;
-    }
-    @FunctionalInterface
-    private interface UpdateMethod {
-        Optional<Instant> updateAndGetRetryAfter() throws AcmeException;
-    }
-
-    private Status waitForCompletion(Supplier<Status> statusSupplier, UpdateMethod statusUpdater)
-            throws AcmeException {
-        // A set of terminating status values
-        Set<Status> acceptableStatus = EnumSet.of(Status.VALID, Status.INVALID);
-
-        // Limit the number of checks, to avoid endless loops
-        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-            Instant now = Instant.now();
-            // Update the status property
-            Instant retryAfter = statusUpdater.updateAndGetRetryAfter()
-                    .orElse(now.plusSeconds(3L));
-            // Check the status
-            Status currentStatus = statusSupplier.get();
-            if (acceptableStatus.contains(currentStatus)) {
-                // Reached VALID or INVALID, we're done here
-                return currentStatus;
-            }
-            // Wait before checking again
-            try {
-                Thread.sleep(now.until(retryAfter, ChronoUnit.MILLIS));
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                throw new AcmeException("interrupted");
-            }
-        }
-
-        throw new AcmeException("Too many update attempts, status did not change");
-    }
-
-    private void doChallenge(String domain, String uploadPath, Http01Challenge challenge ) {
-        try {
-            URL url = new URL("http://"+domain + uploadPath + "/" + challenge.getToken());
-            HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-            httpCon.setDoOutput(true);
-            httpCon.setRequestMethod("PUT");
-            OutputStreamWriter out = new OutputStreamWriter(httpCon.getOutputStream());
-            out.write(challenge.getAuthorization());
-            out.close();
-            httpCon.getInputStream();
-        } catch (ProtocolException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    private void clearChallenge(String domain, String uploadPath, Http01Challenge challenge) {
-        try {
-            URL url = new URL("http://"+domain + uploadPath + "/" + challenge.getToken());
-            HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-            httpCon.setDoOutput(true);
-            httpCon.setRequestMethod("DELETE");
-            httpCon.getInputStream();
-        } catch (ProtocolException e) {
-            e.printStackTrace();
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private boolean loginDefaultAccount(HttpSession httpSession) {
-        boolean ret = false;
-        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
-        if(acmeAccount != null) {
-            Session session = new Session(CA_URI);
-            try {
-                if(acmeAccount.getAccountPrivateKey()==null) {
-                    StringWriter sw = new StringWriter();
-                    KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
-                    acmeAccount.setAccountPrivateKey(sw.toString());
-                    accountRepository.save(acmeAccount);
-                }
-                KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
-                if(acmeAccount.getAccountUrl()==null) {
-                    // register on acme server
-                    Account acct = new AccountBuilder()
-                            .addContact("mailto:"+acmeAccount.getEmail())
-                            .agreeToTermsOfService()
-                            .useKeyPair(userKeyPair)
-                            .create(session);
-                    Login login = session.login(acct.getLocation(), userKeyPair);
-                    httpSession.setAttribute("login", login);
-                    acmeAccount.setAccountUrl(acct.getLocation().toString());
-                    accountRepository.save(acmeAccount);
-
-                } else {
-                    // login on acme server
-                    Login login = new AccountBuilder()
-                            .onlyExisting()         // Do not create a new acmeAccount
-                            .agreeToTermsOfService()
-                            .useKeyPair(userKeyPair)
-                            .createLogin(session);
-                    httpSession.setAttribute("login", login);
-                    ret = true;
-                }
-            } catch (IOException | AcmeException ignored) {
-            }
-        }
-        return ret;
-    }
 
     @GetMapping("/accounts/{id}/login")
     public Map login(HttpSession httpSession,
                     @PathVariable Long id) {
-        HashMap<String, String> ret = new HashMap<>();
-        AcmeAccount acmeAccount = accountRepository.findAccountById(id);
-        if(acmeAccount != null) {
-            Session session = new Session(CA_URI);
-            try {
-                if(acmeAccount.getAccountPrivateKey()==null) {
-                    StringWriter sw = new StringWriter();
-                    KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
-                    acmeAccount.setAccountPrivateKey(sw.toString());
-                    accountRepository.save(acmeAccount);
-                }
-                KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
-                Login login = new AccountBuilder()
-                        .onlyExisting()         // Do not create a new acmeAccount
-                        .agreeToTermsOfService()
-                        .useKeyPair(userKeyPair)
-                        .createLogin(session);
-                httpSession.setAttribute("login", login);
-                ret.put("result", "done");
-            } catch (IOException e) {
-                ret.put("error", "io exception");
-                ret.put("exception", e.getMessage());
-            } catch (AcmeException e) {
-                ret.put("error", "acme exception");
-                ret.put("exception", e.getMessage());
-            }
-        } else {
-            ret.put("error", "no account");
-        }
-        return ret;
+        return acmeService.login(httpSession,id);
     }
 
     @PostMapping("/accounts/{id}/register")
     public Map register(HttpSession httpSession,
                         @PathVariable Long id) {
-        HashMap<String, String> ret = new HashMap<>();
-        AcmeAccount acmeAccount = accountRepository.findAccountById(id);
-        if(acmeAccount != null) {
-            Session session = new Session(CA_URI);
-            try {
-                if(acmeAccount.getAccountPrivateKey()==null) {
-                    StringWriter sw = new StringWriter();
-                    KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
-                    acmeAccount.setAccountPrivateKey(sw.toString());
-                    accountRepository.save(acmeAccount);
-                }
-                KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
-                Account acct = new AccountBuilder()
-                        .addContact("mailto:"+acmeAccount.getEmail())
-                        .agreeToTermsOfService()
-                        .useKeyPair(userKeyPair)
-                        .create(session);
-                Login login = session.login(acct.getLocation(), userKeyPair);
-                httpSession.setAttribute("login", login);
-                acmeAccount.setAccountUrl(acct.getLocation().toString());
-                accountRepository.save(acmeAccount);
-                ret.put("result", "done");
-            } catch (IOException e) {
-                ret.put("error", "io exception");
-                ret.put("exception", e.getMessage());
-            } catch (AcmeException e) {
-                ret.put("error", "acme exception");
-                ret.put("exception", e.getMessage());
-            }
-        }
-        return ret;
+        return acmeService.register(httpSession,id);
     }
 
     @GetMapping("/accounts/{id}/logout")
     public Map logout(HttpSession httpSession, @PathVariable Long id) {
-        HashMap<String, String> ret = new HashMap<>();
-        AcmeAccount acmeAccount = accountRepository.findAccountById(id);
-        if(acmeAccount != null) {
-            httpSession.removeAttribute("login");
-            ret.put("result", "done");
-        } else {
-            ret.put("error", "no account");
-        }
-        return ret;
+        return acmeService.logout(httpSession,id);
     }
 
     @PostMapping("/certificate")
@@ -300,187 +91,21 @@ public class AcmeController {
                                            @RequestParam(value = "domainName") String domainName,
                                            @RequestParam(value = "notAfter") String notAfter
     ) {
-        HashMap<String, String> ret = new HashMap<>();
-        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
-        if(acmeAccount==null) {
-            acmeAccount = new AcmeAccount(ACME_ACCOUNT_NAME, ACME_ACCOUNT_KEY);
-            acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
-            accountRepository.save(acmeAccount);
-        }
-        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domainName);
-        if(acmeDomain==null) {
-            acmeDomain = new AcmeDomain(acmeAccount, domainName);
-            domainRepository.save(acmeDomain);
-        }
-
-        if(loginDefaultAccount(httpSession)){
-            Login login = (Login)httpSession.getAttribute("login");
-            try {
-                Account account = login.getAccount();
-                Order order = account
-                        .newOrder()
-                        .domain(acmeDomain.getDomainUrl())
-                        .notAfter(Instant.parse(notAfter))
-                        .create();
-
-                Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
-                if(challenge==null) {
-                    // авторизация уже прошла или испытание выполнено
-                    ret.put("result", "done");
-                    ret.put("description", "Auth and challenge done");
-                    new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
-                }
-                doChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
-
-                challenge.trigger();
-
-                if(acmeDomain.getDomainPrivateKey()==null) {
-                    StringWriter sw = new StringWriter();
-                    KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(4096), sw);
-                    acmeDomain.setDomainPrivateKey(sw.toString());
-                    domainRepository.save(acmeDomain);
-                }
-                KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
-
-                order.execute(domainKeyPair);
-
-                // Wait for the order to complete
-                Status status = waitForCompletion(order::getStatus, order::fetch);
-                if (status != Status.VALID) {
-                    throw new AcmeException("Order failed... Giving up.");
-                }
-                clearChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
-
-                Certificate certificate = order.getCertificate();
-
-                StringWriter writer = new StringWriter();
-                certificate.writeCertificate(writer);
-
-                AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
-                acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
-                certificateRepository.save(acmeCertificate);
-
-                return new ResponseEntity<>(CertificateController.certInfo(acmeCertificate), HttpStatus.OK);
-            } catch (AcmeException e) {
-                ret.put("error", "acme exception");
-                ret.put("exception", e.getMessage());
-            } catch (IOException e) {
-                ret.put("error", "io exception");
-                ret.put("exception", e.getMessage());
-            }
-        }
-        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+        return acmeService.certificate(httpSession,domainName, notAfter);
     }
 
     @PostMapping("/domains/{domainId}/certificate")
     public Map certificate(HttpSession httpSession,
                       @PathVariable(value = "domainId") Long domainId
                       ) {
-        HashMap<String, String> ret = new HashMap<>();
-        AcmeDomain acmeDomain= domainRepository.findDomainById(domainId);
-
-        Login login = (Login)httpSession.getAttribute("login");
-        if(login!=null) {
-            Account account = login.getAccount();
-            if(account.getStatus() != Status.VALID){
-                ret.put("error", "invalid status");
-            } else {
-
-                try {
-                    Order order = account
-                            .newOrder()
-                            .domain(acmeDomain.getDomainUrl())
-                            .create();
-
-                    Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
-                    if(challenge==null) {
-                        // авторизация уже прошла или испытание выполнено
-                        ret.put("result", "done");
-                        ret.put("description", "Auth and challenge done");
-                        return ret;
-                    }
-                    doChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
-
-                    challenge.trigger();
-
-                    if(acmeDomain.getDomainPrivateKey()==null) {
-                        StringWriter sw = new StringWriter();
-                        KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(4096), sw);
-                        acmeDomain.setDomainPrivateKey(sw.toString());
-                        domainRepository.save(acmeDomain);
-                    }
-                    KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
-
-                    order.execute(domainKeyPair);
-
-                    // Wait for the order to complete
-                    Status status = waitForCompletion(order::getStatus, order::fetch);
-                    if (status != Status.VALID) {
-                        throw new AcmeException("Order failed... Giving up.");
-                    }
-                    clearChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
-
-                    Certificate certificate = order.getCertificate();
-
-                    StringWriter writer = new StringWriter();
-                    certificate.writeCertificate(writer);
-
-                    AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
-                    acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
-                    certificateRepository.save(acmeCertificate);
-
-                    ret.put("url", certificate.getLocation().toString());
-                    return ret;
-                } catch (AcmeException e) {
-                    ret.put("error", "acme exception");
-                    ret.put("exception", e.getMessage());
-                } catch (IOException e) {
-                    ret.put("error", "io exception");
-                    ret.put("exception", e.getMessage());
-                }
-            }
-        } else {
-            ret.put("error", "no login");
-        }
-        return ret;
+        return acmeService.certificate(httpSession,domainId);
     }
 
     @PostMapping("/certificates/{id}/revoke")
     public Map revoke(HttpSession httpSession,
                            @PathVariable(value = "id") Long id
     ) {
-        HashMap<String, String> ret = new HashMap<>();
-        AcmeCertificate acmeCertificate= certificateRepository.findCertificateById(id);
-
-        Login login = (Login)httpSession.getAttribute("login");
-        if(login!=null) {
-            Account account = login.getAccount();
-            if(account.getStatus() != Status.VALID){
-                ret.put("error", "invalid status");
-            } else {
-                try {
-                    CertificateFactory fac = null;
-                    fac = CertificateFactory.getInstance("X509");
-                    X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(acmeCertificate.getContent().getBytes()));
-
-                    Certificate.revoke(login, cert, RevocationReason.KEY_COMPROMISE);
-
-                    acmeCertificate.setRevoked(true);
-                    certificateRepository.save(acmeCertificate);
-                    ret.put("result", "done");
-                    return ret;
-                } catch (AcmeException e) {
-                    ret.put("error", "acme exception");
-                    ret.put("exception", e.getMessage());
-                } catch (CertificateException e) {
-                    ret.put("error", "cert exception");
-                    ret.put("exception", e.getMessage());
-                }
-            }
-        } else {
-            ret.put("error", "no login");
-        }
-        return ret;
+        return acmeService.revoke(httpSession,id);
     }
 
 

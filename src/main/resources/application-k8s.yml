@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 80
 web:
   cors:
     allow-origin: "*"
@@ -49,4 +49,14 @@ logging:
 jwt:
   secret: $2a$12$HmLdYNemJ6B6tFTC9InU.OoF5hB3w.3109Pb4sc.Fthvm4X3TZz4i
   lifetime: 40m
+
+tls:
+  ca:
+    uri: https://step-certificates/acme/acme/directory
+  account:
+    name: acme.account.name
+    mail: acme@account.mail
+    key: acme.account.key
+  max_attempts: 50
+  external_acknowledge: false
 

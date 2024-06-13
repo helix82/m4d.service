@@ -55,6 +55,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/webjars/**",
+                                "/.well-known/acme-challenge/**",
                                 //TODO: remove h2 console start
                                 "/h2-console/**"
                                 //TODO: remove h2 console finish
