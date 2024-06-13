@@ -43,7 +43,7 @@ public class CredentialController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить запись полномочия", description = "Возвращает список полномочий")
+    @Operation(summary = "Сохранить запись полномочия", description = "Возвращает созданную запись полномочия")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно сохранено"),
             @ApiResponse(code = 404, message = "Not found")
@@ -56,9 +56,7 @@ public class CredentialController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(CREDENTIAL_IS_NULL);
         }
-        System.out.println(response);
-        List<Credential> credentials = service.findAllCredential();
-        return new ResponseEntity<>(credentials, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Получить запись полномочия по ИД", description = "Возвращает запись полномочия")
@@ -77,7 +75,7 @@ public class CredentialController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Изменить запись полномочия", description = "Возвращает список полномочий")
+    @Operation(summary = "Изменить запись полномочия", description = "Возвращает измененную запись полномочия")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно получено"),
             @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
@@ -90,12 +88,10 @@ public class CredentialController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(CREDENTIAL_IS_NULL);
         }
-        System.out.println(response);
-        List<Credential> credentials = service.findAllCredential();
-        return new ResponseEntity<>(credentials, HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить запись полномочия по ИД", description = "Возвращает список полномочий")
+    @Operation(summary = "Удалить запись полномочия по ИД", description = "Возвращает true при удачном удалении")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно удалено"),
             @ApiResponse(code = 404, message = "Not found")
@@ -107,7 +103,6 @@ public class CredentialController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ID_IS_NULL);
         }
-        List<Credential> credentials = service.findAllCredential();
-        return new ResponseEntity<>(credentials, HttpStatus.OK);
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 }
