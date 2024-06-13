@@ -38,9 +38,9 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
-    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryId(@NotNull Long id) {
-        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
-        if (mrpaRegistry.isEmpty()) {
+    public MrpaRegistryWithFioDTO findByMrpaRegistryId(@NotNull Long id) {
+        MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry == null) {
             throw new MchdException(String.format("Mrpa registry %s", NOT_FOUND));
         }
         return mrpaRegistry;
@@ -60,8 +60,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
             throw new BadRequestException("Can`t update mrpa registry because id null!");
         }
 
-        List<MrpaRegistryWithFioDTO> existMrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(mrpaRegistryId);
-        if (existMrpaRegistry.isEmpty()) {
+        MrpaRegistryWithFioDTO existMrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(mrpaRegistryId);
+        if (existMrpaRegistry == null) {
             throw new MchdException(String.format("Can`t update. Mrpa registry with id=%d %s", mrpaRegistryId, NOT_FOUND));
         }
 
@@ -70,15 +70,15 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public void deleteMrpaRegistry(@NotNull Long id) {
-        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
-        if (mrpaRegistry.isEmpty()) {
+        MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry == null) {
             throw new MchdException(String.format("Can`t delete mrpa registry because mrpa registry %s", NOT_FOUND));
         }
         this.mrpaRegistryRepository.deleteById(id);
     }
 
     @Override
-    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryPrincipalInn(String inn) {
+    public MrpaRegistryWithFioDTO findByMrpaRegistryPrincipalInn(String inn) {
         return this.mrpaRegistryRepository.findMrpaRegistriesByPrincipalInn(inn);
     }
 
@@ -100,12 +100,12 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
-    public void recallMrpaRegistryById(Long id) {
-        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
-        if (mrpaRegistry.isEmpty()) {
+    public MrpaRegistry recallMrpaRegistryById(Long id) {
+        MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry == null) {
             throw new MchdException(String.format("Can`t recall mrpa registry because mrpa registry %s", NOT_FOUND));
         }
-        this.mrpaRegistryRepository.recallMrpaRegistryById(id);
+        return this.mrpaRegistryRepository.recallMrpaRegistryById(id);
     }
 }
 

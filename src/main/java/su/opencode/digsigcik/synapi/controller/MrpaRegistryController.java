@@ -91,7 +91,7 @@ public class MrpaRegistryController {
             System.out.println(mrpaRegistryCredentialSaved);
         }
 
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -104,7 +104,7 @@ public class MrpaRegistryController {
     @GetMapping("/{id}" )
     public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
             description = "ИД МЧД", example = "1" ) Long id) {
-        List<MrpaRegistryWithFioDTO> mrpaRegistryFind;
+        MrpaRegistryWithFioDTO mrpaRegistryFind;
         try {
             mrpaRegistryFind = mrpaRegistryService.findByMrpaRegistryId(id);
         } catch (ConstraintViolationException e) {
@@ -126,7 +126,7 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistryUpdated.getId());
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistryUpdated.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -155,7 +155,7 @@ public class MrpaRegistryController {
     @GetMapping("principal_inn/{inn}" )
     public ResponseEntity<?> findMrpaRegistryByPrincipalInn(@PathVariable @Parameter(name = "inn",
             description = "ИНН доверителя", example = "1" ) String inn) {
-        List<MrpaRegistryWithFioDTO> mrpaRegistryFindByInn;
+        MrpaRegistryWithFioDTO mrpaRegistryFindByInn;
         try {
             mrpaRegistryFindByInn = mrpaRegistryService.findByMrpaRegistryPrincipalInn(inn);
         } catch (ConstraintViolationException e) {
@@ -188,7 +188,7 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
         System.out.println(mrpaRegistrySaved);
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findAllMrpaRegistry();
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -201,12 +201,13 @@ public class MrpaRegistryController {
     @PutMapping("recall/{id}" )
     public ResponseEntity<?> recallMrpaRegistryById(@PathVariable @Parameter(name = "id",
             description = "ИД МЧД", example = "1" ) Long id) {
+        MrpaRegistry mrpaRegistryRecall;
         try {
-            mrpaRegistryService.recallMrpaRegistryById(id);
+            mrpaRegistryRecall = mrpaRegistryService.recallMrpaRegistryById(id);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ID_IS_NULL);
         }
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findAllMrpaRegistry();
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistryRecall.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 }
