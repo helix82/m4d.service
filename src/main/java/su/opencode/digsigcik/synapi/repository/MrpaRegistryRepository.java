@@ -47,5 +47,5 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
     @Modifying
     @Transactional
     @Query("update MrpaRegistry mr set mr.status = 'WITHDRAWN' where mr.id=?1")
-    MrpaRegistry recallMrpaRegistryById(Long id);
+    void recallMrpaRegistryById(Long id);
 }
