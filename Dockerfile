@@ -15,7 +15,7 @@ RUN mkdir -p /app
 COPY --from=maven /app/target/${JAR_FILE}  $PROJECT_HOME/${JAR_FILE}
 COPY root_ca.crt $JAVA_HOME/lib/security
 RUN \
-    cd $JAVA_HOME/jre/lib/security \
+    cd $JAVA_HOME/lib/security \
     && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias root-ca -file root_ca.crt
 WORKDIR $PROJECT_HOME
 
