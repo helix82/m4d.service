@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 
@@ -44,6 +45,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
     MrpaRegistry findMrpaById(Long id);
 
     @Modifying
+    @Transactional
     @Query("update MrpaRegistry mr set mr.status = 'WITHDRAWN' where mr.id=?1")
     void recallMrpaRegistryById(Long id);
 }
