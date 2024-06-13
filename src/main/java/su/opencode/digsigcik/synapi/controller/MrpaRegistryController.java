@@ -55,7 +55,7 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryFindAll, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить данные по МЧД в БД", description = "Возвращает данные по созданному МЧД" )
+    @Operation(summary = "Сохранить данные по МЧД в БД", description = "Возвращает созданную МЧД с ФИО представителя и ФИО доверителя" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно сохранено" ),
             @ApiResponse(code = 404, message = "Not found" )
@@ -91,7 +91,7 @@ public class MrpaRegistryController {
             System.out.println(mrpaRegistryCredentialSaved);
         }
 
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findAllMrpaRegistry();
+        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -113,7 +113,7 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryFind, HttpStatus.OK);
     }
 
-    @Operation(summary = "Изменить данные по МЧД", description = "Возвращает основные данные по МЧД" )
+    @Operation(summary = "Изменить данные по МЧД", description = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Изменения успешно сохранены" ),
             @ApiResponse(code = 404, message = "Not found" )
@@ -126,12 +126,11 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        System.out.println(mrpaRegistryUpdated);
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findAllMrpaRegistry();
+        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistryUpdated.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить данные по МЧД", description = "Возвращает список МЧД с ФИО представителя и ФИО доверителя" )
+    @Operation(summary = "Удалить данные по МЧД", description = "Возвращает true при удачном удалении" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Запись успешно удалена" ),
             @ApiResponse(code = 404, message = "Not found" )
@@ -144,9 +143,7 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ID_IS_NULL);
         }
-
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findAllMrpaRegistry();
-        return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
     @Operation(summary = "Получить МЧД с ФИО представителя и ФИО доверителя по ИНН доверителя",
@@ -167,7 +164,7 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryFindByInn, HttpStatus.OK);
     }
 
-    @Operation(summary = "Загрузить ЭП", description = "Возвращает МЧД")
+    @Operation(summary = "Загрузить ЭП", description = "Возвращает МЧД с ФИО представителя и ФИО доверителя")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно загружено"),
             @ApiResponse(code = 404, message = "Not found")
