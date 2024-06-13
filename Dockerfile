@@ -14,9 +14,11 @@ ENV PROJECT_HOME /app
 RUN mkdir -p /app 
 COPY --from=maven /app/target/${JAR_FILE}  $PROJECT_HOME/${JAR_FILE}
 COPY root_ca.crt $JAVA_HOME/lib/security
+COPY intermediate_ca.crt $JAVA_HOME/lib/security
 RUN \
     cd $JAVA_HOME/lib/security \
-    && keytool -keystore cacerts -storepass changeit -noprompt -trustcacerts -importcert -alias root-ca -file root_ca.crt
+    && keytool -keystore cacerts -storepass changeit -noprompt  -importcert -alias rootca -file root_ca.crt \
+    && keytool -keystore cacerts -storepass changeit -noprompt  -importcert -alias intermediateca -file intermediate_ca.crt
 WORKDIR $PROJECT_HOME
 
 ENTRYPOINT ["java", "-jar", "synapi-0.0.1-SNAPSHOT.jar]
