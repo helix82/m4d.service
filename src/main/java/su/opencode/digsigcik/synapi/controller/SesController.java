@@ -24,7 +24,7 @@ import su.opencode.digsigcik.synapi.service.SesService;
 public class SesController {
     private final SesService sesService;
 
-    @PostMapping("/create")
+    @PostMapping(value = "/create", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                        @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
         SesResponseDto sesResponseDto = sesService.getContainerPath(pinCode, file, authToken);
@@ -32,7 +32,7 @@ public class SesController {
         return new ResponseEntity<>(sesResponseDto.getContainerPath(), HttpStatus.OK);
     }
 
-    @GetMapping("/verify")
+    @GetMapping(value = "/verify", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> verifySes(@RequestParam(value = "operationId") String operationId,
                                        @RequestPart("file") MultipartFile file) {
         SesVerifyJsonDto sesVerifyResponse = sesService.verifySes(operationId, file);

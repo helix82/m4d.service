@@ -7,18 +7,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistrySaveWithCredentialDTO;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
@@ -31,7 +24,6 @@ import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.util.List;
 
-import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constant.NULL;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
@@ -53,19 +45,31 @@ public class MrpaRegistryController {
             @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
     })
     @GetMapping()
-    public List<MrpaRegistryWithFioDTO> findAllMrpaRegistry() {
-        return mrpaRegistryService.findAllMrpaRegistry();
+    public ResponseEntity<?> findAllMrpaRegistry() {
+        List<MrpaRegistryWithFioDTO> mrpaRegistryFindAll;
+        try {
+            mrpaRegistryFindAll = mrpaRegistryService.findAllMrpaRegistry();
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        return new ResponseEntity<>(mrpaRegistryFindAll, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить данные по МЧД в БД", description = "Возвращает данные по созданному МЧД" )
+    @Operation(summary = "Сохранить данные по МЧД в БД", description = "Возвращает созданную МЧД с ФИО представителя и ФИО доверителя" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно сохранено" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @PostMapping("save/credential/{id}" )
-    public ResponseEntity<?> saveMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry, @PathVariable @Parameter(name = "id",
-            description = "ИД полномочия", example = "1" ) Long id) {
+    @PostMapping("save" )
+    public ResponseEntity<?> saveMrpaRegistry(@RequestBody MrpaRegistrySaveWithCredentialDTO mrpaRegistrySaveWithCredentialDTO) {
+        MrpaRegistry mrpaRegistry = new MrpaRegistry();
         mrpaRegistry.setStatus(StatusTypeEnum.NOT_SIGNED);
+        mrpaRegistry.setOrganisationId(mrpaRegistrySaveWithCredentialDTO.getOrganisationId());
+        mrpaRegistry.setPrincipalId(mrpaRegistrySaveWithCredentialDTO.getPrincipalId());
+        mrpaRegistry.setRepresentativeId(mrpaRegistrySaveWithCredentialDTO.getRepresentativeId());
+        mrpaRegistry.setStartDate(mrpaRegistrySaveWithCredentialDTO.getStartDate());
+        mrpaRegistry.setEndDate(mrpaRegistrySaveWithCredentialDTO.getEndDate());
+        mrpaRegistry.setGuid();
         MrpaRegistry mrpaRegistrySaved;
         try {
             mrpaRegistrySaved = mrpaRegistryService.saveMrpaRegistry(mrpaRegistry);
@@ -73,17 +77,21 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
 
-        MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
-        mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
-        mrpaRegistryCredential.setCredentialId(id);
-        MrpaRegistryCredential mrpaRegistryCredentialSaved;
-        try {
-            mrpaRegistryCredentialSaved = mrpaRegistryCredentialService.saveMrpaRegistryCredential(mrpaRegistryCredential);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+        Integer[] credentials = mrpaRegistrySaveWithCredentialDTO.getCredentials();
+        for(Integer s : credentials) {
+            MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
+            mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
+            mrpaRegistryCredential.setCredentialId(Long.valueOf(s));
+            MrpaRegistryCredential mrpaRegistryCredentialSaved;
+            try {
+                mrpaRegistryCredentialSaved = mrpaRegistryCredentialService.saveMrpaRegistryCredential(mrpaRegistryCredential);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+            }
+            System.out.println(mrpaRegistryCredentialSaved);
         }
-        assertNotNull(mrpaRegistryCredentialSaved);
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
+
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -94,12 +102,18 @@ public class MrpaRegistryController {
             @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
     })
     @GetMapping("/{id}" )
-    public List<MrpaRegistryWithFioDTO> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
+    public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
             description = "ИД МЧД", example = "1" ) Long id) {
-        return mrpaRegistryService.findByMrpaRegistryId(id);
+        MrpaRegistryWithFioDTO mrpaRegistryFind;
+        try {
+            mrpaRegistryFind = mrpaRegistryService.findByMrpaRegistryId(id);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        return new ResponseEntity<>(mrpaRegistryFind, HttpStatus.OK);
     }
 
-    @Operation(summary = "Изменить данные по МЧД", description = "Возвращает основные данные по МЧД" )
+    @Operation(summary = "Изменить данные по МЧД", description = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Изменения успешно сохранены" ),
             @ApiResponse(code = 404, message = "Not found" )
@@ -112,12 +126,11 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistryUpdated.getId());
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistryUpdated.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить данные по МЧД", description = "Возвращает список МЧД с ФИО представителя и ФИО доверителя" )
+    @Operation(summary = "Удалить данные по МЧД", description = "Возвращает true при удачном удалении" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Запись успешно удалена" ),
             @ApiResponse(code = 404, message = "Not found" )
@@ -130,24 +143,7 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ID_IS_NULL);
         }
-
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findAllMrpaRegistry();
-        return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
-    }
-
-    @Operation(summary = "Привязать полномочия к МЧД", description = "Возвращает данные о привязке полномочий к МЧД" )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно привязано" ),
-            @ApiResponse(code = 404, message = "Not found" )
-    })
-    @PutMapping("/{mrpaId}/credential/{credentialId}" )
-    public MrpaRegistryCredential assignCredentialToMrpaRegistry(
-            @PathVariable @Parameter(name = "mrpaId", description = "ИД МЧД", example = "1" ) Long mrpaId,
-            @PathVariable @Parameter(name = "credentialId", description = "ИД полномочия", example = "1" ) Long credentialId) {
-        MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
-        mrpaRegistryCredential.setMrpaRegistryId(mrpaId);
-        mrpaRegistryCredential.setCredentialId(credentialId);
-        return mrpaRegistryCredentialService.saveMrpaRegistryCredential(mrpaRegistryCredential);
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
     @Operation(summary = "Получить МЧД с ФИО представителя и ФИО доверителя по ИНН доверителя",
@@ -157,12 +153,18 @@ public class MrpaRegistryController {
             @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
     })
     @GetMapping("principal_inn/{inn}" )
-    public List<MrpaRegistryWithFioDTO> findMrpaRegistryByPrincipalInn(@PathVariable @Parameter(name = "inn",
+    public ResponseEntity<?> findMrpaRegistryByPrincipalInn(@PathVariable @Parameter(name = "inn",
             description = "ИНН доверителя", example = "1" ) String inn) {
-        return mrpaRegistryService.findByMrpaRegistryPrincipalInn(inn);
+        MrpaRegistryWithFioDTO mrpaRegistryFindByInn;
+        try {
+            mrpaRegistryFindByInn = mrpaRegistryService.findByMrpaRegistryPrincipalInn(inn);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        return new ResponseEntity<>(mrpaRegistryFindByInn, HttpStatus.OK);
     }
 
-    @Operation(summary = "Загрузить ЭП", description = "Возвращает МЧД")
+    @Operation(summary = "Загрузить ЭП", description = "Возвращает МЧД с ФИО представителя и ФИО доверителя")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно загружено"),
             @ApiResponse(code = 404, message = "Not found")
@@ -185,7 +187,26 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        List<MrpaRegistryWithFioDTO> mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
+        System.out.println(mrpaRegistrySaved);
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
+        return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Отозвать МЧД",
+            description = "Возвращает МЧД с ФИО представителя и ФИО доверителя" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно отозвано" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PutMapping("recall/{id}" )
+    public ResponseEntity<?> recallMrpaRegistryById(@PathVariable @Parameter(name = "id",
+            description = "ИД МЧД", example = "1" ) Long id) {
+        try {
+            mrpaRegistryService.recallMrpaRegistryById(id);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(ID_IS_NULL);
+        }
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(id);
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 }
