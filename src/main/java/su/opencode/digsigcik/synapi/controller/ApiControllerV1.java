@@ -42,6 +42,7 @@ public class ApiControllerV1 {
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
         ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+                .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
