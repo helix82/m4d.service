@@ -2,7 +2,6 @@ package su.opencode.digsigcik.synapi.dto;
 
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
-import su.opencode.digsigcik.synapi.enums.FtxRegistrationTypeEnum;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 
 @Data
@@ -80,8 +79,7 @@ public class MrpaRegistryFullDTO {
         private String name;
     }
 
-    public MrpaRegistryFullDTO(Long id, Long userId, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status,
-                               @NotNull FtxRegistrationTypeEnum ftxRegistration, String sigPath, String mrpaXmlPath, String recalledXmlPath,
+    public MrpaRegistryFullDTO(Long id, Long userId, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status, String sigPath, String mrpaXmlPath, String recalledXmlPath,
                                Long principal_id, String principal_inn, String principal_snils, String principal_jobTitle, String principal_name, String principal_surname, String principal_patronymic,
                                Long representative_id, String representative_inn, String representative_snils, String representative_birthDate, String representative_name, String representative_surname, String representative_patronymic,
                                Long representativePassport_id, String representativePassport_dateIssue, String representativePassport_whoIssue, String representativePassport_seriesNumber, String representativePassport_departmentCode,
@@ -94,8 +92,7 @@ public class MrpaRegistryFullDTO {
         this.internalNumber = internalNumber;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.status = status.getTitle();
-        this.ftxRegistration = ftxRegistration.getTitle();
+        this.status = status.toString();
         this.sigPath = sigPath;
         this.mrpaXmlPath = mrpaXmlPath;
         this.recalledXmlPath = recalledXmlPath;

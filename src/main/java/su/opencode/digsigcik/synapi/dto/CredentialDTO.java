@@ -5,6 +5,8 @@ import lombok.Data;
 
 @Data
 public class CredentialDTO {
+    @JsonProperty("id")
+    private Long id;
     @JsonProperty("name")
     private String name;
     @JsonProperty("code")
