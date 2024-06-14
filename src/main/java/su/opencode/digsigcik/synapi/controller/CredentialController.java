@@ -13,7 +13,9 @@ import su.opencode.digsigcik.synapi.model.Credential;
 import su.opencode.digsigcik.synapi.service.CredentialService;
 
 import javax.validation.ConstraintViolationException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constant.NULL;
@@ -103,6 +105,9 @@ public class CredentialController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ID_IS_NULL);
         }
-        return new ResponseEntity<>(true, HttpStatus.OK);
+        Map<String, String> body = new HashMap<>();
+        body.put("result", "true");
+
+        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 }

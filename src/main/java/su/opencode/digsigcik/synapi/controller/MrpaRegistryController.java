@@ -22,7 +22,9 @@ import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
 
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constant.NULL;
@@ -44,7 +46,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Успешно получено" ),
             @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
     })
-    @GetMapping()
+    @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistry() {
         List<MrpaRegistryWithFioDTO> mrpaRegistryFindAll;
         try {
@@ -63,7 +65,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Успешно сохранено" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @PostMapping("save" )
+    @PostMapping(value = "save",produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> saveMrpaRegistry(@RequestBody MrpaRegistrySaveWithCredentialDTO mrpaRegistrySaveWithCredentialDTO) {
         MrpaRegistry mrpaRegistry = new MrpaRegistry();
         mrpaRegistry.setStatus(StatusTypeEnum.NOT_SIGNED);
@@ -105,7 +107,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Успешно получено" ),
             @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
     })
-    @GetMapping("/{id}" )
+    @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
             description = "ИД МЧД", example = "1" ) Long id) {
         MrpaRegistryWithFioDTO mrpaRegistryFind;
@@ -123,7 +125,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Изменения успешно сохранены" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @PutMapping("update" )
+    @PutMapping(value = "update", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> updateMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
         MrpaRegistry mrpaRegistryUpdated;
         try {
@@ -141,7 +143,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Запись успешно удалена" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @DeleteMapping("delete/{id}" )
+    @DeleteMapping(value = "delete/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> deleteMrpaRegistry(@PathVariable @Parameter(name = "id",
             description = "ИД МЧД", example = "1" ) Long id) {
         try {
@@ -149,7 +151,10 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ID_IS_NULL);
         }
-        return new ResponseEntity<>(true, HttpStatus.OK);
+        Map<String, String> body = new HashMap<>();
+        body.put("result", "true");
+
+        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
     @Operation(summary = "Получить МЧД с ФИО представителя и ФИО доверителя по ИНН доверителя",
@@ -158,7 +163,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Успешно получено" ),
             @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
     })
-    @GetMapping("principal_inn/{inn}" )
+    @GetMapping(value = "principal_inn/{inn}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryByPrincipalInn(@PathVariable @Parameter(name = "inn",
             description = "ИНН доверителя", example = "1" ) String inn) {
         MrpaRegistryWithFioDTO mrpaRegistryFindByInn;
@@ -205,7 +210,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Успешно отозвано" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @PutMapping("recall/{id}" )
+    @PutMapping(value = "recall/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> recallMrpaRegistryById(@PathVariable @Parameter(name = "id",
             description = "ИД МЧД", example = "1" ) Long id) {
         try {
