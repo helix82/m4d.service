@@ -5,6 +5,8 @@ import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 
+import java.util.List;
+
 @Data
 public class MrpaRegistryWithFioDTO {
     @JsonProperty("id")
@@ -49,6 +51,18 @@ public class MrpaRegistryWithFioDTO {
     @JsonProperty("representativeFio")
     private String representativeFio;
 
+    public List<CredentialDTO> credential;
+
+    @Data
+    public static class CredentialDTO {
+        @JsonProperty("id")
+        private Long id;
+        @JsonProperty("code")
+        private String code;
+        @JsonProperty("name")
+        private String name;
+    }
+
     public MrpaRegistryWithFioDTO(Long id, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status,
                                   String sigPath, String mrpaXmlPath, String recalledXmlPath, Long organizationId,
                                   Long principalId, Long representativeId, String principalSurname, String principalName, String principalPatronymic,
@@ -69,4 +83,5 @@ public class MrpaRegistryWithFioDTO {
         this.principalFio = principalSurname + ' ' + principalName + ' ' + principalPatronymic;
         this.representativeFio = representativeSurname + ' ' + representativeName + ' ' + representativePatronymic;
     }
+
 }
