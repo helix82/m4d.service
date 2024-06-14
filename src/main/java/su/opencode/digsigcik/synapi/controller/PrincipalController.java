@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +13,9 @@ import su.opencode.digsigcik.synapi.model.Principal;
 import su.opencode.digsigcik.synapi.service.PrincipalService;
 
 import javax.validation.ConstraintViolationException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constant.NULL;
@@ -34,8 +35,14 @@ public class PrincipalController {
             @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
     })
     @GetMapping()
-    public List<Principal> findAllPrincipal() {
-        return service.findAllPrincipal();
+    public ResponseEntity<?> findAllPrincipal() {
+        List<Principal> response;
+        try {
+            response = service.findAllPrincipal();
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PRINCIPAL_IS_NULL);
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Сохранить доверителя", description = "Возвращает сохраненную запись доверителя")
@@ -60,8 +67,14 @@ public class PrincipalController {
             @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
     })
     @GetMapping("/{id}")
-    public Principal findByPrincipalId(@PathVariable Long id) {
-        return service.findByPrincipalId(id);
+    public ResponseEntity<?> findByPrincipalId(@PathVariable Long id) {
+        Principal response;
+        try {
+            response = service.findByPrincipalId(id);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PRINCIPAL_IS_NULL);
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @Operation(summary = "Изменить доверителя", description = "Возвращает измененного доверителя")
@@ -93,6 +106,9 @@ public class PrincipalController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ID_IS_NULL);
         }
-        return ResponseEntity.ok().build();
+        Map<String, String> body = new HashMap<>();
+        body.put("result", "true");
+
+        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 }
