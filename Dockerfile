@@ -11,7 +11,9 @@ FROM nexus.essocode.ru/bellsoft/liberica-openjdk-alpine:11
 #FROM bellsoft/liberica-openjdk-alpine:11
 ARG JAR_FILE=synapi-0.0.1-SNAPSHOT.jar
 ENV PROJECT_HOME /app 
-RUN mkdir -p /app 
+RUN mkdir -p /app \
+    && mkdir -p /app/files/source \
+    && mkdir -p /app/files/dscp
 COPY --from=maven /app/target/${JAR_FILE}  $PROJECT_HOME/${JAR_FILE}
 COPY root_ca.crt $JAVA_HOME/lib/security
 COPY intermediate_ca.crt $JAVA_HOME/lib/security
