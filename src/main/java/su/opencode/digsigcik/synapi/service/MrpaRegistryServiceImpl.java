@@ -6,13 +6,12 @@ import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
+import su.opencode.digsigcik.synapi.model.Credential;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
-import su.opencode.digsigcik.synapi.repository.MrpaRegistryRepository;
-import su.opencode.digsigcik.synapi.repository.OrganisationRepository;
-import su.opencode.digsigcik.synapi.repository.PrincipalRepository;
-import su.opencode.digsigcik.synapi.repository.RepresentativeRepository;
+import su.opencode.digsigcik.synapi.repository.*;
 
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
@@ -25,6 +24,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     private final OrganisationRepository organisationRepository;
     private final PrincipalRepository principalRepository;
     private final RepresentativeRepository representativeRepository;
+    private final CredentialRepository credentialRepository;
 
     @Override
     public List<MrpaRegistryWithFioDTO> findAllMrpaRegistry() {
@@ -38,9 +38,9 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
-    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryId(@NotNull Long id) {
-        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
-        if (mrpaRegistry.isEmpty()) {
+    public MrpaRegistryWithFioDTO findByMrpaRegistryId(@NotNull Long id) {
+        MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry == null) {
             throw new MchdException(String.format("Mrpa registry %s", NOT_FOUND));
         }
         return mrpaRegistry;
@@ -60,8 +60,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
             throw new BadRequestException("Can`t update mrpa registry because id null!");
         }
 
-        List<MrpaRegistryWithFioDTO> existMrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(mrpaRegistryId);
-        if (existMrpaRegistry.isEmpty()) {
+        MrpaRegistryWithFioDTO existMrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(mrpaRegistryId);
+        if (existMrpaRegistry == null) {
             throw new MchdException(String.format("Can`t update. Mrpa registry with id=%d %s", mrpaRegistryId, NOT_FOUND));
         }
 
@@ -70,15 +70,15 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public void deleteMrpaRegistry(@NotNull Long id) {
-        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
-        if (mrpaRegistry.isEmpty()) {
+        MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry == null) {
             throw new MchdException(String.format("Can`t delete mrpa registry because mrpa registry %s", NOT_FOUND));
         }
         this.mrpaRegistryRepository.deleteById(id);
     }
 
     @Override
-    public List<MrpaRegistryWithFioDTO> findByMrpaRegistryPrincipalInn(String inn) {
+    public MrpaRegistryWithFioDTO findByMrpaRegistryPrincipalInn(String inn) {
         return this.mrpaRegistryRepository.findMrpaRegistriesByPrincipalInn(inn);
     }
 
@@ -101,11 +101,28 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
     @Override
     public void recallMrpaRegistryById(Long id) {
-        List<MrpaRegistryWithFioDTO> mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
-        if (mrpaRegistry.isEmpty()) {
+        MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry == null) {
             throw new MchdException(String.format("Can`t recall mrpa registry because mrpa registry %s", NOT_FOUND));
         }
         this.mrpaRegistryRepository.recallMrpaRegistryById(id);
     }
+
+    @Override
+    public List<MrpaRegistryWithFioDTO.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId) {
+
+        List<Credential> credential = this.credentialRepository.findCredentialByMrpaId(mrpaId);
+        List<MrpaRegistryWithFioDTO.CredentialDTO> credentialDTOList = new ArrayList<>();
+
+        for(Credential c : credential) {
+            MrpaRegistryWithFioDTO.CredentialDTO credentialDTO = new MrpaRegistryWithFioDTO.CredentialDTO();
+            credentialDTO.setId(c.getId());
+            credentialDTO.setName(c.getName());
+            credentialDTO.setCode(c.getCode());
+            credentialDTOList.add(credentialDTO);
+        }
+        return credentialDTOList;
+    }
+
 }
 

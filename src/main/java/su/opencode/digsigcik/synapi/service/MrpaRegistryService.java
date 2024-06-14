@@ -11,7 +11,7 @@ public interface MrpaRegistryService {
 
     MrpaRegistry saveMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry);
 
-    List<MrpaRegistryWithFioDTO> findByMrpaRegistryId(@NotNull Long id);
+    MrpaRegistryWithFioDTO findByMrpaRegistryId(@NotNull Long id);
 
     MrpaRegistry findById(@NotNull Long id);
 
@@ -19,7 +19,9 @@ public interface MrpaRegistryService {
 
     void deleteMrpaRegistry(@NotNull Long id);
 
-    List<MrpaRegistryWithFioDTO> findByMrpaRegistryPrincipalInn(String inn);
+    MrpaRegistryWithFioDTO findByMrpaRegistryPrincipalInn(String inn);
 
     void recallMrpaRegistryById(@NotNull Long id);
+
+    List<MrpaRegistryWithFioDTO.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId);
 }

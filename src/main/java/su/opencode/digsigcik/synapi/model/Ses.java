@@ -1,7 +1,6 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.Column;
@@ -11,8 +10,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name="ses")
 @Transactional
@@ -20,9 +18,6 @@ public class Ses {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "operation_id")
-    private Long operationId;
 
     @Column(name = "user_login", columnDefinition = "VARCHAR(50)")
     private String userLogin;

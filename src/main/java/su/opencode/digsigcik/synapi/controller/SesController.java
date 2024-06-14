@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,18 +23,17 @@ import su.opencode.digsigcik.synapi.service.SesService;
 public class SesController {
     private final SesService sesService;
 
-    @PostMapping("/create")
+    @PostMapping(value = "/create")
     public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                        @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
         SesResponseDto sesResponseDto = sesService.getContainerPath(pinCode, file, authToken);
 
-        return new ResponseEntity<>(sesResponseDto.getContainerPath(), HttpStatus.OK);
+        return new ResponseEntity<>(sesResponseDto, HttpStatus.OK);
     }
 
-    @GetMapping("/verify")
-    public ResponseEntity<?> verifySes(@RequestParam(value = "operationId") String operationId,
-                                       @RequestPart("file") MultipartFile file) {
-        SesVerifyJsonDto sesVerifyResponse = sesService.verifySes(operationId, file);
+    @PostMapping(value = "/verify")
+    public ResponseEntity<?> verifySes(@RequestPart("file") MultipartFile file) {
+        SesVerifyJsonDto sesVerifyResponse = sesService.verifySes(file);
 
         return new ResponseEntity<>(sesVerifyResponse, HttpStatus.OK);
     }

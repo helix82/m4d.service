@@ -49,7 +49,7 @@ steps:
   - name: curl synapi
     image: curlimages/curl
     environment:
-      SYNAPI_URL: http://synapi:8080
+      SYNAPI_URL: http://synapi
     commands:
       - while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' $SYNAPI_URL/swagger-ui/index.html#)" != "200" ]]; do sleep 5; done
     depends_on:

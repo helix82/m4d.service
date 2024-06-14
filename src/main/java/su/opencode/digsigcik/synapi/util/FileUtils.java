@@ -52,8 +52,16 @@ public class FileUtils {
         return multipartFile;
     }
 
+    public static void createDirectoryIfSheNotExist(String directoryPathName) {
+        Path directoryPath = Paths.get(directoryPathName);
+        if (!Files.exists(directoryPath)) {
+            File file = new File(directoryPathName);
+            file.mkdirs();
+        }
+    }
+
     public static void deleteFile(String filePathName) {
-        File myFile = new File(filePathName);
-        myFile.delete();
+        File file = new File(filePathName);
+        file.delete();
     }
 }
