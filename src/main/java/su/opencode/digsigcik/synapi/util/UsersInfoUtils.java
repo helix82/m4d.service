@@ -43,12 +43,6 @@ public class UsersInfoUtils {
                 .findFirst();
     }
 
-    public Optional<UserDto> getUserByOperationId(Long operationId) {
-        return usersInfo.stream()
-                .filter(userDto -> userDto.getOperationId().equals(operationId))
-                .findFirst();
-    }
-
     public boolean isUserWithPinCodeHashNotExist(String pinCodeHash) {
         return getUserByUserPinCodeHash(pinCodeHash).isEmpty();
     }
@@ -119,13 +113,13 @@ public class UsersInfoUtils {
                 RoleEnum.ADMIN, HashUtils.getSha256Hash(gudkovPinCode.getBytes(StandardCharsets.UTF_8)));
 
         usersInfo.add(addUserFullNameAndOperationId(ivanov, "Иван", "Иванов",
-                "Иванович", 1L));
+                "Иванович"));
         usersInfo.add(addUserFullNameAndOperationId(petrov, "Петр", "Петров",
-                "Петрович", 2L));
+                "Петрович"));
         usersInfo.add(addUserFullNameAndOperationId(sokolov, "Юрий", "Соколов",
-                "Александрович", 3L));
+                "Александрович"));
         usersInfo.add(addUserFullNameAndOperationId(gudkov, "Владимир", "Гудков",
-                "Алексеевич", 4L));
+                "Алексеевич"));
     }
 
     private UserDto createUserDto(String login, String password, PositionEnum position,
@@ -142,11 +136,10 @@ public class UsersInfoUtils {
     }
 
     private UserDto addUserFullNameAndOperationId(UserDto user, String firstName, String lastName,
-                                                  String patronymic, Long operationId) {
+                                                  String patronymic) {
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setPatronymic(patronymic);
-        user.setOperationId(operationId);
         return user;
     }
 }

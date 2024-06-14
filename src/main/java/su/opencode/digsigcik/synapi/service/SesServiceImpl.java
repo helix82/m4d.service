@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.dto.SesContainerFileDto;
 import su.opencode.digsigcik.synapi.dto.SesDto;
 import su.opencode.digsigcik.synapi.dto.SesResponseDto;
+import su.opencode.digsigcik.synapi.dto.SesUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
 import su.opencode.digsigcik.synapi.dto.SigHashDto;
 import su.opencode.digsigcik.synapi.dto.UserDto;
@@ -38,9 +40,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import static su.opencode.digsigcik.synapi.util.Constant.DSCP_DIRECTORY_PATH;
 import static su.opencode.digsigcik.synapi.util.Constant.FILE_ERROR_MESSAGE;
-import static su.opencode.digsigcik.synapi.util.Constant.OPERATION_ID_ERROR_MESSAGE;
+import static su.opencode.digsigcik.synapi.util.Constant.HASH_ALGORITHM;
 import static su.opencode.digsigcik.synapi.util.Constant.PIN_CODE_ERROR_MESSAGE;
+import static su.opencode.digsigcik.synapi.util.Constant.ROOT_FILE_STORAGE_PATH;
+import static su.opencode.digsigcik.synapi.util.Constant.SOURCE_DIRECTORY_PATH;
 import static su.opencode.digsigcik.synapi.util.Constant.TOKEN_ERROR_MESSAGE;
 import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
 
@@ -83,8 +88,6 @@ public class SesServiceImpl implements SesService {
         if (usersInfo.isUserWithPinCodeHashNotExist(pinCodeHash)) {
             throw new SesException(PIN_CODE_ERROR_MESSAGE);
         }
-        UserDto user = userDto.get();
-        Long operationId = user.getOperationId();
 
         LocalDateTime date = LocalDateTime.now();
         String operationDate = date.toString();
@@ -97,20 +100,25 @@ public class SesServiceImpl implements SesService {
         usersInfo.setSignature(userLogin, signature);
 
         // создаем файл SHA256sig.sig в который записываем signature
-        String sigFilePathName = "./files/source/SHA256sig.sig";
+        String sourceDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, SOURCE_DIRECTORY_PATH);
+        String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "SHA256sig.sig");
+        FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
         FileUtils.createFile(sigFilePathName, signature.getBytes());
 
         MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
+        String userFirstName = jwtPayloadDto.getFirstName();
+        String userLastName = jwtPayloadDto.getLastName();
+        String userPatronymic = jwtPayloadDto.getPatronymic();
+
         ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
                 .login(userLogin)
-                .firstname(jwtPayloadDto.getFirstName())
-                .lastname(jwtPayloadDto.getLastName())
-                .patronymic(jwtPayloadDto.getPatronymic())
+                .firstname(userFirstName)
+                .lastname(userLastName)
+                .patronymic(userPatronymic)
                 .timestamp(date)
                 .build();
 
         Resource containerResource = containerService.createPdfContainer(srcFile, sigMultipartFile, containerUserInfo);
-
 
         File sigFile = new File(sigFilePathName);
         if (sigFile.exists()) {
@@ -120,10 +128,11 @@ public class SesServiceImpl implements SesService {
         /*  - добавляем в таблицу sesContainer новую запись
             - добавляем в таблицу ses новую запись
         */
-        String containerPath = String.format("./files/dscp/container-%s.dscp", DateUtils.formatDate(date));
+        String containerPath = String.format("%s%scontainer-%s.dscp", ROOT_FILE_STORAGE_PATH, DSCP_DIRECTORY_PATH,
+                DateUtils.formatDate(date)
+        );
         SesContainer sesContainer = addNewSesContainer(containerPath);
         SesDto sesDto = SesDto.builder()
-                .operationId(operationId)
                 .userLogin(userLogin)
                 .fileHash(fileHash)
                 .signature(signature)
@@ -136,16 +145,16 @@ public class SesServiceImpl implements SesService {
         }
 
         return SesResponseDto.builder()
-                .containerPath(containerPath)
+                .containerUUID(sesContainer.getUuid())
+                .sigType("simple")
+                .firstName(userFirstName)
+                .lastName(userLastName)
+                .patronymic(userPatronymic)
                 .build();
     }
 
     @Override
-    public SesVerifyJsonDto verifySes(String operationId, @NotNull MultipartFile container) {
-        if (operationId == null || operationId.isEmpty()) {
-            throw new SesVerifyException(OPERATION_ID_ERROR_MESSAGE);
-        }
-
+    public SesVerifyJsonDto verifySes(@NotNull MultipartFile container) {
         if (container.isEmpty()) {
             throw new SesVerifyException("Container is empty!");
         }
@@ -156,7 +165,7 @@ public class SesServiceImpl implements SesService {
         if (containerData == null) {
             throw new SesVerifyException("Verify ses error!");
         }
-        return getVerifyResultDto(Long.valueOf(operationId), containerData);
+        return getVerifyResultDto(containerData);
     }
 
     @Override
@@ -164,7 +173,6 @@ public class SesServiceImpl implements SesService {
         boolean sesIsSaved = false;
         if (sesDto != null) {
             Ses ses = new Ses();
-            ses.setOperationId(sesDto.getOperationId());
             ses.setUserLogin(sesDto.getUserLogin());
             ses.setFileHash(sesDto.getFileHash());
             ses.setSignature(sesDto.getSignature());
@@ -236,7 +244,7 @@ public class SesServiceImpl implements SesService {
         return file == null || file.isEmpty();
     }
 
-    private SesVerifyJsonDto getVerifyResultDto(Long operationId, Map<String, ContainerPart> containerData) {
+    private SesVerifyJsonDto getVerifyResultDto(Map<String, ContainerPart> containerData) {
         String userFirstname = new String(containerData.get("userFirstname").getData(), StandardCharsets.UTF_8);
         String userLastname = new String(containerData.get("userLastname").getData(), StandardCharsets.UTF_8);
         String userPatronymic = new String(containerData.get("userPatronymic").getData(), StandardCharsets.UTF_8);
@@ -250,11 +258,6 @@ public class SesServiceImpl implements SesService {
             throw new SesVerifyException(USER_NOT_FOUND);
         }
 
-        UserDto userDto = user.get();
-        if (!userDto.getOperationId().equals(operationId)) {
-            throw new SesVerifyException("User with operation id not found!");
-        }
-
         SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
         for (UserDto userInfo : usersInfo.getUsersInfo()) {
             if (userInfo.getLogin().equals(userLogin)) {
@@ -265,19 +268,20 @@ public class SesServiceImpl implements SesService {
                 String signature = generateSignature(pinCodeHash, fileHash, ses.getOperationDate());
 
                 if (userSignature.equals(signature)) {
-                    sesVerifyJsonDto.setVerifyResultMessage("The signature is correct!");
-                    sesVerifyJsonDto.setUserInfoDto(
-                            ContainerUserInfoDto.builder()
-                            .login(userLogin)
-                            .firstname(userFirstname)
-                            .lastname(userLastname)
-                            .patronymic(userPatronymic)
-                            .timestamp(LocalDateTime.parse(timestamp))
-                            .build()
+                    sesVerifyJsonDto.setVerifyResultMessage("VALID");
+                    sesVerifyJsonDto.setUserInfo(
+                            SesUserInfoDto.builder()
+                                    .hashAlgorithmType(HASH_ALGORITHM)
+                                    .hashSignatureAlgorithm(HASH_ALGORITHM)
+                                    .firstname(userFirstname)
+                                    .lastname(userLastname)
+                                    .patronymic(userPatronymic)
+                                    .timestamp(LocalDateTime.parse(timestamp))
+                                    .build()
                     );
                     break;
                 } else {
-                    throw new SesVerifyException("The signature is not correct!");
+                    throw new SesVerifyException("INVALID");
                 }
             }
         }

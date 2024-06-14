@@ -35,6 +35,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static su.opencode.digsigcik.synapi.util.Constant.DSCP_DIRECTORY_PATH;
+import static su.opencode.digsigcik.synapi.util.Constant.ROOT_FILE_STORAGE_PATH;
+
 // TODO: add proper error handling, likely with exception handlers
 @Service
 @AllArgsConstructor
@@ -94,8 +97,11 @@ public class ContainerServiceImpl implements ContainerService {
         ContainerUtils.fillContainerByResult(container, params);
 
         byte[] containerBytes = ContainerUtils.containerContent(container);
-
-        String containerPath = String.format("./files/dscp/container-%s.dscp", DateUtils.formatDate(containerUserInfo.getTimestamp()));
+        String dscpDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, DSCP_DIRECTORY_PATH);
+        String containerPath = String.format("%scontainer-%s.dscp", dscpDirectoryPathName,
+                DateUtils.formatDate(containerUserInfo.getTimestamp())
+        );
+        FileUtils.createDirectoryIfSheNotExist(dscpDirectoryPathName);
         FileUtils.createFile(containerPath, containerBytes);
 
         return new ByteArrayResource(containerBytes);

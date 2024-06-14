@@ -28,13 +28,12 @@ public class SesController {
                                        @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
         SesResponseDto sesResponseDto = sesService.getContainerPath(pinCode, file, authToken);
 
-        return new ResponseEntity<>(sesResponseDto.getContainerPath(), HttpStatus.OK);
+        return new ResponseEntity<>(sesResponseDto, HttpStatus.OK);
     }
 
     @PostMapping(value = "/verify")
-    public ResponseEntity<?> verifySes(@RequestParam(value = "operationId") String operationId,
-                                       @RequestPart("file") MultipartFile file) {
-        SesVerifyJsonDto sesVerifyResponse = sesService.verifySes(operationId, file);
+    public ResponseEntity<?> verifySes(@RequestPart("file") MultipartFile file) {
+        SesVerifyJsonDto sesVerifyResponse = sesService.verifySes(file);
 
         return new ResponseEntity<>(sesVerifyResponse, HttpStatus.OK);
     }

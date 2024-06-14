@@ -28,6 +28,5 @@ public class UserDto {
     private String pinCodeHash;
     private String fileHash;
     private String signature;
-    private Long operationId;
     private String operationDate;
 }
