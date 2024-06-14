@@ -11,7 +11,7 @@ import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
 public interface SesService {
     SesResponseDto getContainerPath(String pinCode, MultipartFile file, String token);
 
-    SesVerifyJsonDto verifySes(String operationId, MultipartFile file);
+    SesVerifyJsonDto verifySes(MultipartFile file);
 
     boolean createSes(SesDto ses);
 
