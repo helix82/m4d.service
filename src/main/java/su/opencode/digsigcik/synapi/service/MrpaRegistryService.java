@@ -22,4 +22,6 @@ public interface MrpaRegistryService {
     MrpaRegistryWithFioDTO findByMrpaRegistryPrincipalInn(String inn);
 
     void recallMrpaRegistryById(@NotNull Long id);
+
+    List<MrpaRegistryWithFioDTO.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId);
 }
