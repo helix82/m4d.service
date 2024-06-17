@@ -12,13 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistrySaveWithCredentialDTO;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
+import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.model.MrpaRegistryCredential;
-import su.opencode.digsigcik.synapi.model.ca.CAXml;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryCredentialService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
@@ -30,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constant.NULL;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
@@ -232,30 +231,16 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = "Успешно загружено"),
             @ApiResponse(code = 404, message = "Not found")
     })
-    @PostMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public String upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, JAXBException {
-        String content = new String(sourceFile.getBytes());
-        Document document = convertStringToDocument(content);
-        assert document != null;
-        CAXml caXml = XMLUtil.unmarshal(document, CAXml.class);
+    @GetMapping(value = "/download/{id}", produces = MediaType.APPLICATION_XML_VALUE) //"application/json; charset=UTF-8"
+    public ResponseEntity<?> download(@PathVariable @Parameter(name = "id",
+            description = "ИД МЧД", example = "1" ) Long id) throws IOException, JAXBException {
+        MrpaRegistryFullDTO mrpaRegistryFullDTO = mrpaRegistryService.findMrpaRegistryFullById(id);
+        mrpaRegistryFullDTO.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(id);
+        MrpaRegistryFullXML mrpaRegistryFullXML = mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
+        String xmlString;
+        xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
 
-//        for(CAXml.CA ca : caXml.getCa()){
-//            var stat = ca.getAccreditationStatus().getStatus();
-//            List<CertificateData> certData = ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()
-//                    .stream().map(z->z.getCertificates().getCertificateData()).collect(Collectors.toList())).collect(Collectors.toList()).stream().flatMap(Collection::stream).flatMap(Collection::stream).collect(Collectors.toList());
-//            for(CertificateData cert : certData){
-//
-//                var substr = cert.getIssuedTo().split(", ");
-//                for(String s : substr) {
-//                    var st = s.substring(0,3);
-//                    if (st.equals("CN="))
-//                        cert.setIssuedTo(s.substring(3));
-//                }
-//                cert.setTypeInput("Автоматически");
-//                cert.setAccreditationStatus(stat);
-//                certificateDataService.saveCertificateData(cert);
-//            }
-//        }
-        return "OK";
+        assertNotNull(xmlString);
+        return new ResponseEntity<>(xmlString, HttpStatus.OK);
     }
 }

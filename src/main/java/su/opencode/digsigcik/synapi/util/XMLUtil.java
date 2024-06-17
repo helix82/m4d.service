@@ -14,8 +14,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 @UtilityClass
 public class XMLUtil {
 
@@ -30,7 +28,7 @@ public class XMLUtil {
         JAXBContext context = JAXBContext.newInstance(clazz);
         Marshaller marshaller = context.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.setProperty(Marshaller.JAXB_ENCODING, UTF_8);
+        marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
         StringWriter stringWriter = new StringWriter();
         marshaller.marshal(wrapper, stringWriter);
         return stringWriter.toString();

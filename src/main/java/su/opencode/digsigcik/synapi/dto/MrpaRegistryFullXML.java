@@ -1,11 +1,14 @@
 package su.opencode.digsigcik.synapi.dto;
 
+import lombok.Data;
+
 import javax.xml.bind.annotation.*;
 import java.util.List;
 
-@XmlRootElement
+@XmlRootElement(name = "Доверенность")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Доверенность")
+@Data
 public class MrpaRegistryFullXML {
     @XmlAttribute(name = "xmlns:xsi")
     private String xmlnsXsi; //"http://www.w3.org/2001/XMLSchema-instance"
@@ -21,22 +24,25 @@ public class MrpaRegistryFullXML {
     private String idFile; //ON_EMCHD_20240516_75655b80-cc58-4a2b-b244-8334eb895a2f
 
     @XmlElement(name = "Документ")
-    public List<Document> document;
+    public Document document;
 
     @XmlRootElement
     @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
     public static class Document{
         @XmlElement(name = "Довер")
-        public List<PowerAttorneys> powerAttorneys;
+        public PowerAttorneys powerAttorneys;
 
         @XmlRootElement
         @XmlAccessorType(XmlAccessType.FIELD)
+        @Data
         public static class PowerAttorneys{
             @XmlElement(name = "СвДов")
             public Mrpa mrpa;
 
             @XmlRootElement
             @XmlAccessorType(XmlAccessType.FIELD)
+            @Data
             public static class Mrpa{
                 @XmlAttribute(name = "ВидДовер")
                 private String typePowerAttorney; //1
@@ -59,20 +65,23 @@ public class MrpaRegistryFullXML {
 
             @XmlRootElement
             @XmlAccessorType(XmlAccessType.FIELD)
+            @Data
             public static class InfoPrincipals{
                 @XmlAttribute(name = "ТипДоверит")
                 private String typePrincipal;//1
                 @XmlElement(name = "Доверит")
-                public List<InfoPrincipal> principal;
+                public InfoPrincipal principal;
 
                 @XmlRootElement
                 @XmlAccessorType(XmlAccessType.FIELD)
+                @Data
                 public static class InfoPrincipal{
                     @XmlElement(name = "РосОргДовер")
                     public LegalEntity legalEntity;
 
                     @XmlRootElement
                     @XmlAccessorType(XmlAccessType.FIELD)
+                    @Data
                     public static class LegalEntity{
                         @XmlAttribute(name = "ЕИОУК")
                         private String managementCompany; //0
@@ -81,10 +90,11 @@ public class MrpaRegistryFullXML {
                         @XmlAttribute(name = "ЕИОИП")
                         private String individualEntrepreneur; //0
                         @XmlElement(name = "СвРосОрг")
-                        private Organisation organisation;
+                        public Organisation organisation;
 
                         @XmlRootElement
                         @XmlAccessorType(XmlAccessType.FIELD)
+                        @Data
                         public static class Organisation{
                             @XmlAttribute(name = "НаимОрг")
                             private String name;
@@ -99,6 +109,7 @@ public class MrpaRegistryFullXML {
 
                             @XmlRootElement
                             @XmlAccessorType(XmlAccessType.FIELD)
+                            @Data
                             public static class AddressRegion{
                                 @XmlAttribute(name = "Регион")
                                 private String regionCode;
@@ -112,6 +123,7 @@ public class MrpaRegistryFullXML {
 
                         @XmlRootElement
                         @XmlAccessorType(XmlAccessType.FIELD)
+                        @Data
                         public static class PersonPrincipal{
                             @XmlAttribute(name = "ПолнЮЛ")
                             private String typeCredential; //1
@@ -121,6 +133,7 @@ public class MrpaRegistryFullXML {
 
                             @XmlRootElement
                             @XmlAccessorType(XmlAccessType.FIELD)
+                            @Data
                             public static class Principal{
                                 @XmlAttribute(name = "ИННФЛ")
                                 private String inn;
@@ -134,12 +147,14 @@ public class MrpaRegistryFullXML {
 
                                 @XmlRootElement
                                 @XmlAccessorType(XmlAccessType.FIELD)
+                                @Data
                                 public static class FioPrincipal{
                                     @XmlElement(name = "ФИО")
                                     public Fio fio;
 
                                     @XmlRootElement
                                     @XmlAccessorType(XmlAccessType.FIELD)
+                                    @Data
                                     public static class Fio{
                                         @XmlAttribute(name = "Фамилия")
                                         private String surname;
@@ -161,6 +176,7 @@ public class MrpaRegistryFullXML {
 
             @XmlRootElement
             @XmlAccessorType(XmlAccessType.FIELD)
+            @Data
             public static class InfoRepresentative{
                 @XmlAttribute(name = "ТипПред")
                 private String typeRepresentative; //3
@@ -170,12 +186,14 @@ public class MrpaRegistryFullXML {
 
                 @XmlRootElement
                 @XmlAccessorType(XmlAccessType.FIELD)
+                @Data
                 public static class Representative{
                     @XmlElement(name = "СведФизЛ")
                     public DetailRepresentative detailRepresentative;
 
                     @XmlRootElement
                     @XmlAccessorType(XmlAccessType.FIELD)
+                    @Data
                     public static class DetailRepresentative{
                         @XmlAttribute(name = "ИННФЛ")
                         private String inn;
@@ -186,6 +204,7 @@ public class MrpaRegistryFullXML {
 
                         @XmlRootElement
                         @XmlAccessorType(XmlAccessType.FIELD)
+                        @Data
                         public static class InfoIndividual{
                             @XmlAttribute(name = "ДатаРожд")
                             private String birthDate;
@@ -194,6 +213,7 @@ public class MrpaRegistryFullXML {
 
                             @XmlRootElement
                             @XmlAccessorType(XmlAccessType.FIELD)
+                            @Data
                             public static class FioRepresentative{
                                 @XmlAttribute(name = "Фамилия")
                                 private String surname;
@@ -208,6 +228,7 @@ public class MrpaRegistryFullXML {
 
                             @XmlRootElement
                             @XmlAccessorType(XmlAccessType.FIELD)
+                            @Data
                             public static class RepresentativePassport{
                                 @XmlAttribute(name = "КодВидДок")
                                 private String typeDocument; //21
@@ -230,6 +251,7 @@ public class MrpaRegistryFullXML {
 
             @XmlRootElement
             @XmlAccessorType(XmlAccessType.FIELD)
+            @Data
             public static class Credential{
                 @XmlAttribute(name = "ТипПолн")
                 private String typeCredential; //0
@@ -238,7 +260,7 @@ public class MrpaRegistryFullXML {
                 @XmlAttribute(name = "ПрУтрПолн")
                 private String lossCredential; //1
                 @XmlElement(name = "ТекстПолн")
-                public String name;
+                public List<String> name;
             }
         }
     }
