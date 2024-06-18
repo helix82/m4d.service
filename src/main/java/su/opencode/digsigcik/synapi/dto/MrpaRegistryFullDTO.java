@@ -1,20 +1,26 @@
 package su.opencode.digsigcik.synapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 
+import java.util.List;
+
 @Data
 public class MrpaRegistryFullDTO {
-
+    @JsonProperty("id")
     private Long id;
-    private Long userId;
+
+    @JsonProperty("guid")
     private String guid;
+
+    @JsonProperty("internalNumber")
     private String internalNumber;
-    private OrganizationDTO organization;
+    public OrganizationDTO organization;
 
     @Data
-    private static class OrganizationDTO {
+    public static class OrganizationDTO {
         private Long id;
         private String inn;
         private String kpp;
@@ -25,10 +31,10 @@ public class MrpaRegistryFullDTO {
 
     }
 
-    private PrincipalDTO principal;
+    public PrincipalDTO principal;
 
     @Data
-    private static class PrincipalDTO {
+    public static class PrincipalDTO {
         private Long id;
         private String inn;
         private String snils;
@@ -38,10 +44,10 @@ public class MrpaRegistryFullDTO {
         private String name;
     }
 
-    private RepresentativeDTO representative;
+    public RepresentativeDTO representative;
 
     @Data
-    private static class RepresentativeDTO {
+    public static class RepresentativeDTO {
         private Long id;
         private String inn;
         private String snils;
@@ -50,11 +56,11 @@ public class MrpaRegistryFullDTO {
         private String patronymic;
         private String name;
 
-        private RepresentativePassportDTO representativePassport;
+        public RepresentativePassportDTO representativePassport;
     }
 
     @Data
-    private static  class RepresentativePassportDTO {
+    public static  class RepresentativePassportDTO {
         private Long id;
         private String seriesNumber;
         private String dateIssue;
@@ -62,32 +68,43 @@ public class MrpaRegistryFullDTO {
         private String departmentCode;
     }
 
+    @JsonProperty("startDate")
     private String startDate;
+
+    @JsonProperty("endDate")
     private String endDate;
+
+    @JsonProperty("status")
     private String status;
-    private String ftxRegistration;
+
+    @JsonProperty("sigPath")
     private String sigPath;
+
+    @JsonProperty("mrpaXmlPath")
     private String mrpaXmlPath;
+
+    @JsonProperty("recalledXmlPath")
     private String recalledXmlPath;
 
-    private CredentialDTO credential;
+    public List<CredentialDTO> credential;
 
     @Data
-    private static class CredentialDTO {
+    public static class CredentialDTO {
+        @JsonProperty("id")
         private Long id;
+        @JsonProperty("code")
         private String code;
+        @JsonProperty("name")
         private String name;
     }
 
-    public MrpaRegistryFullDTO(Long id, Long userId, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status, String sigPath, String mrpaXmlPath, String recalledXmlPath,
+    public MrpaRegistryFullDTO(Long id, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status, String sigPath, String mrpaXmlPath, String recalledXmlPath,
                                Long principal_id, String principal_inn, String principal_snils, String principal_jobTitle, String principal_name, String principal_surname, String principal_patronymic,
                                Long representative_id, String representative_inn, String representative_snils, String representative_birthDate, String representative_name, String representative_surname, String representative_patronymic,
                                Long representativePassport_id, String representativePassport_dateIssue, String representativePassport_whoIssue, String representativePassport_seriesNumber, String representativePassport_departmentCode,
-                               Long organisation_id, String organisation_inn, String organisation_kpp, String organisation_ogrn, String organisation_name, String organisation_regionCode, String organisation_legalAddress,
-                               Long credential_id, String credential_code, String credential_name) {
+                               Long organisation_id, String organisation_inn, String organisation_kpp, String organisation_ogrn, String organisation_name, String organisation_regionCode, String organisation_legalAddress) {
         super();
         this.id = id;
-        this.userId = userId;
         this.guid = guid;
         this.internalNumber = internalNumber;
         this.startDate = startDate;
@@ -134,12 +151,6 @@ public class MrpaRegistryFullDTO {
         organizationDTO.regionCode = organisation_regionCode;
         organizationDTO.legalAddress = organisation_legalAddress;
         this.organization = organizationDTO;
-
-        MrpaRegistryFullDTO.CredentialDTO credentialDTO = new CredentialDTO();
-        credentialDTO.id = credential_id;
-        credentialDTO.code = credential_code;
-        credentialDTO.name = credential_name;
-        this.credential = credentialDTO;
     }
 
 }

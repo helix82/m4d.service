@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 
@@ -48,4 +49,15 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
     @Transactional
     @Query("update MrpaRegistry mr set mr.status = 'WITHDRAWN' where mr.id=?1")
     void recallMrpaRegistryById(Long id);
+
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, " +
+            "p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic," +
+            "rp.id, rp.dateIssue, rp.whoIssue, rp.seriesNumber, rp.departmentCode, o.id, o.inn, o.kpp, o.ogrn, o.name, o.regionCode, o.legalAddress) "
+            + " from MrpaRegistry mr"
+            + " left join Principal p on p.id=mr.principalId"
+            + " left join Organisation o on o.id=mr.organisationId"
+            + " left join Representative r on r.id=mr.representativeId "
+            + " left join RepresentativePassport rp on rp.representativeId=r.id"
+            + " where mr.id=?1 ")
+    MrpaRegistryFullDTO findMrpaRegistryFullById(Long id);
 }
