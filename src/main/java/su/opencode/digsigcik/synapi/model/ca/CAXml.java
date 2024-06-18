@@ -6,13 +6,15 @@ import lombok.NoArgsConstructor;
 import javax.xml.bind.annotation.*;
 import java.util.List;
 
+import static su.opencode.digsigcik.synapi.util.Constants.XML_ELEMENT_CA;
+
 @NoArgsConstructor
 @Data
 @XmlRootElement(name = "АккредитованныеУдостоверяющиеЦентры")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "АккредитованныеУдостоверяющиеЦентры")
 public class CAXml {
-    @XmlElement(name = "УдостоверяющийЦентр")
+    @XmlElement(name = XML_ELEMENT_CA)
     public List<CA> ca;
 
     @Data
