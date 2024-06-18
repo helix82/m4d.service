@@ -11,6 +11,10 @@ public interface AcmeService {
     Map logout(HttpSession httpSession, Long id);
     ResponseEntity<Map> certificate(HttpSession httpSession, String domainName, String notAfter
     );
+    ResponseEntity<Map> certificateOrder(HttpSession httpSession, String domainName, String notAfter
+    );
+    ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long id
+    );
     Map certificate(HttpSession httpSession, Long domainId
     );
     Map revoke(HttpSession httpSession, Long id

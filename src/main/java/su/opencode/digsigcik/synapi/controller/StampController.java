@@ -3,15 +3,16 @@ package su.opencode.digsigcik.synapi.controller;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Image;
 import com.lowagie.text.Rectangle;
-import com.lowagie.text.pdf.ByteBuffer;
 import com.lowagie.text.pdf.PdfAnnotation;
 import com.lowagie.text.pdf.PdfAppearance;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfReader;
-import com.lowagie.text.pdf.PdfSignatureAppearance;
 import com.lowagie.text.pdf.PdfStamper;
-import com.lowagie.text.pdf.PdfTemplate;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,74 +30,41 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
 
 @RestController
 @RequestMapping("/api/v1/stamp")
 @AllArgsConstructor
 public class StampController {
 
-    private static void setVisibleSignatureRotated(PdfStamper stamper, PdfSignatureAppearance appearance, Rectangle pageRect, int page, String fieldName) throws DocumentException, IOException {
-        float height = pageRect.getHeight();
-        float width = pageRect.getWidth();
-        float llx = pageRect.getLeft();
-        float lly = pageRect.getBottom();
-        // Visual signature is configured as if it were going to be a regular horizontal visual signature.
-        appearance.setVisibleSignature(new Rectangle(llx, lly, llx + height, lly + width), page, null);
-        // We trigger premature appearance creation, so independent parts of it can be modified right away.
-        appearance.getAppearance();
-        // Now we correct the width and height.
-        appearance.setVisibleSignature(new Rectangle(llx, lly, llx + width, lly + height), page, fieldName);
-        appearance.getTopLayer().setWidth(width);
-        appearance.getTopLayer().setHeight(height);
-        PdfTemplate n2Layer = appearance.getLayer(2);
-        n2Layer.setWidth(width);
-        n2Layer.setHeight(height);
-        // Then we rotate the n2 layer. See http://developers.itextpdf.com/question/how-rotate-paragraph.
-        PdfTemplate t = PdfTemplate.createTemplate(stamper.getWriter(), height, width);
-        ByteBuffer internalBuffer = t.getInternalBuffer();
-        internalBuffer.write(n2Layer.toString().getBytes());
-        n2Layer.reset();
-        Image textImg = Image.getInstance(t);
-        textImg.setInterpolation(true);
-        textImg.scaleAbsolute(height, width);
-        textImg.setRotationDegrees((float) 90);
-        textImg.setAbsolutePosition(0, 0);
-        n2Layer.addImage(textImg);
-    }
-
-    private byte[] doStamp(InputStream document,InputStream stamp) {
+    private byte[] doStamp(InputStream document,InputStream stamp, Integer page, Integer offsetX, Integer offsetY, Integer scale) {
         try {
-/*            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream("signer.p12"), "secret".toCharArray());
-            String alias = keyStore.aliases().nextElement();
-            PrivateKey privateKey = (PrivateKey) keyStore.getKey(alias, "secret".toCharArray());
-            Certificate[] certificateChain = keyStore.getCertificateChain(alias);
-
-
-*/
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
             PdfReader reader = new PdfReader(document);
+            Integer pagesCount = reader.getNumberOfPages();
+            Integer stampPage = pagesCount;
+            if(page!=null){
+                if(page>0&&page<pagesCount){
+                    stampPage = page;
+                }
+                if(page>-pagesCount&&page<0){
+                    stampPage = pagesCount + page + 1;
+                }
+            }
             PdfStamper stamper = new PdfStamper(reader, baos, '\0', true);
-//            PdfStamper stamper  = PdfStamper.createSignature(reader, baos, '\0');
 
-//            PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
-//            appearance.setCertificate(certificateChain[0]);
-
-//            setVisibleSignatureRotated(stamper, appearance, new Rectangle(120, 650, 170, 770), 1, null);
-
-
-
-            //Read the image
             Image img = Image.getInstance(ImageIO.read(stamp), null);
+            if(scale != null )
+                img.scalePercent(scale);
 
             float w = img.getScaledWidth();
             float h = img.getScaledHeight();
 
-            Rectangle location = new Rectangle(70, 70 - h, 70 + w, 70);
+            Rectangle pagesize = reader.getPageSize(stampPage);
+            int oX = (int) (pagesize.getWidth() - w), oY=0;
+            if(offsetX!=null)oX = ((offsetX<0)?((int)(pagesize.getWidth() - w) ):0) + offsetX;
+            if(offsetY!=null)oY = ((offsetY<0)?((int)(pagesize.getHeight() - h) ):0) + offsetY;
+            Rectangle location = new Rectangle(oX, oY, oX + w, oY + h );
 
             PdfAnnotation stampAnnot = PdfAnnotation.createStamp(stamper.getWriter(), location, null, "ITEXT");
             stampAnnot.setFlags(PdfAnnotation.FLAGS_LOCKED);
@@ -106,13 +74,10 @@ public class StampController {
             PdfAppearance app = cb.createAppearance(w, h);
             app.addImage(img);
             stampAnnot.setAppearance(PdfName.N, app);
-            stampAnnot.setFlags(PdfAnnotation.FLAGS_PRINT);
+            stampAnnot.setFlags(PdfAnnotation.FLAGS_PRINT | PdfAnnotation.FLAGS_READONLY );
 
-            stamper.addAnnotation(stampAnnot, reader.getNumberOfPages());
+            stamper.addAnnotation(stampAnnot, stampPage);
 
-/*            if (stampAnnot!=null)
-                sap.SetVisibleSignature(stampAnnot, 1, "SignatureESift");
-*/
             reader.close();
             stamper.close();
             return baos.toByteArray();
@@ -125,28 +90,43 @@ public class StampController {
         return null;
     }
 
-    @GetMapping("/")
+    @Operation(summary = "Проставить штамп на визуальном представлении документа",
+            description = "Возвращает документ PDF с просталенным штампом" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Штамп успешно проставлен" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @GetMapping(value = "/", produces = "application/pdf")
     public @ResponseBody
-    byte[] stamp(HttpServletResponse httpResponse,
-                 @RequestParam("document") String documentUrl,
-                 @RequestParam("stamp") String stampUrl) {
+    byte[] stamp(@RequestParam("document") @Parameter(name = "document", description="Ссылка на PDF-документ", example = "http://example.com/document.pdf", required = true) String documentUrl,
+                 @RequestParam("stamp") @Parameter(name = "stamp", description="Ссылка на файл штампа", example = "http://example.com/stamp.png", required = true) String stampUrl,
+                 @RequestParam(value = "page", required = false) @Parameter(name = "page", description="Номер страницы для проставления штампа. Может быть отрицательным, тогда номер страницы считается с конца документа", example = "-1") Integer page,
+                 @RequestParam(value = "offsetX", required = false) @Parameter(name = "offsetX", description="Смещение штампа в 1/72 дюйма оносительно левой стороны страницы. Может быть отрицательным, тогда смещение считается от правой стороны страницы", example = "36") Integer offsetX,
+                 @RequestParam(value = "offsetY", required = false) @Parameter(name = "offsetY", description="Смещение штампа в 1/72 дюйма оносительно нижней стороны страницы. Может быть отрицательным, тогда смещение считается от верхней стороны страницы", example = "36") Integer offsetY,
+                 @RequestParam(value = "scale", required = false) @Parameter(name = "scale", description="Масштаб штампа в процентах, относительно исходного размера", example = "75") Integer scale) {
         try {
-            httpResponse.setContentType ("application/pdf");
-            return doStamp(new URL(documentUrl).openStream(), new URL(stampUrl).openStream());
+            return doStamp(new URL(documentUrl).openStream(), new URL(stampUrl).openStream(), page, offsetX, offsetY, scale);
         } catch (IOException e) {
             return null;
         }
     }
 
-    @PostMapping("/")
+    @Operation(summary = "Проставить штамп на визуальном представлении документа",
+            description = "Возвращает документ PDF с просталенным штампом" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Штамп успешно проставлен" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping(value = "/", produces = "application/pdf")
     public @ResponseBody
-    byte[] stamp(
-            HttpServletResponse httpResponse,
-            @RequestPart("document") MultipartFile document,
-            @RequestPart("stamp") MultipartFile stamp) {
+    byte[] stamp(@RequestPart("document") @Parameter(name = "document", description="Содержимое PDF-документа", example = "http://example.com/document.pdf", required = true) MultipartFile document,
+                 @RequestPart("stamp") @Parameter(name = "stamp", description="Содержимое файлв штампа", example = "http://example.com/stamp.png", required = true) MultipartFile stamp,
+                 @RequestPart(value = "page", required = false) @Parameter(name = "page", description="Номер страницы для проставления штампа. Может быть отрицательным, тогда номер страницы считается с конца документа", example = "-1") Integer page,
+                 @RequestPart(value = "offsetX", required = false) @Parameter(name = "offsetX", description="Смещение штампа в 1/72 дюйма оносительно левой стороны страницы. Может быть отрицательным, тогда смещение считается от правой стороны страницы", example = "36") Integer offsetX,
+                 @RequestPart(value = "offsetY", required = false) @Parameter(name = "offsetY", description="Смещение штампа в 1/72 дюйма оносительно нижней стороны страницы. Может быть отрицательным, тогда смещение считается от верхней стороны страницы", example = "36") Integer offsetY,
+                 @RequestParam(value = "scale", required = false) @Parameter(name = "scale", description="Масштаб штампа в процентах, относительно исходного размера", example = "75") Integer scale) {
         try {
-            httpResponse.setContentType ("application/pdf");
-            return doStamp(document.getInputStream(), stamp.getInputStream());
+            return doStamp(document.getInputStream(), stamp.getInputStream(), page, offsetX, offsetY, scale);
         } catch (IOException e) {
             return null;
         }
