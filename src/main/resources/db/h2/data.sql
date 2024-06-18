@@ -86,3 +86,21 @@ VALUES
     (6, 1, 5),
     (7, 2, 5),
     (8, 3, 5);
+INSERT INTO ses_user (id, login, firstname, lastname, patronymic, inn, position, pin_code_hash, file_hash, signature, operation_date)
+VALUES
+    (1, 'ivanov', 'Иван', 'Иванов', 'Иванович', '832061154574', 'SEP_USER', 'b1120795d51648daa9440851f8fa3872736ae197968c8eb4d67153f669179374', NULL, NULL, '2024-06-18T17:08:59.309763400'),
+    (2, 'petrov', 'Петр', 'Петров', 'Петрович', '832061154574', 'SEP_ADMIN', 'ae25bd29649627c85c54855d918879a0d46efddc6129a394011d81c116f0c702', NULL, NULL, '2024-06-18T17:08:59.309763400'),
+    (3, 'sokolov', 'Юрий', 'Соколов', 'Александрович', '832061154574', 'TLS_ADMIN', 'bd2ab9815a11b9ccba17a6d7eb39b7f12710785b9d8eb1cd0c251ee5c8107a2f', NULL, NULL, '2024-06-18T17:08:59.309763400'),
+    (4, 'gudkov', 'Владимир', 'Гудков', 'Алексеевич', '832061154574', 'IOK_OBJECTS_ADMIN', '837cf2ac5bbb55a95e32ee409181ab626e64ee1d2c5b92255c478e05c535707e', NULL, NULL, '2024-06-18T17:08:59.309763400');
+INSERT INTO container (id, uuid, container_path)
+VALUES
+    (1, 'b3460860815d4a208671875e2fd9f84f', './files/dscp/container-2024-06-18T19-22-26.291956000.dscp'),
+    (2, 'f13164195edf49c7b2e18707abeb4a1b', './files/dscp/container-2024-06-18T19-23-40.707683800.dscp'),
+    (3, 'fadd3ec79bf842f5a661a30b1b2321b1', './files/dscp/container-2024-06-18T19-24-32.922951700.dscp'),
+    (4, '6667c1b2ea014cffbae504d234d6a5ae', './files/dscp/container-2024-06-18T19-25-29.204134800.dscp');
+INSERT INTO ses (id, user_login, file_hash, signature, operation_date, container_id)
+VALUES
+    (1, 'ivanov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', 'b1120795d51648daa9440851f8fa3872736ae197968c8eb4d67153f669179374.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:22:26.291956', '2024-06-18T19:22:26.291956', 1),
+    (2, 'petrov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', 'ae25bd29649627c85c54855d918879a0d46efddc6129a394011d81c116f0c702.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:23:40.707683800', '2024-06-18T19:23:40.707683800', 2),
+    (3, 'sokolov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', 'bd2ab9815a11b9ccba17a6d7eb39b7f12710785b9d8eb1cd0c251ee5c8107a2f.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:24:32.922951700', '2024-06-18T19:24:32.922951700', 3),
+    (4, 'gudkov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', '837cf2ac5bbb55a95e32ee409181ab626e64ee1d2c5b92255c478e05c535707e.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:25:29.204134800', '2024-06-18T19:25:29.204134800', 4);
