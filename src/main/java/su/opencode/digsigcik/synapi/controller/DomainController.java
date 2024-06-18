@@ -1,5 +1,8 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +33,12 @@ public class DomainController {
     @Autowired
     private DomainRepository domainRepository;
 
+    @Operation(summary = "Получить список доменов указанного ACME-аккаунта",
+            description = "Возвращает список доменов указанного ACME-аккаунта" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно получено" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
     @GetMapping("/accounts/{accountId}/domains")
     public ResponseEntity<List<AcmeDomain>> getAllDomainsByAccountId(@PathVariable(value = "accountId") Long accountId) {
         if (!accountRepository.existsById(accountId)) {
@@ -39,6 +48,12 @@ public class DomainController {
         return new ResponseEntity<>(domains, HttpStatus.OK);
     }
 
+    @Operation(summary = "Получить указанный домен",
+            description = "Возвращает указанный домен" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно получено" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
     @GetMapping("/domains/{id}")
     public ResponseEntity<AcmeDomain> getDomainBylId(@PathVariable(value = "id") Long id) {
         AcmeDomain domain = domainRepository.findById(id)
@@ -47,6 +62,12 @@ public class DomainController {
         return new ResponseEntity<>(domain, HttpStatus.OK);
     }
 
+    @Operation(summary = "Создать новый домен для указанного ACME-аккаунта",
+            description = "Создаёт новый домен для указанного ACME-аккаунта" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно создано" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
     @PostMapping("/accounts/{accountId}/domains")
     public ResponseEntity<AcmeDomain> createDomain(@PathVariable(value = "accountId") Long accountId,
                                                  @RequestBody AcmeDomain acmeDomain) {
@@ -60,6 +81,13 @@ public class DomainController {
 
         return new ResponseEntity<>(domain, HttpStatus.CREATED);
     }
+
+    @Operation(summary = "Обновить указанный домен",
+            description = "Обновляет указанный домен" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно обновлено" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
     @PutMapping("/domains/{id}")
     public ResponseEntity<AcmeDomain> updateDomain(@PathVariable("id") long id, @RequestBody AcmeDomain acmeDomain) {
         AcmeDomain _acmeDomain = domainRepository.findById(id)
@@ -79,6 +107,12 @@ public class DomainController {
         return new ResponseEntity<>(domainRepository.save(_acmeDomain), HttpStatus.OK);
     }
 
+    @Operation(summary = "Удалить указанный домен",
+            description = "Удаляет указанный домен" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно удалено" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
     @DeleteMapping("/domains/{id}")
     public ResponseEntity<HttpStatus> deleteDomain(@PathVariable("id") long id) {
         domainRepository.deleteById(id);
@@ -86,6 +120,12 @@ public class DomainController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(summary = "Удалить все домены указанного ACME-аккаунта",
+            description = "Удаляет все домены указанного ACME-аккаунта" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно удалено" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
     @DeleteMapping("/accounts/{accountId}/domains")
     public ResponseEntity<List<AcmeDomain>> deleteAllDomainsOfAccount(@PathVariable(value = "accountId") Long accountId) {
         if (!accountRepository.existsById(accountId)) {
