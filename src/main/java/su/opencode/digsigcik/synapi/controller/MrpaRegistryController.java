@@ -6,26 +6,29 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistrySaveWithCredentialDTO;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
+import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.model.MrpaRegistryCredential;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryCredentialService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
+import su.opencode.digsigcik.synapi.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constant.NULL;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
@@ -221,5 +224,23 @@ public class MrpaRegistryController {
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(id);
         mrpaRegistryWithFioDTOS.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(id);
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Выгрузить МЧД в XML-файл", description = "Возвращает статус выполнения загрузки")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно загружено"),
+            @ApiResponse(code = 404, message = "Not found")
+    })
+    @GetMapping(value = "/download/{id}", produces = MediaType.APPLICATION_XML_VALUE) //"application/json; charset=UTF-8"
+    public ResponseEntity<?> download(@PathVariable @Parameter(name = "id",
+            description = "ИД МЧД", example = "1" ) Long id) throws IOException, JAXBException {
+        MrpaRegistryFullDTO mrpaRegistryFullDTO = mrpaRegistryService.findMrpaRegistryFullById(id);
+        mrpaRegistryFullDTO.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(id);
+        MrpaRegistryFullXML mrpaRegistryFullXML = mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
+        String xmlString;
+        xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
+
+        assertNotNull(xmlString);
+        return new ResponseEntity<>(xmlString, HttpStatus.OK);
     }
 }

@@ -1,5 +1,7 @@
 package su.opencode.digsigcik.synapi.service;
 
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 
@@ -13,6 +15,8 @@ public interface MrpaRegistryService {
 
     MrpaRegistryWithFioDTO findByMrpaRegistryId(@NotNull Long id);
 
+    MrpaRegistryFullDTO findMrpaRegistryFullById(Long id);
+
     MrpaRegistry findById(@NotNull Long id);
 
     MrpaRegistry updateMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry);
@@ -24,4 +28,8 @@ public interface MrpaRegistryService {
     void recallMrpaRegistryById(@NotNull Long id);
 
     List<MrpaRegistryWithFioDTO.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId);
+
+    List<MrpaRegistryFullDTO.CredentialDTO> getCredentialByMrpaRegistryFullId(Long mrpaId);
+
+    MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO);
 }
