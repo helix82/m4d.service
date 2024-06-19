@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
+import su.opencode.digsigcik.synapi.enums.RoleEnum;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -15,11 +16,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+//TODO: @vitalik.sahnov Временное решение. Удалить поля, которые относятся к авторизации, после интеграции авторизации
 @Data
 @Entity
-@Table(name="ses_user")
+@Table(name="ess_user")
 @Transactional
-public class SesUser {
+// Electronic signature service user
+public class ESSUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(name = "ИД пользователя", example = "1", required = true)
@@ -51,6 +54,15 @@ public class SesUser {
     @Schema(name = "Должность", example = "SEP_ADMIN")
     private PositionEnum position;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", columnDefinition = "VARCHAR(50)")
+    @Schema(name = "Роль", example = "USER")
+    private RoleEnum role;
+
+    @Column(name = "pin_code", columnDefinition = "VARCHAR(10)")
+    @Schema(name = "Пин-кода", example = "89265390")
+    private String pinCode;
+
     @Column(name = "pin_code_hash", columnDefinition = "VARCHAR(64)")
     @Schema(name = "Хэш пин-кода", example = "cd70b...24f45a")
     private String pinCodeHash;
@@ -59,11 +71,19 @@ public class SesUser {
     @Schema(name = "Хэш файла", example = "tasf0b...24145a")
     private String fileHash;
 
-    @Column(name = "signature", columnDefinition = "VARCHAR(64)")
+    @Column(name = "signature", columnDefinition = "VARCHAR(159)")
     @Schema(name = "Сигнатура", example = "хэш_пинкода.хэш_файла.дата")
     private String signature;
 
     @Column(name = "operation_date", columnDefinition = "VARCHAR(29)")
     @Schema(name = "Дата операции", example = "2024-06-18T17:08:59.309763400")
     private String operationDate;
+
+    @Column(name = "password", columnDefinition = "VARCHAR(20)")
+    @Schema(name = "Пароль", example = "12345678")
+    private String password;
+
+    @Column(name = "email", columnDefinition = "VARCHAR(50)")
+    @Schema(name = "Email", example = "ivanov@gmail.com")
+    private String email;
 }

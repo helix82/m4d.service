@@ -1,0 +1,26 @@
+package su.opencode.digsigcik.synapi.service;
+
+import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.dto.SigHashDto;
+import su.opencode.digsigcik.synapi.dto.UserDto;
+import su.opencode.digsigcik.synapi.model.ESSUser;
+
+import javax.validation.constraints.NotNull;
+
+public interface ESUserService {
+    SigHashDto generateHashForPinCodeAndFile(String pinCode, MultipartFile file);
+
+    boolean isESSUserWithPinCodeHashNotExist(String pinCodeHash);
+
+    boolean isESSUserPasswordCorrect(String login, String password);
+
+    UserDto getESSUserByUserPinCodeHash(String pinCodeHash);
+
+    UserDto getESSUserByLogin(String login);
+
+    ESSUser updateESSUser(@NotNull ESSUser essUser);
+
+    ESSUser createESSUser(@NotNull ESSUser essUser);
+
+    void deleteESSUser(Long id);
+}
