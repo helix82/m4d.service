@@ -34,7 +34,52 @@ public class SecurityConfig {
     private final UserService userService;
     private final JwtRequestFilter jwtRequestFilter;
 
+
     @Order(0)
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable)
+                //TODO: remove h2 console start
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers(toH2Console())
+                        .disable()
+                )
+                //TODO: remove h2 console finish
+                .authorizeRequests(rm -> rm
+                        .antMatchers("/api/**")
+                        .permitAll()
+                        .antMatchers("/v2/api-docs",
+                                "/configuration/ui",
+                                "/swagger-resources/**",
+                                "/configuration/security",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/webjars/**",
+                                "/.well-known/acme-challenge/**",
+                                //TODO: remove h2 console start
+                                "/h2-console",
+                                "/h2-console/**"
+                                //TODO: remove h2 console finish
+                        )
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated()
+                        .and())
+                //TODO: remove h2 console start
+                .headers(headers -> headers.frameOptions()
+                        .disable())
+                //TODO: remove h2 console finish
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                .and()
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+    @Order(1)
     @Bean
     public SecurityFilterChain h2FilterChain(HttpSecurity http) throws Exception {
 
@@ -49,36 +94,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Order(1)
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeRequests(rm -> rm
-                        .antMatchers("/api/**")
-                        .permitAll()
-                        .antMatchers("/v2/api-docs",
-                                "/configuration/ui",
-                                "/swagger-resources/**",
-                                "/configuration/security",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/webjars/**",
-                                "/.well-known/acme-challenge/**"
-                        )
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated()
-                        .and())
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                .and()
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
-    }
 
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
