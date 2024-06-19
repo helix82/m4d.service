@@ -49,6 +49,10 @@ spring:
     init:
       schema-locations: classpath*:db/h2/schema.sql
       data-locations: classpath*:db/h2/data.sql
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 
 logging:
   level:
