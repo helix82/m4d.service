@@ -128,7 +128,7 @@ public class MrpaRegistryFullXML {
                             @XmlAttribute(name = "ПолнЮЛ")
                             private String typeCredential; //1
 
-                            @XmlElement(name = "СвФл")
+                            @XmlElement(name = "СвФЛ")
                             public Principal principal;
 
                             @XmlRootElement
