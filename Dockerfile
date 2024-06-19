@@ -23,4 +23,4 @@ RUN \
     && keytool -keystore cacerts -storepass changeit -noprompt  -importcert -alias intermediateca -file intermediate_ca.crt
 WORKDIR $PROJECT_HOME
 
-ENTRYPOINT ["java", "-jar", "synapi-0.0.1-SNAPSHOT.jar, "-web -webAllowOthers -tcp -tcpAllowOthers -browser"]
+ENTRYPOINT ["java","-jar","synapi-0.0.1-SNAPSHOT.jar,"-web -webAllowOthers -tcp -tcpAllowOthers -browser"]
