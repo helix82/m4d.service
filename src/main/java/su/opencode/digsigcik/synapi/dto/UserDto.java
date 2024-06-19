@@ -1,30 +1,29 @@
 package su.opencode.digsigcik.synapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
 import su.opencode.digsigcik.synapi.enums.RoleEnum;
 
-import java.time.LocalDateTime;
-
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
-@Getter
-@Setter
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserDto {
     private String login;
     private String email;
     private String password;
-    private String firstName;
-    private String lastName;
+    private String firstname;
+    private String lastname;
     private String patronymic;
     private PositionEnum position;
     private RoleEnum role;
+    private String pinCode;
     private String pinCodeHash;
     private String fileHash;
     private String signature;

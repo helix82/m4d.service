@@ -12,7 +12,6 @@ import su.opencode.digsigcik.synapi.dto.JwtResponseErrorDto;
 import su.opencode.digsigcik.synapi.dto.JwtTokenDto;
 import su.opencode.digsigcik.synapi.exception.UserAuthException;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
-import su.opencode.digsigcik.synapi.util.UsersInfoUtils;
 
 import static su.opencode.digsigcik.synapi.util.Constant.AUTH_ERROR;
 
@@ -20,10 +19,10 @@ import static su.opencode.digsigcik.synapi.util.Constant.AUTH_ERROR;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-    private final UserService userService;
+    private final AuthUserService authUserService;
     private final JwtTokenUtils jwtTokenUtils;
     private final AuthenticationManager authenticationManager;
-    private final UsersInfoUtils usersInfo;
+    private final ESUserService esUserService;
 
     @Override
     public JwtResponseDto createAuthToken(String login, String password) throws UserAuthException {
@@ -33,17 +32,17 @@ public class AuthServiceImpl implements AuthService {
         if (password == null || password.isEmpty()) {
             return createJwtResponseDto(HttpStatus.UNAUTHORIZED);
         }
-        if (usersInfo.getUserByUserLogin(login).isEmpty()) {
+        if (esUserService.getESSUserByLogin(login) == null) {
             return createJwtResponseDto(HttpStatus.NOT_FOUND);
         }
-        if (!usersInfo.isUserPasswordCorrect(login, password)) {
+        if (!esUserService.isESSUserPasswordCorrect(login, password)) {
             return createJwtResponseDto(HttpStatus.UNAUTHORIZED);
         }
 
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login, password));
 
-        UserDetails userDetails = userService.loadUserByUsername(login);
-        String token = jwtTokenUtils.generateToken(userDetails, usersInfo.getUserByUserLogin(login).get());
+        UserDetails userDetails = authUserService.loadUserByUsername(login);
+        String token = jwtTokenUtils.generateToken(userDetails, esUserService.getESSUserByLogin(login));
 
         return JwtResponseDto.builder().token(new JwtTokenDto(token)).build();
     }
