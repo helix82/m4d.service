@@ -8,6 +8,7 @@ public interface CertificateDataService {
     List<CertificateData> findAllCertificateData();
     CertificateData saveCertificateData(CertificateData certificateData);
     CertificateData findByCertificateDataId(Long id);
+    Integer countCertificateDataByImprint(String imprint);
     CertificateData updateCertificateData(CertificateData certificateData);
     void deleteCertificateData(Long id);
 }

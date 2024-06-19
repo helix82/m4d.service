@@ -48,4 +48,9 @@ public class CertificateDataServiceImpl implements CertificateDataService{
         }
         this.repository.deleteById(id);
     }
+
+    @Override
+    public Integer countCertificateDataByImprint(String imprint){
+        return this.repository.countCertificateDataByImprint(imprint);
+    }
 }
