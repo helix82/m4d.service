@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.*;
 import su.opencode.digsigcik.synapi.filters.JwtRequestFilter;
-import su.opencode.digsigcik.synapi.service.UserService;
+import su.opencode.digsigcik.synapi.service.AuthUserService;
 
 import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
 
@@ -30,7 +30,7 @@ import static org.springframework.boot.autoconfigure.security.servlet.PathReques
 public class SecurityConfig {
     public static final String CORS_CFG_SOURCE_BEAN = "corsConfigurationSource";
     private final WebConfigProperties webConfigProperties;
-    private final UserService userService;
+    private final AuthUserService authUserService;
     private final JwtRequestFilter jwtRequestFilter;
 
 
@@ -80,7 +80,7 @@ public class SecurityConfig {
     public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-        daoAuthenticationProvider.setUserDetailsService(userService);
+        daoAuthenticationProvider.setUserDetailsService(authUserService);
         return daoAuthenticationProvider;
     }
 
