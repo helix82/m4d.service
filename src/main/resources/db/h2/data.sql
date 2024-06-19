@@ -86,15 +86,6 @@ VALUES
     (1, 5),
     (2, 5),
     (3, 5);
-INSERT INTO ses_user (login, firstname, lastname, patronymic, inn, position, pin_code_hash, file_hash, signature, operation_date)
-    (1, 1, 1),
-    (2, 4, 1),
-    (3, 2, 2),
-    (4, 3, 3),
-    (5, 5, 4),
-    (6, 1, 5),
-    (7, 2, 5),
-    (8, 3, 5);
 INSERT INTO ess_user (login, email, firstname, lastname, patronymic, password, role, inn, position, pin_code, pin_code_hash, file_hash, signature, operation_date)
 VALUES
     ('ivanov', 'ivanov@gmail.com', 'Иван', 'Иванов', 'Иванович', '12345678', 'USER', '832061154574', 'SEP_USER', '89265390', 'b1120795d51648daa9440851f8fa3872736ae197968c8eb4d67153f669179374', NULL, NULL, '2024-06-18T17:08:59.309763400'),
