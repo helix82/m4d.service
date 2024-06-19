@@ -20,10 +20,9 @@ import su.opencode.digsigcik.synapi.util.XMLUtil;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
@@ -43,7 +42,7 @@ public class CertificateDataController {
             @ApiResponse(code = 200, message = "Успешно загружено"),
             @ApiResponse(code = 404, message = "Not found")
     })
-    @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8") //MediaType.APPLICATION_OCTET_STREAM_VALUE
+    @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, JAXBException {
         String content = new String(sourceFile.getBytes());
         Document document = convertStringToDocument(content);
@@ -55,26 +54,48 @@ public class CertificateDataController {
         }
         int ca_import = 0;
         for(CAXml.CA ca : caXml.getCa()){
-            var stat = ca.getAccreditationStatus().getStatus();
-            List<CertificateData> certData = ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()
-                    .stream().map(z->z.getCertificates().getCertificateData()).collect(Collectors.toList())).collect(Collectors.toList()).stream().flatMap(Collection::stream).flatMap(Collection::stream).collect(Collectors.toList());
-            for(CertificateData cert : certData){
 
-                var substr = cert.getIssuedTo().split(", ");
-                for(String s : substr) {
-                    var st = s.substring(0,3);
-                    if (st.equals("CN="))
-                        cert.setIssuedTo(s.substring(3));
+            var stat = ca.getAccreditationStatus().getStatus();
+            if(Objects.equals(stat, "Действует")){
+                if(ca.getShSystems().getShSystem() != null){
+                    System.out.println(ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()).collect(Collectors.toList()).stream().flatMap(Collection::stream).collect(Collectors.toList()));
+                    List<CAXml.CA.SHSystems.SHSystem.KeysAuthPersons.KeyAuthPerson> keyAuthPerson = ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()).collect(Collectors.toList()).stream().flatMap(Collection::stream).collect(Collectors.toList());
+                    for(CAXml.CA.SHSystems.SHSystem.KeysAuthPersons.KeyAuthPerson keyAP: keyAuthPerson){
+                        var keyId = keyAP.getKeyId();
+                        List<CertificateData> certData = keyAP.getCertificates().getCertificateData();
+                        for(CertificateData cert : certData){
+                            var dateStart = LocalDateTime.parse(cert.getDateStart(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+                            var dateEnd = LocalDateTime.parse(cert.getDateEnd(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+                            var currDateTime = LocalDateTime.now();
+                            var existsCert = certificateDataService.countCertificateDataByImprint(cert.getImprint());
+                            if(existsCert == 0){
+                                if(!currDateTime.isBefore(dateStart) && !currDateTime.isAfter(dateEnd)){
+                                    var substr = cert.getIssuedTo().split(", ");
+                                    for(String s : substr) {
+                                        if(s.length()>2){
+                                            var st = s.substring(0,3);
+                                            if (st.equals("CN="))
+                                                cert.setIssuedTo(s.substring(3));
+                                        }
+                                    }
+                                    cert.setTypeInput("Автоматически");
+                                    cert.setAccreditationStatus(stat);
+                                    cert.setKeyId(keyId);
+
+                                    try {
+                                        certificateDataService.saveCertificateData(cert);
+                                        ca_import++;
+                                    } catch (ConstraintViolationException e) {
+                                        throw new BadRequestException(CA_IS_NULL);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-                cert.setTypeInput("Автоматически");
-                cert.setAccreditationStatus(stat);
-                try {
-                    certificateDataService.saveCertificateData(cert);
-                    ca_import++;
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(CA_IS_NULL);
-                }
+
             }
+
         }
 
         Map<String, String> body = new HashMap<>();

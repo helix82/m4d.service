@@ -24,10 +24,10 @@ spring:
 #  TODO: remove h2 console
   h2:
     console:
-      enable: true
       path: /h2-console
       settings:
         web-allow-others: true
+      enabled: true
 
 
   jpa:
@@ -49,6 +49,10 @@ spring:
     init:
       schema-locations: classpath*:db/h2/schema.sql
       data-locations: classpath*:db/h2/data.sql
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 
 logging:
   level:

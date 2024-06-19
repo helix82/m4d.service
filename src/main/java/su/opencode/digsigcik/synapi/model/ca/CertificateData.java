@@ -19,6 +19,15 @@ public class CertificateData {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Schema(name = "ИД сертификата УЦ", example = "1", required = true)
         private Long id;
+        @XmlElement(name = "Отпечаток")
+        @Schema(name = "Отпечаток", example = "", required = false)
+        private String imprint;
+        @XmlElement(name = "СерийныйНомер")
+        @Schema(name = "Серийный номер", example = "", required = false)
+        private String serialNumber;
+        @XmlElement(name = "ИдентификаторКлюча")
+        @Schema(name = "Идентификатор ключа", example = "", required = false)
+        private String keyId;
         @XmlElement(name = "КомуВыдан")
         @Schema(name = "Кому выдан сертификат УЦ", example = "", required = false)
         @Column(columnDefinition = "Text")
