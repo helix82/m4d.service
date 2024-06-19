@@ -56,25 +56,29 @@ public class CertificateDataController {
         int ca_import = 0;
         for(CAXml.CA ca : caXml.getCa()){
             var stat = ca.getAccreditationStatus().getStatus();
-            List<CertificateData> certData = ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()
-                    .stream().map(z->z.getCertificates().getCertificateData()).collect(Collectors.toList())).collect(Collectors.toList()).stream().flatMap(Collection::stream).flatMap(Collection::stream).collect(Collectors.toList());
-            for(CertificateData cert : certData){
-
-                var substr = cert.getIssuedTo().split(", ");
-                for(String s : substr) {
-                    var st = s.substring(0,3);
-                    if (st.equals("CN="))
-                        cert.setIssuedTo(s.substring(3));
-                }
-                cert.setTypeInput("Автоматически");
-                cert.setAccreditationStatus(stat);
-                try {
-                    certificateDataService.saveCertificateData(cert);
-                    ca_import++;
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(CA_IS_NULL);
+            if(stat.equals("Действует")){
+                List<CertificateData> certData = ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()
+                        .stream().map(z->z.getCertificates().getCertificateData()).collect(Collectors.toList())).collect(Collectors.toList()).stream().flatMap(Collection::stream).flatMap(Collection::stream).collect(Collectors.toList());
+                for(CertificateData cert : certData){
+//cert.getDateStart()
+//        cert.getDateEnd()
+                    var substr = cert.getIssuedTo().split(", ");
+                    for(String s : substr) {
+                        var st = s.substring(0,3);
+                        if (st.equals("CN="))
+                            cert.setIssuedTo(s.substring(3));
+                    }
+                    cert.setTypeInput("Автоматически");
+                    cert.setAccreditationStatus(stat);
+                    try {
+                        certificateDataService.saveCertificateData(cert);
+                        ca_import++;
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(CA_IS_NULL);
+                    }
                 }
             }
+
         }
 
         Map<String, String> body = new HashMap<>();
