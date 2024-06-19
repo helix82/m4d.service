@@ -43,8 +43,6 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(toH2Console())
                         .disable()
                 )
-                .headers(headers -> headers.frameOptions()
-                        .disable())
                 //TODO: remove h2 console finish
                 .authorizeRequests(rm -> rm
                         .antMatchers("/api/**")
@@ -58,6 +56,7 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/.well-known/acme-challenge/**",
                                 //TODO: remove h2 console start
+                                "/h2-console",
                                 "/h2-console/**"
                                 //TODO: remove h2 console finish
                         )
@@ -65,6 +64,10 @@ public class SecurityConfig {
                         .anyRequest()
                         .authenticated()
                         .and())
+                //TODO: remove h2 console start
+                .headers(headers -> headers.frameOptions()
+                        .disable())
+                //TODO: remove h2 console finish
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -115,6 +118,7 @@ public class SecurityConfig {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring()
+                .antMatchers("/h2-console")
                 .antMatchers("/h2-console/**");
     }
     //TODO: remove h2 console finish
