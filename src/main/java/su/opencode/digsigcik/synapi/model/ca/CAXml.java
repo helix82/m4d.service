@@ -6,13 +6,13 @@ import lombok.NoArgsConstructor;
 import javax.xml.bind.annotation.*;
 import java.util.List;
 
-import static su.opencode.digsigcik.synapi.util.Constants.XML_ELEMENT_CA;
+import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @NoArgsConstructor
 @Data
-@XmlRootElement(name = "АккредитованныеУдостоверяющиеЦентры")
+@XmlRootElement(name = XML_ELEMENT_ACC)
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "АккредитованныеУдостоверяющиеЦентры")
+@XmlType(name = XML_ELEMENT_ACC)
 public class CAXml {
     @XmlElement(name = XML_ELEMENT_CA)
     public List<CA> ca;
@@ -21,48 +21,48 @@ public class CAXml {
     @XmlRootElement
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class CA{
-        @XmlElement(name = "ПрограммноАппаратныеКомплексы")
+        @XmlElement(name = XML_ELEMENT_SHC)
         public SHSystems shSystems;
-        @XmlElement(name = "СтатусАккредитации")
+        @XmlElement(name = XML_ELEMENT_ACCREDITATION_STATUS)
         private AccreditationStatus accreditationStatus;
 
         @Data
         @XmlRootElement
         @XmlAccessorType(XmlAccessType.FIELD)
         public static class SHSystems{
-            @XmlElement(name = "ПрограммноАппаратныйКомплекс")
+            @XmlElement(name = XML_ELEMENT_SH_SYSTEM)
             public List<SHSystem> shSystem;
 
             @Data
             @XmlRootElement
             @XmlAccessorType(XmlAccessType.FIELD)
             public static class SHSystem{
-                @XmlElement(name = "КлючиУполномоченныхЛиц")
+                @XmlElement(name = XML_ELEMENT_KEYS_AUTH_PERSONS)
                 private KeysAuthPersons keysAuthPersons;
 
                 @Data
                 @XmlRootElement
                 @XmlAccessorType(XmlAccessType.FIELD)
                 public static class KeysAuthPersons{
-                    @XmlElement(name = "Ключ")
+                    @XmlElement(name = XML_ELEMENT_KEY)
                     private List<KeyAuthPerson> keyAuthPerson;
 
                     @Data
                     @XmlRootElement
                     @XmlAccessorType(XmlAccessType.FIELD)
                     public static class KeyAuthPerson{
-                        @XmlElement(name = "ИдентификаторКлюча")
+                        @XmlElement(name = XML_ELEMENT_KEY_ID)
                         private String keyId;
-                        @XmlElement(name = "АдресаСписковОтзыва")
+                        @XmlElement(name = XML_ELEMENT_REVIEW_LIST_ADDRESS)
                         private List<Addresses> addresses;
-                        @XmlElement(name = "Сертификаты")
+                        @XmlElement(name = XML_ELEMENT_CERTIFICATES)
                         private Certificates certificates;
 
                         @Data
                         @XmlRootElement
                         @XmlAccessorType(XmlAccessType.FIELD)
                         public static class Addresses{
-                            @XmlElement(name = "Адрес")
+                            @XmlElement(name = XML_ELEMENT_ADDRESS)
                             private List<String> address;
                         }
 
@@ -70,7 +70,7 @@ public class CAXml {
                         @XmlRootElement
                         @XmlAccessorType(XmlAccessType.FIELD)
                         public static class Certificates{
-                            @XmlElement(name = "ДанныеСертификата")
+                            @XmlElement(name = XML_ELEMENT_CERTIFICATE_DATA)
                             private List<CertificateData> certificateData;
 
                         }
@@ -83,7 +83,7 @@ public class CAXml {
         @XmlRootElement
         @XmlAccessorType(XmlAccessType.FIELD)
         public static class AccreditationStatus{
-            @XmlElement(name = "Статус")
+            @XmlElement(name = XML_ELEMENT_STATUS)
             private String status;
         }
     }

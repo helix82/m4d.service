@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,21 +19,20 @@ import java.util.List;
 import java.util.Map;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
-import static su.opencode.digsigcik.synapi.util.Constant.NULL;
+import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @RestController
 @MchdExceptionHandler
 @RequestMapping("/api/v1/organisation" )
 @AllArgsConstructor
 public class OrganisationController {
-    private final String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
 
     private final OrganisationService service;
 
-    @Operation(summary = "Получить список организаций", description = "Возвращает список организаций" )
+    @Operation(summary = CONTROLLER_ORGANISATION_FIND_ALL_SUMMARY, description = CONTROLLER_ORGANISATION_FIND_ALL_DESCRIPTION )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено" ),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping()
     public ResponseEntity<?> findAllOrganisation() {
@@ -45,11 +45,10 @@ public class OrganisationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить организацию", description = "Если указанной организации нет в базе, " +
-            "создаем её и возвращаем, иначе возвращаем уже существующую организацию" )
+    @Operation(summary = CONTROLLER_ORGANISATION_SAVE_SUMMARY, description = CONTROLLER_ORGANISATION_SAVE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно сохранено" ),
-            @ApiResponse(code = 404, message = "Not found" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping("save" )
     public ResponseEntity<?> saveOrganisation(@RequestBody Organisation organisation) {
@@ -66,13 +65,14 @@ public class OrganisationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить организацию по ИД", description = "Возвращает запись организации" )
+    @Operation(summary = CONTROLLER_ORGANISATION_FIND_BY_ID_SUMMARY, description = CONTROLLER_ORGANISATION_FIND_BY_ID_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено" ),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping("/{id}" )
-    public ResponseEntity<?> findByOrganisationId(@PathVariable Long id) {
+    public ResponseEntity<?> findByOrganisationId(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_ORGANISATION_ID_DESCRIPTION, example = "1" ) Long id) {
         Organisation response;
         try {
             response = service.findByOrganisationId(id);
@@ -82,10 +82,10 @@ public class OrganisationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Изменить запись организации", description = "Возвращает измененную организацию" )
+    @Operation(summary = CONTROLLER_ORGANISATION_UPDATE_SUMMARY, description = CONTROLLER_ORGANISATION_UPDATE_DESCRIPTION )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно изменено" ),
-            @ApiResponse(code = 404, message = "Not found" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping("update" )
     public ResponseEntity<?> updateOrganisation(@RequestBody Organisation organisation) {
@@ -98,13 +98,14 @@ public class OrganisationController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить организацию", description = "Ничего не возвращает" )
+    @Operation(summary = CONTROLLER_ORGANISATION_DELETE_SUMMARY, description = CONTROLLER_ORGANISATION_DELETE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно удалено" ),
-            @ApiResponse(code = 404, message = "Not found" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @DeleteMapping("delete/{id}" )
-    public ResponseEntity<?> deleteOrganisation(@PathVariable Long id) {
+    public ResponseEntity<?> deleteOrganisation(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_ORGANISATION_ID_DESCRIPTION, example = "1" ) Long id) {
         try {
             service.deleteOrganisation(id);
         } catch (ConstraintViolationException e) {

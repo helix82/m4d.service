@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,21 +19,20 @@ import java.util.List;
 import java.util.Map;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
-import static su.opencode.digsigcik.synapi.util.Constant.NULL;
+import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @RestController
 @MchdExceptionHandler
 @RequestMapping("/api/v1/credential")
 @AllArgsConstructor
 public class CredentialController {
-    private final String CREDENTIAL_IS_NULL = String.format("Credential is %s!", NULL);
 
     private final CredentialService service;
 
-    @Operation(summary = "Получить список полномочий", description = "Возвращает список полномочий")
+    @Operation(summary = CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY, description = CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping()
     public ResponseEntity<?> findAllCredential() {
@@ -45,10 +45,10 @@ public class CredentialController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить запись полномочия", description = "Возвращает созданную запись полномочия")
+    @Operation(summary = CONTROLLER_CREDENTIAL_SAVE_SUMMARY, description = CONTROLLER_CREDENTIAL_SAVE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно сохранено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping("save")
     public ResponseEntity<?> saveCredential(@RequestBody Credential credential) {
@@ -61,13 +61,14 @@ public class CredentialController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить запись полномочия по ИД", description = "Возвращает запись полномочия")
+    @Operation(summary = CONTROLLER_CREDENTIAL_FIND_BY_ID_SUMMARY, description = CONTROLLER_CREDENTIAL_FIND_BY_ID_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping("/{id}")
-    public ResponseEntity<?> findByCredentialId(@PathVariable Long id) {
+    public ResponseEntity<?> findByCredentialId(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_CREDENTIAL_ID_DESCRIPTION, example = "1" ) Long id) {
         Credential response;
         try {
             response = service.findByCredentialId(id);
@@ -77,10 +78,10 @@ public class CredentialController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Изменить запись полномочия", description = "Возвращает измененную запись полномочия")
+    @Operation(summary = CONTROLLER_CREDENTIAL_UPDATE_SUMMARY, description = CONTROLLER_CREDENTIAL_UPDATE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping("update")
     public ResponseEntity<?> updateCredential(@RequestBody Credential credential) {
@@ -93,13 +94,14 @@ public class CredentialController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить запись полномочия по ИД", description = "Возвращает true при удачном удалении")
+    @Operation(summary = CONTROLLER_CREDENTIAL_DELETE_SUMMARY, description = CONTROLLER_CREDENTIAL_DELETE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно удалено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @DeleteMapping("delete/{id}")
-    public ResponseEntity<?> deleteCredential(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCredential(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_CREDENTIAL_ID_DESCRIPTION, example = "1" ) Long id) {
         try {
             service.deleteCredential(id);
         } catch (ConstraintViolationException e) {

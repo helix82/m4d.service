@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
-import static su.opencode.digsigcik.synapi.util.Constant.NULL;
+import static su.opencode.digsigcik.synapi.util.Constants.*;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
 @RestController
@@ -34,13 +34,12 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 @RequestMapping("/api/v1/certificate-data")
 @AllArgsConstructor
 public class CertificateDataController {
-    private final String CA_IS_NULL = String.format("CA is %s!", NULL);
     private final CertificateDataService certificateDataService;
 
-    @Operation(summary = "Загрузить аккредитованные УЦ из XML-файла", description = "Возвращает статус выполнения загрузки")
+    @Operation(summary = CONTROLLER_CA_UPLOAD_SUMMARY, description = CONTROLLER_CA_UPLOAD_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно загружено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, JAXBException {
@@ -56,7 +55,7 @@ public class CertificateDataController {
         for(CAXml.CA ca : caXml.getCa()){
 
             var stat = ca.getAccreditationStatus().getStatus();
-            if(Objects.equals(stat, "Действует")){
+            if(Objects.equals(stat, CONTROLLER_CA_ACCREDITATION_STATUS_VALID)){
                 if(ca.getShSystems().getShSystem() != null){
                     System.out.println(ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()).collect(Collectors.toList()).stream().flatMap(Collection::stream).collect(Collectors.toList()));
                     List<CAXml.CA.SHSystems.SHSystem.KeysAuthPersons.KeyAuthPerson> keyAuthPerson = ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()).collect(Collectors.toList()).stream().flatMap(Collection::stream).collect(Collectors.toList());
@@ -78,7 +77,7 @@ public class CertificateDataController {
                                                 cert.setIssuedTo(s.substring(3));
                                         }
                                     }
-                                    cert.setTypeInput("Автоматически");
+                                    cert.setTypeInput(CONTROLLER_CA_TYPE_INPUT_AUTO);
                                     cert.setAccreditationStatus(stat);
                                     cert.setKeyId(keyId);
 
@@ -104,10 +103,10 @@ public class CertificateDataController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить список аккредитованных УЦ", description = "Возвращает список аккредитованных УЦ")
+    @Operation(summary = CONTROLLER_CA_FIND_ALL_SUMMARY, description = CONTROLLER_CA_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllCertificateData() {
@@ -120,15 +119,15 @@ public class CertificateDataController {
         return new ResponseEntity<>(CAFindByInn, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить новую запись аккредитованных УЦ", description = "Возвращает сохраненную запись аккредитованной УЦ")
+    @Operation(summary = CONTROLLER_CA_SAVE_SUMMARY, description = CONTROLLER_CA_SAVE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно сохранено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "save", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> saveCertificateData(@RequestBody CertificateData certificateData) {
         CertificateData certificateDataSave;
-        certificateData.setTypeInput("Вручную");
+        certificateData.setTypeInput(CONTROLLER_CA_TYPE_INPUT_MANUALLY);
         try {
             certificateDataSave = certificateDataService.saveCertificateData(certificateData);
         } catch (ConstraintViolationException e) {
@@ -138,13 +137,14 @@ public class CertificateDataController {
         return new ResponseEntity<>(certificateDataSave, HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить запись аккредитованной УЦ по ИД", description = "Возвращает запись аккредитованной УЦ")
+    @Operation(summary = CONTROLLER_CA_FIND_BY_ID_SUMMARY, description = CONTROLLER_CA_FIND_BY_ID_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> findByCertificateDataId(@PathVariable Long id) {
+    public ResponseEntity<?> findByCertificateDataId(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_CA_ID_DESCRIPTION, example = "1" ) Long id) {
         CertificateData certificateDataFind;
         try {
             certificateDataFind = certificateDataService.findByCertificateDataId(id);
@@ -154,10 +154,10 @@ public class CertificateDataController {
         return new ResponseEntity<>(certificateDataFind, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить изменения аккредитованной УЦ", description = "Возвращает запись аккредитованной УЦ")
+    @Operation(summary = CONTROLLER_CA_UPDATE_SUMMARY, description = CONTROLLER_CA_UPDATE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно изменено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping(value = "update", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> updateCertificateData(@RequestBody CertificateData certificateData) {
@@ -170,14 +170,14 @@ public class CertificateDataController {
         return new ResponseEntity<>(certificateDataUpdate, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить запись аккредитованной УЦ по ИД", description = "Ничего не возвращает")
+    @Operation(summary = CONTROLLER_CA_DELETE_SUMMARY, description = CONTROLLER_CA_DELETE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно удалено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @DeleteMapping(value = "delete/{id}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> deleteCertificateData(@PathVariable @Parameter(name = "id",
-            description = "ИД CA", example = "1" ) Long id) {
+            description = PARAMETER_CA_ID_DESCRIPTION, example = "1" ) Long id) {
         try {
             certificateDataService.deleteCertificateData(id);
         } catch (ConstraintViolationException e) {

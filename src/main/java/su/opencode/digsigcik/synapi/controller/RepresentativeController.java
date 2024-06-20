@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,20 +19,19 @@ import java.util.List;
 import java.util.Map;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
-import static su.opencode.digsigcik.synapi.util.Constant.NULL;
+import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @RestController
 @MchdExceptionHandler
 @RequestMapping("/api/v1/representative")
 @AllArgsConstructor
 public class RepresentativeController {
-    private final String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);
     private final RepresentativeService service;
 
-    @Operation(summary = "Получить список представителей", description = "Возвращает список представителей")
+    @Operation(summary = CONTROLLER_REPRESENTATIVE_FIND_ALL_SUMMARY, description = CONTROLLER_REPRESENTATIVE_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping()
     public ResponseEntity<?> findAllRepresentative() {
@@ -44,10 +44,10 @@ public class RepresentativeController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить представителя", description = "Возвращает сохраненного представителя")
+    @Operation(summary = CONTROLLER_REPRESENTATIVE_SAVE_SUMMARY, description = CONTROLLER_REPRESENTATIVE_SAVE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно сохранено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping("save")
     public ResponseEntity<?> saveRepresentative(@RequestBody Representative representative) {
@@ -60,13 +60,14 @@ public class RepresentativeController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить представителя по ИД", description = "Возвращает представителя")
+    @Operation(summary = CONTROLLER_REPRESENTATIVE_FIND_BY_ID_SUMMARY, description = CONTROLLER_REPRESENTATIVE_FIND_BY_ID_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено"),
-            @ApiResponse(code = 404, message = "Not found - Ни одна запись не найдена")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping("/{id}")
-    public ResponseEntity<?> findByRepresentativeId(@PathVariable Long id) {
+    public ResponseEntity<?> findByRepresentativeId(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_REPRESENTATIVE_ID_DESCRIPTION, example = "1" ) Long id) {
         Representative response;
         try {
             response = service.findByRepresentativeId(id);
@@ -76,10 +77,10 @@ public class RepresentativeController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Изменить представителя", description = "Возвращает измененного представителя")
+    @Operation(summary = CONTROLLER_REPRESENTATIVE_UPDATE_SUMMARY, description = CONTROLLER_REPRESENTATIVE_UPDATE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно изменено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping("update")
     public ResponseEntity<?> updateRepresentative(@RequestBody Representative representative) {
@@ -92,13 +93,14 @@ public class RepresentativeController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить представителя", description = "Ничего не возвращает")
+    @Operation(summary = CONTROLLER_REPRESENTATIVE_DELETE_SUMMARY, description = CONTROLLER_REPRESENTATIVE_DELETE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно удалено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @DeleteMapping("delete/{id}")
-    public ResponseEntity<?> deleteRepresentative(@PathVariable Long id) {
+    public ResponseEntity<?> deleteRepresentative(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_REPRESENTATIVE_ID_DESCRIPTION, example = "1" ) Long id) {
         try {
             service.deleteRepresentative(id);
         } catch (ConstraintViolationException e) {
