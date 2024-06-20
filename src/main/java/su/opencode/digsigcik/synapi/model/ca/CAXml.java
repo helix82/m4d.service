@@ -51,6 +51,8 @@ public class CAXml {
                     @XmlRootElement
                     @XmlAccessorType(XmlAccessType.FIELD)
                     public static class KeyAuthPerson{
+                        @XmlElement(name = "ИдентификаторКлюча")
+                        private String keyId;
                         @XmlElement(name = "АдресаСписковОтзыва")
                         private List<Addresses> addresses;
                         @XmlElement(name = "Сертификаты")

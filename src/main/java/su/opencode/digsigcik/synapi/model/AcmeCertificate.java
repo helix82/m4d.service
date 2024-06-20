@@ -34,6 +34,17 @@ public class AcmeCertificate {
     @JsonIgnore
     private AcmeDomain domain;
 
+    @Column(name = "challenge_url", columnDefinition = "VARCHAR(2000)")
+    private String challengeUrl;
+
+    @Column(name = "order_url", columnDefinition = "VARCHAR(2000)")
+    private String orderUrl;
+
+    @Column(name = "challenge_token", columnDefinition = "VARCHAR(2000)")
+    private String challengeToken;
+
+    @Column(name = "challenge_content", columnDefinition = "VARCHAR(2000)")
+    private String challengeContent;
 
     @Column(name = "certificate_url", columnDefinition = "VARCHAR(2000)")
     private String certificateUrl;
@@ -98,5 +109,37 @@ public class AcmeCertificate {
 
     public void setCertificateUrl(String certificateUrl) {
         this.certificateUrl = certificateUrl;
+    }
+
+    public String getChallengeUrl() {
+        return challengeUrl;
+    }
+
+    public void setChallengeUrl(String challengeUrl) {
+        this.challengeUrl = challengeUrl;
+    }
+
+    public String getChallengeToken() {
+        return challengeToken;
+    }
+
+    public void setChallengeToken(String challengeToken) {
+        this.challengeToken = challengeToken;
+    }
+
+    public String getChallengeContent() {
+        return challengeContent;
+    }
+
+    public void setChallengeContent(String challengeContent) {
+        this.challengeContent = challengeContent;
+    }
+
+    public String getOrderUrl() {
+        return orderUrl;
+    }
+
+    public void setOrderUrl(String orderUrl) {
+        this.orderUrl = orderUrl;
     }
 }

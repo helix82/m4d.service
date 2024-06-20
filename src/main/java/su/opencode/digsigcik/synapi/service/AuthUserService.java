@@ -8,37 +8,34 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import su.opencode.digsigcik.synapi.dto.UserDto;
 import su.opencode.digsigcik.synapi.exception.UserAuthException;
-import su.opencode.digsigcik.synapi.util.UsersInfoUtils;
+import su.opencode.digsigcik.synapi.model.ESSUser;
+import su.opencode.digsigcik.synapi.repository.ESUserRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Service
-public class UserService implements UserDetailsService {
+public class AuthUserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
-    private final UsersInfoUtils usersInfo;
+    private final ESUserRepository esUserRepository;
 
     @Autowired
-    public UserService(@Lazy PasswordEncoder passwordEncoder, UsersInfoUtils usersInfo) {
+    public AuthUserService(@Lazy PasswordEncoder passwordEncoder, ESUserRepository esUserRepository) {
         this.passwordEncoder = passwordEncoder;
-        this.usersInfo = usersInfo;
+        this.esUserRepository = esUserRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String userLogin) throws UserAuthException {
-        Optional<UserDto> user = usersInfo.getUserByUserLogin(userLogin);
-
-        if (user.isPresent()) {
-            UserDto userDto = user.get();
+        ESSUser user = esUserRepository.findESSUserByLogin(userLogin);
+        if (user != null) {
             return new User(
                     userLogin,
-                    passwordEncoder.encode(userDto.getPassword()),
-                    List.of(new SimpleGrantedAuthority(userDto.getPosition().name()))
+                    passwordEncoder.encode(user.getPassword()),
+                    List.of(new SimpleGrantedAuthority(user.getPosition().name()))
             );
         } else {
             throw new UserAuthException(USER_NOT_FOUND);

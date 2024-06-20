@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.shredzone.acme4j.*;
+import org.shredzone.acme4j.challenge.Challenge;
 import org.shredzone.acme4j.challenge.Http01Challenge;
 import org.shredzone.acme4j.exception.AcmeException;
 import org.shredzone.acme4j.util.KeyPairUtils;
@@ -145,8 +146,7 @@ public class AcmeServiceImpl implements AcmeService {
         return ret;
     }
 
-    public ResponseEntity<Map> certificate(HttpSession httpSession,String domainName, String notAfter
-    ) {
+    public ResponseEntity<Map> certificate(HttpSession httpSession,String domainName, String notAfter) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -223,8 +223,123 @@ public class AcmeServiceImpl implements AcmeService {
         return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }
 
-    public Map certificate(HttpSession httpSession, Long domainId
-    ) {
+    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domainName, String notAfter) {
+        HashMap<String, String> ret = new HashMap<>();
+        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
+        if(acmeAccount==null) {
+            acmeAccount = new AcmeAccount(ACME_ACCOUNT_NAME, ACME_ACCOUNT_KEY);
+            acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
+            accountRepository.save(acmeAccount);
+        }
+        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domainName);
+        if(acmeDomain==null) {
+            acmeDomain = new AcmeDomain(acmeAccount, domainName);
+            domainRepository.save(acmeDomain);
+        }
+
+        if(loginDefaultAccount(httpSession)){
+            Login login = (Login)httpSession.getAttribute("login");
+            try {
+                Account account = login.getAccount();
+                Order order = account
+                        .newOrder()
+                        .domain(acmeDomain.getDomainUrl())
+                        .notAfter(Instant.parse(notAfter))
+                        .create();
+
+                Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
+                if(challenge==null) {
+                    // авторизация уже прошла или испытание выполнено
+                    ret.put("result", "done");
+                    ret.put("description", "Auth and challenge done");
+                    new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                }
+                ret.put("token", challenge.getToken());
+                ret.put("authorization", challenge.getAuthorization());
+
+                AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, null);
+                acmeCertificate.setOrderUrl(order.getLocation().toString());
+                acmeCertificate.setChallengeUrl(challenge.getLocation().toString());
+                acmeCertificate.setChallengeToken(challenge.getToken());
+                acmeCertificate.setChallengeContent(challenge.getAuthorization());
+                certificateRepository.save(acmeCertificate);
+            } catch (AcmeException e) {
+                ret.put("error", "acme exception");
+                ret.put("exception", e.getMessage());
+            }
+        } else {
+            ret.put("error", "no login");
+        }
+        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+    }
+
+    public ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long id) {
+        HashMap<String, String> ret = new HashMap<>();
+        AcmeCertificate acmeCertificate = certificateRepository.findCertificateById(id);
+        if(acmeCertificate!=null) {
+            if(acmeCertificate.getCertificateUrl()!=null) {
+                ret.put("error", "certificate already released");
+            } else {
+                if(loginDefaultAccount(httpSession)){
+                    Login login = (Login)httpSession.getAttribute("login");
+                    if(login!=null) {
+                        try {
+                            AcmeDomain acmeDomain = acmeCertificate.getDomain();
+
+                            Challenge challenge = login.bindChallenge(new URL(acmeCertificate.getChallengeUrl()));
+                            Order order = login.bindOrder(new URL(acmeCertificate.getOrderUrl()));
+
+                            challenge.trigger();
+
+                            if(acmeDomain.getDomainPrivateKey()==null) {
+                                StringWriter sw = new StringWriter();
+                                KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(4096), sw);
+                                acmeDomain.setDomainPrivateKey(sw.toString());
+                                domainRepository.save(acmeDomain);
+                            }
+                            KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
+
+                            order.execute(domainKeyPair);
+
+                            // Wait for the order to complete
+                            Status status = waitForCompletion(order::getStatus, order::fetch);
+                            if (status != Status.VALID) {
+                                throw new AcmeException("Order failed... Giving up.");
+                            }
+
+                            Certificate certificate = order.getCertificate();
+
+                            StringWriter writer = new StringWriter();
+                            certificate.writeCertificate(writer);
+                            acmeCertificate.setContent(writer.toString());
+                            acmeCertificate.setOrderUrl(null);
+                            acmeCertificate.setChallengeUrl(null);
+                            acmeCertificate.setChallengeToken(null);
+                            acmeCertificate.setChallengeContent(null);
+                            acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
+                            certificateRepository.save(acmeCertificate);
+                            return new ResponseEntity<>(CertificateController.certInfo(acmeCertificate), HttpStatus.OK);
+                        } catch (AcmeException e) {
+                            ret.put("error", "acme exception");
+                            ret.put("exception", e.getMessage());
+                        } catch (IOException e) {
+                            ret.put("error", "io exception");
+                            ret.put("exception", e.getMessage());
+                        }
+                    } else {
+                        ret.put("error", "no login");
+                    }
+                } else {
+                    ret.put("error", "no login");
+                }
+            }
+        } else {
+            ret.put("error", "no certificate");
+        }
+        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+    }
+
+    public Map certificate(HttpSession httpSession, Long domainId) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeDomain acmeDomain= domainRepository.findDomainById(domainId);
 
@@ -330,8 +445,6 @@ public class AcmeServiceImpl implements AcmeService {
         }
         return ret;
     }
-
-
 
 
     private KeyPair makeKeyPair(MultipartFile userFile) throws IOException {

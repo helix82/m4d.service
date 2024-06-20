@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -19,7 +20,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.*;
 import su.opencode.digsigcik.synapi.filters.JwtRequestFilter;
-import su.opencode.digsigcik.synapi.service.UserService;
+import su.opencode.digsigcik.synapi.service.AuthUserService;
 
 import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
 
@@ -30,22 +31,28 @@ import static org.springframework.boot.autoconfigure.security.servlet.PathReques
 public class SecurityConfig {
     public static final String CORS_CFG_SOURCE_BEAN = "corsConfigurationSource";
     private final WebConfigProperties webConfigProperties;
-    private final UserService userService;
+    private final AuthUserService authUserService;
     private final JwtRequestFilter jwtRequestFilter;
 
+    @Order(1)
+    @Bean
+    public SecurityFilterChain h2FilterChain(HttpSecurity http) throws Exception {
+        http
+                .antMatcher("/h2-console/**")
+                .csrf(csrf -> csrf.ignoringRequestMatchers(PathRequest.toH2Console()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .headers(headers -> headers.frameOptions().sameOrigin());
 
-    @Order(0)
+        return http.build();
+    }
+
+    @Order(2)
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                //TODO: remove h2 console start
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers(toH2Console())
-                        .disable()
-                )
-                .headers(headers -> headers.frameOptions()
-                        .disable())
-                //TODO: remove h2 console finish
                 .authorizeRequests(rm -> rm
                         .antMatchers("/api/**")
                         .permitAll()
@@ -56,10 +63,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/webjars/**",
-                                "/.well-known/acme-challenge/**",
-                                //TODO: remove h2 console start
-                                "/h2-console/**"
-                                //TODO: remove h2 console finish
+                                "/.well-known/acme-challenge/**"
                         )
                         .permitAll()
                         .anyRequest()
@@ -80,7 +84,7 @@ public class SecurityConfig {
     public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-        daoAuthenticationProvider.setUserDetailsService(userService);
+        daoAuthenticationProvider.setUserDetailsService(authUserService);
         return daoAuthenticationProvider;
     }
 
@@ -111,11 +115,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-    //TODO: remove h2 console start
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring()
-                .antMatchers("/h2-console/**");
-    }
-    //TODO: remove h2 console finish
+
 }

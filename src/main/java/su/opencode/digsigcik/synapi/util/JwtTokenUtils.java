@@ -44,8 +44,8 @@ public class JwtTokenUtils {
 
         claims.put("resource_access", resourceAccessDto.getPdDto());
         claims.put("preferred_username", userDetails.getUsername());
-        claims.put("firstname", userDto.getFirstName());
-        claims.put("lastname", userDto.getLastName());
+        claims.put("firstname", userDto.getFirstname());
+        claims.put("lastname", userDto.getLastname());
         claims.put("patronymic", userDto.getPatronymic());
 
         Date issuedDate = new Date();
