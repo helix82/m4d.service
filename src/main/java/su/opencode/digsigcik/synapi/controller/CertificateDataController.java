@@ -54,7 +54,6 @@ public class CertificateDataController {
         int ca_import = 0;
         for(CAXml.CA ca : caXml.getCa()){
 
-            //var stat = ca.getAccreditationStatus().getStatus();
             String stat = ca.getAccreditationStatusCode(ca.getAccreditationStatus().getStatus());
             if(Objects.equals(stat, "VALID")){
                 if(ca.getShSystems().getShSystem() != null){
