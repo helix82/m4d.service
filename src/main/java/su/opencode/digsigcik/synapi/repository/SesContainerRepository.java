@@ -9,5 +9,5 @@ import java.util.UUID;
 @Repository
 public interface SesContainerRepository extends JpaRepository<SesContainer, Long> {
     SesContainer findSesContainerById(Long id);
-    SesContainer findSesContainerByUuid(UUID uuid);
+    SesContainer findSesContainerByUuid(String uuid);
 }

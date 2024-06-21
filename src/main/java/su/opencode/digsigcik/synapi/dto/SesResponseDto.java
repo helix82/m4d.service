@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SesResponseDto {
-    private UUID containerUUID;
+    private String containerUUID;
     private String firstName;
     private String lastName;
     private String patronymic;

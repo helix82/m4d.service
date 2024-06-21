@@ -38,7 +38,7 @@ public class SesFilesController {
 
     @GetMapping(value = "/getContainer", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<?> getContainer(@RequestParam(name = "uuid") String uuid) {
-        String sesContainerPath = sesContainerService.getSesContainerPathByUUID(UUID.fromString(uuid));
+        String sesContainerPath = sesContainerService.getSesContainerPathByUUID(uuid);
 
         byte[] fileContent = FileUtils.getFileContentByPath(sesContainerPath);
         Resource resource = new ByteArrayResource(fileContent);

@@ -15,6 +15,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class SesContainerFileDto {
     private Long id;
-    private UUID uuid;
+    private String uuid;
     private String sesContainerPath;
 }

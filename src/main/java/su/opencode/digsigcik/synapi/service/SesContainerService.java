@@ -10,5 +10,5 @@ public interface SesContainerService {
     SesContainer findSesContainerById(Long id);
     boolean updateSesContainer(SesContainerFileDto sesContainer);
     void deleteSesContainer(Long id);
-    String getSesContainerPathByUUID(UUID uuid);
+    String getSesContainerPathByUUID(String uuid);
 }

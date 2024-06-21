@@ -36,7 +36,7 @@ public class SesContainerServiceImpl implements SesContainerService {
     }
 
     @Override
-    public String getSesContainerPathByUUID(UUID uuid) {
+    public String getSesContainerPathByUUID(String uuid) {
         SesContainer sesContainer = this.sesContainerRepository.findSesContainerByUuid(uuid);
         String sesContainerPath = sesContainer.getSesContainerPath();
         if (sesContainerPath == null || sesContainerPath.isEmpty()) {
@@ -47,7 +47,7 @@ public class SesContainerServiceImpl implements SesContainerService {
 
     private SesContainer mapDtoToSesContainer(SesContainerFileDto sesContainerFileDto) {
         SesContainer sesContainer = new SesContainer();
-        sesContainer.setUuid(sesContainerFileDto.getUuid());
+        sesContainer.setUuid(sesContainerFileDto.getUuid().toString());
         sesContainer.setSesContainerPath(sesContainerFileDto.getSesContainerPath());
         return sesContainer;
     }
