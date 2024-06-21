@@ -212,7 +212,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         addressRegion.setLegalAddress(mrpaRegistryFullDTO.organization.getLegalAddress());
         organisation.setAddressRegion(addressRegion);
         MrpaRegistryFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal personPrincipal = new MrpaRegistryFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal();
-        personPrincipal.setTypeCredential("1");
+        personPrincipal.setTypePrincipal("1");
         legalEntity.setPrincipal(personPrincipal);
         MrpaRegistryFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal principal = new MrpaRegistryFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal();
         principal.setInn(mrpaRegistryFullDTO.principal.getInn());

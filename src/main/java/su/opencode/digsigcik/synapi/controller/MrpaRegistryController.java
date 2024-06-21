@@ -12,7 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
-import su.opencode.digsigcik.synapi.dto.*;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullXML;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistrySaveWithCredentialDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
@@ -30,7 +33,7 @@ import java.util.Map;
 
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
-import static su.opencode.digsigcik.synapi.util.Constant.NULL;
+import static su.opencode.digsigcik.synapi.util.Constants.*;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
 @RestController
@@ -38,16 +41,14 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 @RequestMapping("/api/v1/mrpa_registry" )
 @AllArgsConstructor
 public class MrpaRegistryController {
-    private final String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
-    private final String MRPA_REGISTRY_CREDENTIAL_IS_NULL = String.format("Assign Credential to Mrpa registry is %s!", NULL);
     private final MrpaRegistryService mrpaRegistryService;
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
 
-    @Operation(summary = "Получить список МЧД с ФИО представителя и ФИО доверителя",
-            description = "Возвращает список МЧД с ФИО представителя и ФИО доверителя" )
+    @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
+            description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено" ),
-            @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistry() {
@@ -63,10 +64,10 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryFindAll, HttpStatus.OK);
     }
 
-    @Operation(summary = "Сохранить данные по МЧД в БД", description = "Возвращает созданную МЧД с ФИО представителя и ФИО доверителя" )
+    @Operation(summary = CONTROLLER_MRPA_SAVE_SUMMARY, description = CONTROLLER_MRPA_SAVE_DESCRIPTION )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно сохранено" ),
-            @ApiResponse(code = 404, message = "Not found" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "save",produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> saveMrpaRegistry(@RequestBody MrpaRegistrySaveWithCredentialDTO mrpaRegistrySaveWithCredentialDTO) {
@@ -104,15 +105,15 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить МЧД с ФИО представителя и ФИО доверителя по ИД МЧД",
-            description = "Возвращает МЧД с ФИО представителя и ФИО доверителя" )
+    @Operation(summary = CONTROLLER_MRPA_FIND_BY_ID_SUMMARY,
+            description = CONTROLLER_MRPA_FIND_BY_ID_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено" ),
-            @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
-            description = "ИД МЧД", example = "1" ) Long id) {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id) {
         MrpaRegistryWithFioDTO mrpaRegistryFind;
         try {
             mrpaRegistryFind = mrpaRegistryService.findByMrpaRegistryId(id);
@@ -123,10 +124,10 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryFind, HttpStatus.OK);
     }
 
-    @Operation(summary = "Изменить данные по МЧД", description = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя" )
+    @Operation(summary = CONTROLLER_MRPA_UPDATE_SUMMARY, description = CONTROLLER_MRPA_UPDATE_DESCRIPTION )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Изменения успешно сохранены" ),
-            @ApiResponse(code = 404, message = "Not found" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping(value = "update", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> updateMrpaRegistry(@RequestBody MrpaRegistry mrpaRegistry) {
@@ -141,14 +142,15 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
-    @Operation(summary = "Удалить данные по МЧД", description = "Возвращает true при удачном удалении" )
+    //TODO: @helix82 При удалении физически не удаляем а ставим пометку об удалении
+    @Operation(summary = CONTROLLER_MRPA_DELETE_SUMMARY, description = CONTROLLER_MRPA_DELETE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Запись успешно удалена" ),
-            @ApiResponse(code = 404, message = "Not found" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @DeleteMapping(value = "delete/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> deleteMrpaRegistry(@PathVariable @Parameter(name = "id",
-            description = "ИД МЧД", example = "1" ) Long id) {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id) {
         try {
             mrpaRegistryService.deleteMrpaRegistry(id);
         } catch (ConstraintViolationException e) {
@@ -160,15 +162,15 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить МЧД с ФИО представителя и ФИО доверителя по ИНН доверителя",
-            description = "Возвращает МЧД с ФИО представителя и ФИО доверителя" )
+    @Operation(summary = CONTROLLER_MRPA_FIND_BY_PRINCIPAL_INN_SUMMARY,
+            description = CONTROLLER_MRPA_FIND_BY_PRINCIPAL_INN_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено" ),
-            @ApiResponse(code = 404, message = "Not found - Ни одна МЧД не найдена" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(value = "principal_inn/{inn}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryByPrincipalInn(@PathVariable @Parameter(name = "inn",
-            description = "ИНН доверителя", example = "1" ) String inn) {
+            description = PARAMETER_PRINCIPAL_INN_DESCRIPTION, example = "1" ) String inn) {
         MrpaRegistryWithFioDTO mrpaRegistryFindByInn;
         try {
             mrpaRegistryFindByInn = mrpaRegistryService.findByMrpaRegistryPrincipalInn(inn);
@@ -179,14 +181,14 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryFindByInn, HttpStatus.OK);
     }
 
-    @Operation(summary = "Загрузить ЭП", description = "Возвращает МЧД с ФИО представителя и ФИО доверителя")
+    @Operation(summary = CONTROLLER_MRPA_UPLOAD_SUMMARY, description = CONTROLLER_MRPA_UPLOAD_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно загружено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "/{id}/upload_sig", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@PathVariable @Parameter(name = "id",
-            description = "ИД МЧД", example = "1" ) Long id, @RequestPart("sigFile") MultipartFile sourceSig) throws IOException {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("sigFile") MultipartFile sourceSig) throws IOException {
         String content = new String(sourceSig.getBytes());
         Document document = convertStringToDocument(content);
         assert document != null;
@@ -207,15 +209,15 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
-    @Operation(summary = "Отозвать МЧД",
-            description = "Возвращает МЧД с ФИО представителя и ФИО доверителя" )
+    @Operation(summary = CONTROLLER_MRPA_RECALL_SUMMARY,
+            description = CONTROLLER_MRPA_RECALL_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно отозвано" ),
-            @ApiResponse(code = 404, message = "Not found" )
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping(value = "recall/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> recallMrpaRegistryById(@PathVariable @Parameter(name = "id",
-            description = "ИД МЧД", example = "1" ) Long id) {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id) {
         try {
             mrpaRegistryService.recallMrpaRegistryById(id);
         } catch (ConstraintViolationException e) {
@@ -226,14 +228,14 @@ public class MrpaRegistryController {
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
-    @Operation(summary = "Выгрузить МЧД в XML-файл", description = "Возвращает статус выполнения загрузки")
+    @Operation(summary = CONTROLLER_MRPA_DOWNLOAD_SUMMARY, description = CONTROLLER_MRPA_DOWNLOAD_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно загружено"),
-            @ApiResponse(code = 404, message = "Not found")
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @GetMapping(value = "/download/{id}", produces = MediaType.APPLICATION_XML_VALUE) //"application/json; charset=UTF-8"
+    @GetMapping(value = "/download/{id}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<?> download(@PathVariable @Parameter(name = "id",
-            description = "ИД МЧД", example = "1" ) Long id) throws IOException, JAXBException {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id) throws IOException, JAXBException {
         MrpaRegistryFullDTO mrpaRegistryFullDTO = mrpaRegistryService.findMrpaRegistryFullById(id);
         mrpaRegistryFullDTO.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(id);
         MrpaRegistryFullXML mrpaRegistryFullXML = mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
