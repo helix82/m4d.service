@@ -8,7 +8,6 @@ public interface RevokedCertificateService {
     List<RevokedCertificate> findAllRevokedCertificate();
     RevokedCertificate saveRevokedCertificate(RevokedCertificate revokedCertificate);
     RevokedCertificate findByRevokedCertificateId(Long id);
-    Integer countRevokedCertificateByImprint(String imprint);
     RevokedCertificate updateRevokedCertificate(RevokedCertificate revokedCertificate);
     void deleteRevokedCertificate(Long id);
 }
