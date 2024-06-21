@@ -55,7 +55,7 @@ public class CertificateDataController {
         for(CAXml.CA ca : caXml.getCa()){
 
             var stat = ca.getAccreditationStatus().getStatus();
-            if(Objects.equals(stat, CONTROLLER_CA_ACCREDITATION_STATUS_VALID)){
+            if(Objects.equals(stat, "VALID")){
                 if(ca.getShSystems().getShSystem() != null){
                     System.out.println(ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()).collect(Collectors.toList()).stream().flatMap(Collection::stream).collect(Collectors.toList()));
                     List<CAXml.CA.SHSystems.SHSystem.KeysAuthPersons.KeyAuthPerson> keyAuthPerson = ca.getShSystems().getShSystem().stream().map(y->y.getKeysAuthPersons().getKeyAuthPerson()).collect(Collectors.toList()).stream().flatMap(Collection::stream).collect(Collectors.toList());
