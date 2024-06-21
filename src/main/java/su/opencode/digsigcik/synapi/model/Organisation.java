@@ -17,33 +17,33 @@ import java.util.Set;
 public class Organisation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(name = "ИД организации", example = "1", required = true)
+    @Schema(example = "1", required = true)
     @JsonProperty("id")
     private Long id;
 
     @Column(name = "name", columnDefinition = "VARCHAR(255)")
-    @Schema(name = "Наименование организации", example = "", required = false)
+    @Schema(example = "", required = false)
     @JsonProperty("name")
     private String name;
 
-    @Schema(name = "ИНН организации", example = "1234567890", required = true)
+    @Schema(example = "1234567890", required = true)
     @JsonProperty("inn")
     private String inn;
 
-    @Schema(name = "КПП организации", example = "123456789", required = false)
+    @Schema(example = "123456789", required = false)
     @JsonProperty("kpp")
     private String kpp;
 
-    @Schema(name = "ОГРН организации", example = "1234567890123", required = false)
+    @Schema(example = "1234567890123", required = false)
     @JsonProperty("ogrn")
     private String ogrn;
 
     @Column(name = "legal_address", columnDefinition = "TEXT")
-    @Schema(name = "Юридический адрес организации", example = "", required = false)
+    @Schema(example = "", required = false)
     @JsonProperty("legalAddress")
     private String legalAddress;
 
-    @Schema(name = "Код региона организации", example = "", required = false)
+    @Schema(example = "", required = false)
     @JsonProperty("regionCode")
     private String regionCode;
 
