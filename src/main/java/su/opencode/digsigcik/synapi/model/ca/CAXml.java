@@ -86,5 +86,23 @@ public class CAXml {
             @XmlElement(name = XML_ELEMENT_STATUS)
             private String status;
         }
+
+        public String getAccreditationStatusCode(String status) {
+            switch (status){
+                case "Действует":
+                    return "VALID";
+                case "Прекращена":
+                    return "DISCONTINUED";
+                case "Приостановлена":
+                    return "SUSPENDED";
+                case "Аннулирована":
+                    return "CANCELED";
+                default:
+                    return null;
+            }
+        }
+
+
+
     }
 }
