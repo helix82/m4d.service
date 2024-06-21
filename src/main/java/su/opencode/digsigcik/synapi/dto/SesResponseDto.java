@@ -6,8 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
 
-import java.util.UUID;
-
 @Data
 @Builder
 @NoArgsConstructor

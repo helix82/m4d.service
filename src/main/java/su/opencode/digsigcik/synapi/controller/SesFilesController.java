@@ -16,7 +16,6 @@ import su.opencode.digsigcik.synapi.service.SesContainerService;
 import su.opencode.digsigcik.synapi.util.FileUtils;
 
 import java.io.IOException;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

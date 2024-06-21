@@ -7,8 +7,6 @@ import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.model.SesContainer;
 import su.opencode.digsigcik.synapi.repository.SesContainerRepository;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class SesContainerServiceImpl implements SesContainerService {
@@ -47,7 +45,7 @@ public class SesContainerServiceImpl implements SesContainerService {
 
     private SesContainer mapDtoToSesContainer(SesContainerFileDto sesContainerFileDto) {
         SesContainer sesContainer = new SesContainer();
-        sesContainer.setUuid(sesContainerFileDto.getUuid().toString());
+        sesContainer.setUuid(sesContainerFileDto.getUuid());
         sesContainer.setSesContainerPath(sesContainerFileDto.getSesContainerPath());
         return sesContainer;
     }
