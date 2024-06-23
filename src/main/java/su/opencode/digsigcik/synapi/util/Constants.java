@@ -1,6 +1,9 @@
 package su.opencode.digsigcik.synapi.util;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static su.opencode.digsigcik.synapi.util.Constant.NULL;
 
 /**

@@ -38,7 +38,8 @@ public class ApiControllerV1 {
     public ResponseEntity<Resource> createPdfContainer(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             @RequestPart("srcFile") MultipartFile sourceFile,
-            @RequestPart("sigFile") MultipartFile sourceSig) {
+            @RequestPart("sigFile") MultipartFile sourceSig,
+            @RequestPart("pubFile") MultipartFile sourcePub) {
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
         ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
@@ -48,7 +49,7 @@ public class ApiControllerV1 {
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
                 .build();
-        var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
+        var res = containerService.createPdfContainer(sourceFile, sourceSig, sourcePub,containerUserInfo,null);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }

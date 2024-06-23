@@ -11,6 +11,7 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	CHECK_HISTORY("checkHistory", MediaType.APPLICATION_JSON, ContainerFileEnum.CHECK_HISTORY, "_check_history", "json"),
 	SOURCE_FILE("sourceFile", null, ContainerFileEnum.MAIN_FILE, null, null),
 	PREVIEW("preview", MediaType.APPLICATION_PDF, ContainerFileEnum.PREVIEW, "_preview", "pdf"),
+	DETACHED_PUB("detachedPub", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.DETACHED_PUB, null, "pub"),
 	DETACHED_SIGN("detachedSign", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.DETACHED_BES, null, "sig"),
 	ATTACHED_SIGN("attachedSign", null, ContainerFileEnum.ATTACHED_BES, null, null),
 	HASH_TYPE("hashType", MetaAttribute.MAIN_FILE_HASH_TYPE),

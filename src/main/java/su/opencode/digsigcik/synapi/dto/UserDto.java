@@ -23,9 +23,9 @@ public class UserDto {
     private String patronymic;
     private PositionEnum position;
     private RoleEnum role;
-    private String pinCode;
-    private String pinCodeHash;
-    private String fileHash;
-    private String signature;
-    private String operationDate;
+//    private String pinCode;
+//    private String pinCodeHash;
+//    private String fileHash;
+//    private String signature;
+//    private String operationDate;
 }

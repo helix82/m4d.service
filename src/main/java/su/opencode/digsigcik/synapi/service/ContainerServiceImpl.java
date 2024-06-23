@@ -58,7 +58,9 @@ public class ContainerServiceImpl implements ContainerService {
 
     @Override
     public Resource createPdfContainer(@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
-                                       @NotNull ContainerUserInfoDto containerUserInfo) {
+                                       @NotNull MultipartFile pubFile,
+                                       @NotNull ContainerUserInfoDto containerUserInfo,
+                                       @NotNull String containerHashType) {
         String fileName = srcFile.getOriginalFilename();
         String contentTypeStr = srcFile.getContentType();
         MediaType contentType = StringUtils.isBlank(contentTypeStr)
@@ -78,7 +80,14 @@ public class ContainerServiceImpl implements ContainerService {
             throw new IllegalStateException("Cannot get sig file content", e);
         }
 
-        Container container = ContainerUtils.createContainer(ContainerTypeEnum.SIMPLE_DETACHED, sourceFileContent, fileName, contentType);
+        byte[] pubFileContent;
+        try {
+            pubFileContent = pubFile.getBytes();
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot get pub file content", e);
+        }
+
+        Container container = ContainerUtils.createContainer(ContainerTypeEnum.SIMPLE_DETACHED, sourceFileContent, fileName, contentType,containerHashType);
 
         byte[] login = containerUserInfo.getLogin().getBytes(StandardCharsets.UTF_8);
         byte[] firstname = containerUserInfo.getFirstname().getBytes(StandardCharsets.UTF_8);
@@ -88,6 +97,7 @@ public class ContainerServiceImpl implements ContainerService {
 
         Map<ResultTypeEnum, byte[]> params = new HashMap<>();
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
+        params.put(ResultTypeEnum.DETACHED_PUB, pubFileContent);
         params.put(ResultTypeEnum.LOGIN, login);
         params.put(ResultTypeEnum.FIRSTNAME, firstname);
         params.put(ResultTypeEnum.LASTNAME, lastname);

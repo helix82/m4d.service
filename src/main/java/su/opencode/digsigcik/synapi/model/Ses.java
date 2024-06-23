@@ -25,7 +25,7 @@ public class Ses {
     @Column(name = "file_hash", columnDefinition = "VARCHAR(64)")
     private String fileHash;
 
-    @Column(name = "signature", columnDefinition = "VARCHAR(194)")
+    @Column(name = "signature", columnDefinition = "BLOB")
     private String signature;
 
     @Column(name = "operation_date", columnDefinition = "VARCHAR(29)")

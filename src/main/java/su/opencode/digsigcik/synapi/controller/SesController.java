@@ -14,7 +14,11 @@ import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.annotation.SesExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.SesResponseDto;
 import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
+import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
+import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.service.SesService;
+
+import java.io.IOException;
 
 @RestController
 @SesExceptionHandler
@@ -24,9 +28,13 @@ public class SesController {
     private final SesService sesService;
 
     @PostMapping(value = "/create")
-    public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
-                                       @RequestParam String pinCode, @RequestPart("file") MultipartFile file) {
-        SesResponseDto sesResponseDto = sesService.getContainerPath(pinCode, file, authToken);
+    public ResponseEntity<?> createSes(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken, HashAlgorithm hashAlgorithm, @RequestPart("file") MultipartFile file) {
+        SesResponseDto sesResponseDto = null;
+        try {
+            sesResponseDto = sesService.getContainerPath(file, authToken, hashAlgorithm);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         return new ResponseEntity<>(sesResponseDto, HttpStatus.OK);
     }

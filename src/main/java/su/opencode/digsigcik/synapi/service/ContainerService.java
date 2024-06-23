@@ -17,7 +17,9 @@ public interface ContainerService {
     Resource createPdfContainer(
 	    @NotNull MultipartFile srcFile,
 	    @NotNull MultipartFile sigFile,
-        @NotNull ContainerUserInfoDto containerUserInfo);
+        @NotNull MultipartFile pubFile,
+        @NotNull ContainerUserInfoDto containerUserInfo,
+        @NotNull String containerHashType);
 
     Resource updatePdfContainerRegData(
             @NotNull MultipartFile containerFile,

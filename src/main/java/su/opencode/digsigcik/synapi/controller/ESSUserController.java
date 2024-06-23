@@ -35,7 +35,7 @@ public class ESSUserController {
     public ResponseEntity<?> createESSUser(@RequestBody UserDto userDto) {
         ESSUser essUser = new ObjectMapper().convertValue(userDto, ESSUser.class);
         if (esUserService.getESSUserByLogin(userDto.getLogin()) == null) {
-            essUser.setPinCodeHash(HashUtils.getSha256Hash(userDto.getPinCode().getBytes(StandardCharsets.UTF_8)));
+          //  essUser.setPinCodeHash(HashUtils.getSha256Hash(userDto.getPinCode().getBytes(StandardCharsets.UTF_8)));
             esUserService.createESSUser(essUser);
         }
         return new ResponseEntity<>(essUser, HttpStatus.OK);

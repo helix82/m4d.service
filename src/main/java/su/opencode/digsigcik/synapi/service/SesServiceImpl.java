@@ -1,7 +1,6 @@
 package su.opencode.digsigcik.synapi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.Resource;
@@ -10,22 +9,16 @@ import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
-import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
-import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
-import su.opencode.digsigcik.synapi.dto.SesContainerFileDto;
-import su.opencode.digsigcik.synapi.dto.SesDto;
-import su.opencode.digsigcik.synapi.dto.SesResponseDto;
-import su.opencode.digsigcik.synapi.dto.SesUserInfoDto;
-import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
-import su.opencode.digsigcik.synapi.dto.SigHashDto;
-import su.opencode.digsigcik.synapi.dto.UserDto;
+import su.opencode.digsigcik.synapi.dto.*;
+import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.exception.SesVerifyException;
-import su.opencode.digsigcik.synapi.model.ESSUser;
+import su.opencode.digsigcik.synapi.model.EncryptionKeyEntity;
 import su.opencode.digsigcik.synapi.model.Ses;
 import su.opencode.digsigcik.synapi.model.SesContainer;
 import su.opencode.digsigcik.synapi.repository.ESUserRepository;
+import su.opencode.digsigcik.synapi.repository.EncryptionKeyRepository;
 import su.opencode.digsigcik.synapi.repository.SesContainerRepository;
 import su.opencode.digsigcik.synapi.repository.SesRepository;
 import su.opencode.digsigcik.synapi.util.DateUtils;
@@ -34,23 +27,21 @@ import su.opencode.digsigcik.synapi.util.HashUtils;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-import static su.opencode.digsigcik.synapi.util.Constant.DSCP_DIRECTORY_PATH;
-import static su.opencode.digsigcik.synapi.util.Constant.FILE_ERROR_MESSAGE;
-import static su.opencode.digsigcik.synapi.util.Constant.HASH_ALGORITHM;
-import static su.opencode.digsigcik.synapi.util.Constant.PIN_CODE_ERROR_MESSAGE;
-import static su.opencode.digsigcik.synapi.util.Constant.ROOT_FILE_STORAGE_PATH;
-import static su.opencode.digsigcik.synapi.util.Constant.SOURCE_DIRECTORY_PATH;
-import static su.opencode.digsigcik.synapi.util.Constant.TOKEN_ERROR_MESSAGE;
-import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constant.*;
 
 @Service
-@RequiredArgsConstructor
+
 public class SesServiceImpl implements SesService {
     private final SesContainerService sesContainerService;
     private final ContainerService containerService;
@@ -59,12 +50,26 @@ public class SesServiceImpl implements SesService {
     private final SesRepository sesRepository;
     private final ESUserRepository esUserRepository;
     private final SesContainerRepository sesContainerRepository;
+    private final EncryptionKeyRepository encryptionKeyRepository;
+    private final ElectronicSignatureService signatureService;
+
+    public SesServiceImpl(SesContainerService sesContainerService, ContainerService containerService, ESUserService esUserService, JwtTokenUtils jwtTokenUtils, SesRepository sesRepository, ESUserRepository esUserRepository, SesContainerRepository sesContainerRepository, EncryptionKeyRepository encryptionKeyRepository, ElectronicSignatureService signatureService) {
+        this.sesContainerService = sesContainerService;
+        this.containerService = containerService;
+        this.esUserService = esUserService;
+        this.jwtTokenUtils = jwtTokenUtils;
+        this.sesRepository = sesRepository;
+        this.esUserRepository = esUserRepository;
+        this.sesContainerRepository = sesContainerRepository;
+        this.encryptionKeyRepository = encryptionKeyRepository;
+        this.signatureService = signatureService;
+    }
 
     @Override
-    public SesResponseDto getContainerPath(String pinCode, MultipartFile srcFile, String token) {
-        if (isParameterNullOrEmpty(pinCode)) {
-            throw new SesException(PIN_CODE_ERROR_MESSAGE);
-        }
+    public SesResponseDto getContainerPath(MultipartFile srcFile, String token, HashAlgorithm hashAlgorithm) throws IOException {
+//        if (isParameterNullOrEmpty(pinCode)) {
+//            throw new SesException(PIN_CODE_ERROR_MESSAGE);
+//        }
         if (isParameterNullOrEmpty(token)) {
             throw new BadRequestException(TOKEN_ERROR_MESSAGE);
         }
@@ -85,77 +90,109 @@ public class SesServiceImpl implements SesService {
             2 - генерируем хэш документа (pin_hash.doc_hash)
             3 - генирируем хэш сигнатуры (pin_hash.doc_hash.timestamp)
         */
-        SigHashDto sigHashDto = esUserService.generateHashForPinCodeAndFile(pinCode, srcFile);
-        String pinCodeHash = sigHashDto.getPinCodeHash();
-        if (esUserService.isESSUserWithPinCodeHashNotExist(pinCodeHash)) {
-            throw new SesException(PIN_CODE_ERROR_MESSAGE);
-        }
+        //       SigHashDto sigHashDto = esUserService.generateHashForPinCodeAndFile(pinCode, srcFile);
+//        String pinCodeHash = sigHashDto.getPinCodeHash();
+//        if (esUserService.isESSUserWithPinCodeHashNotExist(pinCodeHash)) {
+//            throw new SesException(PIN_CODE_ERROR_MESSAGE);
+//        }
 
         LocalDateTime date = LocalDateTime.now();
         String operationDate = date.toString();
 
-        String fileHash = sigHashDto.getFileHash();
-        String signature = generateSignature(sigHashDto.getPinCodeHash(), fileHash, operationDate);
+        Optional<EncryptionKeyEntity> keyEntity = encryptionKeyRepository.findById(1L);
+        if (keyEntity.isEmpty()) {
+            throw new RuntimeException("keyEntity not found");
+        } else {
+            //PinCode pinCode = pinCodeService.getPinCodeById(pinCodeId);
+            PrivateKey privateKey = signatureService.getPrivateKey(keyEntity.get()
+                    .getPrivateKey(), keyEntity.get()
+                    .getPinCode()
+                    .getPinCode(), keyEntity.get()
+                    .getAlgorithm()
+                    .getAlgorithmName());
 
-        ESSUser essUser = esUserRepository.findESSUserByLogin(userLogin);
-        essUser.setOperationDate(operationDate);
-        essUser.setFileHash(fileHash);
-        essUser.setSignature(signature);
-        esUserService.updateESSUser(essUser);
+            if (privateKey == null) {
+                throw new RuntimeException("privateKey not found");
+            }
+            PublicKey publicKey = signatureService.getPublicKey(keyEntity.get()
+                    .getPublicKey(), keyEntity.get()
+                    .getAlgorithm()
+                    .getAlgorithmName());
+            if (publicKey == null) {
+                throw new RuntimeException("publicKey not found");
+            }
+            byte[] signature = signatureService.createSignature(srcFile.getBytes(), privateKey);
 
-        // создаем файл SHA256sig.sig в который записываем signature
-        String sourceDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, SOURCE_DIRECTORY_PATH);
-        String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "SHA256sig.sig");
-        FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
-        FileUtils.createFile(sigFilePathName, signature.getBytes());
+//
+//        String fileHash = sigHashDto.getFileHash();
+//        String signature = generateSignature(sigHashDto.getPinCodeHash(), fileHash, operationDate);
 
-        MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
-        String userFirstName = jwtPayloadDto.getFirstName();
-        String userLastName = jwtPayloadDto.getLastName();
-        String userPatronymic = jwtPayloadDto.getPatronymic();
+//        ESSUser essUser = esUserRepository.findESSUserByLogin(userLogin);
+//        essUser.setOperationDate(operationDate);
+//        essUser.setFileHash(fileHash);
+//        essUser.setSignature(signature);
+//        esUserService.updateESSUser(essUser);
 
-        ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
-                .login(userLogin)
-                .firstname(userFirstName)
-                .lastname(userLastName)
-                .patronymic(userPatronymic)
-                .timestamp(date)
-                .build();
+            // создаем файл SHA256sig.sig в который записываем signature
+            String sourceDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, SOURCE_DIRECTORY_PATH);
+            String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "SHA256sig.sig");
+            FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
+            FileUtils.createFile(sigFilePathName, Base64.getEncoder().encodeToString(signature).getBytes());
+            String pubFilePathName = String.format("%s%s", sourceDirectoryPathName, "SHA256sig.pub");
+            FileUtils.createFile(pubFilePathName, Base64.getEncoder().encodeToString(publicKey.getEncoded()).getBytes());
 
-        Resource containerResource = containerService.createPdfContainer(srcFile, sigMultipartFile, containerUserInfo);
+            MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
 
-        File sigFile = new File(sigFilePathName);
-        if (sigFile.exists()) {
-            FileUtils.deleteFile(sigFilePathName);
-        }
+            MultipartFile pubMultipartFile = FileUtils.mapFileToMultipart(pubFilePathName);
+
+            String userFirstName = jwtPayloadDto.getFirstName();
+            String userLastName = jwtPayloadDto.getLastName();
+            String userPatronymic = jwtPayloadDto.getPatronymic();
+
+            ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+                    .login(userLogin)
+                    .firstname(userFirstName)
+                    .lastname(userLastName)
+                    .patronymic(userPatronymic)
+                    .timestamp(date)
+                    .build();
+
+            Resource containerResource = containerService.createPdfContainer(srcFile, sigMultipartFile, pubMultipartFile,
+                    containerUserInfo, hashAlgorithm.getAlgorithmName());
+
+            File sigFile = new File(sigFilePathName);
+            if (sigFile.exists()) {
+                FileUtils.deleteFile(sigFilePathName);
+            }
 
         /*  - добавляем в таблицу sesContainer новую запись
             - добавляем в таблицу ses новую запись
         */
-        String containerPath = String.format("%s%scontainer-%s.dscp", ROOT_FILE_STORAGE_PATH, DSCP_DIRECTORY_PATH,
-                DateUtils.formatDate(date)
-        );
-        SesContainer sesContainer = addNewSesContainer(containerPath);
-        SesDto sesDto = SesDto.builder()
-                .userLogin(userLogin)
-                .fileHash(fileHash)
-                .signature(signature)
-                .operationDate(operationDate)
-                .sesContainerFileId(sesContainer.getId())
-                .build();
+            String containerPath = String.format("%s%scontainer-%s.dscp", ROOT_FILE_STORAGE_PATH, DSCP_DIRECTORY_PATH,
+                    DateUtils.formatDate(date)
+            );
+            SesContainer sesContainer = addNewSesContainer(containerPath);
+            SesDto sesDto = SesDto.builder()
+                    .userLogin(userLogin)
+                   // .fileHash(HashUtils.getSha256Hash(srcFile.getBytes()))
+                    .signature(Base64.getEncoder().encodeToString(signature))
+                    .operationDate(operationDate)
+                    .sesContainerFileId(sesContainer.getId())
+                    .build();
 
-        boolean isSesCreated = createSes(sesDto);
-        if (!isSesCreated) {
-            throw new SesException("Ses not created!");
+            boolean isSesCreated = createSes(sesDto);
+            if (!isSesCreated) {
+                throw new SesException("Ses not created!");
+            }
+
+            return SesResponseDto.builder()
+                    .containerUUID(sesContainer.getUuid())
+                    .sigType(keyEntity.get().getAlgorithm().getAlgorithmName())
+                    .firstName(userFirstName)
+                    .lastName(userLastName)
+                    .patronymic(userPatronymic)
+                    .build();
         }
-
-        return SesResponseDto.builder()
-                .containerUUID(sesContainer.getUuid())
-                .sigType("simple")
-                .firstName(userFirstName)
-                .lastName(userLastName)
-                .patronymic(userPatronymic)
-                .build();
     }
 
     @Override
@@ -170,7 +207,11 @@ public class SesServiceImpl implements SesService {
         if (containerData == null) {
             throw new SesVerifyException("Verify ses error!");
         }
-        return getVerifyResultDto(containerData);
+        try {
+            return getVerifyResultDto(containerData);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -179,7 +220,7 @@ public class SesServiceImpl implements SesService {
         if (sesDto != null) {
             Ses ses = new Ses();
             ses.setUserLogin(sesDto.getUserLogin());
-            ses.setFileHash(sesDto.getFileHash());
+          //  ses.setFileHash(sesDto.getFileHash());
             ses.setSignature(sesDto.getSignature());
             ses.setOperationDate(sesDto.getOperationDate());
             ses.setContainerId(sesDto.getSesContainerFileId());
@@ -218,8 +259,9 @@ public class SesServiceImpl implements SesService {
         val timestamp = createContainerSelector(ContainerSelectorCode.TIMESTAMP);
         val sourceFile = createContainerSelector(ContainerSelectorCode.SOURCEFILE);
         val detachedSign = createContainerSelector(ContainerSelectorCode.DETACHEDSIGN);
+        val detachedPub = createContainerSelector(ContainerSelectorCode.DETACHEDPUB);
 
-        return List.of(firstName, lastName, patronymic, userLogin, timestamp, sourceFile, detachedSign);
+        return List.of(firstName, lastName, patronymic, userLogin, timestamp, sourceFile, detachedSign, detachedPub);
     }
 
     private ContainerSelector createContainerSelector(ContainerSelectorCode containerSelectorCode) {
@@ -249,30 +291,54 @@ public class SesServiceImpl implements SesService {
         return file == null || file.isEmpty();
     }
 
-    private SesVerifyJsonDto getVerifyResultDto(Map<String, ContainerPart> containerData) {
-        String userFirstname = new String(containerData.get("userFirstname").getData(), StandardCharsets.UTF_8);
-        String userLastname = new String(containerData.get("userLastname").getData(), StandardCharsets.UTF_8);
-        String userPatronymic = new String(containerData.get("userPatronymic").getData(), StandardCharsets.UTF_8);
-        String timestamp = new String(containerData.get("timestamp").getData(), StandardCharsets.UTF_8);
-        String userLogin = new String(containerData.get("userLogin").getData(), StandardCharsets.UTF_8);
-        String userSignature = new String(containerData.get("detachedSign").getData(), StandardCharsets.UTF_8);
-        byte[] srcFile = containerData.get("sourceFile").getData();
+    private SesVerifyJsonDto getVerifyResultDto(Map<String, ContainerPart> containerData) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        String userFirstname = new String(containerData.get("userFirstname")
+                .getData(), StandardCharsets.UTF_8);
+        String userLastname = new String(containerData.get("userLastname")
+                .getData(), StandardCharsets.UTF_8);
+        String userPatronymic = new String(containerData.get("userPatronymic")
+                .getData(), StandardCharsets.UTF_8);
+        String timestamp = new String(containerData.get("timestamp")
+                .getData(), StandardCharsets.UTF_8);
+        String userLogin = new String(containerData.get("userLogin")
+                .getData(), StandardCharsets.UTF_8);
+        String userSignature = new String(containerData.get("detachedSign")
+                .getData(), StandardCharsets.UTF_8);
+        String publicKey = new String(containerData.get("detachedPub")
+                .getData(), StandardCharsets.UTF_8);
+        byte[] srcFile = containerData.get("sourceFile")
+                .getData();
 
-        UserDto user = esUserService.getESSUserByLogin(userLogin);
-        if (user == null) {
-            throw new SesVerifyException(USER_NOT_FOUND);
-        }
+//        UserDto user = esUserService.getESSUserByLogin(userLogin);
+//        if (user == null) {
+//            throw new SesVerifyException(USER_NOT_FOUND);
+//        }
 
         SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
 
-        if (user.getLogin().equals(userLogin)) {
-            String pinCodeHash = user.getPinCodeHash();
+//        if (user.getLogin()
+//                .equals(userLogin)) {
+            //?     String pinCodeHash = user.getPinCodeHash();
+            String pinCodeHash = ""; //TODO: temporary solution
+
             String fileHash = HashUtils.getSha256Hash(srcFile);
 
             SesDto ses = findSesByUserLogin(userLogin);
-            String signature = generateSignature(pinCodeHash, fileHash, ses.getOperationDate());
+//            String signature = generateSignature(pinCodeHash, fileHash, ses.getOperationDate());
+            // декодируем открытый ключ из Base64 в байты
+            byte[] decodedPublicKey = Base64.getDecoder().decode(publicKey);
 
-            if (userSignature.equals(signature)) {
+            // создаём спецификацию ключа из байтов декодированного ключа
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodedPublicKey);
+
+            // создаём фабрику ключей
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+
+            // генерируем открытый ключ из спецификации ключа
+            PublicKey publicKey1 = keyFactory.generatePublic(keySpec);
+            boolean valid = signatureService.verifySignature(srcFile, Base64.getDecoder().decode(userSignature), publicKey1);
+
+            if (valid) {
                 sesVerifyJsonDto.setVerifyResultMessage("VALID");
                 sesVerifyJsonDto.setUserInfo(
                         SesUserInfoDto.builder()
@@ -287,7 +353,7 @@ public class SesServiceImpl implements SesService {
             } else {
                 throw new SesVerifyException("INVALID");
             }
-        }
+    //    }
 
         return sesVerifyJsonDto;
     }

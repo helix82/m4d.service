@@ -7,14 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
 import su.opencode.digsigcik.synapi.enums.RoleEnum;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 //TODO: @vitalik.sahnov Временное решение. Удалить поля, которые относятся к авторизации, после интеграции авторизации
 @Data
@@ -59,25 +52,28 @@ public class ESSUser {
     @Schema(name = "Роль", example = "USER")
     private RoleEnum role;
 
-    @Column(name = "pin_code", columnDefinition = "VARCHAR(10)")
-    @Schema(name = "Пин-кода", example = "89265390")
-    private String pinCode;
+//    @Column(name = "pin_code", columnDefinition = "VARCHAR(10)")
+//    @Schema(name = "Пин-кода", example = "89265390")
+//    private String pinCode;
+//
+//    @Column(name = "pin_code_hash", columnDefinition = "VARCHAR(64)")
+//    @Schema(name = "Хэш пин-кода", example = "cd70b...24f45a")
+//    private String pinCodeHash;
+//
+//    @Column(name = "file_hash", columnDefinition = "VARCHAR(64)")
+//    @Schema(name = "Хэш файла", example = "tasf0b...24145a")
+//    private String fileHash;
+//
+//    @Column(name = "signature", columnDefinition = "VARCHAR(159)")
+//    @Schema(name = "Сигнатура", example = "хэш_пинкода.хэш_файла.дата")
+//    private String signature;
+//
+//    @Column(name = "operation_date", columnDefinition = "VARCHAR(29)")
+//    @Schema(name = "Дата операции", example = "2024-06-18T17:08:59.309763400")
+//    private String operationDate;
 
-    @Column(name = "pin_code_hash", columnDefinition = "VARCHAR(64)")
-    @Schema(name = "Хэш пин-кода", example = "cd70b...24f45a")
-    private String pinCodeHash;
-
-    @Column(name = "file_hash", columnDefinition = "VARCHAR(64)")
-    @Schema(name = "Хэш файла", example = "tasf0b...24145a")
-    private String fileHash;
-
-    @Column(name = "signature", columnDefinition = "VARCHAR(159)")
-    @Schema(name = "Сигнатура", example = "хэш_пинкода.хэш_файла.дата")
-    private String signature;
-
-    @Column(name = "operation_date", columnDefinition = "VARCHAR(29)")
-    @Schema(name = "Дата операции", example = "2024-06-18T17:08:59.309763400")
-    private String operationDate;
+//    @OneToOne
+//    private PinCode pinCode; // Связь с моделью PinCode
 
     @Column(name = "password", columnDefinition = "VARCHAR(20)")
     @Schema(name = "Пароль", example = "12345678")

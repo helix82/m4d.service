@@ -10,11 +10,11 @@ import javax.validation.constraints.NotNull;
 public interface ESUserService {
     SigHashDto generateHashForPinCodeAndFile(String pinCode, MultipartFile file);
 
-    boolean isESSUserWithPinCodeHashNotExist(String pinCodeHash);
+//    boolean isESSUserWithPinCodeHashNotExist(String pinCodeHash);
 
     boolean isESSUserPasswordCorrect(String login, String password);
 
-    UserDto getESSUserByUserPinCodeHash(String pinCodeHash);
+//    UserDto getESSUserByUserPinCodeHash(String pinCodeHash);
 
     UserDto getESSUserByLogin(String login);
 

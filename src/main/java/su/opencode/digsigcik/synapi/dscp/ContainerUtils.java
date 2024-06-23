@@ -26,10 +26,10 @@ public final class ContainerUtils {
 	}
 
 	public static Container createContainer(
-		ContainerTypeEnum type, byte[] content, String fileName, MediaType contentType) throws DscpContainerException {
+		ContainerTypeEnum type, byte[] content, String fileName, MediaType contentType, String containerHashType) throws DscpContainerException {
 
 		return new Container(type, content, fileName,
-			contentType == null ? CommonUtils.toMediaType(content) : contentType);
+			contentType == null ? CommonUtils.toMediaType(content) : contentType,containerHashType);
 	}
 
 	public static Container readContainer(File filePath) throws DscpContainerException {
