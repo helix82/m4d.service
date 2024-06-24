@@ -220,6 +220,7 @@ public interface Constants {
     String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
 
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
+    String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
 
     String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
@@ -232,4 +233,12 @@ public interface Constants {
     String REVOKED_CERTIFICATE_IS_NULL = String.format("Revoked certificate is %s!", NULL);
     String TRUSTED_CERTIFICATE_IS_NULL = String.format("Trusted certificate is %s!", NULL);
     String CA_IS_NULL = String.format("CA is %s!", NULL);
+
+
+
+    String CONTROLLER_PIN_CODE_GET_ALL = "Возвращает хэши пинкодов всех пользователей";
+    String CONTROLLER_PIN_CODE_CREATE = "Создает пинкод для пользователя";
+    String CONTROLLER_PIN_CODE_UPDATE = "Обновляет пинкод для пользователя";
+    String CONTROLLER_PIN_CODE_DELETE = "Удаляет пинкод для пользователя";
+
 }

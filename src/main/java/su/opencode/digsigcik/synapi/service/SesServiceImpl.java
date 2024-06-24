@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerPart;
@@ -23,10 +22,11 @@ import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.exception.SesVerifyException;
 import su.opencode.digsigcik.synapi.model.ESSUser;
+import su.opencode.digsigcik.synapi.model.PinCode;
 import su.opencode.digsigcik.synapi.model.Ses;
 import su.opencode.digsigcik.synapi.model.SesContainer;
 import su.opencode.digsigcik.synapi.repository.ESUserRepository;
-import su.opencode.digsigcik.synapi.repository.SesContainerRepository;
+import su.opencode.digsigcik.synapi.repository.PinCodeRepository;
 import su.opencode.digsigcik.synapi.repository.SesRepository;
 import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.FileUtils;
@@ -58,7 +58,7 @@ public class SesServiceImpl implements SesService {
     private final JwtTokenUtils jwtTokenUtils;
     private final SesRepository sesRepository;
     private final ESUserRepository esUserRepository;
-    private final SesContainerRepository sesContainerRepository;
+    private final PinCodeRepository pinCodeRepository;
 
     @Override
     public SesResponseDto getContainerPath(String pinCode, MultipartFile srcFile, String token) {
@@ -87,7 +87,9 @@ public class SesServiceImpl implements SesService {
         */
         SigHashDto sigHashDto = esUserService.generateHashForPinCodeAndFile(pinCode, srcFile);
         String pinCodeHash = sigHashDto.getPinCodeHash();
-        if (esUserService.isESSUserWithPinCodeHashNotExist(pinCodeHash)) {
+        ESSUser essUser = esUserRepository.findESSUserByLogin(userLogin);
+        PinCode pinCode1 = pinCodeRepository.getPinCodeByUser(essUser);
+        if (!pinCode1.getPinCodeHash().equals(pinCodeHash)) {
             throw new SesException(PIN_CODE_ERROR_MESSAGE);
         }
 
@@ -97,11 +99,6 @@ public class SesServiceImpl implements SesService {
         String fileHash = sigHashDto.getFileHash();
         String signature = generateSignature(sigHashDto.getPinCodeHash(), fileHash, operationDate);
 
-        ESSUser essUser = esUserRepository.findESSUserByLogin(userLogin);
-        essUser.setOperationDate(operationDate);
-        essUser.setFileHash(fileHash);
-        essUser.setSignature(signature);
-        esUserService.updateESSUser(essUser);
 
         // создаем файл SHA256sig.sig в который записываем signature
         String sourceDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, SOURCE_DIRECTORY_PATH);
@@ -122,7 +119,7 @@ public class SesServiceImpl implements SesService {
                 .timestamp(date)
                 .build();
 
-        Resource containerResource = containerService.createPdfContainer(srcFile, sigMultipartFile, containerUserInfo);
+        containerService.createPdfContainer(srcFile, sigMultipartFile, containerUserInfo);
 
         File sigFile = new File(sigFilePathName);
         if (sigFile.exists()) {
@@ -258,19 +255,18 @@ public class SesServiceImpl implements SesService {
         String userSignature = new String(containerData.get("detachedSign").getData(), StandardCharsets.UTF_8);
         byte[] srcFile = containerData.get("sourceFile").getData();
 
-        UserDto user = esUserService.getESSUserByLogin(userLogin);
-        if (user == null) {
+        ESSUser essUser = esUserRepository.findESSUserByLogin(userLogin);
+        PinCode pinCode = pinCodeRepository.getPinCodeByUser(essUser);
+        if (essUser == null) {
             throw new SesVerifyException(USER_NOT_FOUND);
         }
 
         SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
 
-        if (user.getLogin().equals(userLogin)) {
-            String pinCodeHash = user.getPinCodeHash();
+        if (essUser.getLogin().equals(userLogin)) {
             String fileHash = HashUtils.getSha256Hash(srcFile);
 
-            SesDto ses = findSesByUserLogin(userLogin);
-            String signature = generateSignature(pinCodeHash, fileHash, ses.getOperationDate());
+            String signature = generateSignature(pinCode.getPinCodeHash(), fileHash, timestamp);
 
             if (userSignature.equals(signature)) {
                 sesVerifyJsonDto.setVerifyResultMessage("VALID");

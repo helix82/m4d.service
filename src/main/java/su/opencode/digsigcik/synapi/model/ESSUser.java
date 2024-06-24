@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import org.checkerframework.common.aliasing.qual.Unique;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
 import su.opencode.digsigcik.synapi.enums.RoleEnum;
@@ -29,6 +30,7 @@ public class ESSUser {
     @JsonProperty("id")
     private Long id;
 
+    @Unique
     @Column(name = "login", columnDefinition = "VARCHAR(25)")
     @Schema(name = "Логин пользователя", example = "ivanov")
     private String login;
@@ -59,31 +61,9 @@ public class ESSUser {
     @Schema(name = "Роль", example = "USER")
     private RoleEnum role;
 
-    @Column(name = "pin_code", columnDefinition = "VARCHAR(10)")
-    @Schema(name = "Пин-кода", example = "89265390")
-    private String pinCode;
-
-    @Column(name = "pin_code_hash", columnDefinition = "VARCHAR(64)")
-    @Schema(name = "Хэш пин-кода", example = "cd70b...24f45a")
-    private String pinCodeHash;
-
-    @Column(name = "file_hash", columnDefinition = "VARCHAR(64)")
-    @Schema(name = "Хэш файла", example = "tasf0b...24145a")
-    private String fileHash;
-
-    @Column(name = "signature", columnDefinition = "VARCHAR(159)")
-    @Schema(name = "Сигнатура", example = "хэш_пинкода.хэш_файла.дата")
-    private String signature;
-
-    @Column(name = "operation_date", columnDefinition = "VARCHAR(29)")
-    @Schema(name = "Дата операции", example = "2024-06-18T17:08:59.309763400")
-    private String operationDate;
-
     @Column(name = "password", columnDefinition = "VARCHAR(20)")
     @Schema(name = "Пароль", example = "12345678")
     private String password;
 
-    @Column(name = "email", columnDefinition = "VARCHAR(50)")
-    @Schema(name = "Email", example = "ivanov@gmail.com")
-    private String email;
+
 }
