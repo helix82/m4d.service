@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 @Builder
@@ -15,6 +13,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class SesContainerFileDto {
     private Long id;
-    private UUID uuid;
+    private String uuid;
     private String sesContainerPath;
 }

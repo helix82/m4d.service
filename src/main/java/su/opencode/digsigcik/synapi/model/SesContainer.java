@@ -15,7 +15,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @Getter
 @Setter
@@ -27,8 +26,8 @@ public class SesContainer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "uuid")
-    private UUID uuid;
+    @Column(name = "uuid", columnDefinition = "VARCHAR(36)")
+    private String uuid;
 
     @Column(name = "container_path")
     private String sesContainerPath;

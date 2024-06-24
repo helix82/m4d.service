@@ -7,8 +7,6 @@ import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.model.SesContainer;
 import su.opencode.digsigcik.synapi.repository.SesContainerRepository;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 public class SesContainerServiceImpl implements SesContainerService {
@@ -36,7 +34,7 @@ public class SesContainerServiceImpl implements SesContainerService {
     }
 
     @Override
-    public String getSesContainerPathByUUID(UUID uuid) {
+    public String getSesContainerPathByUUID(String uuid) {
         SesContainer sesContainer = this.sesContainerRepository.findSesContainerByUuid(uuid);
         String sesContainerPath = sesContainer.getSesContainerPath();
         if (sesContainerPath == null || sesContainerPath.isEmpty()) {

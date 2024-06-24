@@ -76,10 +76,10 @@ VALUES
     ('gudkov', 'gudkov@gmail.com', 'Владимир', 'Гудков', 'Алексеевич', '12345678', 'ADMIN', '832061154574', 'IOK_OBJECTS_ADMIN', '01421652', '837cf2ac5bbb55a95e32ee409181ab626e64ee1d2c5b92255c478e05c535707e', NULL, NULL, '2024-06-18T17:08:59.309763400');
 INSERT INTO container (uuid, container_path)
 VALUES
-    ('b3460860815d4a208671875e2fd9f84f', './files/dscp/container-2024-06-18T19-22-26.291956000.dscp'),
-    ('f13164195edf49c7b2e18707abeb4a1b', './files/dscp/container-2024-06-18T19-23-40.707683800.dscp'),
-    ('fadd3ec79bf842f5a661a30b1b2321b1', './files/dscp/container-2024-06-18T19-24-32.922951700.dscp'),
-    ('6667c1b2ea014cffbae504d234d6a5ae', './files/dscp/container-2024-06-18T19-25-29.204134800.dscp');
+    ('b3460860-815d-4a20-8671-875e2fd9f84f', './files/dscp/container-2024-06-18T19-22-26.291956000.dscp'),
+    ('f1316419-5edf-49c7-b2e1-8707abeb4a1b', './files/dscp/container-2024-06-18T19-23-40.707683800.dscp'),
+    ('fadd3ec7-9bf8-42f5-a661-a30b1b2321b1', './files/dscp/container-2024-06-18T19-24-32.922951700.dscp'),
+    ('6667c1b2-ea01-4cff-bae5-04d234d6a5ae', './files/dscp/container-2024-06-18T19-25-29.204134800.dscp');
 INSERT INTO ses (user_login, file_hash, signature, operation_date, container_id)
 VALUES
     ('ivanov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', 'b1120795d51648daa9440851f8fa3872736ae197968c8eb4d67153f669179374.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:22:26.291956', '2024-06-18T19:22:26.291956', 1),
