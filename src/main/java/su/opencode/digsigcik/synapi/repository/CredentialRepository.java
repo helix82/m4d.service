@@ -13,4 +13,7 @@ public interface CredentialRepository extends JpaRepository<Credential, Long> {
 
     @Query(value = "SELECT c.id, c.code, c.name FROM credential c left join mrpa_registry_credential mrc on mrc.credential_id=c.id where mrc.mrpa_registry_id=:mrpaId", nativeQuery = true)
     List<Credential> findCredentialByMrpaId(Long mrpaId);
+
+    @Query("SELECT c FROM credential c where c.code LIKE %:codeOrName% OR c.name LIKE %:codeOrName%")
+    List<Credential> findCredentialByCodeOrName(String codeOrName);
 }

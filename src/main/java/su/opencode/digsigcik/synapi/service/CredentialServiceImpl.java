@@ -38,6 +38,15 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
+    public List<Credential> findCredentialByCodeOrName(String codeOrName) {
+        List<Credential> credential = this.repository.findCredentialByCodeOrName(codeOrName);
+        if (credential == null) {
+            throw new MchdException(String.format("Credential %s", NOT_FOUND));
+        }
+        return credential;
+    }
+
+    @Override
     public Credential updateCredential(@NotNull Credential credential) {
         Long credentialId = credential.getId();
         if (credentialId == null) {

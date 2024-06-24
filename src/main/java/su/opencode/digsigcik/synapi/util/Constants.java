@@ -95,6 +95,7 @@ public interface Constants {
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
     String PARAMETER_CA_ID_DESCRIPTION = "ИД сертификата УЦ";
     String PARAMETER_CREDENTIAL_ID_DESCRIPTION = "ИД полномочия";
+    String PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION = "Код или наименование полномочия";
     String PARAMETER_ORGANISATION_ID_DESCRIPTION = "ИД организации";
     String PARAMETER_PRINCIPAL_ID_DESCRIPTION = "ИД доверителя";
     String PARAMETER_PRINCIPAL_INN_DESCRIPTION = "ИНН доверителя";
@@ -139,6 +140,9 @@ public interface Constants {
 
     String CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY = "Получить список полномочий";
     String CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION = "Возвращает список полномочий";
+    String CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_SUMMARY = "Получить список полномочий с фильтром по коду или наименованию";
+    String CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_DESCRIPTION = "Возвращает список полномочий с фильтром по коду или наименованию";
+
     String CONTROLLER_CREDENTIAL_SAVE_SUMMARY = "Сохранить запись полномочия";
     String CONTROLLER_CREDENTIAL_SAVE_DESCRIPTION = "Возвращает созданную запись полномочия";
     String CONTROLLER_CREDENTIAL_FIND_BY_ID_SUMMARY = "Получить запись полномочия по ИД";
