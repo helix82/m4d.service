@@ -101,6 +101,8 @@ public interface Constants {
     String PARAMETER_PRINCIPAL_INN_DESCRIPTION = "ИНН доверителя";
     String PARAMETER_REPRESENTATIVE_ID_DESCRIPTION = "ИД представителя";
     String PARAMETER_REPRESENTATIVE_PASSPORT_ID_DESCRIPTION = "ИД паспорта представителя";
+    String PARAMETER_REVOKED_CERTIFICATE_ID_DESCRIPTION = "ИД отозванного сертификата";
+    String PARAMETER_TRUSTED_CERTIFICATE_ID_DESCRIPTION = "ИД доверенного сертификата";
 
     String CONTROLLER_MRPA_FIND_ALL_SUMMARY = "Получить список МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_DESCRIPTION = "Возвращает список МЧД с ФИО представителя и ФИО доверителя";
@@ -121,7 +123,6 @@ public interface Constants {
     String CONTROLLER_MRPA_DOWNLOAD_SUMMARY = "Выгрузить МЧД в XML-файл";
     String CONTROLLER_MRPA_DOWNLOAD_DESCRIPTION = "Возвращает XML-структуру";
 
-    String CONTROLLER_CA_ACCREDITATION_STATUS_VALID = "Действует";
     String CONTROLLER_CA_TYPE_INPUT_AUTO = "Автоматически";
     String CONTROLLER_CA_TYPE_INPUT_MANUALLY = "Вручную";
 
@@ -196,6 +197,28 @@ public interface Constants {
     String CONTROLLER_REPRESENTATIVE_PASSPORT_DELETE_SUMMARY = "Удалить запись паспорта представителя по ИД";
     String CONTROLLER_REPRESENTATIVE_PASSPORT_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
 
+    String CONTROLLER_REVOKED_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список отозванных сертификатов";
+    String CONTROLLER_REVOKED_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список отозванных сертификатов";
+    String CONTROLLER_REVOKED_CERTIFICATE_SAVE_SUMMARY = "Сохранить отозванный сертификат";
+    String CONTROLLER_REVOKED_CERTIFICATE_SAVE_DESCRIPTION = "Возвращает созданный отозванный сертификат";
+    String CONTROLLER_REVOKED_CERTIFICATE_FIND_BY_ID_SUMMARY = "Получить отозванный сертификат по ИД";
+    String CONTROLLER_REVOKED_CERTIFICATE_FIND_BY_ID_DESCRIPTION = "Возвращает отозванный сертификат по ИД";
+    String CONTROLLER_REVOKED_CERTIFICATE_UPDATE_SUMMARY = "Изменить отозванный сертификат";
+    String CONTROLLER_REVOKED_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает измененный отозванный сертификат";
+    String CONTROLLER_REVOKED_CERTIFICATE_DELETE_SUMMARY = "Удалить отозванный сертификат по ИД";
+    String CONTROLLER_REVOKED_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+
+    String CONTROLLER_TRUSTED_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список доверенных сертификатов";
+    String CONTROLLER_TRUSTED_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список доверенных сертификатов";
+    String CONTROLLER_TRUSTED_CERTIFICATE_SAVE_SUMMARY = "Сохранить доверенный сертификат";
+    String CONTROLLER_TRUSTED_CERTIFICATE_SAVE_DESCRIPTION = "Возвращает созданный доверенный сертификат";
+    String CONTROLLER_TRUSTED_CERTIFICATE_FIND_BY_ID_SUMMARY = "Получить доверенный сертификат по ИД";
+    String CONTROLLER_TRUSTED_CERTIFICATE_FIND_BY_ID_DESCRIPTION = "Возвращает доверенный сертификат по ИД";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPDATE_SUMMARY = "Изменить доверенный сертификат";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает доверенный сертификат";
+    String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_SUMMARY = "Удалить доверенный сертификат по ИД";
+    String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
 
@@ -206,5 +229,7 @@ public interface Constants {
     String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);
     String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);
     String REPRESENTATIVE_PASSPORT_IS_NULL = String.format("Representative passport is %s!", NULL);
+    String REVOKED_CERTIFICATE_IS_NULL = String.format("Revoked certificate is %s!", NULL);
+    String TRUSTED_CERTIFICATE_IS_NULL = String.format("Trusted certificate is %s!", NULL);
     String CA_IS_NULL = String.format("CA is %s!", NULL);
 }
