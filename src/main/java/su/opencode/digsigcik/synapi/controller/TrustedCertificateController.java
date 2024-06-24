@@ -26,7 +26,7 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @RestController
 @MchdExceptionHandler
-@RequestMapping("/api/v1/revoked_certificate")
+@RequestMapping("/api/v1/trusted_certificate")
 @AllArgsConstructor
 public class TrustedCertificateController {
     private final TrustedCertificateService service;

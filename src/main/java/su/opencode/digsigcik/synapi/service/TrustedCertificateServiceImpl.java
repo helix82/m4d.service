@@ -41,8 +41,8 @@ public class TrustedCertificateServiceImpl implements TrustedCertificateService{
 
     @Override
     public void deleteTrustedCertificate(Long id) {
-        TrustedCertificate revokedCertificate = this.repository.findTrustedCertificateById(id);
-        if (revokedCertificate == null) {
+        TrustedCertificate trustedCertificate = this.repository.findTrustedCertificateById(id);
+        if (trustedCertificate == null) {
             throw new MchdException(String.format("Can`t delete Trusted Certificate because Trusted Certificate %s", NOT_FOUND));
         }
         this.repository.deleteById(id);
