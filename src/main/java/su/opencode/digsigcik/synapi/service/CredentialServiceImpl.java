@@ -8,6 +8,7 @@ import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.Credential;
 import su.opencode.digsigcik.synapi.repository.CredentialRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
@@ -35,6 +36,19 @@ public class CredentialServiceImpl implements CredentialService {
             throw new MchdException(String.format("Credential %s", NOT_FOUND));
         }
         return credential;
+    }
+
+    @Override
+    public List<Credential> findCredentialByCodeOrName(@NotNull String codeOrName) {
+        List<Credential> credentialList = new ArrayList<>();
+        List<Credential> credential = this.repository.findCredentialByCodeContainingIgnoreCase(codeOrName);
+        List<Credential> credential1 = this.repository.findCredentialByNameContainingIgnoreCase(codeOrName);
+        if (credential != null){ credentialList.addAll(credential); }
+        if (credential1 != null){ credentialList.addAll(credential1); }
+        if (credentialList == null) {
+            throw new MchdException(String.format("Credential %s", NOT_FOUND));
+        }
+        return credentialList;
     }
 
     @Override

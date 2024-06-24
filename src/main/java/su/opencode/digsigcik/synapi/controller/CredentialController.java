@@ -78,6 +78,23 @@ public class CredentialController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @Operation(summary = CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_SUMMARY, description = CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @GetMapping("find_by_code_or_name/{codeOrName}")
+    public ResponseEntity<?> findCredentialByCodeOrName(@PathVariable @Parameter(name = "codeOrName",
+            description = PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION, example = "EMPOWER" ) String codeOrName) {
+        List<Credential> response;
+        try {
+            response = service.findCredentialByCodeOrName(codeOrName);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(CREDENTIAL_IS_NULL);
+        }
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @Operation(summary = CONTROLLER_CREDENTIAL_UPDATE_SUMMARY, description = CONTROLLER_CREDENTIAL_UPDATE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
