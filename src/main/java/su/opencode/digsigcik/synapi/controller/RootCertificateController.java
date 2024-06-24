@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.model.RootCertificate;
 import su.opencode.digsigcik.synapi.repository.RootCertificateRepository;
+import su.opencode.digsigcik.synapi.util.CertUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
@@ -45,33 +46,19 @@ public class RootCertificateController {
         HashMap<String, Object> ret = new HashMap<>();
 
         if(certificate.getContent() != null) {
-            CertificateFactory fac = null;
             try {
-                fac = CertificateFactory.getInstance("X509");
-                X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(certificate.getContent().getBytes()));
-
                 ret.put("id", certificate.getId());
-
                 ret.put("owner", certificate.getOwnerName());
-
                 ret.put("deleted", certificate.getDeleted());
                 ret.put("revoked", certificate.getRevoked());
 
-                ret.put("issuerDN", String.valueOf(cert.getIssuerDN()));
-                ret.put("type", String.valueOf(cert.getType()));
-                ret.put("algName", String.valueOf(cert.getSigAlgName()));
-                ret.put("notBefore", cert.getNotBefore());
-                ret.put("notAfter", cert.getNotAfter());
-                ret.put("serialNumber", String.valueOf(cert.getSerialNumber()));
-
+                ret.putAll(CertUtils.certInfo(certificate.getContent()));
             } catch (CertificateException e) {
-                e.printStackTrace();
+                ret.put("error", "invalid certificate");
             }
         } else {
             ret.put("id", certificate.getId());
-
             ret.put("owner", certificate.getOwnerName());
-
             ret.put("deleted", certificate.getDeleted());
             ret.put("revoked", certificate.getRevoked());
         }
@@ -89,7 +76,9 @@ public class RootCertificateController {
         ArrayList<Map> list = new ArrayList<>();
         List<RootCertificate> certificates = rootCertificateRepository.findAll();
         for(RootCertificate certificate:certificates) {
-            list.add(certInfo(certificate));
+            if(!certificate.getDeleted()){
+                list.add(certInfo(certificate));
+            }
         }
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
@@ -135,6 +124,32 @@ public class RootCertificateController {
         return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Загрузить и создать корневой сертификат",
+            description = "Загружает и создайт корневой сертификат" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно загружен и создан" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping("/root/certificates/upload")
+    public ResponseEntity<RootCertificate> uploadAndCreateRootCertificate(
+            @RequestPart(value = "issuer", required = false) @Parameter(name = "issuer", description="Наименование владельца", example = "issuer") String issuer,
+            @RequestPart("content") @Parameter(name = "content", description="Содержимое корневого сертификата", example = "", required = true) MultipartFile content
+    ) {
+        try {
+            String certContent = new String(content.getBytes());
+            Map certInfo = CertUtils.certInfo(certContent);
+            String _issuer = (String)(certInfo.get("cn"));
+            if(issuer!=null)_issuer=issuer;
+            RootCertificate _certificate = new RootCertificate(_issuer, certContent);
+            return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
+        } catch (IOException e) {
+            throw new ResourceNotFoundException("Can't upload certificate");
+        } catch (CertificateException e) {
+            throw new ResourceNotFoundException("Invalid certificate");
+        }
+    }
+
+
     @Operation(summary = "Обновить корневой сертификат",
             description = "Обновляет корневой сертификат" )
     @ApiResponses(value = {
@@ -164,13 +179,13 @@ public class RootCertificateController {
                                                                     @PathVariable(value = "id") Long id) {
         RootCertificate certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found RootCertificate with id = " + id));
-        httpResponse.setContentType ("application/x-x509-user-cert");
+        httpResponse.setContentType ("application/width-x509-user-cert");
         httpResponse.setHeader ("Content-Disposition", "attachment; filename=root_ca.crt");
         return new ResponseEntity<>(certificate.getContent(), HttpStatus.OK);
     }
 
-    @Operation(summary = "Получить файл корневого сертификата",
-            description = "Возвращает файл корневого сертификата" )
+    @Operation(summary = "Загрузить файл корневого сертификата",
+            description = "Загружает файл корневого сертификата" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно получено" ),
             @ApiResponse(code = 404, message = "Not found" )
@@ -184,7 +199,7 @@ public class RootCertificateController {
         try {
             certificate.setContent( new String(content.getBytes()));
         } catch (IOException e) {
-            throw new ResourceNotFoundException("Can't upload certificate with");
+            throw new ResourceNotFoundException("Can't upload certificate");
         }
         rootCertificateRepository.save(certificate);
         return new ResponseEntity<>(certificate, HttpStatus.OK);

@@ -6,7 +6,6 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import su.opencode.digsigcik.synapi.service.AcmeService;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
 
@@ -90,6 +90,23 @@ public class AcmeController {
     ) {
         return acmeService.certificateOrder(httpSession,domainName, notAfter);
     }
+
+
+
+
+    @Operation(summary = "Получить файл для прохождения челленджа по ранее сформированной заявке",
+            description = "Получает файл для прохождения челленджа по ранее сформированной заявке" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Файл получен" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping("/certificate/{id}/challenge")
+    public ResponseEntity<String>  certificateChallenge(HttpServletResponse httpResponse,
+                                                     @PathVariable(value = "id") Long id
+    ) {
+        return acmeService.certificateChallenge(httpResponse,id);
+    }
+
 
     @Operation(summary = "Получить сертификат по ранее сформированной заявке",
             description = "Получает сертификат по ранее сформированной заявке" )

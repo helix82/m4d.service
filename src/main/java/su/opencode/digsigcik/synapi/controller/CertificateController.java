@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
+import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
+import su.opencode.digsigcik.synapi.repository.ProviderRepository;
+import su.opencode.digsigcik.synapi.util.CertUtils;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +35,8 @@ public class CertificateController {
     @Autowired
     private DomainRepository domainRepository;
 
+    @Autowired
+    private ProviderRepository providerRepository;
 
     @Autowired
     private CertificateRepository certificateRepository;
@@ -54,41 +56,54 @@ public class CertificateController {
         return new ResponseEntity<>(certificates, HttpStatus.OK);
     }
 
+    @Operation(summary = "Получить список сертификатов указанного провайдера",
+            description = "Возвращает список сертификатов указанного провайдера" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно получено" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @GetMapping("/providers/{providerId}/certificates")
+    public ResponseEntity<List<AcmeCertificate>> getAllCertificatesByProviderId(@PathVariable(value = "providerId") Long providerId) {
+        if (!providerRepository.existsById(providerId)) {
+            throw new ResourceNotFoundException("Not found AcmeProvider with id = " + providerId);
+        }
+        List<AcmeCertificate> certificates = certificateRepository.findByProviderId(providerId);
+        return new ResponseEntity<>(certificates, HttpStatus.OK);
+    }
 
     public static Map certInfo(AcmeCertificate certificate) {
         HashMap<String, Object> ret = new HashMap<>();
+        if(certificate.getDeleted()) {
+            ret.put("status", "deleted");
+        } else {
+            if(certificate.getRevoked()) {
+                ret.put("status", "revoked");
+            }
+        }
+
+        ret.put("id", certificate.getId());
+        ret.put("deleted", certificate.getDeleted());
+        ret.put("revoked", certificate.getRevoked());
+        AcmeProvider provider = certificate.getProvider();
+        if(provider!=null) {
+            ret.put("provider", String.valueOf(provider.getName()));
+            ret.put("providerId", String.valueOf(provider.getId()));
+        }
+        AcmeDomain domain = certificate.getDomain();
+        ret.put("domain", String.valueOf(domain.getDomainUrl()));
 
         if(certificate.getContent() != null) {
-            CertificateFactory fac = null;
             try {
-                fac = CertificateFactory.getInstance("X509");
-                AcmeDomain domain = certificate.getDomain();
-                X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(certificate.getContent().getBytes()));
-
-                ret.put("id", certificate.getId());
-
-                ret.put("deleted", certificate.getDeleted());
-                ret.put("revoked", certificate.getRevoked());
-
-                ret.put("issuerDN", String.valueOf(cert.getIssuerDN()));
-                ret.put("type", String.valueOf(cert.getType()));
-                ret.put("domain", String.valueOf(domain.getDomainUrl()));
-                ret.put("algName", String.valueOf(cert.getSigAlgName()));
-                ret.put("notBefore", cert.getNotBefore());
-                ret.put("notAfter", cert.getNotAfter());
-                ret.put("serialNumber", String.valueOf(cert.getSerialNumber()));
-
+                ret.put("status", "unknown");
+                ret.putAll(CertUtils.certInfo(certificate.getContent()));
             } catch (CertificateException e) {
-                e.printStackTrace();
+                ret.put("error", "invalid certificate");
+                ret.put("status", "error");
             }
         } else {
-            ret.put("id", certificate.getId());
-
-            ret.put("deleted", certificate.getDeleted());
-            ret.put("revoked", certificate.getRevoked());
-
             ret.put("challengeToken", certificate.getChallengeToken());
             ret.put("challengeContent", certificate.getChallengeContent());
+            ret.put("status", "challenge");
         }
         return ret;
     }
@@ -104,7 +119,9 @@ public class CertificateController {
         ArrayList<Map> list = new ArrayList<>();
         List<AcmeCertificate> certificates = certificateRepository.findAll();
         for(AcmeCertificate certificate:certificates) {
-            list.add(certInfo(certificate));
+            if(!certificate.getDeleted()) {
+                list.add(certInfo(certificate));
+            }
         }
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
@@ -148,7 +165,7 @@ public class CertificateController {
                                                                     @PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
-        httpResponse.setContentType ("application/x-x509-user-cert");
+        httpResponse.setContentType ("application/width-x509-user-cert");
         httpResponse.setHeader ("Content-Disposition", "attachment; filename="+certificate.getDomain().getDomainUrl()+"-chain.crt");
         return new ResponseEntity<>(certificate.getContent(), HttpStatus.OK);
     }

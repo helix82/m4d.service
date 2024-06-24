@@ -2,6 +2,7 @@ package su.opencode.digsigcik.synapi.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.shredzone.acme4j.*;
 import org.shredzone.acme4j.challenge.Challenge;
 import org.shredzone.acme4j.challenge.Http01Challenge;
@@ -22,6 +23,7 @@ import su.opencode.digsigcik.synapi.repository.AccountRepository;
 import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -273,6 +275,17 @@ public class AcmeServiceImpl implements AcmeService {
         return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }
 
+    public ResponseEntity<String> certificateChallenge(HttpServletResponse httpResponse, Long id) {
+        AcmeCertificate certificate = certificateRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
+        if(certificate.getContent()!=null || certificate.getChallengeToken()==null || certificate.getChallengeContent()==null){
+            throw new ResourceNotFoundException("certificate not in challenge state");
+        }
+        httpResponse.setContentType ("text/plain");
+        httpResponse.setHeader ("Content-Disposition", "attachment; filename="+certificate.getChallengeToken());
+        return new ResponseEntity<>(certificate.getChallengeContent(), HttpStatus.OK);
+    }
+
     public ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long id) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeCertificate acmeCertificate = certificateRepository.findCertificateById(id);
@@ -341,10 +354,19 @@ public class AcmeServiceImpl implements AcmeService {
 
     public Map certificate(HttpSession httpSession, Long domainId) {
         HashMap<String, String> ret = new HashMap<>();
+        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
+        if(acmeAccount==null) {
+            acmeAccount = new AcmeAccount(ACME_ACCOUNT_NAME, ACME_ACCOUNT_KEY);
+            acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
+            accountRepository.save(acmeAccount);
+        }
         AcmeDomain acmeDomain= domainRepository.findDomainById(domainId);
+        if(acmeDomain==null) {
+            ret.put("error", "no domain");
+        }
 
-        Login login = (Login)httpSession.getAttribute("login");
-        if(login!=null) {
+        if(loginDefaultAccount(httpSession)){
+            Login login = (Login)httpSession.getAttribute("login");
             Account account = login.getAccount();
             if(account.getStatus() != Status.VALID){
                 ret.put("error", "invalid status");
@@ -415,8 +437,15 @@ public class AcmeServiceImpl implements AcmeService {
         HashMap<String, String> ret = new HashMap<>();
         AcmeCertificate acmeCertificate= certificateRepository.findCertificateById(id);
 
-        Login login = (Login)httpSession.getAttribute("login");
-        if(login!=null) {
+        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
+        if(acmeAccount==null) {
+            acmeAccount = new AcmeAccount(ACME_ACCOUNT_NAME, ACME_ACCOUNT_KEY);
+            acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
+            accountRepository.save(acmeAccount);
+        }
+
+        if(loginDefaultAccount(httpSession)){
+            Login login = (Login)httpSession.getAttribute("login");
             Account account = login.getAccount();
             if(account.getStatus() != Status.VALID){
                 ret.put("error", "invalid status");
