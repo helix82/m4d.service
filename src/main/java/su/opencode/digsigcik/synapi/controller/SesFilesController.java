@@ -16,7 +16,6 @@ import su.opencode.digsigcik.synapi.service.SesContainerService;
 import su.opencode.digsigcik.synapi.util.FileUtils;
 
 import java.io.IOException;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +37,7 @@ public class SesFilesController {
 
     @GetMapping(value = "/getContainer", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<?> getContainer(@RequestParam(name = "uuid") String uuid) {
-        String sesContainerPath = sesContainerService.getSesContainerPathByUUID(UUID.fromString(uuid));
+        String sesContainerPath = sesContainerService.getSesContainerPathByUUID(uuid);
 
         byte[] fileContent = FileUtils.getFileContentByPath(sesContainerPath);
         Resource resource = new ByteArrayResource(fileContent);

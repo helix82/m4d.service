@@ -231,7 +231,7 @@ public class SesServiceImpl implements SesService {
     private SesContainer addNewSesContainer(String sesContainerPath) {
         UUID xmlUUID = UUID.randomUUID();
         SesContainerFileDto sesContainerFileDto = SesContainerFileDto.builder()
-                .uuid(xmlUUID)
+                .uuid(xmlUUID.toString())
                 .sesContainerPath(sesContainerPath)
                 .build();
         return sesContainerService.createSesContainer(sesContainerFileDto);
