@@ -68,12 +68,12 @@ VALUES
     (1, 5),
     (2, 5),
     (3, 5);
-INSERT INTO ess_user (login, email, firstname, lastname, patronymic, password, role, inn, position, pin_code, pin_code_hash, file_hash, signature, operation_date)
+INSERT INTO ess_user (login, firstname, lastname, patronymic, password, role, inn, position)
 VALUES
-    ('ivanov', 'ivanov@gmail.com', 'Иван', 'Иванов', 'Иванович', '12345678', 'USER', '832061154574', 'SEP_USER', '89265390', 'b1120795d51648daa9440851f8fa3872736ae197968c8eb4d67153f669179374', NULL, NULL, '2024-06-18T17:08:59.309763400'),
-    ('petrov', 'petrov@gmail.com', 'Петр', 'Петров', 'Петрович', '12345678', 'USER', '832061154574', 'SEP_ADMIN', '02531485', 'ae25bd29649627c85c54855d918879a0d46efddc6129a394011d81c116f0c702', NULL, NULL, '2024-06-18T17:08:59.309763400'),
-    ('sokolov', 'sokolov@gmail.com', 'Юрий', 'Соколов', 'Александрович', '12345678', 'ADMIN', '832061154574', 'TLS_ADMIN', '91159207', 'bd2ab9815a11b9ccba17a6d7eb39b7f12710785b9d8eb1cd0c251ee5c8107a2f', NULL, NULL, '2024-06-18T17:08:59.309763400'),
-    ('gudkov', 'gudkov@gmail.com', 'Владимир', 'Гудков', 'Алексеевич', '12345678', 'ADMIN', '832061154574', 'IOK_OBJECTS_ADMIN', '01421652', '837cf2ac5bbb55a95e32ee409181ab626e64ee1d2c5b92255c478e05c535707e', NULL, NULL, '2024-06-18T17:08:59.309763400');
+    ('ivanov', 'Иван', 'Иванов', 'Иванович', '12345678', 'USER', '832061154574', 'SEP_USER'),
+    ('petrov', 'Петр', 'Петров', 'Петрович', '12345678', 'USER', '832061154574', 'SEP_ADMIN'),
+    ('sokolov', 'Юрий', 'Соколов', 'Александрович', '12345678', 'ADMIN', '832061154574', 'TLS_ADMIN'),
+    ('gudkov', 'Владимир', 'Гудков', 'Алексеевич', '12345678', 'ADMIN', '832061154574', 'IOK_OBJECTS_ADMIN');
 INSERT INTO container (uuid, container_path)
 VALUES
     ('b3460860-815d-4a20-8671-875e2fd9f84f', './files/dscp/container-2024-06-18T19-22-26.291956000.dscp'),

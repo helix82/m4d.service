@@ -42,10 +42,10 @@ public class ESUserServiceImpl implements ESUserService {
         return sigHashDto;
     }
 
-    @Override
-    public boolean isESSUserWithPinCodeHashNotExist(String pinCodeHash) {
-        return getESSUserByUserPinCodeHash(pinCodeHash) == null;
-    }
+//    @Override
+//    public boolean isESSUserWithPinCodeHashNotExist(String pinCodeHash) {
+//        return getESSUserByUserPinCodeHash(pinCodeHash) == null;
+//    }
 
     @Override
     public boolean isESSUserPasswordCorrect(String login, String password) {
@@ -58,10 +58,10 @@ public class ESUserServiceImpl implements ESUserService {
         return new ObjectMapper().convertValue(this.esUserRepository.findESSUserByLogin(login), UserDto.class);
     }
 
-    @Override
-    public UserDto getESSUserByUserPinCodeHash(String pinCodeHash) {
-        return new ObjectMapper().convertValue(this.esUserRepository.findESSUserByPinCodeHash(pinCodeHash), UserDto.class);
-    }
+//    @Override
+//    public UserDto getESSUserByUserPinCodeHash(String pinCodeHash) {
+//        return new ObjectMapper().convertValue(this.esUserRepository.findESSUserByPinCodeHash(pinCodeHash), UserDto.class);
+//    }
 
     @Override
     public ESSUser createESSUser(@NotNull ESSUser essUser){

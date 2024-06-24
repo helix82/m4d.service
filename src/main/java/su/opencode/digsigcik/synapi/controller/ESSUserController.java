@@ -15,9 +15,6 @@ import su.opencode.digsigcik.synapi.annotation.SesExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.UserDto;
 import su.opencode.digsigcik.synapi.model.ESSUser;
 import su.opencode.digsigcik.synapi.service.ESUserService;
-import su.opencode.digsigcik.synapi.util.HashUtils;
-
-import java.nio.charset.StandardCharsets;
 
 @RestController
 @SesExceptionHandler
@@ -35,7 +32,6 @@ public class ESSUserController {
     public ResponseEntity<?> createESSUser(@RequestBody UserDto userDto) {
         ESSUser essUser = new ObjectMapper().convertValue(userDto, ESSUser.class);
         if (esUserService.getESSUserByLogin(userDto.getLogin()) == null) {
-            essUser.setPinCodeHash(HashUtils.getSha256Hash(userDto.getPinCode().getBytes(StandardCharsets.UTF_8)));
             esUserService.createESSUser(essUser);
         }
         return new ResponseEntity<>(essUser, HttpStatus.OK);
