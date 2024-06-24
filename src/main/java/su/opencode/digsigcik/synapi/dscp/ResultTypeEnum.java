@@ -36,7 +36,8 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	LASTNAME("userLastname", MetaAttribute.USER_LASTNAME),
 	PATRONYMIC("userPatronymic", MetaAttribute.USER_PATRONYMIC),
 	TIMESTAMP("timestamp", MetaAttribute.SIGNATURE_TIMESTAMP),
-	LOGIN("userLogin", MetaAttribute.USER_LOGIN);
+	LOGIN("userLogin", MetaAttribute.USER_LOGIN),
+	SIGNATURE_ALGORITHM("signatureAlgorithm", MetaAttribute.SIGNATURE_ALGORITHM);
 
 	static {
 		InvariantUtils.fillCodes(ResultTypeEnum.class);

@@ -53,7 +53,11 @@ public class SesServiceImpl implements SesService {
     private final EncryptionKeyRepository encryptionKeyRepository;
     private final ElectronicSignatureService signatureService;
 
-    public SesServiceImpl(SesContainerService sesContainerService, ContainerService containerService, ESUserService esUserService, JwtTokenUtils jwtTokenUtils, SesRepository sesRepository, ESUserRepository esUserRepository, SesContainerRepository sesContainerRepository, EncryptionKeyRepository encryptionKeyRepository, ElectronicSignatureService signatureService) {
+    public SesServiceImpl(SesContainerService sesContainerService, ContainerService containerService,
+                          ESUserService esUserService, JwtTokenUtils jwtTokenUtils, SesRepository sesRepository,
+                          ESUserRepository esUserRepository, SesContainerRepository sesContainerRepository,
+                          EncryptionKeyRepository encryptionKeyRepository,
+                          ElectronicSignatureService signatureService) {
         this.sesContainerService = sesContainerService;
         this.containerService = containerService;
         this.esUserService = esUserService;
@@ -133,13 +137,18 @@ public class SesServiceImpl implements SesService {
 //        essUser.setSignature(signature);
 //        esUserService.updateESSUser(essUser);
 
-            // создаем файл SHA256sig.sig в который записываем signature
+            // создаем файл temp.sig в который записываем signature
             String sourceDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, SOURCE_DIRECTORY_PATH);
-            String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "SHA256sig.sig");
+            String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "temp.sig");
             FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
-            FileUtils.createFile(sigFilePathName, Base64.getEncoder().encodeToString(signature).getBytes());
-            String pubFilePathName = String.format("%s%s", sourceDirectoryPathName, "SHA256sig.pub");
-            FileUtils.createFile(pubFilePathName, Base64.getEncoder().encodeToString(publicKey.getEncoded()).getBytes());
+            FileUtils.createFile(sigFilePathName, Base64.getEncoder()
+                    .encodeToString(signature)
+                    .getBytes());
+            // создаем файл temp.pub в который записываем publicKey
+            String pubFilePathName = String.format("%s%s", sourceDirectoryPathName, "temp.pub");
+            FileUtils.createFile(pubFilePathName, Base64.getEncoder()
+                    .encodeToString(publicKey.getEncoded())
+                    .getBytes());
 
             MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
 
@@ -155,14 +164,23 @@ public class SesServiceImpl implements SesService {
                     .lastname(userLastName)
                     .patronymic(userPatronymic)
                     .timestamp(date)
+                    .signatureAlgorithm(keyEntity.get()
+                            .getAlgorithm()
+                            .getAlgorithmName())
                     .build();
 
-            Resource containerResource = containerService.createPdfContainer(srcFile, sigMultipartFile, pubMultipartFile,
+            Resource containerResource = containerService.createPdfContainer(srcFile, sigMultipartFile,
+                    pubMultipartFile,
                     containerUserInfo, hashAlgorithm.getAlgorithmName());
 
             File sigFile = new File(sigFilePathName);
             if (sigFile.exists()) {
                 FileUtils.deleteFile(sigFilePathName);
+            }
+
+            File pubFile = new File(pubFilePathName);
+            if (pubFile.exists()) {
+                FileUtils.deleteFile(pubFilePathName);
             }
 
         /*  - добавляем в таблицу sesContainer новую запись
@@ -174,8 +192,9 @@ public class SesServiceImpl implements SesService {
             SesContainer sesContainer = addNewSesContainer(containerPath);
             SesDto sesDto = SesDto.builder()
                     .userLogin(userLogin)
-                   // .fileHash(HashUtils.getSha256Hash(srcFile.getBytes()))
-                    .signature(Base64.getEncoder().encodeToString(signature))
+                    // .fileHash(HashUtils.getSha256Hash(srcFile.getBytes()))
+                    .signature(Base64.getEncoder()
+                            .encodeToString(signature))
                     .operationDate(operationDate)
                     .sesContainerFileId(sesContainer.getId())
                     .build();
@@ -187,7 +206,9 @@ public class SesServiceImpl implements SesService {
 
             return SesResponseDto.builder()
                     .containerUUID(sesContainer.getUuid())
-                    .sigType(keyEntity.get().getAlgorithm().getAlgorithmName())
+                    .sigType(keyEntity.get()
+                            .getAlgorithm()
+                            .getAlgorithmName())
                     .firstName(userFirstName)
                     .lastName(userLastName)
                     .patronymic(userPatronymic)
@@ -220,7 +241,7 @@ public class SesServiceImpl implements SesService {
         if (sesDto != null) {
             Ses ses = new Ses();
             ses.setUserLogin(sesDto.getUserLogin());
-          //  ses.setFileHash(sesDto.getFileHash());
+            //  ses.setFileHash(sesDto.getFileHash());
             ses.setSignature(sesDto.getSignature());
             ses.setOperationDate(sesDto.getOperationDate());
             ses.setContainerId(sesDto.getSesContainerFileId());
@@ -260,8 +281,10 @@ public class SesServiceImpl implements SesService {
         val sourceFile = createContainerSelector(ContainerSelectorCode.SOURCEFILE);
         val detachedSign = createContainerSelector(ContainerSelectorCode.DETACHEDSIGN);
         val detachedPub = createContainerSelector(ContainerSelectorCode.DETACHEDPUB);
+        val signatureAlgorithm = createContainerSelector(ContainerSelectorCode.SIGNATURE_ALGORITHM);
 
-        return List.of(firstName, lastName, patronymic, userLogin, timestamp, sourceFile, detachedSign, detachedPub);
+
+        return List.of(firstName, lastName, patronymic, userLogin, timestamp, sourceFile, detachedSign, detachedPub,signatureAlgorithm);
     }
 
     private ContainerSelector createContainerSelector(ContainerSelectorCode containerSelectorCode) {
@@ -306,6 +329,8 @@ public class SesServiceImpl implements SesService {
                 .getData(), StandardCharsets.UTF_8);
         String publicKey = new String(containerData.get("detachedPub")
                 .getData(), StandardCharsets.UTF_8);
+        String signatureAlgorithm = new String(containerData.get("signatureAlgorithm")
+                .getData(), StandardCharsets.UTF_8);
         byte[] srcFile = containerData.get("sourceFile")
                 .getData();
 
@@ -318,42 +343,52 @@ public class SesServiceImpl implements SesService {
 
 //        if (user.getLogin()
 //                .equals(userLogin)) {
-            //?     String pinCodeHash = user.getPinCodeHash();
-            String pinCodeHash = ""; //TODO: temporary solution
+        //?     String pinCodeHash = user.getPinCodeHash();
+        String pinCodeHash = ""; //TODO: temporary solution
 
-            String fileHash = HashUtils.getSha256Hash(srcFile);
+        String fileHash = HashUtils.getSha256Hash(srcFile);
 
-            SesDto ses = findSesByUserLogin(userLogin);
+        SesDto ses = findSesByUserLogin(userLogin);
 //            String signature = generateSignature(pinCodeHash, fileHash, ses.getOperationDate());
-            // декодируем открытый ключ из Base64 в байты
-            byte[] decodedPublicKey = Base64.getDecoder().decode(publicKey);
+        // декодируем открытый ключ из Base64 в байты
+        byte[] decodedPublicKey = Base64.getDecoder()
+                .decode(publicKey);
 
-            // создаём спецификацию ключа из байтов декодированного ключа
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodedPublicKey);
+        // создаём спецификацию ключа из байтов декодированного ключа
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodedPublicKey);
 
-            // создаём фабрику ключей
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        String keyAlgorithm = signatureAlgorithm;
+        if (keyAlgorithm.endsWith("RSA")) {
+            keyAlgorithm = "RSA";
+        } else if (keyAlgorithm.endsWith("ECDSA")) {
+            keyAlgorithm = "EC";
+        } else if (keyAlgorithm.endsWith("DSA")) {
+            keyAlgorithm = "DSA";
+        }
+        // создаём фабрику ключей
+        KeyFactory keyFactory = KeyFactory.getInstance(keyAlgorithm);
 
-            // генерируем открытый ключ из спецификации ключа
-            PublicKey publicKey1 = keyFactory.generatePublic(keySpec);
-            boolean valid = signatureService.verifySignature(srcFile, Base64.getDecoder().decode(userSignature), publicKey1);
+        // генерируем открытый ключ из спецификации ключа
+        PublicKey publicKey1 = keyFactory.generatePublic(keySpec);
+        boolean valid = signatureService.verifySignature(srcFile, Base64.getDecoder()
+                .decode(userSignature), publicKey1);
 
-            if (valid) {
-                sesVerifyJsonDto.setVerifyResultMessage("VALID");
-                sesVerifyJsonDto.setUserInfo(
-                        SesUserInfoDto.builder()
-                                .hashAlgorithmType(HASH_ALGORITHM)
-                                .hashSignatureAlgorithm(HASH_ALGORITHM)
-                                .firstname(userFirstname)
-                                .lastname(userLastname)
-                                .patronymic(userPatronymic)
-                                .timestamp(LocalDateTime.parse(timestamp))
-                                .build()
-                );
-            } else {
-                throw new SesVerifyException("INVALID");
-            }
-    //    }
+        if (valid) {
+            sesVerifyJsonDto.setVerifyResultMessage("VALID");
+            sesVerifyJsonDto.setUserInfo(
+                    SesUserInfoDto.builder()
+                            .hashAlgorithmType(HASH_ALGORITHM)
+                            .hashSignatureAlgorithm(HASH_ALGORITHM)
+                            .firstname(userFirstname)
+                            .lastname(userLastname)
+                            .patronymic(userPatronymic)
+                            .timestamp(LocalDateTime.parse(timestamp))
+                            .build()
+            );
+        } else {
+            throw new SesVerifyException("INVALID");
+        }
+        //    }
 
         return sesVerifyJsonDto;
     }

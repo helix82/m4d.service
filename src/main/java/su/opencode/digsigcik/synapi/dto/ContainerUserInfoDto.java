@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 
 import java.time.LocalDateTime;
 
@@ -17,4 +18,5 @@ public class ContainerUserInfoDto {
     private String lastname;
     private String patronymic;
     private LocalDateTime timestamp;
+    private String signatureAlgorithm;
 }

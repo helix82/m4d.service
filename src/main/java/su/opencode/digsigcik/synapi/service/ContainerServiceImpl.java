@@ -94,6 +94,7 @@ public class ContainerServiceImpl implements ContainerService {
         byte[] lastname = containerUserInfo.getLastname().getBytes(StandardCharsets.UTF_8);
         byte[] patronymic = containerUserInfo.getPatronymic().getBytes(StandardCharsets.UTF_8);
         byte[] timestamp = containerUserInfo.getTimestamp().toString().getBytes(StandardCharsets.UTF_8);
+        byte[] signatureAlgorithm = containerUserInfo.getSignatureAlgorithm().getBytes(StandardCharsets.UTF_8);
 
         Map<ResultTypeEnum, byte[]> params = new HashMap<>();
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
@@ -103,6 +104,7 @@ public class ContainerServiceImpl implements ContainerService {
         params.put(ResultTypeEnum.LASTNAME, lastname);
         params.put(ResultTypeEnum.PATRONYMIC, patronymic);
         params.put(ResultTypeEnum.TIMESTAMP, timestamp);
+        params.put(ResultTypeEnum.SIGNATURE_ALGORITHM, signatureAlgorithm);
 
         ContainerUtils.fillContainerByResult(container, params);
 
