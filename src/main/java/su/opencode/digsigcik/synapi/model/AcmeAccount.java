@@ -78,7 +78,7 @@ public class AcmeAccount {
     }
 
     public Boolean getDeleted() {
-        return deleted;
+        return (deleted==null)?false:deleted;
     }
 
     public void setName(String name) {

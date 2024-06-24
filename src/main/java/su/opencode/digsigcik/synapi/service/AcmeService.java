@@ -2,6 +2,7 @@ package su.opencode.digsigcik.synapi.service;
 
 import org.springframework.http.ResponseEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
 
@@ -12,6 +13,8 @@ public interface AcmeService {
     ResponseEntity<Map> certificate(HttpSession httpSession, String domainName, String notAfter
     );
     ResponseEntity<Map> certificateOrder(HttpSession httpSession, String domainName, String notAfter
+    );
+    ResponseEntity<String> certificateChallenge(HttpServletResponse httpResponse, Long id
     );
     ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long id
     );

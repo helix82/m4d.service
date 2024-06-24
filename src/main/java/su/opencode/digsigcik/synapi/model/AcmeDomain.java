@@ -80,7 +80,7 @@ public class AcmeDomain {
     }
 
     public Boolean getDeleted() {
-        return deleted;
+        return (deleted==null)?false:deleted;
     }
 
     public void setDeleted(Boolean deleted) {
