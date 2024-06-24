@@ -11,12 +11,15 @@ import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfName;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfStamper;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,6 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -44,7 +48,7 @@ import java.util.Deque;
 @AllArgsConstructor
 public class StampController {
 
-    private byte[] doStamp(InputStream document,InputStream stamp, Integer page, Integer offsetX, Integer offsetY, Integer scale) {
+    private byte[] doStamp(InputStream document, InputStream stamp, Integer page, Integer offsetX, Integer offsetY, Integer scale) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -106,18 +110,29 @@ public class StampController {
     })
     @GetMapping(value = "/", produces = "application/pdf")
     public @ResponseBody
-    byte[] stamp(@RequestParam("document") @Parameter(name = "document", description="Ссылка на PDF-документ", example = "http://example.com/document.pdf", required = true) String documentUrl,
+    byte[] stamp(@RequestParam("document") @Parameter(name = "document", description="Ссылка на docx или pdf документ", example = "http://example.com/document.pdf", required = true) String documentUrl,
                  @RequestParam("stamp") @Parameter(name = "stamp", description="Ссылка на файл штампа", example = "http://example.com/stamp.png", required = true) String stampUrl,
                  @RequestParam(value = "page", required = false) @Parameter(name = "page", description="Номер страницы для проставления штампа. Может быть отрицательным, тогда номер страницы считается с конца документа", example = "-1") Integer page,
                  @RequestParam(value = "offsetX", required = false) @Parameter(name = "offsetX", description="Смещение штампа в 1/72 дюйма оносительно левой стороны страницы. Может быть отрицательным, тогда смещение считается от правой стороны страницы", example = "36") Integer offsetX,
                  @RequestParam(value = "offsetY", required = false) @Parameter(name = "offsetY", description="Смещение штампа в 1/72 дюйма оносительно нижней стороны страницы. Может быть отрицательным, тогда смещение считается от верхней стороны страницы", example = "36") Integer offsetY,
                  @RequestParam(value = "scale", required = false) @Parameter(name = "scale", description="Масштаб штампа в процентах, относительно исходного размера", example = "75") Integer scale) {
         try {
-            return doStamp(new URL(documentUrl).openStream(), new URL(stampUrl).openStream(), page, offsetX, offsetY, scale);
+            InputStream pdfStream=null;
+            if(documentUrl.endsWith(".docx")){
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                PdfOptions options = PdfOptions.create();
+                PdfConverter.getInstance().convert(new XWPFDocument(new URL(documentUrl).openStream()), outputStream, options);
+                pdfStream = new ByteArrayInputStream(outputStream.toByteArray());
+            } else {
+                pdfStream = new URL(documentUrl).openStream();
+            }
+            return doStamp(pdfStream, new URL(stampUrl).openStream(), page, offsetX, offsetY, scale);
+
         } catch (IOException e) {
             return null;
         }
     }
+
 
     @Operation(summary = "Проставить штамп на визуальном представлении документа",
             description = "Возвращает документ PDF с просталенным штампом" )
@@ -135,13 +150,23 @@ public class StampController {
                  @RequestParam(value = "offsetY", required = false) @Parameter(name = "offsetY", description="Смещение штампа в 1/72 дюйма оносительно нижней стороны страницы. Может быть отрицательным, тогда смещение считается от верхней стороны страницы", example = "36") Integer offsetY,
                  @RequestParam(value = "scale", required = false) @Parameter(name = "scale", description="Масштаб штампа в процентах, относительно исходного размера", example = "75") Integer scale) {
         try {
+            InputStream pdfStream=null;
+
+            if(document.getOriginalFilename().endsWith(".docx")){
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                PdfOptions options = PdfOptions.create();
+                PdfConverter.getInstance().convert(new XWPFDocument(document.getInputStream()), outputStream, options);
+                pdfStream = new ByteArrayInputStream(outputStream.toByteArray());
+            } else {
+                pdfStream = document.getInputStream();
+            }
             if(stampdata!=null && !stampdata.isEmpty()){
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 ImageIO.write(makeStampImage(stampdata), "png", os);
-                return doStamp(document.getInputStream(), new ByteArrayInputStream(os.toByteArray()), page, offsetX, offsetY, scale);
+                return doStamp(pdfStream, new ByteArrayInputStream(os.toByteArray()), page, offsetX, offsetY, scale);
 
             } else {
-                return doStamp(document.getInputStream(), stamp.getInputStream(), page, offsetX, offsetY, scale);
+                return doStamp(pdfStream, stamp.getInputStream(), page, offsetX, offsetY, scale);
             }
         } catch (IOException e) {
             return null;
@@ -261,7 +286,6 @@ public class StampController {
     Box drawItems(StampData[] data, Graphics2D ig2) {
         return drawItems(data, ig2, new Box(0,0));
     }
-
     Box drawItems(StampData[] data, Graphics2D ig2, Box offset) {
         int currentHeight = 0;
         Deque<Box> sizes = new ArrayDeque<Box>();
@@ -355,8 +379,6 @@ public class StampController {
         }
         return itemsTotal;
     }
-
-
     BufferedImage makeStampImage(String json) throws JsonProcessingException {
         StampData[] data = new ObjectMapper().readValue(json, StampData[].class);
         Box total = processItems(data);
@@ -365,7 +387,6 @@ public class StampController {
         drawItems(data, ig2);
         return bi;
     }
-
 
     @Operation(summary = "Создать штамп по описанию",
             description = "Создаёт штамп по описанию" )
