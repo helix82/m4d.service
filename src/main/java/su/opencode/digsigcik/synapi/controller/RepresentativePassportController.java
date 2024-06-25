@@ -5,10 +5,12 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
+import su.opencode.digsigcik.synapi.dto.RepresentativePassportDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.RepresentativePassport;
 import su.opencode.digsigcik.synapi.service.RepresentativePassportService;
@@ -17,6 +19,7 @@ import javax.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
@@ -27,6 +30,7 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @AllArgsConstructor
 public class RepresentativePassportController {
     private final RepresentativePassportService service;
+    private final ModelMapper modelMapper;
 
     @Operation(summary = CONTROLLER_REPRESENTATIVE_PASSPORT_FIND_ALL_SUMMARY, description = CONTROLLER_REPRESENTATIVE_PASSPORT_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
@@ -41,7 +45,7 @@ public class RepresentativePassportController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_REPRESENTATIVE_PASSPORT_SAVE_SUMMARY, description = CONTROLLER_REPRESENTATIVE_PASSPORT_SAVE_DESCRIPTION)
@@ -50,14 +54,15 @@ public class RepresentativePassportController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping("save")
-    public ResponseEntity<?> saveRepresentativePassport(@RequestBody RepresentativePassport representativePassport) {
+    public ResponseEntity<?> saveRepresentativePassport(@RequestBody RepresentativePassportDTO representativePassportDTO) {
+        RepresentativePassport representativePassport = convertToEntity(representativePassportDTO);
         RepresentativePassport response;
         try {
             response = service.saveRepresentativePassport(representativePassport);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_REPRESENTATIVE_PASSPORT_FIND_BY_ID_SUMMARY, description = CONTROLLER_REPRESENTATIVE_PASSPORT_FIND_BY_ID_DESCRIPTION)
@@ -74,7 +79,7 @@ public class RepresentativePassportController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_REPRESENTATIVE_PASSPORT_UPDATE_SUMMARY, description = CONTROLLER_REPRESENTATIVE_PASSPORT_UPDATE_DESCRIPTION)
@@ -83,14 +88,15 @@ public class RepresentativePassportController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping("update")
-    public ResponseEntity<?> updateRepresentativePassport(@RequestBody RepresentativePassport representativePassport) {
+    public ResponseEntity<?> updateRepresentativePassport(@RequestBody RepresentativePassportDTO representativePassportDTO) {
+        RepresentativePassport representativePassport = convertToEntity(representativePassportDTO);
         RepresentativePassport response;
         try {
             response = service.updateRepresentativePassport(representativePassport);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_REPRESENTATIVE_PASSPORT_DELETE_SUMMARY, description = CONTROLLER_REPRESENTATIVE_PASSPORT_DELETE_DESCRIPTION)
@@ -110,5 +116,15 @@ public class RepresentativePassportController {
         body.put("result", "true");
 
         return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    private RepresentativePassportDTO convertToDto(RepresentativePassport representativePassport){
+        RepresentativePassportDTO representativePassportDTO = modelMapper.map(representativePassport, RepresentativePassportDTO.class);
+        return representativePassportDTO;
+    }
+
+    private RepresentativePassport convertToEntity(RepresentativePassportDTO representativePassportDTO){
+        RepresentativePassport representativePassport = modelMapper.map(representativePassportDTO, RepresentativePassport.class);
+        return representativePassport;
     }
 }

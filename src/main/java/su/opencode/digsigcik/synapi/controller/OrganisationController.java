@@ -5,10 +5,12 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
+import su.opencode.digsigcik.synapi.dto.OrganisationDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.Organisation;
 import su.opencode.digsigcik.synapi.service.OrganisationService;
@@ -17,6 +19,7 @@ import javax.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
@@ -26,8 +29,8 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @RequestMapping("/api/v1/organisation" )
 @AllArgsConstructor
 public class OrganisationController {
-
     private final OrganisationService service;
+    private final ModelMapper modelMapper;
 
     @Operation(summary = CONTROLLER_ORGANISATION_FIND_ALL_SUMMARY, description = CONTROLLER_ORGANISATION_FIND_ALL_DESCRIPTION )
     @ApiResponses(value = {
@@ -42,7 +45,7 @@ public class OrganisationController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ORGANISATION_IS_NULL);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(response.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_ORGANISATION_SAVE_SUMMARY, description = CONTROLLER_ORGANISATION_SAVE_DESCRIPTION)
@@ -51,7 +54,8 @@ public class OrganisationController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping("save" )
-    public ResponseEntity<?> saveOrganisation(@RequestBody Organisation organisation) {
+    public ResponseEntity<?> saveOrganisation(@RequestBody OrganisationDTO organisationDTO) {
+        Organisation organisation = convertToEntity(organisationDTO);
         Organisation existsOrganisation = service.findByOrganisationInn(organisation.getInn());
         if (existsOrganisation != null) {
             return new ResponseEntity<>(existsOrganisation, HttpStatus.OK);
@@ -62,7 +66,7 @@ public class OrganisationController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ORGANISATION_IS_NULL);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_ORGANISATION_FIND_BY_ID_SUMMARY, description = CONTROLLER_ORGANISATION_FIND_BY_ID_DESCRIPTION)
@@ -79,7 +83,7 @@ public class OrganisationController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ORGANISATION_IS_NULL);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_ORGANISATION_UPDATE_SUMMARY, description = CONTROLLER_ORGANISATION_UPDATE_DESCRIPTION )
@@ -88,14 +92,15 @@ public class OrganisationController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping("update" )
-    public ResponseEntity<?> updateOrganisation(@RequestBody Organisation organisation) {
+    public ResponseEntity<?> updateOrganisation(@RequestBody OrganisationDTO organisationDTO) {
+        Organisation organisation = convertToEntity(organisationDTO);
         Organisation response;
         try {
             response = service.updateOrganisation(organisation);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(ORGANISATION_IS_NULL);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_ORGANISATION_DELETE_SUMMARY, description = CONTROLLER_ORGANISATION_DELETE_DESCRIPTION)
@@ -115,5 +120,15 @@ public class OrganisationController {
         body.put("result", "true");
 
         return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    private OrganisationDTO convertToDto(Organisation organisation){
+        OrganisationDTO organisationDTO = modelMapper.map(organisation, OrganisationDTO.class);
+        return organisationDTO;
+    }
+
+    private Organisation convertToEntity(OrganisationDTO organisationDTO){
+        Organisation organisation = modelMapper.map(organisationDTO, Organisation.class);
+        return organisation;
     }
 }
