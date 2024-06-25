@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import su.opencode.digsigcik.synapi.model.audit.DateAudit;
+
 import javax.persistence.*;
 
 @Builder
@@ -13,14 +15,14 @@ import javax.persistence.*;
 @Table(name = "pincode")
 @NoArgsConstructor
 @AllArgsConstructor
-public class PinCode {
+public class PinCode extends DateAudit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "user_id")
-    private ESSUser user;
+    @JoinColumn(name = "user_projection_id")
+    private UserProjection userProjection;
 
     @Column(name = "pin_code_hash", columnDefinition = "VARCHAR(64)")
     @Schema(name = "Хэш пин-кода", example = "cd70b...24f45a")

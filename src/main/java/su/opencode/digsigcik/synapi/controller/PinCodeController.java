@@ -7,10 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
-import su.opencode.digsigcik.synapi.model.ESSUser;
 import su.opencode.digsigcik.synapi.model.PinCode;
-import su.opencode.digsigcik.synapi.repository.ESUserRepository;
+import su.opencode.digsigcik.synapi.model.UserProjection;
 import su.opencode.digsigcik.synapi.repository.PinCodeRepository;
+import su.opencode.digsigcik.synapi.repository.UserProjectionRepository;
 import su.opencode.digsigcik.synapi.service.PinCodeService;
 import su.opencode.digsigcik.synapi.util.HashUtils;
 
@@ -25,15 +25,14 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 public class PinCodeController {
     private final PinCodeRepository pinCodeRepository;
     private final PinCodeService pinCodeService;
-    private final ESUserRepository esUserRepository;
+    private final UserProjectionRepository userProjectionRepository;
 
-    public PinCodeController(PinCodeService pinCodeService, ESUserRepository esUserRepository,
-                             PinCodeRepository pinCodeRepository) {
+    public PinCodeController(PinCodeService pinCodeService,
+                             PinCodeRepository pinCodeRepository, UserProjectionRepository userProjectionRepository) {
         this.pinCodeService = pinCodeService;
-        this.esUserRepository = esUserRepository;
         this.pinCodeRepository = pinCodeRepository;
+        this.userProjectionRepository = userProjectionRepository;
     }
-
 
     @Operation(summary = CONTROLLER_PIN_CODE_GET_ALL,
             description = CONTROLLER_PIN_CODE_GET_ALL)
@@ -59,18 +58,18 @@ public class PinCodeController {
                 .isEmpty()) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
-        ESSUser essUser = esUserRepository.findESSUserByLogin(login);
-        if (essUser != null) {
-            PinCode pinCode1 = pinCodeRepository.getPinCodeByUser(essUser);
-            if (pinCode1 == null) {
-                pinCode1 = PinCode.builder()
-                        .user(essUser)
-                        .pinCodeHash(HashUtils.getSha256Hash(pinCode.getBytes(StandardCharsets.UTF_8)))
-                        .build();
-                return new ResponseEntity<>(pinCodeService.createPinCode(pinCode1), HttpStatus.OK);
-            } else
-                throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(login);
 
+        if (userProjection == null) {
+            userProjection = userProjectionRepository.save(UserProjection.builder()
+                    .login(login)
+                    .build());
+        }
+        if (!pinCodeRepository.existsByUserProjection(userProjection)) {
+            return new ResponseEntity<>(pinCodeService.createPinCode(PinCode.builder()
+                    .userProjection(userProjection)
+                    .pinCodeHash(HashUtils.getSha256Hash(pinCode.getBytes(StandardCharsets.UTF_8)))
+                    .build()), HttpStatus.OK);
         } else
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
 
@@ -89,9 +88,9 @@ public class PinCodeController {
                 .isEmpty()) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
-        ESSUser essUser = esUserRepository.findESSUserByLogin(login);
-        if (essUser != null) {
-            PinCode pinCode1 = pinCodeRepository.getPinCodeByUser(essUser);
+        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(login);
+        if (userProjection != null) {
+            PinCode pinCode1 = pinCodeRepository.getPinCodeByUserProjection(userProjection);
             if (pinCode1 != null) {
                 pinCode1.setPinCodeHash(HashUtils.getSha256Hash(pinCode.getBytes(StandardCharsets.UTF_8)));
                 return new ResponseEntity<>(pinCodeService.updatePinCode(pinCode1), HttpStatus.OK);
@@ -115,16 +114,16 @@ public class PinCodeController {
                 .isEmpty()) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
-        ESSUser essUser = esUserRepository.findESSUserByLogin(login);
-        if (essUser != null) {
-            PinCode pinCode1 = pinCodeRepository.getPinCodeByUser(essUser);
+        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(login);
+        if (userProjection != null) {
+            PinCode pinCode1 = pinCodeRepository.getPinCodeByUserProjection(userProjection);
             if (pinCode1 != null) {
-                pinCodeService.deleteByUser(essUser);
-                return new ResponseEntity<>("", HttpStatus.OK);
-            } else
-                throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
-        } else
-            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+                if (pinCodeRepository.deleteByUserProjection(userProjection)) {
+                    return new ResponseEntity<>("", HttpStatus.OK);
+                }
+            }
+        }
+        throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
     }
 
 }

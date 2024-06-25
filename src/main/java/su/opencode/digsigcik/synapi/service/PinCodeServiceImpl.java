@@ -1,8 +1,8 @@
 package su.opencode.digsigcik.synapi.service;
 
 import org.springframework.stereotype.Service;
-import su.opencode.digsigcik.synapi.model.ESSUser;
 import su.opencode.digsigcik.synapi.model.PinCode;
+import su.opencode.digsigcik.synapi.model.UserProjection;
 import su.opencode.digsigcik.synapi.repository.PinCodeRepository;
 
 import javax.transaction.Transactional;
@@ -38,8 +38,8 @@ public class PinCodeServiceImpl implements PinCodeService {
 
     @Override
     @Transactional
-    public void deleteByUser(ESSUser essUser) {
-        pinCodeRepository.deleteByUser(essUser);
+    public boolean deleteByUser(UserProjection userProjection) {
+        return pinCodeRepository.deleteByUserProjection(userProjection);
     }
 
     // Реализация других методов...

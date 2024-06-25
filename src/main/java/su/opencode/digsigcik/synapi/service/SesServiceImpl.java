@@ -21,13 +21,10 @@ import su.opencode.digsigcik.synapi.dto.UserDto;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.exception.SesVerifyException;
-import su.opencode.digsigcik.synapi.model.ESSUser;
-import su.opencode.digsigcik.synapi.model.PinCode;
-import su.opencode.digsigcik.synapi.model.Ses;
-import su.opencode.digsigcik.synapi.model.SesContainer;
-import su.opencode.digsigcik.synapi.repository.ESUserRepository;
+import su.opencode.digsigcik.synapi.model.*;
 import su.opencode.digsigcik.synapi.repository.PinCodeRepository;
 import su.opencode.digsigcik.synapi.repository.SesRepository;
+import su.opencode.digsigcik.synapi.repository.UserProjectionRepository;
 import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.FileUtils;
 import su.opencode.digsigcik.synapi.util.HashUtils;
@@ -57,8 +54,8 @@ public class SesServiceImpl implements SesService {
     private final ESUserService esUserService;
     private final JwtTokenUtils jwtTokenUtils;
     private final SesRepository sesRepository;
-    private final ESUserRepository esUserRepository;
     private final PinCodeRepository pinCodeRepository;
+    private final UserProjectionRepository userProjectionRepository;
 
     @Override
     public SesResponseDto getContainerPath(String pinCode, MultipartFile srcFile, String token) {
@@ -87,8 +84,8 @@ public class SesServiceImpl implements SesService {
         */
         SigHashDto sigHashDto = esUserService.generateHashForPinCodeAndFile(pinCode, srcFile);
         String pinCodeHash = sigHashDto.getPinCodeHash();
-        ESSUser essUser = esUserRepository.findESSUserByLogin(userLogin);
-        PinCode pinCode1 = pinCodeRepository.getPinCodeByUser(essUser);
+        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(userLogin);
+        PinCode pinCode1 = pinCodeRepository.getPinCodeByUserProjection(userProjection);
         if (!pinCode1.getPinCodeHash().equals(pinCodeHash)) {
             throw new SesException(PIN_CODE_ERROR_MESSAGE);
         }
@@ -255,15 +252,15 @@ public class SesServiceImpl implements SesService {
         String userSignature = new String(containerData.get("detachedSign").getData(), StandardCharsets.UTF_8);
         byte[] srcFile = containerData.get("sourceFile").getData();
 
-        ESSUser essUser = esUserRepository.findESSUserByLogin(userLogin);
-        PinCode pinCode = pinCodeRepository.getPinCodeByUser(essUser);
-        if (essUser == null) {
+        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(userLogin);
+        PinCode pinCode = pinCodeRepository.getPinCodeByUserProjection(userProjection);
+        if (userProjection == null) {
             throw new SesVerifyException(USER_NOT_FOUND);
         }
 
         SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
 
-        if (essUser.getLogin().equals(userLogin)) {
+        if (userProjection.getLogin().equals(userLogin)) {
             String fileHash = HashUtils.getSha256Hash(srcFile);
 
             String signature = generateSignature(pinCode.getPinCodeHash(), fileHash, timestamp);
