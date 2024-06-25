@@ -16,16 +16,10 @@ import su.opencode.digsigcik.synapi.enums.RoleEnum;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserDto {
     private String login;
-    private String email;
     private String password;
     private String firstname;
     private String lastname;
     private String patronymic;
     private PositionEnum position;
     private RoleEnum role;
-    private String pinCode;
-    private String pinCodeHash;
-    private String fileHash;
-    private String signature;
-    private String operationDate;
 }
