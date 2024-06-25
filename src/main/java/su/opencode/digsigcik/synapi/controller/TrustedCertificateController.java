@@ -5,17 +5,24 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.cryptacular.util.CertUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.TrustedCertificateDTO;
+import su.opencode.digsigcik.synapi.enums.AccreditationStatusEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.TrustedCertificate;
 import su.opencode.digsigcik.synapi.service.TrustedCertificateService;
 
 import javax.validation.ConstraintViolationException;
+import java.io.IOException;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +121,47 @@ public class TrustedCertificateController {
         }
         Map<String, String> body = new HashMap<>();
         body.put("result", "true");
+
+        return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_SUMMARY, description = CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateEncodingException {
+        //System.out.println(sourceFile.getOriginalFilename());
+        X509Certificate certificate = CertUtil.decodeCertificate(sourceFile.getBytes());
+        TrustedCertificate trustedCertificate = new TrustedCertificate();
+        trustedCertificate.setSerialNumber(certificate.getSerialNumber().toString());
+        trustedCertificate.setDateStart(certificate.getNotBefore().toString());
+        trustedCertificate.setDateEnd(certificate.getNotAfter().toString());
+        trustedCertificate.setTypeInput(CONTROLLER_CA_TYPE_INPUT_AUTO);
+        trustedCertificate.setAccreditationStatus(AccreditationStatusEnum.VALID.name());
+        trustedCertificate.setCertificate(certificate.toString());
+        trustedCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
+        trustedCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
+        var substr = certificate.getIssuerDN().getName().split(", ");
+        for(String s : substr) {
+            if(s.length()>2){
+                var st = s.substring(0,3);
+                if (st.equals("CN="))
+                {
+                    trustedCertificate.setIssuedTo(s.substring(3));
+                    break;
+                }
+            }
+        }
+        try {
+            service.saveTrustedCertificate(trustedCertificate);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(TRUSTED_CERTIFICATE_IS_NULL);
+        }
+
+        Map<String, String> body = new HashMap<>();
+        body.put("imported", "1");
 
         return new ResponseEntity<>(body, HttpStatus.OK);
     }

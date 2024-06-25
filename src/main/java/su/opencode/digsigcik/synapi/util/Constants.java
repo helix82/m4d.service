@@ -218,6 +218,8 @@ public interface Constants {
     String CONTROLLER_TRUSTED_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает доверенный сертификат";
     String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_SUMMARY = "Удалить доверенный сертификат по ИД";
     String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_SUMMARY = "Загрузить доверенные сертификаты";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_DESCRIPTION = "Возвращает количество загруженных сертификатов";
 
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
     String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
