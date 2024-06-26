@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.cryptacular.util.CertUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -25,10 +26,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
@@ -135,6 +133,10 @@ public class TrustedCertificateController {
     })
     @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateEncodingException {
+        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
+        if(!Objects.equals(extension, "cer")){
+            throw new BadRequestException(TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT);
+        }
         X509Certificate certificate = CertUtil.decodeCertificate(sourceFile.getBytes());
         TrustedCertificate trustedCertificate = new TrustedCertificate();
         trustedCertificate.setSerialNumber(certificate.getSerialNumber().toString());

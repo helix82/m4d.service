@@ -235,6 +235,7 @@ public interface Constants {
     String REVOKED_CERTIFICATE_IS_NULL = String.format("Revoked certificate is %s!", NULL);
     String TRUSTED_CERTIFICATE_IS_NULL = String.format("Trusted certificate is %s!", NULL);
     String TRUSTED_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый доверенный сертификат уже существует в базе!";
+    String TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .cer!";
     String CA_IS_NULL = String.format("CA is %s!", NULL);
 
 
