@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.RevokedCertificateDTO;
+import su.opencode.digsigcik.synapi.dto.RevokedCertificateListDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.RevokedCertificate;
 import su.opencode.digsigcik.synapi.service.RevokedCertificateService;
@@ -45,7 +46,7 @@ public class RevokedCertificateController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(REVOKED_CERTIFICATE_IS_NULL);
         }
-        return new ResponseEntity<>(findAll.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
+        return new ResponseEntity<>(findAll.stream().map(this::convertToDtoList).collect(Collectors.toList()), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_REVOKED_CERTIFICATE_SAVE_SUMMARY, description = CONTROLLER_REVOKED_CERTIFICATE_SAVE_DESCRIPTION)
@@ -120,6 +121,11 @@ public class RevokedCertificateController {
 
     private RevokedCertificateDTO convertToDto(RevokedCertificate revokedCertificate){
         RevokedCertificateDTO revokedCertificateDTO = modelMapper.map(revokedCertificate, RevokedCertificateDTO.class);
+        return revokedCertificateDTO;
+    }
+
+    private RevokedCertificateListDTO convertToDtoList(RevokedCertificate revokedCertificate){
+        RevokedCertificateListDTO revokedCertificateDTO = modelMapper.map(revokedCertificate, RevokedCertificateListDTO.class);
         return revokedCertificateDTO;
     }
 
