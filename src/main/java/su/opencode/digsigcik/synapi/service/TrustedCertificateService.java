@@ -10,4 +10,5 @@ public interface TrustedCertificateService {
     TrustedCertificate findByTrustedCertificateId(Long id);
     TrustedCertificate updateTrustedCertificate(TrustedCertificate trustedCertificate);
     void deleteTrustedCertificate(Long id);
+    Integer countTrustedCertificateByImprint(String imprint);
 }

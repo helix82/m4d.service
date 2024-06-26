@@ -218,6 +218,8 @@ public interface Constants {
     String CONTROLLER_TRUSTED_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает доверенный сертификат";
     String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_SUMMARY = "Удалить доверенный сертификат по ИД";
     String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_SUMMARY = "Загрузить доверенные сертификаты";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_DESCRIPTION = "Возвращает количество загруженных сертификатов";
 
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
     String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
@@ -232,6 +234,8 @@ public interface Constants {
     String REPRESENTATIVE_PASSPORT_IS_NULL = String.format("Representative passport is %s!", NULL);
     String REVOKED_CERTIFICATE_IS_NULL = String.format("Revoked certificate is %s!", NULL);
     String TRUSTED_CERTIFICATE_IS_NULL = String.format("Trusted certificate is %s!", NULL);
+    String TRUSTED_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый доверенный сертификат уже существует в базе!";
+    String TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .cer!";
     String CA_IS_NULL = String.format("CA is %s!", NULL);
 
 
