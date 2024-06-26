@@ -47,4 +47,9 @@ public class TrustedCertificateServiceImpl implements TrustedCertificateService{
         }
         this.repository.deleteById(id);
     }
+
+    @Override
+    public Integer countTrustedCertificateByImprint(String imprint){
+        return this.repository.countTrustedCertificateByImprint(imprint);
+    }
 }

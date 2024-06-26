@@ -234,6 +234,7 @@ public interface Constants {
     String REPRESENTATIVE_PASSPORT_IS_NULL = String.format("Representative passport is %s!", NULL);
     String REVOKED_CERTIFICATE_IS_NULL = String.format("Revoked certificate is %s!", NULL);
     String TRUSTED_CERTIFICATE_IS_NULL = String.format("Trusted certificate is %s!", NULL);
+    String TRUSTED_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый доверенный сертификат уже существует в базе!";
     String CA_IS_NULL = String.format("CA is %s!", NULL);
 
 

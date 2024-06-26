@@ -23,8 +23,11 @@ import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -132,15 +135,14 @@ public class TrustedCertificateController {
     })
     @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateEncodingException {
-        //System.out.println(sourceFile.getOriginalFilename());
         X509Certificate certificate = CertUtil.decodeCertificate(sourceFile.getBytes());
         TrustedCertificate trustedCertificate = new TrustedCertificate();
         trustedCertificate.setSerialNumber(certificate.getSerialNumber().toString());
-        trustedCertificate.setDateStart(certificate.getNotBefore().toString());
-        trustedCertificate.setDateEnd(certificate.getNotAfter().toString());
+        trustedCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
+        trustedCertificate.setDateEnd(convertRFC1123ToIsoInstant(certificate.getNotAfter().toString()));
         trustedCertificate.setTypeInput(CONTROLLER_CA_TYPE_INPUT_AUTO);
         trustedCertificate.setAccreditationStatus(AccreditationStatusEnum.VALID.name());
-        trustedCertificate.setCertificate(certificate.toString());
+        trustedCertificate.setCertificate(new String(sourceFile.getBytes()));
         trustedCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
         trustedCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
         var substr = certificate.getIssuerDN().getName().split(", ");
@@ -153,6 +155,10 @@ public class TrustedCertificateController {
                     break;
                 }
             }
+        }
+        var existsCert = service.countTrustedCertificateByImprint(trustedCertificate.getImprint());
+        if(existsCert > 0){
+            throw new BadRequestException(TRUSTED_CERTIFICATE_UPLOAD_EXISTS);
         }
         try {
             service.saveTrustedCertificate(trustedCertificate);
@@ -174,5 +180,12 @@ public class TrustedCertificateController {
     private TrustedCertificate convertToEntity(TrustedCertificateDTO trustedCertificateDTO){
         TrustedCertificate trustedCertificate = modelMapper.map(trustedCertificateDTO, TrustedCertificate.class);
         return trustedCertificate;
+    }
+
+    private String convertRFC1123ToIsoInstant(String date){
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH);
+        Instant instant1 = formatter.parse(date, Instant::from);
+        return instant1.toString();
     }
 }
