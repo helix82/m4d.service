@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.TrustedCertificateDTO;
+import su.opencode.digsigcik.synapi.dto.TrustedCertificateListDTO;
 import su.opencode.digsigcik.synapi.enums.AccreditationStatusEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.TrustedCertificate;
@@ -53,7 +54,7 @@ public class TrustedCertificateController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(TRUSTED_CERTIFICATE_IS_NULL);
         }
-        return new ResponseEntity<>(findAll.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
+        return new ResponseEntity<>(findAll.stream().map(this::convertToDtoList).collect(Collectors.toList()), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_TRUSTED_CERTIFICATE_SAVE_SUMMARY, description = CONTROLLER_TRUSTED_CERTIFICATE_SAVE_DESCRIPTION)
@@ -176,6 +177,11 @@ public class TrustedCertificateController {
 
     private TrustedCertificateDTO convertToDto(TrustedCertificate trustedCertificate){
         TrustedCertificateDTO trustedCertificateDTO = modelMapper.map(trustedCertificate, TrustedCertificateDTO.class);
+        return trustedCertificateDTO;
+    }
+
+    private TrustedCertificateListDTO convertToDtoList(TrustedCertificate trustedCertificate){
+        TrustedCertificateListDTO trustedCertificateDTO = modelMapper.map(trustedCertificate, TrustedCertificateListDTO.class);
         return trustedCertificateDTO;
     }
 
