@@ -38,8 +38,8 @@ public class PinCodeServiceImpl implements PinCodeService {
 
     @Override
     @Transactional
-    public boolean deleteByUser(UserProjection userProjection) {
-        return pinCodeRepository.deleteByUserProjection(userProjection);
+    public void deleteByUser(UserProjection userProjection) {
+        pinCodeRepository.deletePinCodeByUserProjection(userProjection);
     }
 
     // Реализация других методов...

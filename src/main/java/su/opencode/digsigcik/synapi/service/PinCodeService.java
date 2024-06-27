@@ -11,5 +11,5 @@ public interface PinCodeService {
     PinCode getPinCodeById(Long id);
     PinCode createPinCode(PinCode pinCode);
     PinCode updatePinCode(PinCode pinCode);
-    boolean deleteByUser(UserProjection userProjection);
+    void deleteByUser(UserProjection userProjection);
 }
