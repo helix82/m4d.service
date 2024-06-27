@@ -8,6 +8,8 @@ import su.opencode.digsigcik.synapi.model.UserProjection;
 @Repository
 public interface PinCodeRepository extends JpaRepository<PinCode, Long> {
     PinCode getPinCodeByUserProjection(UserProjection userProjection);
-    boolean existsByUserProjection(UserProjection userProjection);
-    boolean deleteByUserProjection(UserProjection userProjection);
+    boolean existsPinCodeByUserProjection(UserProjection userProjection);
+    void deletePinCodeByUserProjection(UserProjection userProjection);
+
+
 }

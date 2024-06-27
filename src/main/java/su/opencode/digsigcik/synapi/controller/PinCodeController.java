@@ -65,7 +65,7 @@ public class PinCodeController {
                     .login(login)
                     .build());
         }
-        if (!pinCodeRepository.existsByUserProjection(userProjection)) {
+        if (!pinCodeRepository.existsPinCodeByUserProjection(userProjection)) {
             return new ResponseEntity<>(pinCodeService.createPinCode(PinCode.builder()
                     .userProjection(userProjection)
                     .pinCodeHash(HashUtils.getSha256Hash(pinCode.getBytes(StandardCharsets.UTF_8)))
@@ -118,9 +118,8 @@ public class PinCodeController {
         if (userProjection != null) {
             PinCode pinCode1 = pinCodeRepository.getPinCodeByUserProjection(userProjection);
             if (pinCode1 != null) {
-                if (pinCodeRepository.deleteByUserProjection(userProjection)) {
-                    return new ResponseEntity<>("", HttpStatus.OK);
-                }
+                pinCodeRepository.deletePinCodeByUserProjection(userProjection);
+                return new ResponseEntity<>("", HttpStatus.OK);
             }
         }
         throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
