@@ -11,7 +11,9 @@ import java.util.List;
 public interface CertificateRepository extends JpaRepository<AcmeCertificate, Long> {
     AcmeCertificate findCertificateById(Long id);
 
-    List<AcmeCertificate> findByDomainId(Long accountId);
+    List<AcmeCertificate> findByDomainId(Long domainId);
+
+    List<AcmeCertificate> findByProviderId(Long providerId);
 
     @Transactional
     void deleteByDomainId(long domainId);

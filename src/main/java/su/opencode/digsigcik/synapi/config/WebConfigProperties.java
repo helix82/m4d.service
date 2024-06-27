@@ -2,8 +2,10 @@ package su.opencode.digsigcik.synapi.config;
 
 import lombok.Getter;
 import lombok.Value;
+import org.modelmapper.ModelMapper;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.ConstructorBinding;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.HttpHeaders;
 
@@ -61,5 +63,10 @@ public class WebConfigProperties {
             this.exposeHeaders = exposeHeaders;
             this.maxAge = maxAge;
         }
+    }
+
+    @Bean
+    public ModelMapper modelMapper() {
+        return new ModelMapper();
     }
 }

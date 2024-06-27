@@ -16,7 +16,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.sql.Date;
 
 @Getter
 @Entity
@@ -33,6 +32,12 @@ public class AcmeCertificate {
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private AcmeDomain domain;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "provider_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
+    private AcmeProvider provider;
 
     @Column(name = "challenge_url", columnDefinition = "VARCHAR(2000)")
     private String challengeUrl;
@@ -88,7 +93,7 @@ public class AcmeCertificate {
     }
 
     public Boolean getDeleted() {
-        return deleted;
+        return (deleted==null)?false:deleted;
     }
 
     public void setDeleted(Boolean deleted) {
@@ -96,7 +101,7 @@ public class AcmeCertificate {
     }
 
     public Boolean getRevoked() {
-        return revoked;
+        return (revoked==null)?false:revoked;
     }
 
     public void setRevoked(Boolean revoked) {
@@ -141,5 +146,13 @@ public class AcmeCertificate {
 
     public void setOrderUrl(String orderUrl) {
         this.orderUrl = orderUrl;
+    }
+
+    public AcmeProvider getProvider() {
+        return provider;
+    }
+
+    public void setProvider(AcmeProvider provider) {
+        this.provider = provider;
     }
 }

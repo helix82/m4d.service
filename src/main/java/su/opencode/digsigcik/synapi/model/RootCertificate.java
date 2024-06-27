@@ -69,7 +69,7 @@ public class RootCertificate {
     }
 
     public Boolean getDeleted() {
-        return deleted;
+        return (deleted==null)?false:deleted;
     }
 
     public void setDeleted(Boolean deleted) {
@@ -77,7 +77,7 @@ public class RootCertificate {
     }
 
     public Boolean getRevoked() {
-        return revoked;
+        return (revoked==null)?false:revoked;
     }
 
     public void setRevoked(Boolean revoked) {

@@ -5,12 +5,14 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
+import su.opencode.digsigcik.synapi.dto.CertificateDataListDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.ca.CAXml;
 import su.opencode.digsigcik.synapi.model.ca.CertificateData;
@@ -35,6 +37,7 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 @AllArgsConstructor
 public class CertificateDataController {
     private final CertificateDataService certificateDataService;
+    private final ModelMapper modelMapper;
 
     @Operation(summary = CONTROLLER_CA_UPLOAD_SUMMARY, description = CONTROLLER_CA_UPLOAD_DESCRIPTION)
     @ApiResponses(value = {
@@ -119,7 +122,7 @@ public class CertificateDataController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(CA_IS_NULL);
         }
-        return new ResponseEntity<>(CAFindByInn, HttpStatus.OK);
+        return new ResponseEntity<>(CAFindByInn.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_CA_SAVE_SUMMARY, description = CONTROLLER_CA_SAVE_DESCRIPTION)
@@ -190,6 +193,16 @@ public class CertificateDataController {
         body.put("result", "true");
 
         return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    private CertificateDataListDTO convertToDto(CertificateData certificateData){
+        CertificateDataListDTO certificateDataListDTO = modelMapper.map(certificateData, CertificateDataListDTO.class);
+        return certificateDataListDTO;
+    }
+
+    private CertificateData convertToEntity(CertificateDataListDTO certificateDataListDTO){
+        CertificateData certificateData = modelMapper.map(certificateDataListDTO, CertificateData.class);
+        return certificateData;
     }
 
 }

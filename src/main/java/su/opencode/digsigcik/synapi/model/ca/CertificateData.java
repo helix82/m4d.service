@@ -21,32 +21,41 @@ public class CertificateData {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Schema(example = "1", required = true)
         private Long id;
+
         @XmlElement(name = XML_ELEMENT_IMPRINT)
         @Schema(example = "", required = false)
         private String imprint;
+
         @XmlElement(name = XML_ELEMENT_SERIAL_NUMBER)
         @Schema(example = "", required = false)
         private String serialNumber;
+
         @XmlElement(name = XML_ELEMENT_KEY_ID)
         @Schema(example = "", required = false)
         private String keyId;
+
         @XmlElement(name = XML_ELEMENT_ISSUED_TO)
         @Schema(example = "", required = false)
         @Column(columnDefinition = "Text")
         private String issuedTo;
+
         @XmlElement(name = XML_ELEMENT_DATE_START)
         @Schema(example = "", required = false)
         private String dateStart;
+
         @XmlElement(name = XML_ELEMENT_DATE_END)
         @Schema(example = "", required = false)
         private String dateEnd;
+
         @XmlElement(name = XML_ELEMENT_CERT)
         @Schema(example = "", required = false)
         @Column(columnDefinition = "Text")
         private String certificate;
+
         @Schema(example = SCHEMA_CA_TYPE_INPUT_EXAMPLE, required = false)
         @Column(name = "type_input")
         private String typeInput;
+
         @Schema(example = SCHEMA_CA_ACCREDITATION_STATUS_EXAMPLE, required = false)
         @Column(name = "accreditation_status")
         private String accreditationStatus;

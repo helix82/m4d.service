@@ -98,11 +98,14 @@ public interface Constants {
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
     String PARAMETER_CA_ID_DESCRIPTION = "ИД сертификата УЦ";
     String PARAMETER_CREDENTIAL_ID_DESCRIPTION = "ИД полномочия";
+    String PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION = "Код или наименование полномочия";
     String PARAMETER_ORGANISATION_ID_DESCRIPTION = "ИД организации";
     String PARAMETER_PRINCIPAL_ID_DESCRIPTION = "ИД доверителя";
     String PARAMETER_PRINCIPAL_INN_DESCRIPTION = "ИНН доверителя";
     String PARAMETER_REPRESENTATIVE_ID_DESCRIPTION = "ИД представителя";
     String PARAMETER_REPRESENTATIVE_PASSPORT_ID_DESCRIPTION = "ИД паспорта представителя";
+    String PARAMETER_REVOKED_CERTIFICATE_ID_DESCRIPTION = "ИД отозванного сертификата";
+    String PARAMETER_TRUSTED_CERTIFICATE_ID_DESCRIPTION = "ИД доверенного сертификата";
 
     String CONTROLLER_MRPA_FIND_ALL_SUMMARY = "Получить список МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_DESCRIPTION = "Возвращает список МЧД с ФИО представителя и ФИО доверителя";
@@ -123,7 +126,6 @@ public interface Constants {
     String CONTROLLER_MRPA_DOWNLOAD_SUMMARY = "Выгрузить МЧД в XML-файл";
     String CONTROLLER_MRPA_DOWNLOAD_DESCRIPTION = "Возвращает XML-структуру";
 
-    String CONTROLLER_CA_ACCREDITATION_STATUS_VALID = "Действует";
     String CONTROLLER_CA_TYPE_INPUT_AUTO = "Автоматически";
     String CONTROLLER_CA_TYPE_INPUT_MANUALLY = "Вручную";
 
@@ -142,6 +144,9 @@ public interface Constants {
 
     String CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY = "Получить список полномочий";
     String CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION = "Возвращает список полномочий";
+    String CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_SUMMARY = "Получить список полномочий с фильтром по коду или наименованию";
+    String CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_DESCRIPTION = "Возвращает список полномочий с фильтром по коду или наименованию";
+
     String CONTROLLER_CREDENTIAL_SAVE_SUMMARY = "Сохранить запись полномочия";
     String CONTROLLER_CREDENTIAL_SAVE_DESCRIPTION = "Возвращает созданную запись полномочия";
     String CONTROLLER_CREDENTIAL_FIND_BY_ID_SUMMARY = "Получить запись полномочия по ИД";
@@ -195,7 +200,32 @@ public interface Constants {
     String CONTROLLER_REPRESENTATIVE_PASSPORT_DELETE_SUMMARY = "Удалить запись паспорта представителя по ИД";
     String CONTROLLER_REPRESENTATIVE_PASSPORT_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
 
+    String CONTROLLER_REVOKED_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список отозванных сертификатов";
+    String CONTROLLER_REVOKED_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список отозванных сертификатов";
+    String CONTROLLER_REVOKED_CERTIFICATE_SAVE_SUMMARY = "Сохранить отозванный сертификат";
+    String CONTROLLER_REVOKED_CERTIFICATE_SAVE_DESCRIPTION = "Возвращает созданный отозванный сертификат";
+    String CONTROLLER_REVOKED_CERTIFICATE_FIND_BY_ID_SUMMARY = "Получить отозванный сертификат по ИД";
+    String CONTROLLER_REVOKED_CERTIFICATE_FIND_BY_ID_DESCRIPTION = "Возвращает отозванный сертификат по ИД";
+    String CONTROLLER_REVOKED_CERTIFICATE_UPDATE_SUMMARY = "Изменить отозванный сертификат";
+    String CONTROLLER_REVOKED_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает измененный отозванный сертификат";
+    String CONTROLLER_REVOKED_CERTIFICATE_DELETE_SUMMARY = "Удалить отозванный сертификат по ИД";
+    String CONTROLLER_REVOKED_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+
+    String CONTROLLER_TRUSTED_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список доверенных сертификатов";
+    String CONTROLLER_TRUSTED_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список доверенных сертификатов";
+    String CONTROLLER_TRUSTED_CERTIFICATE_SAVE_SUMMARY = "Сохранить доверенный сертификат";
+    String CONTROLLER_TRUSTED_CERTIFICATE_SAVE_DESCRIPTION = "Возвращает созданный доверенный сертификат";
+    String CONTROLLER_TRUSTED_CERTIFICATE_FIND_BY_ID_SUMMARY = "Получить доверенный сертификат по ИД";
+    String CONTROLLER_TRUSTED_CERTIFICATE_FIND_BY_ID_DESCRIPTION = "Возвращает доверенный сертификат по ИД";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPDATE_SUMMARY = "Изменить доверенный сертификат";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает доверенный сертификат";
+    String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_SUMMARY = "Удалить доверенный сертификат по ИД";
+    String CONTROLLER_TRUSTED_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_SUMMARY = "Загрузить доверенные сертификаты";
+    String CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_DESCRIPTION = "Возвращает количество загруженных сертификатов";
+
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
+    String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
 
     String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
@@ -205,5 +235,17 @@ public interface Constants {
     String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);
     String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);
     String REPRESENTATIVE_PASSPORT_IS_NULL = String.format("Representative passport is %s!", NULL);
+    String REVOKED_CERTIFICATE_IS_NULL = String.format("Revoked certificate is %s!", NULL);
+    String TRUSTED_CERTIFICATE_IS_NULL = String.format("Trusted certificate is %s!", NULL);
+    String TRUSTED_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый доверенный сертификат уже существует в базе!";
+    String TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .cer!";
     String CA_IS_NULL = String.format("CA is %s!", NULL);
+
+
+
+    String CONTROLLER_PIN_CODE_GET_ALL = "Возвращает хэши пинкодов всех пользователей";
+    String CONTROLLER_PIN_CODE_CREATE = "Создает пинкод для пользователя";
+    String CONTROLLER_PIN_CODE_UPDATE = "Обновляет пинкод для пользователя";
+    String CONTROLLER_PIN_CODE_DELETE = "Удаляет пинкод для пользователя";
+
 }

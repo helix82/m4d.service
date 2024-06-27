@@ -10,5 +10,4 @@ public interface ESUserRepository extends JpaRepository<ESSUser, Long> {
 
     ESSUser findESSUserById(Long id);
 
- //   ESSUser findESSUserByPinCodeHash(String pinCodeHash);
 }
