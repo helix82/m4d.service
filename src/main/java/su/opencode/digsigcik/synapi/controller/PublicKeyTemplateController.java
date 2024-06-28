@@ -5,9 +5,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
-import org.hibernate.SessionFactory;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,8 +34,6 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 public class PublicKeyTemplateController {
     private final PublicKeyTemplateService service;
     private final ModelMapper modelMapper;
-    @Autowired
-    private SessionFactory sessionFactory;
 
     @Operation(summary = CONTROLLER_PUBLIC_KEY_TEMPLATE_FIND_ALL_SUMMARY, description = CONTROLLER_PUBLIC_KEY_TEMPLATE_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
