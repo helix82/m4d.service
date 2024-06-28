@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,8 +53,10 @@ public class PublicKeyTemplateController {
     }
 
     @PostMapping(value = "save_file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<?> savePublicKey(@RequestBody PublicKeyTemplateDto publicKeyTemplateDto, @RequestPart("srcFile") MultipartFile sourceFile) throws IOException {
+    public ResponseEntity<?> savePublicKey(@RequestBody String publicKeyTemplate, @RequestPart("srcFile") MultipartFile sourceFile) throws IOException {
         byte[] data = sourceFile.getBytes();
+        ObjectMapper mapper = new ObjectMapper();
+        PublicKeyTemplateDto publicKeyTemplateDto = mapper.readValue(publicKeyTemplate, PublicKeyTemplateDto.class);
     return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
