@@ -51,15 +51,22 @@ public class PublicKeyTemplateController {
         return new ResponseEntity<>(response.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
     }
 
+    @PostMapping(value = "save_file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<?> savePublicKey(@RequestBody PublicKeyTemplateDto publicKeyTemplateDto, @RequestPart("srcFile") MultipartFile sourceFile) throws IOException {
+        byte[] data = sourceFile.getBytes();
+    return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
     @Operation(summary = CONTROLLER_PUBLIC_KEY_TEMPLATE_SAVE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_TEMPLATE_SAVE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @PostMapping(value = "save", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<?> savePublicKeyTemplate(@RequestBody PublicKeyTemplateDto publicKeyTemplateDto, @RequestParam("srcFile") MultipartFile sourceFile) throws IOException {
+    @PostMapping(value = "save")
+    public ResponseEntity<?> savePublicKeyTemplate(@RequestPart("srcFile") MultipartFile sourceFile, @RequestBody PublicKeyTemplateDto publicKeyTemplateDto) throws IOException {
+        byte[] data = sourceFile.getBytes();
+        publicKeyTemplateDto.setTemplate(data);
         PublicKeyTemplate publicKeyTemplate = convertToEntity(publicKeyTemplateDto);
-        //publicKeyTemplate.setTemplate(IOUtils.toByteArray(sourceFile.getBytes()));
         PublicKeyTemplate response;
         try {
             response = service.savePublicKeyTemplate(publicKeyTemplate);
