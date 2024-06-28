@@ -1,6 +1,9 @@
 package su.opencode.digsigcik.synapi.enums;
 
 public enum HashAlgorithm {
+    GOST3411("GOST3411"),
+    GOST3411_2012_256("GOST3411_2012_256"),
+    GOST3411_2012_512("GOST3411_2012_512"),
     SHA1("SHA-1"),
     SHA224("SHA-224"),
     SHA256("SHA-256"),

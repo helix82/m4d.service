@@ -1,6 +1,15 @@
 package su.opencode.digsigcik.synapi.enums;
 
 public enum SignatureAlgorithm {
+    GOST3411withGOST3410EL("GOST3411withGOST3410EL"),
+    GOST3411withGOST3410DHEL("GOST3411withGOST3410DHEL"),
+    GOST3411_2012_256withGOST3410_2012_256("GOST3411_2012_256withGOST3410_2012_256"),
+    GOST3411_2012_512withGOST3410_2012_512("GOST3411_2012_512withGOST3410_2012_512"),
+    GOST3411_2012_256withGOST3410DH_2012_256("GOST3411_2012_256withGOST3410DH_2012_256"),
+    GOST3411_2012_512withGOST3410DH_2012_512("GOST3411_2012_512withGOST3410DH_2012_512"),
+    CryptoProSignature("CryptoProSignature"),
+    CryptoProSignature_2012_256("CryptoProSignature_2012_256"),
+    CryptoProSignature_2012_512("CryptoProSignature_2012_512"),
     NONEwithRSA("NONEwithRSA"),
     MD2withRSA("MD2withRSA"),
     MD5withRSA("MD5withRSA"),

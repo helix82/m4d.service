@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.model;
 
 import lombok.Data;
+import org.checkerframework.common.aliasing.qual.Unique;
 import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 
 import javax.persistence.*;
@@ -13,9 +14,11 @@ public class EncryptionKeyEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id")
-    private ESSUser user;
+    //@ManyToOne(fetch = FetchType.EAGER)
+    @OneToOne
+    @JoinColumn(name = "user_projection_id")
+    @Unique
+    private UserProjection userProjection;
 
     @Column(name = "algorithm")
     private SignatureAlgorithm algorithm;
@@ -25,15 +28,5 @@ public class EncryptionKeyEntity {
 
     @Column(name = "public_key", columnDefinition = "BLOB")
     private byte[] publicKey;
-
-    @Column(name = "deleted")
-    private boolean deleted;
-
-    @Column(name = "disabled")
-    private boolean disabled;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "pincode_id")
-    private PinCode pinCode;
 
 }

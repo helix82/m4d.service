@@ -31,6 +31,28 @@ public class ElectronicSignatureService {
         }
     }
 
+    public PrivateKey getPrivateKey(byte[] privateKeyBytes, String algorithm) {
+        try {
+            byte[] decryptedPrivateKeyBytes = decryptPrivateKey(privateKeyBytes, algorithm);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decryptedPrivateKeyBytes);
+            String keyAlgorithm = algorithm;
+            if (keyAlgorithm.endsWith("RSA")) {
+                keyAlgorithm = "RSA";
+            } else if (keyAlgorithm.endsWith("ECDSA")) {
+                keyAlgorithm = "EC";
+            } else if (keyAlgorithm.endsWith("DSA")) {
+                keyAlgorithm = "DSA";
+            }
+
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(keyAlgorithm);
+            KeyFactory keyFactory = KeyFactory.getInstance(keyAlgorithm);
+            return keyFactory.generatePrivate(keySpec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public PublicKey getPublicKey(byte[] publicKeyBytes, String algorithm) {
         try {
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
@@ -75,6 +97,11 @@ public class ElectronicSignatureService {
     }
 
     private byte[] decryptPrivateKey(byte[] privateKeyBytes, String pinCode, String algorithm) throws InvalidKeyException {
+        // Implement private key decryption using the provided pin code and algorithm
+        return privateKeyBytes;
+    }
+
+    private byte[] decryptPrivateKey(byte[] privateKeyBytes, String algorithm) throws InvalidKeyException {
         // Implement private key decryption using the provided pin code and algorithm
         return privateKeyBytes;
     }
