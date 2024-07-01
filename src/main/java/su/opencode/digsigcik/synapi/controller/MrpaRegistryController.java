@@ -86,11 +86,11 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
 
-        Integer[] credentials = mrpaRegistrySaveWithCredentialDTO.getCredentials();
-        for(Integer s : credentials) {
+        Long[] credentials = mrpaRegistrySaveWithCredentialDTO.getCredentials();
+        for(Long s : credentials) {
             MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
             mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
-            mrpaRegistryCredential.setCredentialId(Long.valueOf(s));
+            mrpaRegistryCredential.setCredentialId(s);
             MrpaRegistryCredential mrpaRegistryCredentialSaved;
             try {
                 mrpaRegistryCredentialSaved = mrpaRegistryCredentialService.saveMrpaRegistryCredential(mrpaRegistryCredential);
