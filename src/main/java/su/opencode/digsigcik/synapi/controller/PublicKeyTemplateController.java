@@ -5,9 +5,8 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.PublicKeyTemplateDto;
@@ -119,6 +118,33 @@ public class PublicKeyTemplateController {
         body.put("result", "true");
 
         return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_SUMMARY, description = CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @GetMapping(value = "/download/{id}", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<?> download(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_PUBLIC_KEY_TEMPLATE_ID_DESCRIPTION, example = "1" ) Long id) {
+        PublicKeyTemplate downloadTempl;
+        try {
+            downloadTempl = service.findByPublicKeyTemplateId(id);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PUBLIC_KEY_TEMPLATE_IS_NULL);
+        }
+        var resource = new ByteArrayResource(downloadTempl.getTemplate());
+        var contentType = MediaType.valueOf(downloadTempl.getContentType());
+        var filename = "template_"+downloadTempl.getType()+"_"+downloadTempl.getVerificationCenter();
+        var disposition = ContentDisposition.attachment()
+                .filename(filename.toLowerCase())
+                .build();
+        return ResponseEntity.ok()
+                .contentLength(resource.contentLength())
+                .contentType(contentType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                .body(resource);
     }
 
     private PublicKeyTemplateDto convertToDto(PublicKeyTemplate publicKeyTemplate) {

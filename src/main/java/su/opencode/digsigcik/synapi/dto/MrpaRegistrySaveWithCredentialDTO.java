@@ -21,5 +21,5 @@ public class MrpaRegistrySaveWithCredentialDTO {
     private String endDate;
 
     @JsonProperty("credentials")
-    private Integer[] credentials;
+    private Long[] credentials;
 }
