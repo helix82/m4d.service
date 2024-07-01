@@ -16,6 +16,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.Date;
 
 @Getter
 @Entity
@@ -39,17 +40,11 @@ public class AcmeCertificate {
     @JsonIgnore
     private AcmeProvider provider;
 
-    @Column(name = "challenge_url", columnDefinition = "VARCHAR(2000)")
-    private String challengeUrl;
-
-    @Column(name = "order_url", columnDefinition = "VARCHAR(2000)")
-    private String orderUrl;
-
-    @Column(name = "challenge_token", columnDefinition = "VARCHAR(2000)")
-    private String challengeToken;
-
-    @Column(name = "challenge_content", columnDefinition = "VARCHAR(2000)")
-    private String challengeContent;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "order_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
+    private AcmeOrder order;
 
     @Column(name = "certificate_url", columnDefinition = "VARCHAR(2000)")
     private String certificateUrl;
@@ -60,16 +55,22 @@ public class AcmeCertificate {
     @Column(name = "revoked", columnDefinition = "BOOLEAN")
     private Boolean revoked;
 
+    @Column(name = "notBefore", columnDefinition = "DATE")
+    private Date notBefore;
+
+    @Column(name = "notAfter", columnDefinition = "DATE")
+    private Date notAfter;
+
     @JsonIgnore
-    @Column(name = "content", columnDefinition = "VARCHAR(16000)")
-    private String content;
+    @Column(name = "content", columnDefinition = "BYTEA")
+    private byte[] content;
 
     public AcmeCertificate() {
     }
 
     public AcmeCertificate(AcmeDomain domain, String content) {
         this.domain = domain;
-        this.content = content;
+        this.content = content.getBytes();
     }
 
     public Long getId() {
@@ -84,11 +85,11 @@ public class AcmeCertificate {
         this.domain = domain;
     }
 
-    public String getContent() {
+    public byte[] getContent() {
         return content;
     }
 
-    public void setContent(String content) {
+    public void setContent(byte[] content) {
         this.content = content;
     }
 
@@ -116,43 +117,35 @@ public class AcmeCertificate {
         this.certificateUrl = certificateUrl;
     }
 
-    public String getChallengeUrl() {
-        return challengeUrl;
-    }
-
-    public void setChallengeUrl(String challengeUrl) {
-        this.challengeUrl = challengeUrl;
-    }
-
-    public String getChallengeToken() {
-        return challengeToken;
-    }
-
-    public void setChallengeToken(String challengeToken) {
-        this.challengeToken = challengeToken;
-    }
-
-    public String getChallengeContent() {
-        return challengeContent;
-    }
-
-    public void setChallengeContent(String challengeContent) {
-        this.challengeContent = challengeContent;
-    }
-
-    public String getOrderUrl() {
-        return orderUrl;
-    }
-
-    public void setOrderUrl(String orderUrl) {
-        this.orderUrl = orderUrl;
-    }
-
     public AcmeProvider getProvider() {
         return provider;
     }
 
     public void setProvider(AcmeProvider provider) {
         this.provider = provider;
+    }
+
+    public AcmeOrder getOrder() {
+        return order;
+    }
+
+    public void setOrder(AcmeOrder order) {
+        this.order = order;
+    }
+
+    public Date getNotBefore() {
+        return notBefore;
+    }
+
+    public void setNotBefore(Date notBefore) {
+        this.notBefore = notBefore;
+    }
+
+    public Date getNotAfter() {
+        return notAfter;
+    }
+
+    public void setNotAfter(Date notAfter) {
+        this.notAfter = notAfter;
     }
 }

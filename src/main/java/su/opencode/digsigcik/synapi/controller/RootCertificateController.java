@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.model.RootCertificate;
+import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 import su.opencode.digsigcik.synapi.repository.RootCertificateRepository;
 import su.opencode.digsigcik.synapi.util.CertUtils;
 
@@ -42,13 +44,17 @@ public class RootCertificateController {
     @Autowired
     private RootCertificateRepository rootCertificateRepository;
 
+    @Autowired
+    private ProviderRepository providerRepository;
+
+
     public static Map certInfo(RootCertificate certificate) {
         HashMap<String, Object> ret = new HashMap<>();
 
         if(certificate.getContent() != null) {
             try {
                 ret.put("id", certificate.getId());
-                ret.put("owner", certificate.getOwnerName());
+                ret.put("provider", certificate.getProvider());
                 ret.put("deleted", certificate.getDeleted());
                 ret.put("revoked", certificate.getRevoked());
 
@@ -58,7 +64,7 @@ public class RootCertificateController {
             }
         } else {
             ret.put("id", certificate.getId());
-            ret.put("owner", certificate.getOwnerName());
+            ret.put("provider", certificate.getProvider());
             ret.put("deleted", certificate.getDeleted());
             ret.put("revoked", certificate.getRevoked());
         }
@@ -118,7 +124,7 @@ public class RootCertificateController {
     })
     @PostMapping("/root/certificates")
     public ResponseEntity<RootCertificate> saveRootCertificate(@RequestBody RootCertificate certificate) {
-        RootCertificate _certificate  = new RootCertificate(certificate.getOwnerName(), certificate.getContent());
+        RootCertificate _certificate  = new RootCertificate(certificate.getProvider(), certificate.getContent());
         if(certificate.getDeleted()!=null)_certificate.setDeleted(certificate.getDeleted());
         if(certificate.getRevoked()!=null)_certificate.setRevoked(certificate.getRevoked());
         return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
@@ -132,15 +138,16 @@ public class RootCertificateController {
     })
     @PostMapping("/root/certificates/upload")
     public ResponseEntity<RootCertificate> uploadAndCreateRootCertificate(
-            @RequestPart(value = "issuer", required = false) @Parameter(name = "issuer", description="Наименование владельца", example = "issuer") String issuer,
+            @RequestPart(value = "provider", required = false) @Parameter(name = "provider", description="Поставщик сертификата", example = "provider") Long provider,
             @RequestPart("content") @Parameter(name = "content", description="Содержимое корневого сертификата", example = "", required = true) MultipartFile content
     ) {
         try {
-            String certContent = new String(content.getBytes());
-            Map certInfo = CertUtils.certInfo(certContent);
-            String _issuer = (String)(certInfo.get("cn"));
-            if(issuer!=null)_issuer=issuer;
-            RootCertificate _certificate = new RootCertificate(_issuer, certContent);
+            AcmeProvider _provider = providerRepository.findById(provider)
+                    .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeProvider with id = " + provider));
+
+            Map certInfo = CertUtils.certInfo(content.getBytes());
+
+            RootCertificate _certificate = new RootCertificate(_provider, content.getBytes());
             return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
         } catch (IOException e) {
             throw new ResourceNotFoundException("Can't upload certificate");
@@ -161,7 +168,7 @@ public class RootCertificateController {
         RootCertificate _certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found RootCertificate with id = " + id));
 
-        if(certificate.getOwnerName()!=null)_certificate.setOwnerName(certificate.getOwnerName());
+        if(certificate.getProvider()!=null)_certificate.setProvider(certificate.getProvider());
         if(certificate.getContent()!=null)_certificate.setContent(certificate.getContent());
         if(certificate.getDeleted()!=null)_certificate.setDeleted(certificate.getDeleted());
         if(certificate.getRevoked()!=null)_certificate.setRevoked(certificate.getRevoked());
@@ -175,7 +182,7 @@ public class RootCertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/root/certificates/{id}/download")
-    public ResponseEntity<String> downloadRootCertificateBylId(HttpServletResponse httpResponse,
+    public ResponseEntity<byte[]> downloadRootCertificateBylId(HttpServletResponse httpResponse,
                                                                     @PathVariable(value = "id") Long id) {
         RootCertificate certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found RootCertificate with id = " + id));
@@ -197,7 +204,7 @@ public class RootCertificateController {
         RootCertificate certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found RootCertificate with id = " + id));
         try {
-            certificate.setContent( new String(content.getBytes()));
+            certificate.setContent(content.getBytes());
         } catch (IOException e) {
             throw new ResourceNotFoundException("Can't upload certificate");
         }

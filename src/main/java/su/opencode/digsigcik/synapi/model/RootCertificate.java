@@ -27,8 +27,11 @@ public class RootCertificate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "owner_name", columnDefinition = "VARCHAR(2000)")
-    private String ownerName;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "provider_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
+    private AcmeProvider provider;
 
     @Column(name = "deleted", columnDefinition = "BOOLEAN")
     private Boolean deleted;
@@ -37,14 +40,14 @@ public class RootCertificate {
     private Boolean revoked;
 
     @JsonIgnore
-    @Column(name = "content", columnDefinition = "VARCHAR(16000)")
-    private String content;
+    @Column(name = "content", columnDefinition = "BYTEA")
+    private byte[] content;
 
     public RootCertificate() {
     }
 
-    public RootCertificate(String ownerName, String content) {
-        this.ownerName = ownerName;
+    public RootCertificate(AcmeProvider provider, byte[] content) {
+        this.provider = provider;
         this.content = content;
     }
 
@@ -52,19 +55,19 @@ public class RootCertificate {
         return id;
     }
 
-    public String getOwnerName() {
-        return ownerName;
+    public AcmeProvider getProvider() {
+        return provider;
     }
 
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
+    public void setProvider(AcmeProvider provider) {
+        this.provider = provider;
     }
 
-    public String getContent() {
+    public byte[] getContent() {
         return content;
     }
 
-    public void setContent(String content) {
+    public void setContent( byte[] content) {
         this.content = content;
     }
 
