@@ -145,9 +145,11 @@ public class RootCertificateController {
             AcmeProvider _provider = providerRepository.findById(provider)
                     .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeProvider with id = " + provider));
 
-            Map certInfo = CertUtils.certInfo(content.getBytes());
+            String certContent = new String(content.getBytes());
 
-            RootCertificate _certificate = new RootCertificate(_provider, content.getBytes());
+            Map certInfo = CertUtils.certInfo(certContent);
+
+            RootCertificate _certificate = new RootCertificate(_provider, certContent);
             return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
         } catch (IOException e) {
             throw new ResourceNotFoundException("Can't upload certificate");
@@ -182,7 +184,7 @@ public class RootCertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/root/certificates/{id}/download")
-    public ResponseEntity<byte[]> downloadRootCertificateBylId(HttpServletResponse httpResponse,
+    public ResponseEntity<String> downloadRootCertificateBylId(HttpServletResponse httpResponse,
                                                                     @PathVariable(value = "id") Long id) {
         RootCertificate certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found RootCertificate with id = " + id));
@@ -204,7 +206,7 @@ public class RootCertificateController {
         RootCertificate certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found RootCertificate with id = " + id));
         try {
-            certificate.setContent(content.getBytes());
+            certificate.setContent( new String(content.getBytes()));
         } catch (IOException e) {
             throw new ResourceNotFoundException("Can't upload certificate");
         }

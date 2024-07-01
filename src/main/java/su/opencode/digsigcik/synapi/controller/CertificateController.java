@@ -208,7 +208,7 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/certificates/{id}/download")
-    public ResponseEntity<byte[]> downloadCertificateBylId(HttpServletResponse httpResponse,
+    public ResponseEntity<String> downloadCertificateBylId(HttpServletResponse httpResponse,
                                                                     @PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
