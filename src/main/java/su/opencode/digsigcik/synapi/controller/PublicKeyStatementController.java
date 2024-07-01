@@ -6,14 +6,17 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.PublicKeyStatementDto;
+import su.opencode.digsigcik.synapi.enums.StatusStatementEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.PublicKeyStatement;
+import su.opencode.digsigcik.synapi.model.PublicKeyTemplate;
 import su.opencode.digsigcik.synapi.service.PublicKeyStatementService;
+import su.opencode.digsigcik.synapi.service.PublicKeyTemplateService;
 
 import javax.validation.ConstraintViolationException;
 import java.util.HashMap;
@@ -30,6 +33,7 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @AllArgsConstructor
 public class PublicKeyStatementController {
     private final PublicKeyStatementService service;
+    private final PublicKeyTemplateService publicKeyTemplateService;
     private final ModelMapper modelMapper;
 
     @Operation(summary = CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_SUMMARY, description = CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_DESCRIPTION)
@@ -56,6 +60,7 @@ public class PublicKeyStatementController {
     @PostMapping("save")
     public ResponseEntity<?> savePublicKeyStatement(@RequestBody PublicKeyStatementDto publicKeyStatementDto) {
         PublicKeyStatement publicKeyStatement = convertToEntity(publicKeyStatementDto);
+        publicKeyStatement.setStatus(StatusStatementEnum.IN_PROGRESS);
         PublicKeyStatement response;
         try {
             response = service.savePublicKeyStatement(publicKeyStatement);
@@ -117,6 +122,63 @@ public class PublicKeyStatementController {
         body.put("result", "true");
 
         return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_SUMMARY, description = CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @GetMapping(value = "/download/{id}", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<?> download(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_PUBLIC_KEY_STATEMENT_ID_DESCRIPTION, example = "1" ) Long id) {
+        PublicKeyStatement pkStatement;
+        try {
+            pkStatement = service.findByPublicKeyStatementId(id);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+        }
+        PublicKeyTemplate downloadTempl;
+        try {
+            downloadTempl = publicKeyTemplateService.findByPublicKeyTemplateId(Long.parseLong(pkStatement.getTemplateId()));
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PUBLIC_KEY_TEMPLATE_IS_NULL);
+        }
+        var resource = new ByteArrayResource(downloadTempl.getTemplate());
+        var contentType = MediaType.valueOf(downloadTempl.getContentType());
+        var filename = "template_"+downloadTempl.getType()+"_"+downloadTempl.getVerificationCenter();
+        var disposition = ContentDisposition.attachment()
+                .filename(filename.toLowerCase())
+                .build();
+        return ResponseEntity.ok()
+                .contentLength(resource.contentLength())
+                .contentType(contentType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                .body(resource);
+    }
+
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_SUMMARY, description = CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @PutMapping("check_processed/{id}")
+    public ResponseEntity<?> checkPublicKeyStatementProcessed(@PathVariable @Parameter(name = "id",
+            description = PARAMETER_PUBLIC_KEY_STATEMENT_ID_DESCRIPTION, example = "1" ) Long id) {
+        PublicKeyStatement pkStatement;
+        try {
+            pkStatement = service.findByPublicKeyStatementId(id);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+        }
+        pkStatement.setStatus(StatusStatementEnum.PROCESSED);
+        PublicKeyStatement response;
+        try {
+            response = service.updatePublicKeyStatement(pkStatement);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+        }
+        return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
 
     private PublicKeyStatementDto convertToDto(PublicKeyStatement publicKeyStatement){

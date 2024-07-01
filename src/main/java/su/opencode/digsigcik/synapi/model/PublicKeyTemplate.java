@@ -39,6 +39,11 @@ public class PublicKeyTemplate {
     @JsonProperty("template")
     private byte[] template;
 
+    @Column(name = "content_type")
+    @Schema(example = "", required = false)
+    @JsonProperty("contentType")
+    private String contentType;
+
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "template_id")
     private Set<PublicKeyStatement> publicKeyStatements = new HashSet<>();

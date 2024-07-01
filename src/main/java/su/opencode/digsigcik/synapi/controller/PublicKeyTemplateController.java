@@ -1,17 +1,14 @@
 package su.opencode.digsigcik.synapi.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.PublicKeyTemplateDto;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
@@ -34,7 +31,6 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @AllArgsConstructor
 public class PublicKeyTemplateController {
     private final PublicKeyTemplateService service;
-    private final ModelMapper modelMapper;
 
     @Operation(summary = CONTROLLER_PUBLIC_KEY_TEMPLATE_FIND_ALL_SUMMARY, description = CONTROLLER_PUBLIC_KEY_TEMPLATE_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
@@ -42,7 +38,7 @@ public class PublicKeyTemplateController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping()
-    public ResponseEntity<?> findAllPublicKeyTemplate() {
+    public ResponseEntity<?> findAllPublicKeyTemplate() throws IOException {
         List<PublicKeyTemplate> response;
         try {
             response = service.findAllPublicKeyTemplate();
@@ -52,24 +48,16 @@ public class PublicKeyTemplateController {
         return new ResponseEntity<>(response.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
     }
 
-    @PostMapping(value = "save_file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<?> savePublicKey(@RequestBody String publicKeyTemplate, @RequestPart("srcFile") MultipartFile sourceFile) throws IOException {
-        byte[] data = sourceFile.getBytes();
-        ObjectMapper mapper = new ObjectMapper();
-        PublicKeyTemplateDto publicKeyTemplateDto = mapper.readValue(publicKeyTemplate, PublicKeyTemplateDto.class);
-    return new ResponseEntity<>(data, HttpStatus.OK);
-    }
-
     @Operation(summary = CONTROLLER_PUBLIC_KEY_TEMPLATE_SAVE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_TEMPLATE_SAVE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @PostMapping(value = "save")
-    public ResponseEntity<?> savePublicKeyTemplate(@RequestPart("srcFile") MultipartFile sourceFile, @RequestBody PublicKeyTemplateDto publicKeyTemplateDto) throws IOException {
-        byte[] data = sourceFile.getBytes();
-        publicKeyTemplateDto.setTemplate(data);
+    @PostMapping(value = "save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> savePublicKeyTemplate(@ModelAttribute PublicKeyTemplateDto publicKeyTemplateDto) throws IOException {
+
         PublicKeyTemplate publicKeyTemplate = convertToEntity(publicKeyTemplateDto);
+        publicKeyTemplate.setContentType(publicKeyTemplateDto.getTemplate().getContentType());
         PublicKeyTemplate response;
         try {
             response = service.savePublicKeyTemplate(publicKeyTemplate);
@@ -102,7 +90,7 @@ public class PublicKeyTemplateController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping("update")
-    public ResponseEntity<?> updatePublicKeyTemplate(@RequestBody PublicKeyTemplateDto publicKeyTemplateDto) {
+    public ResponseEntity<?> updatePublicKeyTemplate(@RequestBody PublicKeyTemplateDto publicKeyTemplateDto) throws IOException {
         PublicKeyTemplate publicKeyTemplate = convertToEntity(publicKeyTemplateDto);
         PublicKeyTemplate response;
         try {
@@ -133,13 +121,22 @@ public class PublicKeyTemplateController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    private PublicKeyTemplateDto convertToDto(PublicKeyTemplate publicKeyTemplate){
-        PublicKeyTemplateDto publicKeyTemplateDto = modelMapper.map(publicKeyTemplate, PublicKeyTemplateDto.class);
+    private PublicKeyTemplateDto convertToDto(PublicKeyTemplate publicKeyTemplate) {
+        PublicKeyTemplateDto publicKeyTemplateDto = new PublicKeyTemplateDto();
+        publicKeyTemplateDto.setId(publicKeyTemplate.getId());
+        publicKeyTemplateDto.setType(publicKeyTemplate.getType());
+        publicKeyTemplateDto.setVerificationCenter(publicKeyTemplate.getVerificationCenter());
+        publicKeyTemplateDto.setContentType(publicKeyTemplate.getContentType());
         return publicKeyTemplateDto;
     }
 
-    private PublicKeyTemplate convertToEntity(PublicKeyTemplateDto publicKeyTemplateDto){
-        PublicKeyTemplate publicKeyTemplate = modelMapper.map(publicKeyTemplateDto, PublicKeyTemplate.class);
+    private PublicKeyTemplate convertToEntity(PublicKeyTemplateDto publicKeyTemplateDto) throws IOException {
+        PublicKeyTemplate publicKeyTemplate = new PublicKeyTemplate();
+        publicKeyTemplate.setId(publicKeyTemplateDto.getId());
+        publicKeyTemplate.setType(publicKeyTemplateDto.getType());
+        publicKeyTemplate.setVerificationCenter(publicKeyTemplateDto.getVerificationCenter());
+        byte[] bytes = publicKeyTemplateDto.getTemplate().getBytes();
+        publicKeyTemplate.setTemplate(bytes);
         return publicKeyTemplate;
     }
 }

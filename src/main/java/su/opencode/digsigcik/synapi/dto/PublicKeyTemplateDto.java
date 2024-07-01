@@ -2,6 +2,7 @@ package su.opencode.digsigcik.synapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.enums.TypeTemplateEnum;
 import su.opencode.digsigcik.synapi.enums.VerificationCenterEnum;
 
@@ -17,5 +18,8 @@ public class PublicKeyTemplateDto {
     private VerificationCenterEnum verificationCenter;
 
     @JsonProperty("template")
-    private byte[] template;
+    private MultipartFile template;
+
+    @JsonProperty("contentType")
+    private String contentType;
 }

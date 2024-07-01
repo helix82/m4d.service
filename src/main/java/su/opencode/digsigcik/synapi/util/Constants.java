@@ -234,6 +234,8 @@ public interface Constants {
     String CONTROLLER_PUBLIC_KEY_TEMPLATE_UPDATE_DESCRIPTION = "Возвращает измененный шаблон заявления";
     String CONTROLLER_PUBLIC_KEY_TEMPLATE_DELETE_SUMMARY = "Удалить шаблон заявления по ИД";
     String CONTROLLER_PUBLIC_KEY_TEMPLATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_SUMMARY = "Скачать шаблон заявления по ИД";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_DESCRIPTION = "Выгружает на локальный компьютер шаблон заявления";
 
     String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_SUMMARY = "Получить список заявлений";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_DESCRIPTION = "Возвращает список заявлений";
@@ -245,6 +247,8 @@ public interface Constants {
     String CONTROLLER_PUBLIC_KEY_STATEMENT_UPDATE_DESCRIPTION = "Возвращает измененное заявление";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_DELETE_SUMMARY = "Удалить заявление по ИД";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_SUMMARY = "Отметить заявление обработанным";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_DESCRIPTION = "Возвращает измененное заявление";
 
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список сертификатов пользователей";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список сертификатов пользователей";
