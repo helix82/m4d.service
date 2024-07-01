@@ -11,17 +11,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
+import su.opencode.digsigcik.synapi.model.AcmeOrder;
 import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
+import su.opencode.digsigcik.synapi.service.AcmeService;
 import su.opencode.digsigcik.synapi.util.CertUtils;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +45,9 @@ public class CertificateController {
 
     @Autowired
     private CertificateRepository certificateRepository;
+
+    @Autowired
+    private AcmeService acmeService;
 
     @Operation(summary = "Получить список сертификатов указанного домена",
             description = "Возвращает список сертификатов указанного домена" )
@@ -91,19 +99,17 @@ public class CertificateController {
         }
         AcmeDomain domain = certificate.getDomain();
         ret.put("domain", String.valueOf(domain.getDomainUrl()));
+        ret.put("domainId", String.valueOf(domain.getId()));
 
-        if(certificate.getContent() != null) {
-            try {
-                ret.put("status", "unknown");
-                ret.putAll(CertUtils.certInfo(certificate.getContent()));
-            } catch (CertificateException e) {
-                ret.put("error", "invalid certificate");
-                ret.put("status", "error");
-            }
-        } else {
-            ret.put("challengeToken", certificate.getChallengeToken());
-            ret.put("challengeContent", certificate.getChallengeContent());
-            ret.put("status", "challenge");
+        AcmeOrder order = certificate.getOrder();
+        ret.put("orderId", String.valueOf(order.getId()));
+
+        try {
+            ret.put("status", "unknown");
+            ret.putAll(CertUtils.certInfo(certificate.getContent()));
+        } catch (CertificateException e) {
+            ret.put("error", "invalid certificate");
+            ret.put("status", "error");
         }
         return ret;
     }
@@ -154,6 +160,47 @@ public class CertificateController {
         return new ResponseEntity<>(certInfo(certificate), HttpStatus.OK);
     }
 
+    @Operation(summary = "Выпустить новый сертификат в автоматическом режиме",
+            description = "Выпускает новый сертификат в автоматическом режиме" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Сертификат успешно выпущен" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping("/certificates")
+    public ResponseEntity<Map> certificateReleaseAuto(HttpSession httpSession,
+                                            @RequestParam(value = "provider") Long providerId,
+                                            @RequestParam(value = "domainName") String domainName,
+                                            @RequestParam(value = "notAfter") String notAfter ) {
+        return acmeService.certificate(httpSession,domainName, notAfter, providerId);
+    }
+
+    @Operation(summary = "Выпустить новый сертификат в автоматическом режиме для указанного домена",
+            description = "Выпускает новый сертификат в автоматическом режиме для указанного домена" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Сертификат успешно выпущен" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping("/domains/{domainId}/certificate")
+    public Map certificateReleaseDomain(HttpSession httpSession,
+                           @PathVariable(value = "domainId") Long domainId
+    ) {
+        return acmeService.certificate(httpSession,domainId);
+    }
+
+    @Operation(summary = "Отозвать сертификат",
+            description = "Отзывает сертификат" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Сертификат успешно отозван" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping("/certificates/{id}/revoke")
+    public Map revoke(HttpSession httpSession,
+                      @PathVariable(value = "id") Long id
+    ) {
+        return acmeService.revoke(httpSession,id);
+    }
+
+
     @Operation(summary = "Получить файл сертификата",
             description = "Возвращает файл сертификата" )
     @ApiResponses(value = {
@@ -161,7 +208,7 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/certificates/{id}/download")
-    public ResponseEntity<String> downloadCertificateBylId(HttpServletResponse httpResponse,
+    public ResponseEntity<byte[]> downloadCertificateBylId(HttpServletResponse httpResponse,
                                                                     @PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));

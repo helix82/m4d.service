@@ -13,6 +13,8 @@ public interface CertificateRepository extends JpaRepository<AcmeCertificate, Lo
 
     List<AcmeCertificate> findByDomainId(Long domainId);
 
+    List<AcmeCertificate> findByOrderId(Long orderId);
+
     List<AcmeCertificate> findByProviderId(Long providerId);
 
     @Transactional

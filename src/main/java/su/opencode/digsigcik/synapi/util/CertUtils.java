@@ -20,11 +20,11 @@ import java.util.Map;
 
 @Getter
 public class CertUtils {
-    public static Map<String, Object> certInfo(String certContent) throws CertificateException {
+    public static Map<String, Object> certInfo(byte[] certContent) throws CertificateException {
         HashMap<String, Object> ret = new HashMap<>();
         if(certContent != null) {
             CertificateFactory fac = CertificateFactory.getInstance("X509");
-            X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(certContent.getBytes()));
+            X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(certContent));
 
             ret.put("issuer", String.valueOf(cert.getIssuerX500Principal().getName()));
 

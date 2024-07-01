@@ -23,6 +23,15 @@ public class AcmeProvider {
     @Column(name = "name", columnDefinition = "VARCHAR(50)")
     private String name;
 
+    @Column(name = "description", columnDefinition = "VARCHAR(2000)")
+    private String description;
+
+    @Column(name = "domain", columnDefinition = "VARCHAR(400)")
+    private String domain;
+
+    @Column(name = "ip", columnDefinition = "VARCHAR(400)")
+    private String ip;
+
     @Column(name = "directory_url", columnDefinition = "VARCHAR(400)")
     private String directoryUrl;
 
@@ -75,5 +84,29 @@ public class AcmeProvider {
 
     public void setAutomatedRelease(Boolean automatedRelease) {
         this.automatedRelease = automatedRelease;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDomain() {
+        return domain;
+    }
+
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 }

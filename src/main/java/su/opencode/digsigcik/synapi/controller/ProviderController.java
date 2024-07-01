@@ -63,6 +63,9 @@ public class ProviderController {
     @PostMapping("/providers")
     public ResponseEntity<AcmeProvider> createProvider(@RequestBody AcmeProvider acmeProvider) {
         AcmeProvider _acmeProvider= new AcmeProvider(acmeProvider.getName(), acmeProvider.getDirectoryUrl());
+        if(acmeProvider.getDomain()!=null)_acmeProvider.setDomain(acmeProvider.getDomain());
+        if(acmeProvider.getIp()!=null)_acmeProvider.setIp(acmeProvider.getIp());
+        if(acmeProvider.getDescription()!=null)_acmeProvider.setDescription(acmeProvider.getDescription());
         if(acmeProvider.getAutomatedRelease()!=null)_acmeProvider.setAutomatedRelease(acmeProvider.getAutomatedRelease());
         if(acmeProvider.getDeleted()!=null)_acmeProvider.setDeleted(acmeProvider.getDeleted());
 
@@ -83,6 +86,9 @@ public class ProviderController {
                 .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeProvider with id = " + id));
 
         if(acmeProvider.getName()!=null)_acmeProvider.setName(acmeProvider.getName());
+        if(acmeProvider.getDescription()!=null)_acmeProvider.setDescription(acmeProvider.getDescription());
+        if(acmeProvider.getDomain()!=null)_acmeProvider.setDomain(acmeProvider.getDomain());
+        if(acmeProvider.getIp()!=null)_acmeProvider.setIp(acmeProvider.getIp());
         if(acmeProvider.getDirectoryUrl()!=null)_acmeProvider.setDirectoryUrl(acmeProvider.getDirectoryUrl());
         if(acmeProvider.getAutomatedRelease()!=null)_acmeProvider.setAutomatedRelease(acmeProvider.getAutomatedRelease());
         if(acmeProvider.getDeleted()!=null)_acmeProvider.setDeleted(acmeProvider.getDeleted());
