@@ -40,13 +40,13 @@ public class RootCertificate {
     private Boolean revoked;
 
     @JsonIgnore
-    @Column(name = "content", columnDefinition = "BYTEA")
-    private byte[] content;
+    @Column(name = "content", columnDefinition = "VARCHAR(16000)")
+    private String content;
 
     public RootCertificate() {
     }
 
-    public RootCertificate(AcmeProvider provider, byte[] content) {
+    public RootCertificate(AcmeProvider provider, String content) {
         this.provider = provider;
         this.content = content;
     }
@@ -63,11 +63,11 @@ public class RootCertificate {
         this.provider = provider;
     }
 
-    public byte[] getContent() {
+    public String getContent() {
         return content;
     }
 
-    public void setContent( byte[] content) {
+    public void setContent(String content) {
         this.content = content;
     }
 

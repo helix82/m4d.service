@@ -62,15 +62,15 @@ public class AcmeCertificate {
     private Date notAfter;
 
     @JsonIgnore
-    @Column(name = "content", columnDefinition = "BYTEA")
-    private byte[] content;
+    @Column(name = "content", columnDefinition = "VARCHAR(16000)")
+    private String content;
 
     public AcmeCertificate() {
     }
 
     public AcmeCertificate(AcmeDomain domain, String content) {
         this.domain = domain;
-        this.content = content.getBytes();
+        this.content = content;
     }
 
     public Long getId() {
@@ -85,11 +85,11 @@ public class AcmeCertificate {
         this.domain = domain;
     }
 
-    public byte[] getContent() {
+    public String getContent() {
         return content;
     }
 
-    public void setContent(byte[] content) {
+    public void setContent(String content) {
         this.content = content;
     }
 

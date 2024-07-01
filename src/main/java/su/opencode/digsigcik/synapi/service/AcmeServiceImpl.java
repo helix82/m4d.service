@@ -483,7 +483,7 @@ public class AcmeServiceImpl implements AcmeService {
                 try {
                     CertificateFactory fac = null;
                     fac = CertificateFactory.getInstance("X509");
-                    X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(acmeCertificate.getContent()));
+                    X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(acmeCertificate.getContent().getBytes()));
 
                     Certificate.revoke(login, cert, RevocationReason.KEY_COMPROMISE);
 
