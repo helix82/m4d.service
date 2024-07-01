@@ -232,6 +232,7 @@ public class AcmeServiceImpl implements AcmeService {
 
                 AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
                 acmeCertificate.setOrder(acmeOrder);
+                acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
                 acmeCertificate.setProvider(acmeOrder.getProvider());
                 acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
                 certificateRepository.save(acmeCertificate);
@@ -356,6 +357,7 @@ public class AcmeServiceImpl implements AcmeService {
 
                             AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
                             acmeCertificate.setOrder(acmeOrder);
+                            acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
                             acmeCertificate.setProvider(acmeOrder.getProvider());
                             acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
                             certificateRepository.save(acmeCertificate);
