@@ -103,6 +103,9 @@ public interface Constants {
     String PARAMETER_REPRESENTATIVE_PASSPORT_ID_DESCRIPTION = "ИД паспорта представителя";
     String PARAMETER_REVOKED_CERTIFICATE_ID_DESCRIPTION = "ИД отозванного сертификата";
     String PARAMETER_TRUSTED_CERTIFICATE_ID_DESCRIPTION = "ИД доверенного сертификата";
+    String PARAMETER_PUBLIC_KEY_TEMPLATE_ID_DESCRIPTION = "ИД шаблона заявления";
+    String PARAMETER_PUBLIC_KEY_USER_CERTIFICATE_ID_DESCRIPTION = "ИД сертификата пользователя";
+    String PARAMETER_PUBLIC_KEY_STATEMENT_ID_DESCRIPTION = "ИД заявления";
 
     String CONTROLLER_MRPA_FIND_ALL_SUMMARY = "Получить список МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_DESCRIPTION = "Возвращает список МЧД с ФИО представителя и ФИО доверителя";
@@ -221,6 +224,43 @@ public interface Constants {
     String CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_SUMMARY = "Загрузить доверенные сертификаты";
     String CONTROLLER_TRUSTED_CERTIFICATE_UPLOAD_DESCRIPTION = "Возвращает количество загруженных сертификатов";
 
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_FIND_ALL_SUMMARY = "Получить список шаблонов заявлений";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_FIND_ALL_DESCRIPTION = "Возвращает список шаблонов заявлений";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_SAVE_SUMMARY = "Сохранить шаблон заявления";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_SAVE_DESCRIPTION = "Возвращает созданный шаблон заявления";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_FIND_BY_ID_SUMMARY = "Получить шаблон заявления по ИД";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_FIND_BY_ID_DESCRIPTION = "Возвращает шаблон заявления по ИД";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_UPDATE_SUMMARY = "Изменить шаблон заявления";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_UPDATE_DESCRIPTION = "Возвращает измененный шаблон заявления";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_DELETE_SUMMARY = "Удалить шаблон заявления по ИД";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_SUMMARY = "Скачать шаблон заявления по ИД";
+    String CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_DESCRIPTION = "Выгружает на локальный компьютер шаблон заявления";
+
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_SUMMARY = "Получить список заявлений";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_DESCRIPTION = "Возвращает список заявлений";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_SAVE_SUMMARY = "Сохранить заявление";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_SAVE_DESCRIPTION = "Возвращает созданное заявление";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_BY_ID_SUMMARY = "Получить заявление по ИД";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_BY_ID_DESCRIPTION = "Возвращает заявление по ИД";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_UPDATE_SUMMARY = "Изменить заявление";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_UPDATE_DESCRIPTION = "Возвращает измененное заявление";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_DELETE_SUMMARY = "Удалить заявление по ИД";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_SUMMARY = "Отметить заявление обработанным";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_DESCRIPTION = "Возвращает измененное заявление";
+
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список сертификатов пользователей";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список сертификатов пользователей";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_SAVE_SUMMARY = "Сохранить сертификат пользователя";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_SAVE_DESCRIPTION = "Возвращает созданный сертификат пользователя";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_BY_ID_SUMMARY = "Получить сертификат пользователя по ИД";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_BY_ID_DESCRIPTION = "Возвращает сертификат пользователя по ИД";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_UPDATE_SUMMARY = "Изменить сертификат пользователя";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает измененный сертификат пользователя";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_DELETE_SUMMARY = "Удалить сертификат пользователя по ИД";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
     String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
@@ -237,7 +277,9 @@ public interface Constants {
     String TRUSTED_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый доверенный сертификат уже существует в базе!";
     String TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .cer!";
     String CA_IS_NULL = String.format("CA is %s!", NULL);
-
+    String PUBLIC_KEY_TEMPLATE_IS_NULL = String.format("Template is %s!", NULL);
+    String PUBLIC_KEY_STATEMENT_IS_NULL = String.format("Statement is %s!", NULL);
+    String PUBLIC_KEY_USER_CERTIFICATE_IS_NULL = String.format("User certificate is %s!", NULL);
 
 
     String CONTROLLER_PIN_CODE_GET_ALL = "Возвращает хэши пинкодов всех пользователей";
