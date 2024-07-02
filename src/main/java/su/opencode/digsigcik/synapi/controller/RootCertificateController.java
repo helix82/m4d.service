@@ -51,22 +51,23 @@ public class RootCertificateController {
     public static Map certInfo(RootCertificate certificate) {
         HashMap<String, Object> ret = new HashMap<>();
 
+
+
+        ret.put("id", certificate.getId());
+        AcmeProvider provider = certificate.getProvider();
+        if(provider!=null) {
+            ret.put("provider", String.valueOf(provider.getName()));
+            ret.put("providerId", String.valueOf(provider.getId()));
+        }
+        ret.put("deleted", certificate.getDeleted());
+        ret.put("revoked", certificate.getRevoked());
+
         if(certificate.getContent() != null) {
             try {
-                ret.put("id", certificate.getId());
-                ret.put("provider", certificate.getProvider());
-                ret.put("deleted", certificate.getDeleted());
-                ret.put("revoked", certificate.getRevoked());
-
                 ret.putAll(CertUtils.certInfo(certificate.getContent()));
             } catch (CertificateException e) {
                 ret.put("error", "invalid certificate");
             }
-        } else {
-            ret.put("id", certificate.getId());
-            ret.put("provider", certificate.getProvider());
-            ret.put("deleted", certificate.getDeleted());
-            ret.put("revoked", certificate.getRevoked());
         }
         return ret;
     }
