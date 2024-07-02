@@ -98,11 +98,15 @@ public class CertificateController {
             ret.put("providerId", String.valueOf(provider.getId()));
         }
         AcmeDomain domain = certificate.getDomain();
-        ret.put("domain", String.valueOf(domain.getDomainUrl()));
-        ret.put("domainId", String.valueOf(domain.getId()));
+        if(domain!=null) {
+            ret.put("domain", String.valueOf(domain.getDomainUrl()));
+            ret.put("domainId", String.valueOf(domain.getId()));
+        }
 
         AcmeOrder order = certificate.getOrder();
-        ret.put("orderId", String.valueOf(order.getId()));
+        if(order!=null) {
+            ret.put("orderId", String.valueOf(order.getId()));
+        }
 
         try {
             ret.put("status", "unknown");
