@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.StatusStatementEnum;
+import su.opencode.digsigcik.synapi.enums.TypeStatementEnum;
 
 import javax.persistence.*;
 
@@ -30,10 +31,15 @@ public class PublicKeyStatement {
     @JsonProperty("dtCreate")
     private String dtCreate;
 
-    @Column(name = "template_id", columnDefinition = "VARCHAR(255)")
+    @Column(name = "verification_center_id", columnDefinition = "VARCHAR(255)")
     @Schema(example = "", required = false)
-    @JsonProperty("templateId")
-    private String templateId;
+    @JsonProperty("verificationCenterId")
+    private String verificationCenterId;
+
+    @Column(name = "type", columnDefinition = "VARCHAR(255)")
+    @Schema(example = "", required = false)
+    @JsonProperty("type")
+    private TypeStatementEnum type;
 
     @Column(name = "status", columnDefinition = "VARCHAR(255)")
     @Schema(example = "", required = false)
