@@ -25,6 +25,7 @@ import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 import su.opencode.digsigcik.synapi.service.AcmeService;
 import su.opencode.digsigcik.synapi.util.CertUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.security.cert.CertificateException;
@@ -171,11 +172,15 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/certificates")
-    public ResponseEntity<Map> certificateReleaseAuto(HttpSession httpSession,
+    public ResponseEntity<Map> certificateReleaseAuto(HttpSession httpSession, HttpServletRequest httpRequest,
                                             @RequestParam(value = "provider") Long providerId,
                                             @RequestParam(value = "domainName") String domainName,
                                             @RequestParam(value = "notAfter") String notAfter ) {
-        return acmeService.certificate(httpSession,domainName, notAfter, providerId);
+        Map data = httpRequest.getParameterMap();
+        data.remove("provider");
+        data.remove("domainName");
+        data.remove("notAfter");
+        return acmeService.certificate(httpSession,domainName, notAfter, providerId, data);
     }
 
     @Operation(summary = "Выпустить новый сертификат в автоматическом режиме для указанного домена",

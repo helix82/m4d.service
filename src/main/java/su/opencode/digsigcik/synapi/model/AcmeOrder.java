@@ -1,9 +1,13 @@
 package su.opencode.digsigcik.synapi.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import lombok.Getter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.CascadeType;
@@ -17,11 +21,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Entity
 @Table(name="acmeorder")
 @Transactional
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 // AcmeCertificate settings for acme
 public class AcmeOrder {
     @Id
@@ -55,14 +62,15 @@ public class AcmeOrder {
     @Column(name = "deleted", columnDefinition = "BOOLEAN")
     private Boolean deleted;
 
-    @Column(name = "revoked", columnDefinition = "BOOLEAN")
-    private Boolean revoked;
-
     @Column(name = "notBefore", columnDefinition = "DATE")
     private Date notBefore;
 
     @Column(name = "notAfter", columnDefinition = "DATE")
     private Date notAfter;
+
+    @Type(type = "jsonb")
+    @Column(name = "data", columnDefinition = "jsonb")
+    private Map<String, String[]> data = new HashMap<>();
 
     public AcmeOrder() {
     }
@@ -89,14 +97,6 @@ public class AcmeOrder {
 
     public void setDeleted(Boolean deleted) {
         this.deleted = deleted;
-    }
-
-    public Boolean getRevoked() {
-        return (revoked==null)?false:revoked;
-    }
-
-    public void setRevoked(Boolean revoked) {
-        this.revoked = revoked;
     }
 
     public String getChallengeUrl() {
@@ -153,5 +153,13 @@ public class AcmeOrder {
 
     public void setNotAfter(Date notAfter) {
         this.notAfter = notAfter;
+    }
+
+    public Map<String, String[]> getData() {
+        return data;
+    }
+
+    public void setData(Map<String, String[]> data) {
+        this.data = data;
     }
 }
