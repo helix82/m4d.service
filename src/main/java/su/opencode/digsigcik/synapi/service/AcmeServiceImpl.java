@@ -26,6 +26,7 @@ import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
 import su.opencode.digsigcik.synapi.repository.OrderRepository;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
+import su.opencode.digsigcik.synapi.util.DateUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -38,6 +39,8 @@ import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -158,7 +161,7 @@ public class AcmeServiceImpl implements AcmeService {
         return ret;
     }
 
-    public ResponseEntity<Map> certificate(HttpSession httpSession,String domainName, String notAfter, Long providerId) {
+    public ResponseEntity<Map> certificate(HttpSession httpSession,String domainName, String notAfter, Long providerId, Map data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -174,6 +177,13 @@ public class AcmeServiceImpl implements AcmeService {
         AcmeProvider acmeProvider = providerRepository.findById(providerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
 
+        Date notAfterDate = null;
+        try {
+            notAfterDate = DateUtils.parse(notAfter);
+        } catch (ParseException e) {
+            notAfterDate = new Date();
+        }
+
         if(loginDefaultAccount(httpSession)){
             Login login = (Login)httpSession.getAttribute("login");
             try {
@@ -181,7 +191,7 @@ public class AcmeServiceImpl implements AcmeService {
                 Order order = account
                         .newOrder()
                         .domain(acmeDomain.getDomainUrl())
-                        .notAfter(Instant.parse(notAfter))
+                        .notAfter(notAfterDate.toInstant())
                         .create();
 
                 Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
@@ -196,10 +206,11 @@ public class AcmeServiceImpl implements AcmeService {
                 acmeOrder.setOrderUrl(order.getLocation().toString());
                 acmeOrder.setProvider(acmeProvider);
                 acmeOrder.setDomain(acmeDomain);
-                acmeOrder.setNotAfter(Date.from(Instant.parse(notAfter)));
+                acmeOrder.setNotAfter(notAfterDate);
                 acmeOrder.setChallengeUrl(challenge.getLocation().toString());
                 acmeOrder.setChallengeToken(challenge.getToken());
                 acmeOrder.setChallengeContent(challenge.getAuthorization());
+                acmeOrder.setData(data);
                 orderRepository.save(acmeOrder);
 
                 doChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
@@ -251,7 +262,7 @@ public class AcmeServiceImpl implements AcmeService {
         return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }
 
-    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domainName, String notAfter, Long providerId) {
+    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domainName, String notAfter, Long providerId, Map data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -264,6 +275,12 @@ public class AcmeServiceImpl implements AcmeService {
             acmeDomain = new AcmeDomain(acmeAccount, domainName);
             domainRepository.save(acmeDomain);
         }
+        Date notAfterDate = null;
+        try {
+            notAfterDate = DateUtils.parse(notAfter);
+        } catch (ParseException e) {
+            notAfterDate = new Date();
+        }
 
         AcmeProvider acmeProvider = providerRepository.findById(providerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
@@ -275,7 +292,7 @@ public class AcmeServiceImpl implements AcmeService {
                 Order order = account
                         .newOrder()
                         .domain(acmeDomain.getDomainUrl())
-                        .notAfter(Instant.parse(notAfter))
+                        .notAfter(notAfterDate.toInstant())
                         .create();
 
                 Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
@@ -292,10 +309,11 @@ public class AcmeServiceImpl implements AcmeService {
                 acmeOrder.setOrderUrl(order.getLocation().toString());
                 acmeOrder.setProvider(acmeProvider);
                 acmeOrder.setDomain(acmeDomain);
-                acmeOrder.setNotAfter(Date.from(Instant.parse(notAfter)));
+                acmeOrder.setNotAfter(notAfterDate);
                 acmeOrder.setChallengeUrl(challenge.getLocation().toString());
                 acmeOrder.setChallengeToken(challenge.getToken());
                 acmeOrder.setChallengeContent(challenge.getAuthorization());
+                acmeOrder.setData(data);
                 orderRepository.save(acmeOrder);
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");

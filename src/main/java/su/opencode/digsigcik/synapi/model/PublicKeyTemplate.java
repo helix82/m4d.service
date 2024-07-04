@@ -34,7 +34,7 @@ public class PublicKeyTemplate {
     private VerificationCenterEnum verificationCenter;
 
     @Lob
-    @Column(name = "template", columnDefinition = "BLOB")
+    @Column(name = "template", columnDefinition = "bytea")
     @Schema(example = "", required = false)
     @JsonProperty("template")
     private byte[] template;
