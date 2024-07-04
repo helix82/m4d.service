@@ -14,6 +14,4 @@ public interface PublicKeyUserCertificateService {
 
     PublicKeyUserCertificate updatePublicKeyUserCertificate(@NotNull PublicKeyUserCertificate publicKeyUserCertificate);
 
-    void deletePublicKeyUserCertificate(@NotNull Long id);
-
 }

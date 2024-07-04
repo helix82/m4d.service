@@ -21,9 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
-import static su.opencode.digsigcik.synapi.util.Constants.CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_SAVE_DESCRIPTION;
 
 
 @RestController
@@ -58,6 +56,7 @@ public class PublicKeyUserCertificateController {
     @PostMapping("save")
     public ResponseEntity<?> savePublicKeyUserCertificate(@RequestBody PublicKeyUserCertificateDto publicKeyUserCertificateDto) {
         PublicKeyUserCertificate publicKeyUserCertificate = convertToEntity(publicKeyUserCertificateDto);
+        publicKeyUserCertificate.setDeleted(false);
         PublicKeyUserCertificate response;
         try {
             response = service.savePublicKeyUserCertificate(publicKeyUserCertificate);
@@ -110,10 +109,12 @@ public class PublicKeyUserCertificateController {
     @DeleteMapping("delete/{id}")
     public ResponseEntity<?> deletePublicKeyUserCertificate(@PathVariable @Parameter(name = "id",
             description = PARAMETER_PUBLIC_KEY_USER_CERTIFICATE_ID_DESCRIPTION, example = "1" ) Long id) {
+        PublicKeyUserCertificate publicKeyUserCertificate = service.findByPublicKeyUserCertificateId(id);
+        publicKeyUserCertificate.setDeleted(true);
         try {
-            service.deletePublicKeyUserCertificate(id);
+            service.updatePublicKeyUserCertificate(publicKeyUserCertificate);
         } catch (ConstraintViolationException e) {
-            throw new BadRequestException(ID_IS_NULL);
+            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NULL);
         }
         Map<String, String> body = new HashMap<>();
         body.put("result", "true");

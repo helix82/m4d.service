@@ -5,11 +5,10 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public enum TypeTemplateEnum {
+public enum TypeStatementEnum {
     RELEASE("Выпуск"),
     REISSUE("Перевыпуск"),
-    RECALL("Отзыв"),
-    UNKNOWN("Неизвестный тип");
+    RECALL("Отзыв");
 
     private final String title;
 }

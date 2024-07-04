@@ -12,13 +12,16 @@ import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.PublicKeyStatementDto;
 import su.opencode.digsigcik.synapi.enums.StatusStatementEnum;
+import su.opencode.digsigcik.synapi.enums.TypeStatementEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.PublicKeyStatement;
-import su.opencode.digsigcik.synapi.model.PublicKeyTemplate;
+import su.opencode.digsigcik.synapi.model.PublicKeyVerificationCenter;
 import su.opencode.digsigcik.synapi.service.PublicKeyStatementService;
-import su.opencode.digsigcik.synapi.service.PublicKeyTemplateService;
+import su.opencode.digsigcik.synapi.service.PublicKeyVerificationCenterService;
 
 import javax.validation.ConstraintViolationException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +36,7 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @AllArgsConstructor
 public class PublicKeyStatementController {
     private final PublicKeyStatementService service;
-    private final PublicKeyTemplateService publicKeyTemplateService;
+    private final PublicKeyVerificationCenterService publicKeyVerificationCenterService;
     private final ModelMapper modelMapper;
 
     @Operation(summary = CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_SUMMARY, description = CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_DESCRIPTION)
@@ -61,6 +64,7 @@ public class PublicKeyStatementController {
     public ResponseEntity<?> savePublicKeyStatement(@RequestBody PublicKeyStatementDto publicKeyStatementDto) {
         PublicKeyStatement publicKeyStatement = convertToEntity(publicKeyStatementDto);
         publicKeyStatement.setStatus(StatusStatementEnum.IN_PROGRESS);
+        publicKeyStatement.setType(TypeStatementEnum.RELEASE);
         PublicKeyStatement response;
         try {
             response = service.savePublicKeyStatement(publicKeyStatement);
@@ -124,7 +128,7 @@ public class PublicKeyStatementController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_SUMMARY, description = CONTROLLER_PUBLIC_KEY_TEMPLATE_DOWNLOAD_DESCRIPTION)
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_STATEMENT_DOWNLOAD_TEMPLATE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_STATEMENT_DOWNLOAD_TEMPLATE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
@@ -132,23 +136,43 @@ public class PublicKeyStatementController {
     @GetMapping(value = "/download/{id}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<?> download(@PathVariable @Parameter(name = "id",
             description = PARAMETER_PUBLIC_KEY_STATEMENT_ID_DESCRIPTION, example = "1" ) Long id) {
-        PublicKeyStatement pkStatement;
+                PublicKeyStatement pkStatement;
         try {
             pkStatement = service.findByPublicKeyStatementId(id);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
         }
-        PublicKeyTemplate downloadTempl;
+        PublicKeyVerificationCenter downloadTemplate;
         try {
-            downloadTempl = publicKeyTemplateService.findByPublicKeyTemplateId(Long.parseLong(pkStatement.getTemplateId()));
+            downloadTemplate = publicKeyVerificationCenterService.findByPublicKeyVerificationCenterId(Long.parseLong(pkStatement.getVerificationCenterId()));
         } catch (ConstraintViolationException e) {
-            throw new BadRequestException(PUBLIC_KEY_TEMPLATE_IS_NULL);
+            throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL);
         }
-        var resource = new ByteArrayResource(downloadTempl.getTemplate());
-        var contentType = MediaType.valueOf(downloadTempl.getContentType());
-        var filename = "template_"+downloadTempl.getType()+"_"+downloadTempl.getVerificationCenter();
+        ByteArrayResource resource = null;
+        MediaType contentType = null;
+        String filename = "";
+        if(pkStatement.getType().equals(TypeStatementEnum.RELEASE)){
+            if(downloadTemplate.getTemplateRelease() == null) {
+                return new ResponseEntity<>(TEMPLATE_RELEASE_IS_NULL, HttpStatus.NOT_FOUND);
+            }
+            resource = new ByteArrayResource(downloadTemplate.getTemplateRelease());
+            contentType = MediaType.valueOf(downloadTemplate.getContentTypeRelease());
+            filename = URLEncoder.encode(STATEMENT_RELEASE_FILE, StandardCharsets.UTF_8);
+        } else if (pkStatement.getType().equals(TypeStatementEnum.RECALL)) {
+            if(downloadTemplate.getTemplateRelease() == null) {
+                return new ResponseEntity<>(TEMPLATE_RECALL_IS_NULL, HttpStatus.NOT_FOUND);
+            }
+            resource = new ByteArrayResource(downloadTemplate.getTemplateRecall());
+            contentType = MediaType.valueOf(downloadTemplate.getContentTypeRecall());
+            filename = URLEncoder.encode(STATEMENT_RECALL_FILE, StandardCharsets.UTF_8);
+        }
+
+        if(resource == null || filename == "" || contentType == null) {
+            return new ResponseEntity<>(TEMPLATE_IS_NULL, HttpStatus.NOT_FOUND);
+        }
+
         var disposition = ContentDisposition.attachment()
-                .filename(filename.toLowerCase())
+                .filename(filename)
                 .build();
         return ResponseEntity.ok()
                 .contentLength(resource.contentLength())
@@ -183,6 +207,8 @@ public class PublicKeyStatementController {
 
     private PublicKeyStatementDto convertToDto(PublicKeyStatement publicKeyStatement){
         PublicKeyStatementDto publicKeyStatementDto = modelMapper.map(publicKeyStatement, PublicKeyStatementDto.class);
+        PublicKeyVerificationCenter publicKeyVerificationCenter = publicKeyVerificationCenterService.findByPublicKeyVerificationCenterId(Long.parseLong(publicKeyStatement.getVerificationCenterId()));
+        publicKeyStatementDto.setVerificationCenter(publicKeyVerificationCenter.getName());
         return publicKeyStatementDto;
     }
 
