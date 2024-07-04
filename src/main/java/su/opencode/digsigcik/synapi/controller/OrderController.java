@@ -1,20 +1,26 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import su.opencode.digsigcik.synapi.dto.OrderDto;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.model.AcmeProvider;
@@ -154,7 +160,7 @@ public class OrderController {
             @ApiResponse(code = 200, message = "Заявка успешно сформирована" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @PostMapping("/orders")
+    @PostMapping(value = "/orders",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map> createOrder(HttpSession httpSession, HttpServletRequest httpRequest,
                                             @RequestParam(value = "provider") Long providerId,
                                             @RequestParam(value = "domainName") String domainName,
@@ -166,6 +172,24 @@ public class OrderController {
         data.remove("notAfter");
         return acmeService.certificateOrder(httpSession, domainName, notAfter, providerId, data);
     }
+
+    @Operation(summary = "Сформировать заявку на выпуск нового сертификата (json)",
+            description = "Формирует заявку на выпуск нового сертификата (json)" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Заявка успешно сформирована" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping(value = "/orders",consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map> createOrderJson(HttpSession httpSession, @RequestBody String json ) {
+        OrderDto order = null;
+        try {
+            order = new ObjectMapper().readValue(json, OrderDto.class);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid order format");
+        }
+        return acmeService.certificateOrder(httpSession, order.getDomainName(), order.getNotAfter(), order.getProvider(), order.getData());
+    }
+
 
     @Operation(summary = "Получить файл для прохождения челленджа по ранее сформированной заявке",
             description = "Получает файл для прохождения челленджа по ранее сформированной заявке" )
