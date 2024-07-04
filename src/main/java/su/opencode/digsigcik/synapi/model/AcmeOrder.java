@@ -28,7 +28,7 @@ import java.util.Map;
 @Entity
 @Table(name="acmeorder")
 @Transactional
-@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+@TypeDef(name = "json", typeClass = JsonType.class)
 // AcmeCertificate settings for acme
 public class AcmeOrder {
     @Id
@@ -68,8 +68,8 @@ public class AcmeOrder {
     @Column(name = "notAfter", columnDefinition = "DATE")
     private Date notAfter;
 
-    @Type(type = "jsonb")
-    @Column(name = "data", columnDefinition = "jsonb")
+    @Type(type = "json")
+    @Column(name = "data", columnDefinition = "json")
     private Map<String, String[]> data = new HashMap<>();
 
     public AcmeOrder() {

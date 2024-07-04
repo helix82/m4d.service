@@ -17,7 +17,7 @@ spring:
 #    password: root
 #    driver-class-name: org.postgresql.Driver
 
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;INIT=CREATE DOMAIN IF NOT EXISTS JSONB AS JSON;
+    url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
     username: sa
     password:
