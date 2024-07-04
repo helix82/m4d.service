@@ -11,6 +11,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
+@SuppressWarnings("ALL")
 @Data
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -52,10 +53,12 @@ public class CertificateData {
         @Column(columnDefinition = "Text")
         private String certificate;
 
+        @SuppressWarnings("JpaDataSourceORMInspection")
         @Schema(example = SCHEMA_CA_TYPE_INPUT_EXAMPLE, required = false)
         @Column(name = "type_input")
         private String typeInput;
 
+        @SuppressWarnings("JpaDataSourceORMInspection")
         @Schema(example = SCHEMA_CA_ACCREDITATION_STATUS_EXAMPLE, required = false)
         @Column(name = "accreditation_status")
         private String accreditationStatus;

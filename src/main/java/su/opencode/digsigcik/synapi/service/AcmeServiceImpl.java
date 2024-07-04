@@ -2,7 +2,6 @@ package su.opencode.digsigcik.synapi.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.shredzone.acme4j.*;
 import org.shredzone.acme4j.challenge.Challenge;
 import org.shredzone.acme4j.challenge.Http01Challenge;
@@ -14,14 +13,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.acme.ChallengeStore;
 import su.opencode.digsigcik.synapi.controller.CertificateController;
 import su.opencode.digsigcik.synapi.model.AcmeAccount;
 import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
+import su.opencode.digsigcik.synapi.model.AcmeOrder;
+import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.repository.AccountRepository;
 import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
+import su.opencode.digsigcik.synapi.repository.OrderRepository;
+import su.opencode.digsigcik.synapi.repository.ProviderRepository;
+import su.opencode.digsigcik.synapi.util.DateUtils;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -34,6 +39,8 @@ import java.security.KeyPair;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -64,7 +71,13 @@ public class AcmeServiceImpl implements AcmeService {
     DomainRepository domainRepository;
 
     @Autowired
+    ProviderRepository providerRepository;
+
+    @Autowired
     CertificateRepository certificateRepository;
+
+    @Autowired
+    OrderRepository orderRepository;
 
     @Autowired
     ChallengeStore challengeStore;
@@ -148,7 +161,7 @@ public class AcmeServiceImpl implements AcmeService {
         return ret;
     }
 
-    public ResponseEntity<Map> certificate(HttpSession httpSession,String domainName, String notAfter) {
+    public ResponseEntity<Map> certificate(HttpSession httpSession,String domainName, String notAfter, Long providerId, Map data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -161,6 +174,15 @@ public class AcmeServiceImpl implements AcmeService {
             acmeDomain = new AcmeDomain(acmeAccount, domainName);
             domainRepository.save(acmeDomain);
         }
+        AcmeProvider acmeProvider = providerRepository.findById(providerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
+
+        Date notAfterDate = null;
+        try {
+            notAfterDate = DateUtils.parse(notAfter);
+        } catch (ParseException e) {
+            notAfterDate = new Date();
+        }
 
         if(loginDefaultAccount(httpSession)){
             Login login = (Login)httpSession.getAttribute("login");
@@ -169,7 +191,7 @@ public class AcmeServiceImpl implements AcmeService {
                 Order order = account
                         .newOrder()
                         .domain(acmeDomain.getDomainUrl())
-                        .notAfter(Instant.parse(notAfter))
+                        .notAfter(notAfterDate.toInstant())
                         .create();
 
                 Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
@@ -179,6 +201,18 @@ public class AcmeServiceImpl implements AcmeService {
                     ret.put("description", "Auth and challenge done");
                     new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 }
+
+                AcmeOrder acmeOrder = new AcmeOrder(acmeDomain);
+                acmeOrder.setOrderUrl(order.getLocation().toString());
+                acmeOrder.setProvider(acmeProvider);
+                acmeOrder.setDomain(acmeDomain);
+                acmeOrder.setNotAfter(notAfterDate);
+                acmeOrder.setChallengeUrl(challenge.getLocation().toString());
+                acmeOrder.setChallengeToken(challenge.getToken());
+                acmeOrder.setChallengeContent(challenge.getAuthorization());
+                acmeOrder.setData(data);
+                orderRepository.save(acmeOrder);
+
                 doChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
 
                 challenge.trigger();
@@ -208,6 +242,9 @@ public class AcmeServiceImpl implements AcmeService {
                 certificate.writeCertificate(writer);
 
                 AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
+                acmeCertificate.setOrder(acmeOrder);
+                acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
+                acmeCertificate.setProvider(acmeOrder.getProvider());
                 acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
                 certificateRepository.save(acmeCertificate);
 
@@ -225,7 +262,7 @@ public class AcmeServiceImpl implements AcmeService {
         return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }
 
-    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domainName, String notAfter) {
+    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domainName, String notAfter, Long providerId, Map data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -238,6 +275,15 @@ public class AcmeServiceImpl implements AcmeService {
             acmeDomain = new AcmeDomain(acmeAccount, domainName);
             domainRepository.save(acmeDomain);
         }
+        Date notAfterDate = null;
+        try {
+            notAfterDate = DateUtils.parse(notAfter);
+        } catch (ParseException e) {
+            notAfterDate = new Date();
+        }
+
+        AcmeProvider acmeProvider = providerRepository.findById(providerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
 
         if(loginDefaultAccount(httpSession)){
             Login login = (Login)httpSession.getAttribute("login");
@@ -246,7 +292,7 @@ public class AcmeServiceImpl implements AcmeService {
                 Order order = account
                         .newOrder()
                         .domain(acmeDomain.getDomainUrl())
-                        .notAfter(Instant.parse(notAfter))
+                        .notAfter(notAfterDate.toInstant())
                         .create();
 
                 Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
@@ -259,12 +305,16 @@ public class AcmeServiceImpl implements AcmeService {
                 ret.put("token", challenge.getToken());
                 ret.put("authorization", challenge.getAuthorization());
 
-                AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, null);
-                acmeCertificate.setOrderUrl(order.getLocation().toString());
-                acmeCertificate.setChallengeUrl(challenge.getLocation().toString());
-                acmeCertificate.setChallengeToken(challenge.getToken());
-                acmeCertificate.setChallengeContent(challenge.getAuthorization());
-                certificateRepository.save(acmeCertificate);
+                AcmeOrder acmeOrder = new AcmeOrder(acmeDomain);
+                acmeOrder.setOrderUrl(order.getLocation().toString());
+                acmeOrder.setProvider(acmeProvider);
+                acmeOrder.setDomain(acmeDomain);
+                acmeOrder.setNotAfter(notAfterDate);
+                acmeOrder.setChallengeUrl(challenge.getLocation().toString());
+                acmeOrder.setChallengeToken(challenge.getToken());
+                acmeOrder.setChallengeContent(challenge.getAuthorization());
+                acmeOrder.setData(data);
+                orderRepository.save(acmeOrder);
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
@@ -275,32 +325,30 @@ public class AcmeServiceImpl implements AcmeService {
         return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }
 
-    public ResponseEntity<String> certificateChallenge(HttpServletResponse httpResponse, Long id) {
-        AcmeCertificate certificate = certificateRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
-        if(certificate.getContent()!=null || certificate.getChallengeToken()==null || certificate.getChallengeContent()==null){
-            throw new ResourceNotFoundException("certificate not in challenge state");
-        }
+    public ResponseEntity<String> downloadChallengeFile(HttpServletResponse httpResponse, Long id) {
+        AcmeOrder order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
         httpResponse.setContentType ("text/plain");
-        httpResponse.setHeader ("Content-Disposition", "attachment; filename="+certificate.getChallengeToken());
-        return new ResponseEntity<>(certificate.getChallengeContent(), HttpStatus.OK);
+        httpResponse.setHeader ("Content-Disposition", "attachment; filename="+order.getChallengeToken());
+        return new ResponseEntity<>(order.getChallengeContent(), HttpStatus.OK);
     }
 
-    public ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long id) {
+    public ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long orderId) {
         HashMap<String, String> ret = new HashMap<>();
-        AcmeCertificate acmeCertificate = certificateRepository.findCertificateById(id);
-        if(acmeCertificate!=null) {
-            if(acmeCertificate.getCertificateUrl()!=null) {
+        AcmeOrder acmeOrder = orderRepository.findOrderById(orderId);
+
+        if(acmeOrder!=null) {
+            if(!certificateRepository.findByOrderId(orderId).isEmpty()) {
                 ret.put("error", "certificate already released");
             } else {
                 if(loginDefaultAccount(httpSession)){
                     Login login = (Login)httpSession.getAttribute("login");
                     if(login!=null) {
                         try {
-                            AcmeDomain acmeDomain = acmeCertificate.getDomain();
+                            AcmeDomain acmeDomain = acmeOrder.getDomain();
 
-                            Challenge challenge = login.bindChallenge(new URL(acmeCertificate.getChallengeUrl()));
-                            Order order = login.bindOrder(new URL(acmeCertificate.getOrderUrl()));
+                            Challenge challenge = login.bindChallenge(new URL(acmeOrder.getChallengeUrl()));
+                            Order order = login.bindOrder(new URL(acmeOrder.getOrderUrl()));
 
                             challenge.trigger();
 
@@ -324,11 +372,11 @@ public class AcmeServiceImpl implements AcmeService {
 
                             StringWriter writer = new StringWriter();
                             certificate.writeCertificate(writer);
-                            acmeCertificate.setContent(writer.toString());
-                            acmeCertificate.setOrderUrl(null);
-                            acmeCertificate.setChallengeUrl(null);
-                            acmeCertificate.setChallengeToken(null);
-                            acmeCertificate.setChallengeContent(null);
+
+                            AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
+                            acmeCertificate.setOrder(acmeOrder);
+                            acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
+                            acmeCertificate.setProvider(acmeOrder.getProvider());
                             acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
                             certificateRepository.save(acmeCertificate);
                             return new ResponseEntity<>(CertificateController.certInfo(acmeCertificate), HttpStatus.OK);
@@ -347,7 +395,7 @@ public class AcmeServiceImpl implements AcmeService {
                 }
             }
         } else {
-            ret.put("error", "no certificate");
+            ret.put("error", "no order");
         }
         return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }

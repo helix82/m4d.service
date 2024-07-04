@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.model.AcmeAccount;
 import su.opencode.digsigcik.synapi.repository.AccountRepository;
 
@@ -54,7 +54,7 @@ public class AccountController {
     @GetMapping("/accounts/{id}")
     public ResponseEntity<AcmeAccount> findByAccountId(@PathVariable Long id) {
         AcmeAccount account = accountRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeAccount with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeAccount with id = " + id));
         return new ResponseEntity<>(account, HttpStatus.OK);
     }
 
@@ -85,7 +85,7 @@ public class AccountController {
     @PutMapping("/accounts/{id}")
     public ResponseEntity<AcmeAccount> updateAccount(@PathVariable Long id, @RequestBody AcmeAccount acmeAccount) {
         AcmeAccount _acmeAccount = accountRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeAccount with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeAccount with id = " + id));
 
         if(acmeAccount.getName()!=null)_acmeAccount.setName(acmeAccount.getName());;
         if(acmeAccount.getEmail()!=null)_acmeAccount.setEmail(acmeAccount.getEmail());;
