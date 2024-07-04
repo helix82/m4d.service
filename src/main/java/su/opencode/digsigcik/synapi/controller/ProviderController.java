@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 
@@ -49,7 +49,7 @@ public class ProviderController {
     @GetMapping("/providers/{id}")
     public ResponseEntity<AcmeProvider> getProviderBylId(@PathVariable(value = "id") Long id) {
         AcmeProvider provider = providerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeProvider with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + id));
 
         return new ResponseEntity<>(provider, HttpStatus.OK);
     }
@@ -83,7 +83,7 @@ public class ProviderController {
     @PutMapping("/providers/{id}")
     public ResponseEntity<AcmeProvider> updateProvider(@PathVariable("id") long id, @RequestBody AcmeProvider acmeProvider) {
         AcmeProvider _acmeProvider = providerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeProvider with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + id));
 
         if(acmeProvider.getName()!=null)_acmeProvider.setName(acmeProvider.getName());
         if(acmeProvider.getDescription()!=null)_acmeProvider.setDescription(acmeProvider.getDescription());
