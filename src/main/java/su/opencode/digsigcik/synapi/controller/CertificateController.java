@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
@@ -25,6 +25,7 @@ import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 import su.opencode.digsigcik.synapi.service.AcmeService;
 import su.opencode.digsigcik.synapi.util.CertUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.security.cert.CertificateException;
@@ -58,7 +59,7 @@ public class CertificateController {
     @GetMapping("/domains/{domainId}/certificates")
     public ResponseEntity<List<AcmeCertificate>> getAllCertificatesByDomainId(@PathVariable(value = "domainId") Long domainId) {
         if (!domainRepository.existsById(domainId)) {
-            throw new ResourceNotFoundException("Not found AcmeDomain with id = " + domainId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with id = " + domainId);
         }
         List<AcmeCertificate> certificates = certificateRepository.findByDomainId(domainId);
         return new ResponseEntity<>(certificates, HttpStatus.OK);
@@ -73,7 +74,7 @@ public class CertificateController {
     @GetMapping("/providers/{providerId}/certificates")
     public ResponseEntity<List<AcmeCertificate>> getAllCertificatesByProviderId(@PathVariable(value = "providerId") Long providerId) {
         if (!providerRepository.existsById(providerId)) {
-            throw new ResourceNotFoundException("Not found AcmeProvider with id = " + providerId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId);
         }
         List<AcmeCertificate> certificates = certificateRepository.findByProviderId(providerId);
         return new ResponseEntity<>(certificates, HttpStatus.OK);
@@ -145,7 +146,7 @@ public class CertificateController {
     @GetMapping("/certificates/{id}")
     public ResponseEntity<AcmeCertificate> getCertificateBylId(@PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + id));
 
         return new ResponseEntity<>(certificate, HttpStatus.OK);
     }
@@ -160,7 +161,7 @@ public class CertificateController {
     public ResponseEntity<Map> getCertificateInfoBylId(HttpServletResponse httpResponse,
                                                             @PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + id));
         return new ResponseEntity<>(certInfo(certificate), HttpStatus.OK);
     }
 
@@ -171,11 +172,15 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/certificates")
-    public ResponseEntity<Map> certificateReleaseAuto(HttpSession httpSession,
+    public ResponseEntity<Map> certificateReleaseAuto(HttpSession httpSession, HttpServletRequest httpRequest,
                                             @RequestParam(value = "provider") Long providerId,
                                             @RequestParam(value = "domainName") String domainName,
                                             @RequestParam(value = "notAfter") String notAfter ) {
-        return acmeService.certificate(httpSession,domainName, notAfter, providerId);
+        Map data = httpRequest.getParameterMap();
+        data.remove("provider");
+        data.remove("domainName");
+        data.remove("notAfter");
+        return acmeService.certificate(httpSession,domainName, notAfter, providerId, data);
     }
 
     @Operation(summary = "Выпустить новый сертификат в автоматическом режиме для указанного домена",
@@ -215,7 +220,7 @@ public class CertificateController {
     public ResponseEntity<String> downloadCertificateBylId(HttpServletResponse httpResponse,
                                                                     @PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + id));
         httpResponse.setContentType ("application/width-x509-user-cert");
         httpResponse.setHeader ("Content-Disposition", "attachment; filename="+certificate.getDomain().getDomainUrl()+"-chain.crt");
         return new ResponseEntity<>(certificate.getContent(), HttpStatus.OK);
@@ -230,7 +235,7 @@ public class CertificateController {
     @DeleteMapping("/certificates/{id}")
     public ResponseEntity<HttpStatus> deleteCertificate(@PathVariable("id") long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeCertificate with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + id));
         certificate.setDeleted(true);
         certificateRepository.save(certificate);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -245,7 +250,7 @@ public class CertificateController {
     @DeleteMapping("/domain/{domainId}/certificates")
     public ResponseEntity<List<AcmeCertificate>> deleteAllCertificatesOfDomain(@PathVariable(value = "domainId") Long domainId) {
         if (!domainRepository.existsById(domainId)) {
-            throw new ResourceNotFoundException("Not found Domain with id = " + domainId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found Domain with id = " + domainId);
         }
         List<AcmeCertificate> certificates = certificateRepository.findByDomainId(domainId);
         for(AcmeCertificate certificate: certificates) {

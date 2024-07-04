@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.model.AcmeProvider;
@@ -24,6 +24,7 @@ import su.opencode.digsigcik.synapi.repository.OrderRepository;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 import su.opencode.digsigcik.synapi.service.AcmeService;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
@@ -57,12 +58,12 @@ public class OrderController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/domains/{domainId}/orders")
-    public ResponseEntity<List<AcmeOrder>> getAllOrdersByDomainId(@PathVariable(value = "domainId") Long domainId) {
+    public ResponseEntity<List<Map>> getAllOrdersByDomainId(@PathVariable(value = "domainId") Long domainId) {
         if (!domainRepository.existsById(domainId)) {
-            throw new ResourceNotFoundException("Not found AcmeDomain with id = " + domainId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with id = " + domainId);
         }
         List<AcmeOrder> orders = orderRepository.findByDomainId(domainId);
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+        return new ResponseEntity<>(processOrdersList(orders), HttpStatus.OK);
     }
 
     @Operation(summary = "Получить список заявок указанного провайдера",
@@ -72,27 +73,29 @@ public class OrderController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/providers/{providerId}/orders")
-    public ResponseEntity<List<AcmeOrder>> getAllOrdersByProviderId(@PathVariable(value = "providerId") Long providerId) {
+    public ResponseEntity<List<Map>> getAllOrdersByProviderId(@PathVariable(value = "providerId") Long providerId) {
         if (!providerRepository.existsById(providerId)) {
-            throw new ResourceNotFoundException("Not found AcmeProvider with id = " + providerId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId);
         }
         List<AcmeOrder> orders = orderRepository.findByProviderId(providerId);
-        return new ResponseEntity<>(orders, HttpStatus.OK);
+        return new ResponseEntity<>(processOrdersList(orders), HttpStatus.OK);
     }
 
-    public static Map orderInfo(AcmeOrder order) {
-        HashMap<String, Object> ret = new HashMap<>();
-        if(order.getDeleted()) {
-            ret.put("status", "deleted");
-        } else {
-            if(order.getRevoked()) {
-                ret.put("status", "revoked");
+    private List<Map> processOrdersList(List<AcmeOrder> orders) {
+        ArrayList<Map> list = new ArrayList<>();
+        for(AcmeOrder order:orders) {
+            if(!order.getDeleted()) {
+                list.add(orderInfo(order));
             }
         }
+        return list;
+    }
+
+    private Map orderInfo(AcmeOrder order) {
+        HashMap<String, Object> ret = new HashMap<>();
 
         ret.put("id", order.getId());
         ret.put("deleted", order.getDeleted());
-        ret.put("revoked", order.getRevoked());
         AcmeProvider provider = order.getProvider();
         if(provider!=null) {
             ret.put("provider", String.valueOf(provider.getName()));
@@ -104,8 +107,18 @@ public class OrderController {
         ret.put("challengeToken", order.getChallengeToken());
         ret.put("challengeContent", order.getChallengeContent());
 
-        ret.put("status", "challenge");
-
+        Map<String, String[]> data = order.getData();
+        if(data != null && !data.isEmpty()) {
+            ret.put("data", order.getData());
+        }
+        if(!certificateRepository.findByOrderId(order.getId()).isEmpty()){
+            ret.put("status", "released");
+        } else {
+            ret.put("status", "challenge");
+        }
+        if(order.getDeleted()) {
+            ret.put("status", "deleted");
+        }
         return ret;
     }
 
@@ -117,18 +130,8 @@ public class OrderController {
     })
     @GetMapping("/orders")
     public ResponseEntity<List<Map>> getAllOrders() {
-        ArrayList<Map> list = new ArrayList<>();
         List<AcmeOrder> orders = orderRepository.findAll();
-        for(AcmeOrder order:orders) {
-            if(!order.getDeleted()) {
-                HashMap info = (HashMap)orderInfo(order);
-                if(!certificateRepository.findByOrderId(order.getId()).isEmpty()){
-                    info.put("status", "released");
-                }
-                list.add(info);
-            }
-        }
-        return new ResponseEntity<>(list, HttpStatus.OK);
+        return new ResponseEntity<>(processOrdersList(orders), HttpStatus.OK);
     }
 
     @Operation(summary = "Получить указанную заявку",
@@ -138,30 +141,11 @@ public class OrderController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/orders/{id}")
-    public ResponseEntity<AcmeOrder> getOrderBylId(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<Map> getOrderBylId(@PathVariable(value = "id") Long id) {
         AcmeOrder order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeOrder with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
 
-        return new ResponseEntity<>(order, HttpStatus.OK);
-    }
-
-    @Operation(summary = "Получить расширенную информацю о заявке",
-            description = "Возвращает расширенную информацю о заявке" )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно получено" ),
-            @ApiResponse(code = 404, message = "Not found" )
-    })
-    @GetMapping("/orders/{id}/info")
-    public ResponseEntity<Map> getOrderInfoBylId(HttpServletResponse httpResponse,
-                                                            @PathVariable(value = "id") Long id) {
-        AcmeOrder order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeOrder with id = " + id));
-
-        HashMap info = (HashMap)orderInfo(order);
-        if(!certificateRepository.findByOrderId(order.getId()).isEmpty()){
-            info.put("status", "released");
-        }
-        return new ResponseEntity<>(info, HttpStatus.OK);
+        return new ResponseEntity<>(orderInfo(order), HttpStatus.OK);
     }
 
     @Operation(summary = "Сформировать заявку на выпуск нового сертификата",
@@ -171,12 +155,16 @@ public class OrderController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/orders")
-    public ResponseEntity<Map> createOrder(HttpSession httpSession,
+    public ResponseEntity<Map> createOrder(HttpSession httpSession, HttpServletRequest httpRequest,
                                             @RequestParam(value = "provider") Long providerId,
                                             @RequestParam(value = "domainName") String domainName,
                                             @RequestParam(value = "notAfter") String notAfter
     ) {
-        return acmeService.certificateOrder(httpSession, domainName, notAfter, providerId);
+        Map data = httpRequest.getParameterMap();
+        data.remove("provider");
+        data.remove("domainName");
+        data.remove("notAfter");
+        return acmeService.certificateOrder(httpSession, domainName, notAfter, providerId, data);
     }
 
     @Operation(summary = "Получить файл для прохождения челленджа по ранее сформированной заявке",
@@ -215,7 +203,7 @@ public class OrderController {
     @DeleteMapping("/orders/{id}")
     public ResponseEntity<HttpStatus> deleteOrder(@PathVariable("id") long id) {
         AcmeOrder order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeOrder with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
         order.setDeleted(true);
         orderRepository.save(order);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -230,7 +218,7 @@ public class OrderController {
     @DeleteMapping("/domain/{domainId}/orders")
     public ResponseEntity<List<AcmeOrder>> deleteAllOrdersOfDomain(@PathVariable(value = "domainId") Long domainId) {
         if (!domainRepository.existsById(domainId)) {
-            throw new ResourceNotFoundException("Not found Domain with id = " + domainId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found Domain with id = " + domainId);
         }
         List<AcmeOrder> orders = orderRepository.findByDomainId(domainId);
         for(AcmeOrder order: orders) {

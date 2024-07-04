@@ -66,7 +66,7 @@ public class PublicKeyUserCertificate {
     private String issuedWho;
 
     @Lob
-    @Column(name = "certificate", columnDefinition = "BLOB")
+    @Column(name = "certificate", columnDefinition = "bytea")
     @Schema(example = "", required = false)
     @JsonProperty("certificate")
     private byte[] certificate;
