@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.model.AcmeProvider;
@@ -60,7 +60,7 @@ public class OrderController {
     @GetMapping("/domains/{domainId}/orders")
     public ResponseEntity<List<Map>> getAllOrdersByDomainId(@PathVariable(value = "domainId") Long domainId) {
         if (!domainRepository.existsById(domainId)) {
-            throw new ResourceNotFoundException("Not found AcmeDomain with id = " + domainId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with id = " + domainId);
         }
         List<AcmeOrder> orders = orderRepository.findByDomainId(domainId);
         return new ResponseEntity<>(processOrdersList(orders), HttpStatus.OK);
@@ -75,7 +75,7 @@ public class OrderController {
     @GetMapping("/providers/{providerId}/orders")
     public ResponseEntity<List<Map>> getAllOrdersByProviderId(@PathVariable(value = "providerId") Long providerId) {
         if (!providerRepository.existsById(providerId)) {
-            throw new ResourceNotFoundException("Not found AcmeProvider with id = " + providerId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId);
         }
         List<AcmeOrder> orders = orderRepository.findByProviderId(providerId);
         return new ResponseEntity<>(processOrdersList(orders), HttpStatus.OK);
@@ -143,7 +143,7 @@ public class OrderController {
     @GetMapping("/orders/{id}")
     public ResponseEntity<Map> getOrderBylId(@PathVariable(value = "id") Long id) {
         AcmeOrder order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeOrder with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
 
         return new ResponseEntity<>(orderInfo(order), HttpStatus.OK);
     }
@@ -203,7 +203,7 @@ public class OrderController {
     @DeleteMapping("/orders/{id}")
     public ResponseEntity<HttpStatus> deleteOrder(@PathVariable("id") long id) {
         AcmeOrder order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeOrder with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
         order.setDeleted(true);
         orderRepository.save(order);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -218,7 +218,7 @@ public class OrderController {
     @DeleteMapping("/domain/{domainId}/orders")
     public ResponseEntity<List<AcmeOrder>> deleteAllOrdersOfDomain(@PathVariable(value = "domainId") Long domainId) {
         if (!domainRepository.existsById(domainId)) {
-            throw new ResourceNotFoundException("Not found Domain with id = " + domainId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found Domain with id = " + domainId);
         }
         List<AcmeOrder> orders = orderRepository.findByDomainId(domainId);
         for(AcmeOrder order: orders) {

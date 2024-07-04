@@ -2,7 +2,6 @@ package su.opencode.digsigcik.synapi.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.shredzone.acme4j.*;
 import org.shredzone.acme4j.challenge.Challenge;
 import org.shredzone.acme4j.challenge.Http01Challenge;
@@ -14,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.acme.ChallengeStore;
 import su.opencode.digsigcik.synapi.controller.CertificateController;
 import su.opencode.digsigcik.synapi.model.AcmeAccount;
@@ -175,7 +175,7 @@ public class AcmeServiceImpl implements AcmeService {
             domainRepository.save(acmeDomain);
         }
         AcmeProvider acmeProvider = providerRepository.findById(providerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeProvider with id = " + providerId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
 
         Date notAfterDate = null;
         try {
@@ -283,7 +283,7 @@ public class AcmeServiceImpl implements AcmeService {
         }
 
         AcmeProvider acmeProvider = providerRepository.findById(providerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeProvider with id = " + providerId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
 
         if(loginDefaultAccount(httpSession)){
             Login login = (Login)httpSession.getAttribute("login");
@@ -327,7 +327,7 @@ public class AcmeServiceImpl implements AcmeService {
 
     public ResponseEntity<String> downloadChallengeFile(HttpServletResponse httpResponse, Long id) {
         AcmeOrder order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeOrder with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
         httpResponse.setContentType ("text/plain");
         httpResponse.setHeader ("Content-Disposition", "attachment; filename="+order.getChallengeToken());
         return new ResponseEntity<>(order.getChallengeContent(), HttpStatus.OK);
