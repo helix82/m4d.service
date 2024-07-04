@@ -53,12 +53,4 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
         return this.repository.save(publicKeyUserCertificate);
     }
 
-    @Override
-    public void deletePublicKeyUserCertificate(@NotNull Long id) {
-        PublicKeyUserCertificate publicKeyUserCertificate = this.repository.findPublicKeyUserCertificateById(id);
-        if (publicKeyUserCertificate == null) {
-            throw new MchdException(String.format("Can`t delete user certificate because user certificate %s", NOT_FOUND));
-        }
-        this.repository.deleteById(id);
-    }
 }

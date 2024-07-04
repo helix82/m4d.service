@@ -27,7 +27,7 @@ public class PublicKeyVerificationCenter {
     private String name;
 
     @Lob
-    @Column(name = "template_release", columnDefinition = "BLOB")
+    @Column(name = "template_release", columnDefinition = "bytea")
     @Schema(example = "", required = false)
     @JsonProperty("templateRelease")
     private byte[] templateRelease;
@@ -38,7 +38,7 @@ public class PublicKeyVerificationCenter {
     private String contentTypeRelease;
 
     @Lob
-    @Column(name = "template_recall", columnDefinition = "BLOB")
+    @Column(name = "template_recall", columnDefinition = "bytea")
     @Schema(example = "", required = false)
     @JsonProperty("templateRecall")
     private byte[] templateRecall;

@@ -251,6 +251,8 @@ public interface Constants {
     String CONTROLLER_PUBLIC_KEY_STATEMENT_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_SUMMARY = "Отметить заявление обработанным";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_DESCRIPTION = "Возвращает измененное заявление";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_DOWNLOAD_TEMPLATE_SUMMARY = "Скачать шаблон заявления по ИД";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_DOWNLOAD_TEMPLATE_DESCRIPTION = "Выгружает на локальный компьютер шаблон заявления";
 
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список сертификатов пользователей";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список сертификатов пользователей";
@@ -260,7 +262,7 @@ public interface Constants {
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_BY_ID_DESCRIPTION = "Возвращает сертификат пользователя по ИД";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_UPDATE_SUMMARY = "Изменить сертификат пользователя";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает измененный сертификат пользователя";
-    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_DELETE_SUMMARY = "Удалить сертификат пользователя по ИД";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_DELETE_SUMMARY = "Пометить как удаленный сертификат пользователя по ИД";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
 
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
@@ -286,6 +288,7 @@ public interface Constants {
     String STATEMENT_RECALL_FILE = "Заявление_отзыв_СКП_ЭП";
     String TEMPLATE_RELEASE_IS_NULL = "Шаблон заявления на выпуск не загружен в СЭП";
     String TEMPLATE_RECALL_IS_NULL = "Шаблон заявления на отзыв не загружен в СЭП";
+    String TEMPLATE_IS_NULL = "Не достаточно данных для выгрузки шаблона заявления";
 
 
     String CONTROLLER_PIN_CODE_GET_ALL = "Возвращает хэши пинкодов всех пользователей";

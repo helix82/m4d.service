@@ -128,13 +128,13 @@ public class PublicKeyStatementController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RELEASE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RELEASE_DESCRIPTION)
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_STATEMENT_DOWNLOAD_TEMPLATE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_STATEMENT_DOWNLOAD_TEMPLATE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @GetMapping(value = "/download_template_release/{id}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<?> downloadTemplateRelease(@PathVariable @Parameter(name = "id",
+    @GetMapping(value = "/download/{id}", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<?> download(@PathVariable @Parameter(name = "id",
             description = PARAMETER_PUBLIC_KEY_STATEMENT_ID_DESCRIPTION, example = "1" ) Long id) {
                 PublicKeyStatement pkStatement;
         try {
@@ -142,54 +142,35 @@ public class PublicKeyStatementController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
         }
-        PublicKeyVerificationCenter downloadTempl;
+        PublicKeyVerificationCenter downloadTemplate;
         try {
-            downloadTempl = publicKeyVerificationCenterService.findByPublicKeyVerificationCenterId(pkStatement.getId());
+            downloadTemplate = publicKeyVerificationCenterService.findByPublicKeyVerificationCenterId(Long.parseLong(pkStatement.getVerificationCenterId()));
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL);
         }
-        if(downloadTempl.getTemplateRelease() == null) {
-            return new ResponseEntity<>(TEMPLATE_RELEASE_IS_NULL, HttpStatus.NOT_FOUND);
+        ByteArrayResource resource = null;
+        MediaType contentType = null;
+        String filename = "";
+        if(pkStatement.getType().equals(TypeStatementEnum.RELEASE)){
+            if(downloadTemplate.getTemplateRelease() == null) {
+                return new ResponseEntity<>(TEMPLATE_RELEASE_IS_NULL, HttpStatus.NOT_FOUND);
+            }
+            resource = new ByteArrayResource(downloadTemplate.getTemplateRelease());
+            contentType = MediaType.valueOf(downloadTemplate.getContentTypeRelease());
+            filename = URLEncoder.encode(STATEMENT_RELEASE_FILE, StandardCharsets.UTF_8);
+        } else if (pkStatement.getType().equals(TypeStatementEnum.RECALL)) {
+            if(downloadTemplate.getTemplateRelease() == null) {
+                return new ResponseEntity<>(TEMPLATE_RECALL_IS_NULL, HttpStatus.NOT_FOUND);
+            }
+            resource = new ByteArrayResource(downloadTemplate.getTemplateRecall());
+            contentType = MediaType.valueOf(downloadTemplate.getContentTypeRecall());
+            filename = URLEncoder.encode(STATEMENT_RECALL_FILE, StandardCharsets.UTF_8);
         }
-        var resource = new ByteArrayResource(downloadTempl.getTemplateRelease());
-        var contentType = MediaType.valueOf(downloadTempl.getContentTypeRelease());
-        var filename = URLEncoder.encode(STATEMENT_RELEASE_FILE, StandardCharsets.UTF_8);
-        var disposition = ContentDisposition.attachment()
-                .filename(filename)
-                .build();
-        return ResponseEntity.ok()
-                .contentLength(resource.contentLength())
-                .contentType(contentType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
-                .body(resource);
-    }
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RECALL_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RECALL_DESCRIPTION)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
-    })
-    @GetMapping(value = "/download_template_recall/{id}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<?> downloadTemplateRecall(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_PUBLIC_KEY_STATEMENT_ID_DESCRIPTION, example = "1" ) Long id) {
-        PublicKeyStatement pkStatement;
-        try {
-            pkStatement = service.findByPublicKeyStatementId(id);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+        if(resource == null || filename == "" || contentType == null) {
+            return new ResponseEntity<>(TEMPLATE_IS_NULL, HttpStatus.NOT_FOUND);
         }
-        PublicKeyVerificationCenter downloadTempl;
-        try {
-            downloadTempl = publicKeyVerificationCenterService.findByPublicKeyVerificationCenterId(pkStatement.getId());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL);
-        }
-        if(downloadTempl.getTemplateRecall() == null) {
-            return new ResponseEntity<>(TEMPLATE_RECALL_IS_NULL, HttpStatus.NOT_FOUND);
-        }
-        var resource = new ByteArrayResource(downloadTempl.getTemplateRecall());
-        var contentType = MediaType.valueOf(downloadTempl.getContentTypeRecall());
-        var filename = URLEncoder.encode(STATEMENT_RECALL_FILE, StandardCharsets.UTF_8);
+
         var disposition = ContentDisposition.attachment()
                 .filename(filename)
                 .build();

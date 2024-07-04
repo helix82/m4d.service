@@ -25,6 +25,11 @@ public class PublicKeyUserCertificate {
     @JsonProperty("login")
     private String login;
 
+    @Column(name = "imprint", columnDefinition = "VARCHAR(255)")
+    @Schema(example = "", required = false)
+    @JsonProperty("imprint")
+    private String imprint;
+
     @Column(name = "key_id", columnDefinition = "VARCHAR(255)")
     @Schema(example = "", required = false)
     @JsonProperty("keyId")
@@ -60,6 +65,16 @@ public class PublicKeyUserCertificate {
     @JsonProperty("dateEnd")
     private String dateEnd;
 
+    @Column(name = "date_start_private_key", columnDefinition = "VARCHAR(255)")
+    @Schema(example = "", required = false)
+    @JsonProperty("dateStartPrivateKey")
+    private String dateStartPrivateKey;
+
+    @Column(name = "date_end_private_key", columnDefinition = "VARCHAR(255)")
+    @Schema(example = "", required = false)
+    @JsonProperty("dateEndPrivateKey")
+    private String dateEndPrivateKey;
+
     @Column(name = "issued_who", columnDefinition = "VARCHAR(255)")
     @Schema(example = "", required = false)
     @JsonProperty("issuedWho")
@@ -70,4 +85,9 @@ public class PublicKeyUserCertificate {
     @Schema(example = "", required = false)
     @JsonProperty("certificate")
     private byte[] certificate;
+
+    @Column(name = "deleted", columnDefinition = "BOOLEAN")
+    @Schema(example = "", required = false)
+    @JsonProperty("deleted")
+    private boolean deleted;
 }
