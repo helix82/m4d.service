@@ -155,7 +155,7 @@ public class OrderController {
     public ResponseEntity<Map> getOrderInfoBylId(HttpServletResponse httpResponse,
                                                             @PathVariable(value = "id") Long id) {
         AcmeOrder order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeOrder with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
 
         HashMap info = (HashMap)orderInfo(order);
         if(!certificateRepository.findByOrderId(order.getId()).isEmpty()){
