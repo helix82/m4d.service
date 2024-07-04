@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.model.AcmeAccount;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.repository.AccountRepository;
@@ -42,7 +42,7 @@ public class DomainController {
     @GetMapping("/accounts/{accountId}/domains")
     public ResponseEntity<List<AcmeDomain>> getAllDomainsByAccountId(@PathVariable(value = "accountId") Long accountId) {
         if (!accountRepository.existsById(accountId)) {
-            throw new ResourceNotFoundException("Not found AcmeAccount with id = " + accountId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeAccount with id = " + accountId);
         }
         List<AcmeDomain> domains = domainRepository.findByAccountId(accountId);
         return new ResponseEntity<>(domains, HttpStatus.OK);
@@ -57,7 +57,7 @@ public class DomainController {
     @GetMapping("/domains/{id}")
     public ResponseEntity<AcmeDomain> getDomainBylId(@PathVariable(value = "id") Long id) {
         AcmeDomain domain = domainRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeDomain with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with id = " + id));
 
         return new ResponseEntity<>(domain, HttpStatus.OK);
     }
@@ -77,7 +77,7 @@ public class DomainController {
             if(acmeDomain.getDeleted()!=null)_acmeDomain.setDeleted(acmeDomain.getDeleted());
 
             return domainRepository.save(_acmeDomain);
-        }).orElseThrow(() -> new ResourceNotFoundException("Not found AcmeAccount with id = " + accountId));
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeAccount with id = " + accountId));
 
         return new ResponseEntity<>(domain, HttpStatus.CREATED);
     }
@@ -91,13 +91,13 @@ public class DomainController {
     @PutMapping("/domains/{id}")
     public ResponseEntity<AcmeDomain> updateDomain(@PathVariable("id") long id, @RequestBody AcmeDomain acmeDomain) {
         AcmeDomain _acmeDomain = domainRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeDomain with id = " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with id = " + id));
 
         AcmeAccount acmeAccount = acmeDomain.getAccount();
         if(acmeAccount != null) {
             Long accountId = acmeAccount.getId();
             AcmeAccount _acmeAccount = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Not found AcmeAccount with id = " + id));
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeAccount with id = " + id));
             _acmeDomain.setAccount(_acmeAccount);
         }
         if(acmeDomain.getDomainUrl()!=null)_acmeDomain.setDomainUrl(acmeDomain.getDomainUrl());
@@ -129,7 +129,7 @@ public class DomainController {
     @DeleteMapping("/accounts/{accountId}/domains")
     public ResponseEntity<List<AcmeDomain>> deleteAllDomainsOfAccount(@PathVariable(value = "accountId") Long accountId) {
         if (!accountRepository.existsById(accountId)) {
-            throw new ResourceNotFoundException("Not found Account with id = " + accountId);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found Account with id = " + accountId);
         }
 
         domainRepository.deleteByAccountId(accountId);
