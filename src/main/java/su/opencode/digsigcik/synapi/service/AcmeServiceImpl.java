@@ -202,7 +202,7 @@ public class AcmeServiceImpl implements AcmeService {
         }
     }
 
-    public ResponseEntity<Map> certificate(HttpSession httpSession,String domainName, String notAfter, Long providerId, Map data) {
+    public ResponseEntity<Map> certificate(HttpSession httpSession,String domain, String notAfter, Long providerId, Map data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -210,9 +210,9 @@ public class AcmeServiceImpl implements AcmeService {
             acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
             accountRepository.save(acmeAccount);
         }
-        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domainName);
+        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domain);
         if(acmeDomain==null) {
-            acmeDomain = new AcmeDomain(acmeAccount, domainName);
+            acmeDomain = new AcmeDomain(acmeAccount, domain);
             domainRepository.save(acmeDomain);
         }
         AcmeProvider acmeProvider = providerRepository.findById(providerId)
@@ -305,7 +305,7 @@ public class AcmeServiceImpl implements AcmeService {
         }
     }
 
-    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domainName, String notAfter, Long providerId, Map data) {
+    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domain, String notAfter, Long providerId, Map data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -313,9 +313,9 @@ public class AcmeServiceImpl implements AcmeService {
             acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
             accountRepository.save(acmeAccount);
         }
-        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domainName);
+        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domain);
         if(acmeDomain==null) {
-            acmeDomain = new AcmeDomain(acmeAccount, domainName);
+            acmeDomain = new AcmeDomain(acmeAccount, domain);
             domainRepository.save(acmeDomain);
         }
         Date notAfterDate = null;

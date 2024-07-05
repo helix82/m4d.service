@@ -11,9 +11,9 @@ public interface AcmeService {
     ResponseEntity<Map> login(HttpSession httpSession, Long id);
     ResponseEntity<Map> register(HttpSession httpSession,Long id);
     ResponseEntity<Map> logout(HttpSession httpSession, Long id);
-    ResponseEntity<Map> certificate(HttpSession httpSession, String domainName, String notAfter, Long providerId, Map data
+    ResponseEntity<Map> certificate(HttpSession httpSession, String domain, String notAfter, Long providerId, Map data
     );
-    ResponseEntity<Map> certificateOrder(HttpSession httpSession, String domainName, String notAfter, Long providerId, Map data
+    ResponseEntity<Map> certificateOrder(HttpSession httpSession, String domain, String notAfter, Long providerId, Map data
     );
     ResponseEntity<String> downloadChallengeFile(HttpServletResponse httpResponse, Long id
     );

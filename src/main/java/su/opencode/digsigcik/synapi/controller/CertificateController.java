@@ -174,13 +174,13 @@ public class CertificateController {
     @PostMapping("/certificates")
     public ResponseEntity<Map> certificateReleaseAuto(HttpSession httpSession, HttpServletRequest httpRequest,
                                             @RequestParam(value = "provider") Long providerId,
-                                            @RequestParam(value = "domainName") String domainName,
+                                            @RequestParam(value = "domain") String domain,
                                             @RequestParam(value = "notAfter") String notAfter ) {
         Map data = httpRequest.getParameterMap();
         data.remove("provider");
-        data.remove("domainName");
+        data.remove("domain");
         data.remove("notAfter");
-        return acmeService.certificate(httpSession,domainName, notAfter, providerId, data);
+        return acmeService.certificate(httpSession,domain, notAfter, providerId, data);
     }
 
     @Operation(summary = "Выпустить новый сертификат в автоматическом режиме для указанного домена",
