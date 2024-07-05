@@ -7,8 +7,8 @@ import java.util.Map;
 
 @Data
 public class OrderDto {
-    @JsonProperty("domainName")
-    private String domainName;
+    @JsonProperty("domain")
+    private String domain;
     @JsonProperty("notAfter")
     private String notAfter;
     @JsonProperty("provider")
@@ -16,8 +16,8 @@ public class OrderDto {
     @JsonProperty("data")
     private Map<String, String[]> data;
 
-    public String getDomainName() {
-        return domainName;
+    public String getDomain() {
+        return domain;
     }
 
     public String getNotAfter() {

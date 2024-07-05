@@ -132,14 +132,14 @@ public class OrderController {
     @PostMapping(value = "/orders",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map> createOrder(HttpSession httpSession, HttpServletRequest httpRequest,
                                             @RequestParam(value = "provider") Long providerId,
-                                            @RequestParam(value = "domainName") String domainName,
+                                            @RequestParam(value = "domain") String domain,
                                             @RequestParam(value = "notAfter") String notAfter
     ) {
         Map data = httpRequest.getParameterMap();
         data.remove("provider");
-        data.remove("domainName");
+        data.remove("domain");
         data.remove("notAfter");
-        return acmeService.certificateOrder(httpSession, domainName, notAfter, providerId, data);
+        return acmeService.certificateOrder(httpSession, domain, notAfter, providerId, data);
     }
 
     @Operation(summary = "Сформировать заявку на выпуск нового сертификата (json)",
@@ -156,7 +156,7 @@ public class OrderController {
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid order format");
         }
-        return acmeService.certificateOrder(httpSession, order.getDomainName(), order.getNotAfter(), order.getProvider(), order.getData());
+        return acmeService.certificateOrder(httpSession, order.getDomain(), order.getNotAfter(), order.getProvider(), order.getData());
     }
 
 
