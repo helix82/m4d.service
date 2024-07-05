@@ -82,7 +82,39 @@ public class AcmeServiceImpl implements AcmeService {
     @Autowired
     ChallengeStore challengeStore;
 
-    public Map login(HttpSession httpSession, Long id) {
+    public Map orderInfo(AcmeOrder order) {
+        HashMap<String, Object> ret = new HashMap<>();
+
+        ret.put("id", order.getId());
+        ret.put("deleted", order.getDeleted());
+        AcmeProvider provider = order.getProvider();
+        if(provider!=null) {
+            ret.put("provider", String.valueOf(provider.getName()));
+            ret.put("providerId", String.valueOf(provider.getId()));
+        }
+        AcmeDomain domain = order.getDomain();
+        ret.put("domain", String.valueOf(domain.getDomainUrl()));
+
+        ret.put("challengeToken", order.getChallengeToken());
+        ret.put("challengeContent", order.getChallengeContent());
+
+        Map<String, String[]> data = order.getData();
+        if(data != null && !data.isEmpty()) {
+            ret.put("data", order.getData());
+        }
+        if(!certificateRepository.findByOrderId(order.getId()).isEmpty()){
+            ret.put("status", "released");
+        } else {
+            ret.put("status", "challenge");
+        }
+        if(order.getDeleted()) {
+            ret.put("status", "deleted");
+        }
+        return ret;
+    }
+
+
+    public ResponseEntity<Map> login(HttpSession httpSession, Long id) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountById(id);
         if(acmeAccount != null) {
@@ -102,20 +134,23 @@ public class AcmeServiceImpl implements AcmeService {
                         .createLogin(session);
                 httpSession.setAttribute("login", login);
                 ret.put("result", "done");
+                return new ResponseEntity<>(ret, HttpStatus.OK);
             } catch (IOException e) {
                 ret.put("error", "io exception");
                 ret.put("exception", e.getMessage());
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             }
         } else {
             ret.put("error", "no account");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
         }
-        return ret;
     }
 
-    public Map register(HttpSession httpSession,Long id) {
+    public ResponseEntity<Map> register(HttpSession httpSession,Long id) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountById(id);
         if(acmeAccount != null) {
@@ -138,27 +173,33 @@ public class AcmeServiceImpl implements AcmeService {
                 acmeAccount.setAccountUrl(acct.getLocation().toString());
                 accountRepository.save(acmeAccount);
                 ret.put("result", "done");
+                return new ResponseEntity<>(ret, HttpStatus.OK);
             } catch (IOException e) {
                 ret.put("error", "io exception");
                 ret.put("exception", e.getMessage());
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             }
+        } else {
+            ret.put("error", "no account");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
         }
-        return ret;
     }
 
-    public Map logout(HttpSession httpSession, Long id) {
+    public ResponseEntity<Map> logout(HttpSession httpSession, Long id) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountById(id);
         if(acmeAccount != null) {
             httpSession.removeAttribute("login");
             ret.put("result", "done");
+            return new ResponseEntity<>(ret, HttpStatus.OK);
         } else {
             ret.put("error", "no account");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
         }
-        return ret;
     }
 
     public ResponseEntity<Map> certificate(HttpSession httpSession,String domainName, String notAfter, Long providerId, Map data) {
@@ -199,7 +240,7 @@ public class AcmeServiceImpl implements AcmeService {
                     // авторизация уже прошла или испытание выполнено
                     ret.put("result", "done");
                     ret.put("description", "Auth and challenge done");
-                    new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 }
 
                 AcmeOrder acmeOrder = new AcmeOrder(acmeDomain);
@@ -252,14 +293,16 @@ public class AcmeServiceImpl implements AcmeService {
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
-                throw new RuntimeException(e);
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             } catch (IOException e) {
                 ret.put("error", "io exception");
                 ret.put("exception", e.getMessage());
-                throw new RuntimeException(e);
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             }
+        } else {
+            ret.put("error", "no login");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }
 
     public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domainName, String notAfter, Long providerId, Map data) {
@@ -300,7 +343,7 @@ public class AcmeServiceImpl implements AcmeService {
                     // авторизация уже прошла или испытание выполнено
                     ret.put("result", "done");
                     ret.put("description", "Auth and challenge done");
-                    new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 }
                 ret.put("token", challenge.getToken());
                 ret.put("authorization", challenge.getAuthorization());
@@ -315,14 +358,17 @@ public class AcmeServiceImpl implements AcmeService {
                 acmeOrder.setChallengeContent(challenge.getAuthorization());
                 acmeOrder.setData(data);
                 orderRepository.save(acmeOrder);
+                return new ResponseEntity<>(orderInfo(acmeOrder), HttpStatus.OK);
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+
             }
         } else {
             ret.put("error", "no login");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }
 
     public ResponseEntity<String> downloadChallengeFile(HttpServletResponse httpResponse, Long id) {
@@ -340,6 +386,7 @@ public class AcmeServiceImpl implements AcmeService {
         if(acmeOrder!=null) {
             if(!certificateRepository.findByOrderId(orderId).isEmpty()) {
                 ret.put("error", "certificate already released");
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             } else {
                 if(loginDefaultAccount(httpSession)){
                     Login login = (Login)httpSession.getAttribute("login");
@@ -383,24 +430,28 @@ public class AcmeServiceImpl implements AcmeService {
                         } catch (AcmeException e) {
                             ret.put("error", "acme exception");
                             ret.put("exception", e.getMessage());
+                            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                         } catch (IOException e) {
                             ret.put("error", "io exception");
                             ret.put("exception", e.getMessage());
+                            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                         }
                     } else {
                         ret.put("error", "no login");
+                        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                     }
                 } else {
                     ret.put("error", "no login");
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 }
             }
         } else {
             ret.put("error", "no order");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
     }
 
-    public Map certificate(HttpSession httpSession, Long domainId) {
+    public ResponseEntity<Map> certificate(HttpSession httpSession, Long domainId) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -411,6 +462,7 @@ public class AcmeServiceImpl implements AcmeService {
         AcmeDomain acmeDomain= domainRepository.findDomainById(domainId);
         if(acmeDomain==null) {
             ret.put("error", "no domain");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
         }
 
         if(loginDefaultAccount(httpSession)){
@@ -418,6 +470,7 @@ public class AcmeServiceImpl implements AcmeService {
             Account account = login.getAccount();
             if(account.getStatus() != Status.VALID){
                 ret.put("error", "invalid status");
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             } else {
 
                 try {
@@ -431,7 +484,7 @@ public class AcmeServiceImpl implements AcmeService {
                         // авторизация уже прошла или испытание выполнено
                         ret.put("result", "done");
                         ret.put("description", "Auth and challenge done");
-                        return ret;
+                        return new ResponseEntity<>(ret, HttpStatus.OK);
                     }
                     doChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
 
@@ -465,22 +518,24 @@ public class AcmeServiceImpl implements AcmeService {
                     certificateRepository.save(acmeCertificate);
 
                     ret.put("url", certificate.getLocation().toString());
-                    return ret;
+                    return new ResponseEntity<>(ret, HttpStatus.OK);
                 } catch (AcmeException e) {
                     ret.put("error", "acme exception");
                     ret.put("exception", e.getMessage());
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 } catch (IOException e) {
                     ret.put("error", "io exception");
                     ret.put("exception", e.getMessage());
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 }
             }
         } else {
             ret.put("error", "no login");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
         }
-        return ret;
     }
 
-    public Map revoke(HttpSession httpSession, Long id
+    public ResponseEntity<Map> revoke(HttpSession httpSession, Long id
     ) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeCertificate acmeCertificate= certificateRepository.findCertificateById(id);
@@ -497,6 +552,7 @@ public class AcmeServiceImpl implements AcmeService {
             Account account = login.getAccount();
             if(account.getStatus() != Status.VALID){
                 ret.put("error", "invalid status");
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
             } else {
                 try {
                     CertificateFactory fac = null;
@@ -508,19 +564,22 @@ public class AcmeServiceImpl implements AcmeService {
                     acmeCertificate.setRevoked(true);
                     certificateRepository.save(acmeCertificate);
                     ret.put("result", "done");
-                    return ret;
+                    return new ResponseEntity<>(ret, HttpStatus.OK);
                 } catch (AcmeException e) {
                     ret.put("error", "acme exception");
                     ret.put("exception", e.getMessage());
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 } catch (CertificateException e) {
                     ret.put("error", "cert exception");
                     ret.put("exception", e.getMessage());
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 }
             }
         } else {
             ret.put("error", "no login");
+            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+
         }
-        return ret;
     }
 
 

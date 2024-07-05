@@ -190,7 +190,7 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/domains/{domainId}/certificate")
-    public Map certificateReleaseDomain(HttpSession httpSession,
+    public ResponseEntity<Map> certificateReleaseDomain(HttpSession httpSession,
                            @PathVariable(value = "domainId") Long domainId
     ) {
         return acmeService.certificate(httpSession,domainId);
@@ -203,7 +203,7 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/certificates/{id}/revoke")
-    public Map revoke(HttpSession httpSession,
+    public ResponseEntity<Map> revoke(HttpSession httpSession,
                       @PathVariable(value = "id") Long id
     ) {
         return acmeService.revoke(httpSession,id);

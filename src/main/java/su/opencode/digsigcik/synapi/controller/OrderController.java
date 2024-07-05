@@ -91,41 +91,10 @@ public class OrderController {
         ArrayList<Map> list = new ArrayList<>();
         for(AcmeOrder order:orders) {
             if(!order.getDeleted()) {
-                list.add(orderInfo(order));
+                list.add(acmeService.orderInfo(order));
             }
         }
         return list;
-    }
-
-    private Map orderInfo(AcmeOrder order) {
-        HashMap<String, Object> ret = new HashMap<>();
-
-        ret.put("id", order.getId());
-        ret.put("deleted", order.getDeleted());
-        AcmeProvider provider = order.getProvider();
-        if(provider!=null) {
-            ret.put("provider", String.valueOf(provider.getName()));
-            ret.put("providerId", String.valueOf(provider.getId()));
-        }
-        AcmeDomain domain = order.getDomain();
-        ret.put("domain", String.valueOf(domain.getDomainUrl()));
-
-        ret.put("challengeToken", order.getChallengeToken());
-        ret.put("challengeContent", order.getChallengeContent());
-
-        Map<String, String[]> data = order.getData();
-        if(data != null && !data.isEmpty()) {
-            ret.put("data", order.getData());
-        }
-        if(!certificateRepository.findByOrderId(order.getId()).isEmpty()){
-            ret.put("status", "released");
-        } else {
-            ret.put("status", "challenge");
-        }
-        if(order.getDeleted()) {
-            ret.put("status", "deleted");
-        }
-        return ret;
     }
 
     @Operation(summary = "Получить список все заявок",
@@ -151,7 +120,7 @@ public class OrderController {
         AcmeOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
 
-        return new ResponseEntity<>(orderInfo(order), HttpStatus.OK);
+        return new ResponseEntity<>(acmeService.orderInfo(order), HttpStatus.OK);
     }
 
     @Operation(summary = "Сформировать заявку на выпуск нового сертификата",
