@@ -94,7 +94,12 @@ public class AcmeServiceImpl implements AcmeService {
         }
         AcmeDomain domain = order.getDomain();
         ret.put("domain", String.valueOf(domain.getDomainUrl()));
-
+        if(order.getNotAfter()!=null){
+            ret.put("notAfter", String.valueOf(new SimpleDateFormat("yyyy-MM-dd").format(order.getNotAfter())));
+        }
+        if(order.getNotBefore()!=null) {
+            ret.put("notBefore", String.valueOf(new SimpleDateFormat("yyyy-MM-dd").format(order.getNotBefore())));
+        }
         ret.put("challengeToken", order.getChallengeToken());
         ret.put("challengeContent", order.getChallengeContent());
 
