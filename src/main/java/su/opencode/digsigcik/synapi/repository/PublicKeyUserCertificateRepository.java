@@ -18,4 +18,7 @@ public interface PublicKeyUserCertificateRepository extends JpaRepository<Public
     List<PublicKeyUserCertificate> findAll();
 
     List<PublicKeyUserCertificate> findAllByDeletedFalse();
+
+    @Query("SELECT count(uc.id) from PublicKeyUserCertificate uc where uc.imprint=?1")
+    Integer countPublicKeyUserCertificateByImprint(String imprint);
 }

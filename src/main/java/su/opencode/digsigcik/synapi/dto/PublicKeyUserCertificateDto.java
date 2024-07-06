@@ -46,5 +46,5 @@ public class PublicKeyUserCertificateDto {
     private String issuedWho;
 
     @JsonProperty("certificate")
-    private byte[] certificate;
+    private String certificate;
 }

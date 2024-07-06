@@ -53,4 +53,9 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
         return this.repository.save(publicKeyUserCertificate);
     }
 
+    @Override
+    public Integer countPublicKeyUserCertificateByImprint(String imprint){
+        return this.repository.countPublicKeyUserCertificateByImprint(imprint);
+    }
+
 }
