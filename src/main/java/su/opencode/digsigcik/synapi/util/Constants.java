@@ -284,6 +284,8 @@ public interface Constants {
     String PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL = String.format("Verification center is %s!", NULL);
     String PUBLIC_KEY_STATEMENT_IS_NULL = String.format("Statement is %s!", NULL);
     String PUBLIC_KEY_USER_CERTIFICATE_IS_NULL = String.format("User certificate is %s!", NULL);
+    String PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT = "Не известный формат добавляемого сертификата";
+    String PUBLIC_KEY_USER_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый сертификат пользователя уже существует в базе!";
     String STATEMENT_RELEASE_FILE = "Заявление_выпуск_СКП_ЭП";
     String STATEMENT_RECALL_FILE = "Заявление_отзыв_СКП_ЭП";
     String TEMPLATE_RELEASE_IS_NULL = "Шаблон заявления на выпуск не загружен в СЭП";

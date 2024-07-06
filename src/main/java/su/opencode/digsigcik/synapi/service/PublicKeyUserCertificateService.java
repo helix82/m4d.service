@@ -7,11 +7,8 @@ import java.util.List;
 
 public interface PublicKeyUserCertificateService {
     List<PublicKeyUserCertificate> findAllPublicKeyUserCertificate();
-
     PublicKeyUserCertificate savePublicKeyUserCertificate(@NotNull PublicKeyUserCertificate publicKeyUserCertificate);
-
     PublicKeyUserCertificate findByPublicKeyUserCertificateId(@NotNull Long id);
-
     PublicKeyUserCertificate updatePublicKeyUserCertificate(@NotNull PublicKeyUserCertificate publicKeyUserCertificate);
-
+    Integer countPublicKeyUserCertificateByImprint(String imprint);
 }

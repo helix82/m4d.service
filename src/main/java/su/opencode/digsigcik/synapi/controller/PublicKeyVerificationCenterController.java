@@ -65,9 +65,11 @@ public class PublicKeyVerificationCenterController {
         PublicKeyVerificationCenter publicKeyVerificationCenter = convertToEntity(publicKeyVerificationCenterInputDto);
         if(publicKeyVerificationCenterInputDto.getTemplateRelease() != null) {
             publicKeyVerificationCenter.setContentTypeRelease(publicKeyVerificationCenterInputDto.getTemplateRelease().getContentType());
+            publicKeyVerificationCenter.setOriginalNameRelease(publicKeyVerificationCenterInputDto.getTemplateRelease().getOriginalFilename());
         }
         if(publicKeyVerificationCenterInputDto.getTemplateRecall() != null) {
             publicKeyVerificationCenter.setContentTypeRecall(publicKeyVerificationCenterInputDto.getTemplateRecall().getContentType());
+            publicKeyVerificationCenter.setOriginalNameRecall(publicKeyVerificationCenterInputDto.getTemplateRecall().getOriginalFilename());
         }
         PublicKeyVerificationCenter response;
         try {
@@ -115,9 +117,11 @@ public class PublicKeyVerificationCenterController {
         PublicKeyVerificationCenter publicKeyVerificationCenter = convertToEntity(publicKeyVerificationCenterInputDto);
         if(publicKeyVerificationCenterInputDto.getTemplateRelease() != null) {
             publicKeyVerificationCenter.setContentTypeRelease(publicKeyVerificationCenterInputDto.getTemplateRelease().getContentType());
+            publicKeyVerificationCenter.setOriginalNameRelease(publicKeyVerificationCenterInputDto.getTemplateRelease().getOriginalFilename());
         }
         if(publicKeyVerificationCenterInputDto.getTemplateRecall() != null) {
             publicKeyVerificationCenter.setContentTypeRecall(publicKeyVerificationCenterInputDto.getTemplateRecall().getContentType());
+            publicKeyVerificationCenter.setOriginalNameRecall(publicKeyVerificationCenterInputDto.getTemplateRecall().getOriginalFilename());
         }
         PublicKeyVerificationCenter response;
         try {
@@ -212,6 +216,8 @@ public class PublicKeyVerificationCenterController {
         PublicKeyVerificationCenterOutputDto publicKeyVerificationCenterOutputDto = new PublicKeyVerificationCenterOutputDto();
         publicKeyVerificationCenterOutputDto.setId(publicKeyVerificationCenter.getId());
         publicKeyVerificationCenterOutputDto.setName(publicKeyVerificationCenter.getName());
+        publicKeyVerificationCenterOutputDto.setOriginalNameRelease(publicKeyVerificationCenter.getOriginalNameRelease());
+        publicKeyVerificationCenterOutputDto.setOriginalNameRecall(publicKeyVerificationCenter.getOriginalNameRecall());
         return publicKeyVerificationCenterOutputDto;
     }
 

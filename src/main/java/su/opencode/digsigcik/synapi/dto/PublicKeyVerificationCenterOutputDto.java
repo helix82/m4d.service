@@ -14,4 +14,9 @@ public class PublicKeyVerificationCenterOutputDto {
     @JsonProperty("name")
     private String name;
 
+    @JsonProperty("originalNameRelease")
+    private String originalNameRelease;
+
+    @JsonProperty("originalNameRecall")
+    private String originalNameRecall;
 }

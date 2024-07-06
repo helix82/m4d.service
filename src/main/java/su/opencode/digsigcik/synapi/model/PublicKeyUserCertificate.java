@@ -84,7 +84,7 @@ public class PublicKeyUserCertificate {
     @Column(name = "certificate", columnDefinition = "bytea")
     @Schema(example = "", required = false)
     @JsonProperty("certificate")
-    private byte[] certificate;
+    private String certificate;
 
     @Column(name = "deleted", columnDefinition = "BOOLEAN")
     @Schema(example = "", required = false)

@@ -37,6 +37,11 @@ public class PublicKeyVerificationCenter {
     @JsonProperty("contentTypeRelease")
     private String contentTypeRelease;
 
+    @Column(name = "original_name_release")
+    @Schema(example = "", required = false)
+    @JsonProperty("originalNameRelease")
+    private String originalNameRelease;
+
     @Lob
     @Column(name = "template_recall", columnDefinition = "bytea")
     @Schema(example = "", required = false)
@@ -47,6 +52,11 @@ public class PublicKeyVerificationCenter {
     @Schema(example = "", required = false)
     @JsonProperty("contentTypeRecall")
     private String contentTypeRecall;
+
+    @Column(name = "original_name_recall")
+    @Schema(example = "", required = false)
+    @JsonProperty("originalNameRecall")
+    private String originalNameRecall;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "verification_center_id")
