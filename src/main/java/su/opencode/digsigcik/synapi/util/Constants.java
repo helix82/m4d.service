@@ -300,7 +300,10 @@ public interface Constants {
     String CONTROLLER_SIMPLE_SIGNATURE_CREATE = "Создает простую электронную подпись";
     String CONTROLLER_SIMPLE_SIGNATURE_VERIFY = "Проверяет простую электронную подпись";
     String CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE = "Создает неквалифицированную электронную подпись";
+    String CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE_WITH_CUSTOM_HASH = "Создает неквалифицированную электронную подпись c указанием типа хэша";
     String CONTROLLER_UNQUALIFIED_SIGNATURE_VERIFY = "Проверяет неквалифицированную электронную подпись";
     String CONTROLLER_ENCRYPTION_KEY_CREATE = "Создает пару закрытого и открытого ключа для пользователя";
     String CONTROLLER_ENCRYPTION_KEY_DELETE = "Удаляет пару закрытого и открытого ключа для пользователя";
+    String CONTROLLER_ENCRYPTION_KEY_CREATE_WITH_CUSTOM_ALG  = "Создает пару закрытого и открытого ключа для пользователя c указанием алгоритма";
+
 }

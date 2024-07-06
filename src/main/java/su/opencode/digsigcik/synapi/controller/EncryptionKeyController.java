@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.cryptopro.CryptoProObjectIdentifiers;
-import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -14,22 +13,15 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.bouncycastle.crypto.params.*;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.crypto.params.GOST3410PrivateKeyParameters;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.crypto.util.SubjectPublicKeyInfoFactory;
 import org.bouncycastle.jcajce.provider.asymmetric.gost.BCGOST3410PrivateKey;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.bouncycastle.pkcs.PKCS12PfxPdu;
-import org.bouncycastle.pkcs.PKCS12PfxPduBuilder;
-import org.bouncycastle.pkcs.PKCS12SafeBag;
-import org.bouncycastle.pkcs.PKCSException;
-import org.bouncycastle.pkcs.bc.BcPKCS12MacCalculatorBuilder;
-import org.bouncycastle.pkcs.bc.BcPKCS12PBEOutputEncryptorBuilder;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,8 +41,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.cert.Certificate;
 import java.security.*;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -66,6 +58,7 @@ public class EncryptionKeyController {
     private final EncryptionKeyRepository encryptionKeyRepository;
     private final UserProjectionRepository userProjectionRepository;
 
+
     @Operation(summary = CONTROLLER_ENCRYPTION_KEY_CREATE,
             description = CONTROLLER_ENCRYPTION_KEY_CREATE)
     @ApiResponses(value = {
@@ -73,8 +66,20 @@ public class EncryptionKeyController {
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping("/")
-    public EncryptionKeyEntity createEncryptionKey(SignatureAlgorithm algorithm, KeySize keySize,
-                                                   @RequestParam String login) {
+    public EncryptionKeyEntity createEncryptionKey( @RequestParam String login) {
+        return createEncryptionKeyWithCustomSignature(SignatureAlgorithm.SHA256withRSA, KeySize.BIT_512, login);
+
+    }
+
+    @Operation(summary = CONTROLLER_ENCRYPTION_KEY_CREATE_WITH_CUSTOM_ALG,
+            description = CONTROLLER_ENCRYPTION_KEY_CREATE_WITH_CUSTOM_ALG)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PostMapping("/customize")
+    public EncryptionKeyEntity createEncryptionKeyWithCustomSignature(SignatureAlgorithm algorithm, KeySize keySize,
+                                                                      @RequestParam String login) {
 
         if (login == null || login.trim()
                 .isEmpty()) {
@@ -103,7 +108,7 @@ public class EncryptionKeyController {
             keyEntity.setUserProjection(userProjection);
             // Сохраняем закрытый ключ в файл
 
-           //writeCertificateToFile(x509Certificate,"certificate.cer");
+            //writeCertificateToFile(x509Certificate,"certificate.cer");
             return encryptionKeyRepository.save(keyEntity);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -223,7 +228,8 @@ public class EncryptionKeyController {
             pkcs12.load(null, null);
 
             // --- create entry in PKCS12
-            pkcs12.setKeyEntry("privatekeyalias", keyPair.getPrivate(), password.toCharArray(), new X509Certificate[] {cert});
+            pkcs12.setKeyEntry("privatekeyalias", keyPair.getPrivate(), password.toCharArray(),
+                    new X509Certificate[]{cert});
 
             // --- store PKCS#12 as file
             try (FileOutputStream p12 = new FileOutputStream(filePath)) {
@@ -247,7 +253,8 @@ public class EncryptionKeyController {
             keyStore.load(fis, password.toCharArray());
 
             // Находим первый доступный сертификат и извлекаем соответствующие ключи
-            String alias = keyStore.aliases().nextElement();
+            String alias = keyStore.aliases()
+                    .nextElement();
             Key key = keyStore.getKey(alias, password.toCharArray());
             if (key instanceof PrivateKey) {
                 // Get certificate of public key
@@ -259,7 +266,8 @@ public class EncryptionKeyController {
                 // Return a key pair
                 return new KeyPair(publicKey, (PrivateKey) key);
             }
-        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException | UnrecoverableEntryException e) {
+        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException |
+                 UnrecoverableEntryException e) {
             throw new RuntimeException("Ошибка при чтении ключей из PKCS#12 файла", e);
         }
         return null;
@@ -269,24 +277,25 @@ public class EncryptionKeyController {
     public static void saveGostPrivateKeyToFile(PrivateKey privateKey, String filePath) {
         try (FileOutputStream fos = new FileOutputStream(new File(filePath))) {
             // Проверяем, что ключ является GOST-ключом
-  //          if (privateKey instanceof BCGOST3410PrivateKey) {
-                BCGOST3410PrivateKey gostPrivateKey = (BCGOST3410PrivateKey) privateKey;
+            //          if (privateKey instanceof BCGOST3410PrivateKey) {
+            BCGOST3410PrivateKey gostPrivateKey = (BCGOST3410PrivateKey) privateKey;
 
-                // Получаем параметры GOST-ключа
-                GOST3410PrivateKeyParameters keyParams = (GOST3410PrivateKeyParameters) gostPrivateKey.getParameters();
-                byte[] keyBytes = keyParams.getX().toByteArray();
+            // Получаем параметры GOST-ключа
+            GOST3410PrivateKeyParameters keyParams = (GOST3410PrivateKeyParameters) gostPrivateKey.getParameters();
+            byte[] keyBytes = keyParams.getX()
+                    .toByteArray();
 
-                // Создаем PrivateKeyInfo с GOST-ключом
-                PrivateKeyInfo privateKeyInfo = new PrivateKeyInfo(
-                        new AlgorithmIdentifier(CryptoProObjectIdentifiers.gostR3410_94),
-                        new DEROctetString(keyBytes)
-                );
+            // Создаем PrivateKeyInfo с GOST-ключом
+            PrivateKeyInfo privateKeyInfo = new PrivateKeyInfo(
+                    new AlgorithmIdentifier(CryptoProObjectIdentifiers.gostR3410_94),
+                    new DEROctetString(keyBytes)
+            );
 
-                // Записываем PrivateKeyInfo в файл в формате PEM
-                PemObject pemObject = new PemObject("PRIVATE KEY", privateKeyInfo.getEncoded());
-                try (JcaPEMWriter pemWriter = new JcaPEMWriter(new java.io.OutputStreamWriter(fos))) {
-                    pemWriter.writeObject(pemObject);
-                }
+            // Записываем PrivateKeyInfo в файл в формате PEM
+            PemObject pemObject = new PemObject("PRIVATE KEY", privateKeyInfo.getEncoded());
+            try (JcaPEMWriter pemWriter = new JcaPEMWriter(new java.io.OutputStreamWriter(fos))) {
+                pemWriter.writeObject(pemObject);
+            }
 //            } else {
 //                throw new IllegalArgumentException("Переданный ключ не является GOST-ключом");
 //            }

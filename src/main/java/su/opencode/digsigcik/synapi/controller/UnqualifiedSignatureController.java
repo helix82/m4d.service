@@ -43,7 +43,19 @@ public class UnqualifiedSignatureController {
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "/create")
-    public ResponseEntity<?> createUnqualifiedSignature(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken, HashAlgorithm hashAlgorithm, @RequestPart("file") MultipartFile file) {
+    public ResponseEntity<?> createUnqualifiedSignature(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
+                                                        @RequestPart("file") MultipartFile file) {
+        return createUnqualifiedSignatureWithCustomHash(authToken, HashAlgorithm.SHA256, file);
+    }
+
+    @Operation(summary = CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE_WITH_CUSTOM_HASH,
+            description = CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE_WITH_CUSTOM_HASH)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PostMapping(value = "/customize")
+    public ResponseEntity<?> createUnqualifiedSignatureWithCustomHash(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken, HashAlgorithm hashAlgorithm, @RequestPart("file") MultipartFile file) {
 
         if (authToken == null || authToken.trim()
                 .isEmpty()) {
@@ -71,6 +83,7 @@ public class UnqualifiedSignatureController {
         }
         return new ResponseEntity<>(sesResponseDto, HttpStatus.OK);
     }
+
     @Operation(summary = CONTROLLER_UNQUALIFIED_SIGNATURE_VERIFY,
             description = CONTROLLER_UNQUALIFIED_SIGNATURE_VERIFY)
     @ApiResponses(value = {

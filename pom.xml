@@ -383,20 +383,6 @@
         </dependency>
         <dependency>
             <groupId>jcp</groupId>
-            <artifactId>JCPRevCheck</artifactId>
-            <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/JCPRevCheck.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>jcp</groupId>
-            <artifactId>JCPRevTools</artifactId>
-            <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/JCPRevTools.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>jcp</groupId>
             <artifactId>JCPxml</artifactId>
             <version>5.0.42119-A</version>
             <scope>system</scope>
@@ -430,13 +416,13 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/AdES-core.jar</systemPath>
         </dependency>
-        <dependency>
-            <groupId>jcp</groupId>
-            <artifactId>samples</artifactId>
-            <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/samples.jar</systemPath>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>jcp</groupId>-->
+<!--            <artifactId>samples</artifactId>-->
+<!--            <version>5.0.42119-A</version>-->
+<!--            <scope>system</scope>-->
+<!--            <systemPath>${project.basedir}/libs/samples.jar</systemPath>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
