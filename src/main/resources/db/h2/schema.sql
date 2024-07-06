@@ -255,6 +255,8 @@ CREATE MEMORY TABLE "PUBLIC"."VERIFICATION_CENTER"(
                                                         "CONTENT_TYPE_RECALL" CHARACTER VARYING(255),
                                                         "CONTENT_TYPE_RELEASE" CHARACTER VARYING(255),
                                                         "NAME" CHARACTER VARYING(255),
+                                                        "ORIGINAL_NAME_RECALL" CHARACTER VARYING(255),
+                                                        "ORIGINAL_NAME_RELEASE" CHARACTER VARYING(255),
                                                         "TEMPLATE_RECALL" BINARY LARGE OBJECT,
                                                         "TEMPLATE_RELEASE" BINARY LARGE OBJECT
 );
