@@ -305,135 +305,98 @@
             <version>3.8.0</version>
         </dependency>
         <!--        <dependency>-->
-        <!--            <groupId>jcp</groupId>-->
+        <!--            <groupId>ru.cryptopro.jcp</groupId>-->
         <!--            <artifactId>jscp</artifactId>-->
         <!--            <version>5.0.42119-A</version>-->
         <!--            <scope>system</scope>-->
-        <!--            <systemPath>${project.basedir}/libs/JCSP.jar</systemPath>-->
+        <!--            <systemPath>${pom.basedir}/libs/JCSP.jar</systemPath>-->
         <!--        </dependency>-->
         <dependency>
-            <groupId>jcp</groupId>
-            <artifactId>jcpRevCheck</artifactId>
+            <groupId>ru.cryptopro.jcp</groupId>
+            <artifactId>JCPRevCheck</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/JCPRevCheck.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>jcpRevTools</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/JCPRevTools.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>ASN1P</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/ASN1P.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>asn1rt</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/asn1rt.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>CAdES</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/CAdES.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>forms_rt</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/forms_rt.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>J6Oscar</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/J6Oscar.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCP</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/JCP.jar</systemPath>
         </dependency>
         <!--        <dependency>-->
-        <!--            <groupId>jcp</groupId>-->
+        <!--            <groupId>ru.cryptopro.jcp</groupId>-->
         <!--            <artifactId>JCPinst</artifactId>-->
         <!--            <version>5.0.42119-A</version>-->
-        <!--            <scope>system</scope>-->
-        <!--            <systemPath>${project.basedir}/libs/JCPinst.jar</systemPath>-->
         <!--        </dependency>-->
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCPRequest</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/JCPRequest.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCPxml</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/JCPxml.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCryptoP</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/JCryptoP.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>J6CF</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/J6CF.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>XMLDSigRI</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/XMLDSigRI.jar</systemPath>
         </dependency>
         <dependency>
-            <groupId>jcp</groupId>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>AdES-core</artifactId>
             <version>5.0.42119-A</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/AdES-core.jar</systemPath>
         </dependency>
 <!--        <dependency>-->
-<!--            <groupId>jcp</groupId>-->
+<!--            <groupId>ru.cryptopro.jcp</groupId>-->
 <!--            <artifactId>samples</artifactId>-->
 <!--            <version>5.0.42119-A</version>-->
-<!--            <scope>system</scope>-->
-<!--            <systemPath>${project.basedir}/libs/samples.jar</systemPath>-->
 <!--        </dependency>-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
             <version>1.60</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk15on -->
-<!--        <dependency>-->
-<!--            <groupId>org.bouncycastle</groupId>-->
-<!--            <artifactId>bcpkix-jdk15on</artifactId>-->
-<!--            <version>1.60</version>-->
-<!--        </dependency>-->
+
     </dependencies>
 
     <build>
@@ -448,9 +411,9 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/schema/synapi-api.yml</inputSpec>
+                            <inputSpec>${pom.basedir}/schema/synapi-api.yml</inputSpec>
                             <generatorName>java</generatorName>
-                            <output>${project.basedir}/</output>
+                            <output>${pom.basedir}/</output>
                             <modelPackage>su.opencode.digsigcik.synapi.api.model</modelPackage>
                             <packageName>su.opencode.digsigcik.synapi.api</packageName>
                             <groupId>su.opencode.digsigcik.synapi</groupId>
