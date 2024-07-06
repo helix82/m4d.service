@@ -174,13 +174,13 @@ public class CertificateController {
     @PostMapping("/certificates")
     public ResponseEntity<Map> certificateReleaseAuto(HttpSession httpSession, HttpServletRequest httpRequest,
                                             @RequestParam(value = "provider") Long providerId,
-                                            @RequestParam(value = "domainName") String domainName,
+                                            @RequestParam(value = "domain") String domain,
                                             @RequestParam(value = "notAfter") String notAfter ) {
         Map data = httpRequest.getParameterMap();
         data.remove("provider");
-        data.remove("domainName");
+        data.remove("domain");
         data.remove("notAfter");
-        return acmeService.certificate(httpSession,domainName, notAfter, providerId, data);
+        return acmeService.certificate(httpSession,domain, notAfter, providerId, data);
     }
 
     @Operation(summary = "Выпустить новый сертификат в автоматическом режиме для указанного домена",
@@ -190,7 +190,7 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/domains/{domainId}/certificate")
-    public Map certificateReleaseDomain(HttpSession httpSession,
+    public ResponseEntity<Map> certificateReleaseDomain(HttpSession httpSession,
                            @PathVariable(value = "domainId") Long domainId
     ) {
         return acmeService.certificate(httpSession,domainId);
@@ -203,7 +203,7 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/certificates/{id}/revoke")
-    public Map revoke(HttpSession httpSession,
+    public ResponseEntity<Map> revoke(HttpSession httpSession,
                       @PathVariable(value = "id") Long id
     ) {
         return acmeService.revoke(httpSession,id);
