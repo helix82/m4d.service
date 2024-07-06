@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,8 +34,8 @@ public class AcmeController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/accounts/{id}/login")
-    public Map login(HttpSession httpSession,
-                    @PathVariable Long id ) {
+    public ResponseEntity<Map> login(HttpSession httpSession,
+                                     @PathVariable Long id ) {
         return acmeService.login(httpSession, id);
     }
 
@@ -45,7 +46,7 @@ public class AcmeController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/accounts/{id}/register")
-    public Map register(HttpSession httpSession,
+    public ResponseEntity<Map> register(HttpSession httpSession,
                         @PathVariable Long id) {
         return acmeService.register(httpSession,id);
     }
@@ -57,7 +58,7 @@ public class AcmeController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/accounts/{id}/logout")
-    public Map logout(HttpSession httpSession, @PathVariable Long id) {
+    public ResponseEntity<Map> logout(HttpSession httpSession, @PathVariable Long id) {
         return acmeService.logout(httpSession,id);
     }
 
