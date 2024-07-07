@@ -50,8 +50,7 @@ public class ContainerServiceImpl implements ContainerService {
     @Override
     public Resource createPdfContainer(@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
                                        MultipartFile pubFile,
-                                       @NotNull ContainerUserInfoDto containerUserInfo,
-                                       @NotNull String containerHashType) {
+                                       @NotNull ContainerUserInfoDto containerUserInfo) {
         Map<ResultTypeEnum, byte[]> params = new HashMap<>();
         String fileName = srcFile.getOriginalFilename();
         String contentTypeStr = srcFile.getContentType();
@@ -82,7 +81,7 @@ public class ContainerServiceImpl implements ContainerService {
             }
         }
         Container container = ContainerUtils.createContainer(ContainerTypeEnum.SIMPLE_DETACHED, sourceFileContent,
-                fileName, contentType, containerHashType);
+                fileName, contentType, containerUserInfo.getHashAlgorithm());
 
         byte[] login = containerUserInfo.getLogin()
                 .getBytes(StandardCharsets.UTF_8);

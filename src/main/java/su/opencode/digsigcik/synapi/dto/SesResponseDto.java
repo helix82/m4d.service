@@ -11,7 +11,8 @@ import su.opencode.digsigcik.synapi.enums.PositionEnum;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SesResponseDto {
-    private String containerUUID;
+    private String uri;
+    private String UUID;
     private String firstName;
     private String lastName;
     private String patronymic;

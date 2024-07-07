@@ -21,10 +21,14 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static su.opencode.digsigcik.synapi.util.Constants.API_V_1_SES_FILES;
+import static su.opencode.digsigcik.synapi.util.Constants.GET_CONTAINER;
+
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/sesFiles")
+@RequestMapping(API_V_1_SES_FILES)
 public class ContainerFileController {
+
     private final ContainerFileRepository containerFileRepository;
 
     @GetMapping("/getContainerPath")
@@ -37,7 +41,7 @@ public class ContainerFileController {
         return new ResponseEntity<>(filePath, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/getContainer", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = GET_CONTAINER, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<?> getContainer(@RequestParam(name = "uuid") String uuid) {
         ContainerFile containerFile = containerFileRepository.getContainerFileByUuid(uuid);
         String containerPath = containerFile.getFilePath();

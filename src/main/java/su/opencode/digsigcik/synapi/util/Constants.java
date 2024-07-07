@@ -7,6 +7,9 @@ import static su.opencode.digsigcik.synapi.util.Constant.NULL;
  */
 
 public interface Constants {
+
+    String API_V_1_SES_FILES = "/api/v1/sesFiles";
+    String GET_CONTAINER= "/getContainer";
     // namespaces
     String XML_ELEMENT_CA = "УдостоверяющийЦентр";
     String XML_ELEMENT_ACC = "АккредитованныеУдостоверяющиеЦентры";

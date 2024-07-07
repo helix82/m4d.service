@@ -1,9 +1,12 @@
 server:
   port: 80
+
 web:
   cors:
     allow-origin: "*"
     allow-methods: OPTIONS, HEAD, POST, PUT, GET, DELETE
+  server:
+    uri: http://localhost
 logging:
   level:
     su.opencode.digsigcik.synapi: DEBUG
