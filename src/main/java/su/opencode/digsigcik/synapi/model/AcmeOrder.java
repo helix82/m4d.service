@@ -1,7 +1,6 @@
 package su.opencode.digsigcik.synapi.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import lombok.Getter;
 import org.hibernate.annotations.OnDelete;

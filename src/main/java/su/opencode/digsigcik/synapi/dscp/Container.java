@@ -241,7 +241,8 @@ public class Container {
 					}
 				}
 				String metaJsonStr = metaJson.toString();
-				byte[] metaJsonContent = metaJsonStr.getBytes(StandardCharsets.UTF_8);
+				JSONObject json = new JSONObject(metaJsonStr);
+				byte[] metaJsonContent = json.toString(4).getBytes(StandardCharsets.UTF_8);
 				assert metaJsonContent.length > 0;
 				mainFiles.put(ContainerFileEnum.META, metaJsonContent);
 				properties = new ContainerProperties(metaJson);

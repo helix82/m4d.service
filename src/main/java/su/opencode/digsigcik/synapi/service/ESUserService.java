@@ -8,8 +8,6 @@ import su.opencode.digsigcik.synapi.model.ESSUser;
 import javax.validation.constraints.NotNull;
 
 public interface ESUserService {
-    SigHashDto generateHashForPinCodeAndFile(String pinCode, MultipartFile file);
-
     boolean isESSUserPasswordCorrect(String login, String password);
 
     UserDto getESSUserByLogin(String login);

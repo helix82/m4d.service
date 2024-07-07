@@ -7,6 +7,7 @@ public enum ContainerFileEnum {
 	META("meta.json", true, false, null),
 	PREVIEW("preview/preview.pdf", false, true, null),
 	MAIN_FILE("main/mainFile", true, true, null),
+	DETACHED_PUB("detached/pub", false, true, EnhanceTypeEnum.ADES_BES),
 	DETACHED_BES("detached/sha256", true, true, EnhanceTypeEnum.ADES_BES),
 	DETACHED_T("detached/pkcs7t", false, true, EnhanceTypeEnum.ADES_T),
 	DETACHED_C("detached/pkcs7c", false, true, EnhanceTypeEnum.ADES_C),

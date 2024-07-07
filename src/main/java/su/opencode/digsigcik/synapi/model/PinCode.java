@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
+import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.model.audit.DateAudit;
 
 import javax.persistence.*;
@@ -23,8 +25,9 @@ public class PinCode extends DateAudit {
     @OneToOne
     @JoinColumn(name = "user_projection_id")
     private UserProjection userProjection;
-
-    @Column(name = "pin_code_hash", columnDefinition = "VARCHAR(64)")
+    @Column(name = "algorithm")
+    private HashAlgorithm algorithm;
+    @Column(name = "pin_code_hash")
     @Schema(name = "Хэш пин-кода", example = "cd70b...24f45a")
     private String pinCodeHash;
 

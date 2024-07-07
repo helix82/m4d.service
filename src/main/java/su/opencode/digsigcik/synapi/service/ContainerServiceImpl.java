@@ -15,11 +15,7 @@ import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
-import su.opencode.digsigcik.synapi.dscp.Container;
-import su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum;
-import su.opencode.digsigcik.synapi.dscp.ContainerUtils;
-import su.opencode.digsigcik.synapi.dscp.InvariantUtils;
-import su.opencode.digsigcik.synapi.dscp.ResultTypeEnum;
+import su.opencode.digsigcik.synapi.dscp.*;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 import su.opencode.digsigcik.synapi.util.CommonUtils;
 import su.opencode.digsigcik.synapi.util.DateUtils;
@@ -28,12 +24,7 @@ import su.opencode.digsigcik.synapi.util.FileUtils;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static su.opencode.digsigcik.synapi.util.Constant.DSCP_DIRECTORY_PATH;
 import static su.opencode.digsigcik.synapi.util.Constant.ROOT_FILE_STORAGE_PATH;
@@ -58,7 +49,10 @@ public class ContainerServiceImpl implements ContainerService {
 
     @Override
     public Resource createPdfContainer(@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
-                                       @NotNull ContainerUserInfoDto containerUserInfo) {
+                                       MultipartFile pubFile,
+                                       @NotNull ContainerUserInfoDto containerUserInfo,
+                                       @NotNull String containerHashType) {
+        Map<ResultTypeEnum, byte[]> params = new HashMap<>();
         String fileName = srcFile.getOriginalFilename();
         String contentTypeStr = srcFile.getContentType();
         MediaType contentType = StringUtils.isBlank(contentTypeStr)
@@ -78,21 +72,40 @@ public class ContainerServiceImpl implements ContainerService {
             throw new IllegalStateException("Cannot get sig file content", e);
         }
 
-        Container container = ContainerUtils.createContainer(ContainerTypeEnum.SIMPLE_DETACHED, sourceFileContent, fileName, contentType);
+        if (pubFile != null) {
+            byte[] pubFileContent;
+            try {
+                pubFileContent = pubFile.getBytes();
+                params.put(ResultTypeEnum.DETACHED_PUB, pubFileContent);
+            } catch (IOException e) {
+                throw new IllegalStateException("Cannot get pub file content", e);
+            }
+        }
+        Container container = ContainerUtils.createContainer(ContainerTypeEnum.SIMPLE_DETACHED, sourceFileContent,
+                fileName, contentType, containerHashType);
 
-        byte[] login = containerUserInfo.getLogin().getBytes(StandardCharsets.UTF_8);
-        byte[] firstname = containerUserInfo.getFirstname().getBytes(StandardCharsets.UTF_8);
-        byte[] lastname = containerUserInfo.getLastname().getBytes(StandardCharsets.UTF_8);
-        byte[] patronymic = containerUserInfo.getPatronymic().getBytes(StandardCharsets.UTF_8);
-        byte[] timestamp = containerUserInfo.getTimestamp().toString().getBytes(StandardCharsets.UTF_8);
+        byte[] login = containerUserInfo.getLogin()
+                .getBytes(StandardCharsets.UTF_8);
+        byte[] firstname = containerUserInfo.getFirstname()
+                .getBytes(StandardCharsets.UTF_8);
+        byte[] lastname = containerUserInfo.getLastname()
+                .getBytes(StandardCharsets.UTF_8);
+        byte[] patronymic = containerUserInfo.getPatronymic()
+                .getBytes(StandardCharsets.UTF_8);
+        byte[] timestamp = containerUserInfo.getTimestamp()
+                .toString()
+                .getBytes(StandardCharsets.UTF_8);
+        byte[] signatureAlgorithm = containerUserInfo.getSignatureAlgorithm()
+                .getBytes(StandardCharsets.UTF_8);
 
-        Map<ResultTypeEnum, byte[]> params = new HashMap<>();
+
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
         params.put(ResultTypeEnum.LOGIN, login);
         params.put(ResultTypeEnum.FIRSTNAME, firstname);
         params.put(ResultTypeEnum.LASTNAME, lastname);
         params.put(ResultTypeEnum.PATRONYMIC, patronymic);
         params.put(ResultTypeEnum.TIMESTAMP, timestamp);
+        params.put(ResultTypeEnum.SIGNATURE_ALGORITHM, signatureAlgorithm);
 
         ContainerUtils.fillContainerByResult(container, params);
 
@@ -139,9 +152,12 @@ public class ContainerServiceImpl implements ContainerService {
         var res = new HashMap<String, ContainerPart>();
         for (var rd : rds.entrySet()) {
 
-            var resultType = rd.getValue().getResultType();
-            var contentType = rd.getValue().getContentType();
-            var data = rd.getValue().getContent();
+            var resultType = rd.getValue()
+                    .getResultType();
+            var contentType = rd.getValue()
+                    .getContentType();
+            var data = rd.getValue()
+                    .getContent();
             var containerPart = new ContainerPart()
                     .contentType(contentType.toString())
                     .data(data);
@@ -160,7 +176,8 @@ public class ContainerServiceImpl implements ContainerService {
                 containerFile,
                 Collections.singletonList(selector),
                 reverify);
-        return res.get(selector.getCode().getValue());
+        return res.get(selector.getCode()
+                .getValue());
     }
 
     private boolean shouldVerify(List<ContainerSelector> selectors) {

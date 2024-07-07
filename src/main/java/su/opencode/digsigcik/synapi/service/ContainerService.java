@@ -13,11 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 public interface ContainerService {
-
     Resource createPdfContainer(
 	    @NotNull MultipartFile srcFile,
 	    @NotNull MultipartFile sigFile,
-        @NotNull ContainerUserInfoDto containerUserInfo);
+        MultipartFile pubFile,
+        @NotNull ContainerUserInfoDto containerUserInfo,
+        @NotNull String containerHashType);
 
     Resource updatePdfContainerRegData(
             @NotNull MultipartFile containerFile,

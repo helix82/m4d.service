@@ -43,6 +43,8 @@ final class MetaAttribute {
 	static final MetaAttribute USER_LASTNAME = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userLastname");
 	static final MetaAttribute USER_PATRONYMIC = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userPatronymic");
 	static final MetaAttribute SIGNATURE_TIMESTAMP = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "timestamp");
+	static final MetaAttribute SIGNATURE_ALGORITHM = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "signatureAlgorithm");
+
 
 
 	private final MetaObjectEnum object;
