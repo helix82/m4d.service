@@ -11,18 +11,18 @@ http://maven.apache.org/xsd/settings-1.0.0.xsd">
  <servers>
   <server>
    <id>mvn-ocode</id>
-   <username>admin</username>
-   <password>e449a8103e34644613777</password>
+   <username>ocode-mvn</username>
+   <password>qqQQ1234</password>
   </server>
   <server>
    <id>mvn-ocode-releases</id>
-   <username>admin</username>
-   <password>e449a8103e34644613777</password>
+   <username>ocode-mvn</username>
+   <password>qqQQ1234</password>
   </server>
   <server>
    <id>nexus</id>
-   <username>admin</username>
-   <password>e449a8103e34644613777</password>
+   <username>ocode-mvn</username>
+   <password>qqQQ1234</password>
   </server>
  </servers>
  <mirrors>
