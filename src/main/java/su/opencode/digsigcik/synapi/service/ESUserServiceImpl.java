@@ -25,27 +25,6 @@ import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 public class ESUserServiceImpl implements ESUserService {
     private final ESUserRepository esUserRepository;
 
-    @Override
-    public SigHashDto generateHashForPinCodeAndFile(String pinCode, MultipartFile file) {
-        SigHashDto sigHashDto;
-        try {
-            String pinCodeHash = HashUtils.getSha256Hash(pinCode.getBytes(StandardCharsets.UTF_8));
-            String fileHash = HashUtils.getSha256Hash(file.getBytes());
-
-            sigHashDto = SigHashDto.builder()
-                    .pinCodeHash(pinCodeHash)
-                    .fileHash(fileHash)
-                    .build();
-        } catch (IOException e) {
-            throw new SesException(EMPTY_BYTE_ARRAY_ERROR, e.getCause());
-        }
-        return sigHashDto;
-    }
-
-//    @Override
-//    public boolean isESSUserWithPinCodeHashNotExist(String pinCodeHash) {
-//        return getESSUserByUserPinCodeHash(pinCodeHash) == null;
-//    }
 
     @Override
     public boolean isESSUserPasswordCorrect(String login, String password) {
@@ -58,10 +37,6 @@ public class ESUserServiceImpl implements ESUserService {
         return new ObjectMapper().convertValue(this.esUserRepository.findESSUserByLogin(login), UserDto.class);
     }
 
-//    @Override
-//    public UserDto getESSUserByUserPinCodeHash(String pinCodeHash) {
-//        return new ObjectMapper().convertValue(this.esUserRepository.findESSUserByPinCodeHash(pinCodeHash), UserDto.class);
-//    }
 
     @Override
     public ESSUser createESSUser(@NotNull ESSUser essUser){

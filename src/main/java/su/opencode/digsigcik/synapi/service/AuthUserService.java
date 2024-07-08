@@ -14,7 +14,7 @@ import su.opencode.digsigcik.synapi.repository.ESUserRepository;
 
 import java.util.List;
 
-import static su.opencode.digsigcik.synapi.util.Constant.USER_NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constant.JWT_USER_NOT_FOUND;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Service
@@ -38,7 +38,7 @@ public class AuthUserService implements UserDetailsService {
                     List.of(new SimpleGrantedAuthority(user.getPosition().name()))
             );
         } else {
-            throw new UserAuthException(USER_NOT_FOUND);
+            throw new UserAuthException(JWT_USER_NOT_FOUND);
         }
     }
 }

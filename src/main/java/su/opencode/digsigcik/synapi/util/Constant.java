@@ -9,7 +9,9 @@ public final class Constant {
 
     public static final String NOT_FOUND = "not found!";
     public static final String ID_IS_NULL = String.format("ID is %s", NULL);
-    public static final String USER_NOT_FOUND = String.format("User %s", NOT_FOUND);
+    public static final String JWT_USER_NOT_FOUND = String.format("JWT User %s", NOT_FOUND);
+    public static final String USER_PROJECTION_NOT_FOUND = String.format("User projection %s", NOT_FOUND);
+    public static final String PIN_CODE_NOT_FOUND = String.format("Pin code %s", NOT_FOUND);
     public static final String EMPTY_BYTE_ARRAY_ERROR = "Empty byte array!";
     public static final String AUTH_ERROR = "Authorisation Error!";
     public static final String ROOT_FILE_STORAGE_PATH = ".";
