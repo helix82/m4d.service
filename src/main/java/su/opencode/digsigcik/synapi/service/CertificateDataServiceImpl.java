@@ -31,6 +31,11 @@ public class CertificateDataServiceImpl implements CertificateDataService{
     }
 
     @Override
+    public CertificateData findCertificateDataByKeyId(String keyId) {
+        return this.repository.findCertificateDataByKeyId(keyId);
+    }
+
+    @Override
     public CertificateData findByCertificateDataId(Long id) {
         return this.repository.findCertificateDataById(id);
     }

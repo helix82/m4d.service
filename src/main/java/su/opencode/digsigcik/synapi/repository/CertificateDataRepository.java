@@ -11,4 +11,6 @@ public interface CertificateDataRepository extends JpaRepository<CertificateData
 
     @Query("SELECT count(cd.id) from CertificateData cd where cd.imprint=?1")
     Integer countCertificateDataByImprint(String imprint);
+
+    CertificateData findCertificateDataByKeyId(String keyId);
 }
