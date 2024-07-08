@@ -255,6 +255,8 @@ public interface Constants {
 
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список сертификатов пользователей";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список сертификатов пользователей";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_PARSE_SUMMARY = "Распарсить сертификат пользователя";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_PARSE_DESCRIPTION = "Возвращает структуру сертификата пользователя";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_SAVE_SUMMARY = "Сохранить сертификат пользователя";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_SAVE_DESCRIPTION = "Возвращает созданный сертификат пользователя";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_BY_ID_SUMMARY = "Получить сертификат пользователя по ИД";
