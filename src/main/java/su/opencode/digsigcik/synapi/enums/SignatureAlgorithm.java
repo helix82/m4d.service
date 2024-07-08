@@ -1,15 +1,9 @@
 package su.opencode.digsigcik.synapi.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum SignatureAlgorithm {
-    GOST3411withGOST3410EL("GOST3411withGOST3410EL"),
-    GOST3411withGOST3410DHEL("GOST3411withGOST3410DHEL"),
-    GOST3411_2012_256withGOST3410_2012_256("GOST3411_2012_256withGOST3410_2012_256"),
-    GOST3411_2012_512withGOST3410_2012_512("GOST3411_2012_512withGOST3410_2012_512"),
-    GOST3411_2012_256withGOST3410DH_2012_256("GOST3411_2012_256withGOST3410DH_2012_256"),
-    GOST3411_2012_512withGOST3410DH_2012_512("GOST3411_2012_512withGOST3410DH_2012_512"),
-    CryptoProSignature("CryptoProSignature"),
-    CryptoProSignature_2012_256("CryptoProSignature_2012_256"),
-    CryptoProSignature_2012_512("CryptoProSignature_2012_512"),
     NONEwithRSA("NONEwithRSA"),
     MD2withRSA("MD2withRSA"),
     MD5withRSA("MD5withRSA"),
@@ -25,15 +19,20 @@ public enum SignatureAlgorithm {
     SHA256withECDSA("SHA256withECDSA"), //Key size must be at most 571 bits\r\n\tat
     SHA384withECDSA("SHA384withECDSA"), //Key size must be at most 571 bits\r\n\tat
     SHA512withECDSA("SHA512withECDSA"); // Key size must be at most 571 bits\r\n\tat
-
+    //TODO: FIX ISSUES WITH GOST
+//    GOST3411withGOST3410EL("GOST3411withGOST3410EL"),
+//    GOST3411withGOST3410DHEL("GOST3411withGOST3410DHEL"),
+//    GOST3411_2012_256withGOST3410_2012_256("GOST3411_2012_256withGOST3410_2012_256"),
+//    GOST3411_2012_512withGOST3410_2012_512("GOST3411_2012_512withGOST3410_2012_512"),
+//    GOST3411_2012_256withGOST3410DH_2012_256("GOST3411_2012_256withGOST3410DH_2012_256"),
+//    GOST3411_2012_512withGOST3410DH_2012_512("GOST3411_2012_512withGOST3410DH_2012_512"),
+//    CryptoProSignature("CryptoProSignature"),
+//    CryptoProSignature_2012_256("CryptoProSignature_2012_256"),
+//    CryptoProSignature_2012_512("CryptoProSignature_2012_512");
     private final String algorithmName;
 
     SignatureAlgorithm(String algorithmName) {
         this.algorithmName = algorithmName;
-    }
-
-    public String getAlgorithmName() {
-        return algorithmName;
     }
 
     public static SignatureAlgorithm fromString(String name) {

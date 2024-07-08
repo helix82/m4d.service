@@ -1,5 +1,8 @@
 package su.opencode.digsigcik.synapi.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum KeySize {
     BIT_512(512),
     BIT_1024(1024),
@@ -13,7 +16,4 @@ public enum KeySize {
         this.size = size;
     }
 
-    public int getSize() {
-        return size;
-    }
 }

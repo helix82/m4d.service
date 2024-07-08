@@ -40,7 +40,7 @@ import static su.opencode.digsigcik.synapi.util.HashUtils.generateHash;
 @Service
 @RequiredArgsConstructor
 public class SimpleSignatureServiceImpl implements SimpleSignatureService {
-
+    private static final String SIGNATURE_PUBLIC_KEY_SEPARATOR = "---";
     private final ContainerService containerService;
     private final PinCodeRepository pinCodeRepository;
     private final UserProjectionRepository userProjectionRepository;
@@ -84,7 +84,7 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
         if (sigFile.exists()) {
             FileUtils.deleteFile(sigFilePathName);
         }
-        return containerService.createPdfContainer(srcFile, sigMultipartFile, null, containerUserInfo);
+        return containerService.createPdfContainer(srcFile, sigMultipartFile, containerUserInfo);
     }
 
 
@@ -100,99 +100,91 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
                         createContainerSelector(ContainerSelectorCode.DETACHEDSIGN),
                         createContainerSelector(ContainerSelectorCode.HASHTYPE)
                 ));
+        try {
+            Map<String, ContainerPart> containerData = containerService.getContainerData(container,
+                    containerSelectors, false);
 
-        Map<String, ContainerPart> containerData = containerService.getContainerData(container,
-                containerSelectors, false);
-
-        if (containerData == null) {
-            throw new SesVerifyException("Verify ses error!");
-        }
-        String userFirstname = new String(containerData.get("userFirstname")
-                .getData(), StandardCharsets.UTF_8);
-        String userLastname = new String(containerData.get("userLastname")
-                .getData(), StandardCharsets.UTF_8);
-        String userPatronymic = new String(containerData.get("userPatronymic")
-                .getData(), StandardCharsets.UTF_8);
-        String timestamp = new String(containerData.get("timestamp")
-                .getData(), StandardCharsets.UTF_8);
-        String userLogin = new String(containerData.get("userLogin")
-                .getData(), StandardCharsets.UTF_8);
-        String userSignature = new String(containerData.get("detachedSign")
-                .getData(), StandardCharsets.UTF_8);
-        String hashType = new String(containerData.get("hashType")
-                .getData(), StandardCharsets.UTF_8);
-        byte[] srcFile = containerData.get("sourceFile")
-                .getData();
-
-        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(userLogin);
-        PinCode pinCode = pinCodeRepository.getPinCodeByUserProjection(userProjection);
-        if (userProjection == null) {
-            throw new SesVerifyException(USER_PROJECTION_NOT_FOUND);
-        }
-
-        SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
-
-        if (userProjection.getLogin()
-                .equals(userLogin)) {
-            String fileHash = HashUtils.generateHash(srcFile, pinCode.getAlgorithm());
-            String operationDateHash = generateHash(timestamp.getBytes(), pinCode.getAlgorithm());
-            String signature = createCustomSimpleSignature(pinCode.getPinCodeHash(), fileHash, operationDateHash);
-
-            if (userSignature.equals(signature)) {
-                sesVerifyJsonDto.setValid(true);
-
-            } else {
-                sesVerifyJsonDto.setValid(false);
+            if (containerData == null) {
+                throw new SesVerifyException("Verify ses error!");
             }
-            sesVerifyJsonDto.setUserInfo(SesUserInfoDto.builder()
-                    .hashAlgorithmType(hashType)
-                    .hashSignatureAlgorithm("CUSTOM")
-                    .pinCodeHashAlgorithm(pinCode.getAlgorithm()
-                            .getAlgorithmName())
-                    .firstname(userFirstname)
-                    .lastname(userLastname)
-                    .patronymic(userPatronymic)
-                    .timestamp(LocalDateTime.parse(timestamp))
-                    .build());
-        }
+            String userFirstname = new String(containerData.get("userFirstname")
+                    .getData(), StandardCharsets.UTF_8);
+            String userLastname = new String(containerData.get("userLastname")
+                    .getData(), StandardCharsets.UTF_8);
+            String userPatronymic = new String(containerData.get("userPatronymic")
+                    .getData(), StandardCharsets.UTF_8);
+            String timestamp = new String(containerData.get("timestamp")
+                    .getData(), StandardCharsets.UTF_8);
+            String userLogin = new String(containerData.get("userLogin")
+                    .getData(), StandardCharsets.UTF_8);
+            String userSignature = new String(containerData.get("detachedSign")
+                    .getData(), StandardCharsets.UTF_8);
+            String hashType = new String(containerData.get("hashType")
+                    .getData(), StandardCharsets.UTF_8);
+            byte[] srcFile = containerData.get("sourceFile")
+                    .getData();
 
-        return sesVerifyJsonDto;
+            UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(userLogin);
+            PinCode pinCode = pinCodeRepository.getPinCodeByUserProjection(userProjection);
+            if (userProjection == null) {
+                throw new SesVerifyException(USER_PROJECTION_NOT_FOUND);
+            }
+
+            SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
+
+            if (userProjection.getLogin()
+                    .equals(userLogin)) {
+                String fileHash = HashUtils.generateHash(srcFile, pinCode.getAlgorithm());
+                String operationDateHash = generateHash(timestamp.getBytes(), pinCode.getAlgorithm());
+                String signature = createCustomSimpleSignature(pinCode.getPinCodeHash(), fileHash, operationDateHash);
+
+                if (userSignature.equals(signature)) {
+                    sesVerifyJsonDto.setValid(true);
+
+                } else {
+                    sesVerifyJsonDto.setValid(false);
+                }
+                sesVerifyJsonDto.setUserInfo(SesUserInfoDto.builder()
+                        .hashAlgorithmType(hashType)
+                        .hashSignatureAlgorithm("CUSTOM")
+                        .pinCodeHashAlgorithm(pinCode.getAlgorithm()
+                                .getAlgorithmName())
+                        .firstname(userFirstname)
+                        .lastname(userLastname)
+                        .patronymic(userPatronymic)
+                        .timestamp(LocalDateTime.parse(timestamp))
+                        .build());
+            }
+
+            return sesVerifyJsonDto;
+        } catch (Exception e) {
+            SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
+            sesVerifyJsonDto.setValid(false);
+            sesVerifyJsonDto.setVerifyResultMessage(e.getMessage());
+            return sesVerifyJsonDto;
+        }
     }
 
     @Override
     public Resource createSimpleSignatureResource(@NotNull MultipartFile srcFile,
                                                   @NotNull ContainerUserInfoDto containerUserInfo) throws IOException {
 
-        byte[] signature = createSignature(srcFile.getBytes(), containerUserInfo.getPrivateKey());
+        byte[] signature = createSignature(srcFile.getBytes(), containerUserInfo.getPrivateKey(),containerUserInfo.getTimestamp().toString());
 
         String sourceDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, SOURCE_DIRECTORY_PATH);
         String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "temp.sig");
         FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
-        FileUtils.createFile(sigFilePathName, Base64.getEncoder()
-                .encodeToString(signature)
-                .getBytes());
-
-        String pubFilePathName = String.format("%s%s", sourceDirectoryPathName, "temp.pub");
-        FileUtils.createFile(pubFilePathName, Base64.getEncoder()
-                .encodeToString(containerUserInfo.getPublicKey()
-                        .getEncoded())
-                .getBytes());
+        FileUtils.createFile(sigFilePathName,combineSignatureAndPublicKey(signature,containerUserInfo.getPublicKey()
+                .getEncoded()));
 
         MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
-
-        MultipartFile pubMultipartFile = FileUtils.mapFileToMultipart(pubFilePathName);
 
         File sigFile = new File(sigFilePathName);
         if (sigFile.exists()) {
             FileUtils.deleteFile(sigFilePathName);
         }
 
-        File pubFile = new File(pubFilePathName);
-        if (pubFile.exists()) {
-            FileUtils.deleteFile(pubFilePathName);
-        }
-
-        return containerService.createPdfContainer(srcFile, sigMultipartFile, pubMultipartFile, containerUserInfo);
+        return containerService.createPdfContainer(srcFile, sigMultipartFile, containerUserInfo);
     }
 
 
@@ -207,16 +199,16 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
                         createContainerSelector(ContainerSelectorCode.TIMESTAMP),
                         createContainerSelector(ContainerSelectorCode.SOURCEFILE),
                         createContainerSelector(ContainerSelectorCode.DETACHEDSIGN),
-                        createContainerSelector(ContainerSelectorCode.DETACHEDPUB),
-                        createContainerSelector(ContainerSelectorCode.SIGNATUREALGORITHM)));
-
-        Map<String, ContainerPart> containerData = containerService.getContainerData(container, containerSelectors,
-                false);
-
-        if (containerData == null) {
-            throw new SesVerifyException("Verify ses error!");
-        }
+                        createContainerSelector(ContainerSelectorCode.SIGNATUREALGORITHM),
+                        createContainerSelector(ContainerSelectorCode.HASHTYPE)));
         try {
+            Map<String, ContainerPart> containerData = containerService.getContainerData(container, containerSelectors,
+                    false);
+
+            if (containerData == null) {
+                throw new SesVerifyException("Verify ses error!");
+            }
+
             String userFirstname = new String(containerData.get("userFirstname")
                     .getData(), StandardCharsets.UTF_8);
             String userLastname = new String(containerData.get("userLastname")
@@ -227,20 +219,22 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
                     .getData(), StandardCharsets.UTF_8);
             String userLogin = new String(containerData.get("userLogin")
                     .getData(), StandardCharsets.UTF_8);
-            String userSignature = new String(containerData.get("detachedSign")
-                    .getData(), StandardCharsets.UTF_8);
-            String publicKey = new String(containerData.get("detachedPub")
+            String signatureAndPublicKey = new String(containerData.get("detachedSign")
                     .getData(), StandardCharsets.UTF_8);
             String signatureAlgorithm = new String(containerData.get("signatureAlgorithm")
                     .getData(), StandardCharsets.UTF_8);
+            String hashType = new String(containerData.get("hashType")
+                    .getData(), StandardCharsets.UTF_8);
             byte[] srcFile = containerData.get("sourceFile")
                     .getData();
-
+            String[] parts = signatureAndPublicKey.split(SIGNATURE_PUBLIC_KEY_SEPARATOR);
+            byte[] signature = parts[0].getBytes();
+            byte[] publicKeyBytes = parts[1].getBytes();
             SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
 
             // декодируем открытый ключ из Base64 в байты
             byte[] decodedPublicKey = Base64.getDecoder()
-                    .decode(publicKey);
+                    .decode(publicKeyBytes);
 
             // создаём спецификацию ключа из байтов декодированного ключа
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodedPublicKey);
@@ -251,7 +245,7 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
             // генерируем открытый ключ из спецификации ключа
             PublicKey publicKey1 = keyFactory.generatePublic(keySpec);
             boolean valid = verifySignature(srcFile, Base64.getDecoder()
-                    .decode(userSignature), publicKey1);
+                    .decode(signature), publicKey1, timestamp);
 
             if (valid) {
                 sesVerifyJsonDto.setValid(true);
@@ -259,21 +253,32 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
                 sesVerifyJsonDto.setValid(false);
             }
             sesVerifyJsonDto.setUserInfo(SesUserInfoDto.builder()
-                    .hashAlgorithmType(HASH_ALGORITHM)
-                    .hashSignatureAlgorithm(HASH_ALGORITHM)
+                    .hashAlgorithmType(hashType)
+                    .hashSignatureAlgorithm(signatureAlgorithm)
+//                    .pinCodeHashAlgorithm(pinCode.getAlgorithm()
+//                            .getAlgorithmName())
                     .firstname(userFirstname)
                     .lastname(userLastname)
                     .patronymic(userPatronymic)
                     .timestamp(LocalDateTime.parse(timestamp))
                     .build());
             return sesVerifyJsonDto;
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            SesVerifyJsonDto sesVerifyJsonDto = new SesVerifyJsonDto();
+            sesVerifyJsonDto.setValid(false);
+            sesVerifyJsonDto.setVerifyResultMessage(e.getMessage());
+            return sesVerifyJsonDto;
         }
     }
 
     private static String createCustomSimpleSignature(String pinCodeHash, String fileHash, String operationDate) {
         return String.format("%s.%s.%s", pinCodeHash, fileHash, operationDate);
+    }
+
+    private static byte[]  combineSignatureAndPublicKey(byte[] signature, byte[] publicKey) {
+        return (Base64.getEncoder()
+                .encodeToString(signature) + SIGNATURE_PUBLIC_KEY_SEPARATOR + Base64.getEncoder()
+                .encodeToString(publicKey)).getBytes();
     }
 
     private static ContainerSelector createContainerSelector(ContainerSelectorCode containerSelectorCode) {
@@ -320,11 +325,12 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
         }
     }
 
-    public byte[] createSignature(byte[] fileContent, PrivateKey privateKey) {
+    public byte[] createSignature(byte[] fileContent, PrivateKey privateKey, String timestamp) {
         try {
             Signature signature = Signature.getInstance("SHA256with" + privateKey.getAlgorithm());
             signature.initSign(privateKey);
             signature.update(fileContent);
+            signature.update(timestamp.getBytes());
             return signature.sign();
         } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             e.printStackTrace();
@@ -332,11 +338,12 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
         }
     }
 
-    public boolean verifySignature(byte[] fileContent, byte[] signatureBytes, PublicKey publicKey) {
+    public boolean verifySignature(byte[] fileContent, byte[] signatureBytes, PublicKey publicKey, String timestamp) {
         try {
             Signature verificationSignature = Signature.getInstance("SHA256with" + publicKey.getAlgorithm());
             verificationSignature.initVerify(publicKey);
             verificationSignature.update(fileContent);
+            verificationSignature.update(timestamp.getBytes());
             return verificationSignature.verify(signatureBytes);
         } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             e.printStackTrace();

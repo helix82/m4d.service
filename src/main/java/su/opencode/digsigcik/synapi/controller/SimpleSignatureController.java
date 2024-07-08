@@ -186,9 +186,10 @@ public class SimpleSignatureController {
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createSimpleSignatureContainerWithCustomHash(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                                                  HashAlgorithm hashAlgorithm,
-                                                                                 @RequestParam String pinCode,
                                                                                  @RequestPart("file") MultipartFile file) throws IOException {
-        checkIfPinCodeAndFileEmpty(pinCode, file);
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
         UserProjection userProjection =
                 userProjectionRepository.getUserProjectionByLogin(jwtPayloadDto.getPreferredUsername());
@@ -210,7 +211,6 @@ public class SimpleSignatureController {
                     .signatureAlgorithm(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
-                    .pinCode(pinCode)
                     .pinCodeHashAlgorithm(hashAlgorithm.getAlgorithmName())
                     .privateKey(keyPair.getPrivate())
                     .publicKey(keyPair.getPublic())
@@ -233,9 +233,8 @@ public class SimpleSignatureController {
     })
     @PostMapping(value = "/create-ses-container")
     public ResponseEntity<Resource> createSimpleSignatureContainer(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
-                                                                   @RequestParam String pinCode,
                                                                    @RequestPart("file") MultipartFile file) throws IOException {
-        return createSimpleSignatureContainerWithCustomHash(authToken, HashAlgorithm.SHA256, pinCode, file);
+        return createSimpleSignatureContainerWithCustomHash(authToken, HashAlgorithm.SHA256, file);
     }
 
     @Operation(summary = CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE_WITH_CUSTOM_HASH,
@@ -245,8 +244,10 @@ public class SimpleSignatureController {
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "/create-ses-custom-hash")
-    public ResponseEntity<?> createSimpleSignatureCustomHash(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken, HashAlgorithm hashAlgorithm, @RequestParam String pinCode, @RequestPart("file") MultipartFile file) throws IOException {
-        checkIfPinCodeAndFileEmpty(pinCode, file);
+    public ResponseEntity<?> createSimpleSignatureCustomHash(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken, HashAlgorithm hashAlgorithm, @RequestPart("file") MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
 
         UserProjection userProjection =
@@ -269,7 +270,6 @@ public class SimpleSignatureController {
                     .signatureAlgorithm(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
-                    .pinCode(pinCode)
                     .pinCodeHashAlgorithm(hashAlgorithm.getAlgorithmName())
                     .privateKey(keyPair.getPrivate())
                     .publicKey(keyPair.getPublic())
@@ -316,9 +316,8 @@ public class SimpleSignatureController {
     })
     @PostMapping(value = "/create-ses")
     public ResponseEntity<?> createSimpleSignature(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
-                                                   @RequestParam String pinCode,
                                                    @RequestPart("file") MultipartFile file) throws IOException {
-        return createSimpleSignatureCustomHash(authToken, HashAlgorithm.SHA256, pinCode, file);
+        return createSimpleSignatureCustomHash(authToken, HashAlgorithm.SHA256, file);
     }
 
 

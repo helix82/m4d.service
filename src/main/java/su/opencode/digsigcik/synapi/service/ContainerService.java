@@ -6,7 +6,6 @@ import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
-import su.opencode.digsigcik.synapi.api.model.StampPosition;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 
 import java.util.List;
@@ -16,7 +15,6 @@ public interface ContainerService {
     Resource createPdfContainer(
 	    @NotNull MultipartFile srcFile,
 	    @NotNull MultipartFile sigFile,
-        MultipartFile pubFile,
         @NotNull ContainerUserInfoDto containerUserInfo);
 
     Resource updatePdfContainerRegData(

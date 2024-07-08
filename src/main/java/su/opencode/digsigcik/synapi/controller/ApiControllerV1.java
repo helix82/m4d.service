@@ -51,7 +51,7 @@ public class ApiControllerV1 {
                 .timestamp(LocalDateTime.now())
                 .signatureAlgorithm("NOT IMPLEMENTED")
                 .build();
-        var res = containerService.createPdfContainer(sourceFile, sourceSig, null,containerUserInfo);
+        var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
@@ -77,7 +77,7 @@ public class ApiControllerV1 {
                 .signatureAlgorithm(signatureAlgorithm.getAlgorithmName())
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .build();
-        var res = containerService.createPdfContainer(sourceFile, sourceSig, null,containerUserInfo);
+        var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
