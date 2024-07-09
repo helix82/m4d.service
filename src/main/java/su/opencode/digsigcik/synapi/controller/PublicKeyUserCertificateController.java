@@ -103,6 +103,10 @@ public class PublicKeyUserCertificateController {
     @PostMapping(value = "save", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> savePublicKeyUserCertificate(@RequestBody PublicKeyUserCertificateDto publicKeyUserCertificateDto) {
         PublicKeyUserCertificate publicKeyUserCertificate = convertToEntity(publicKeyUserCertificateDto);
+        var existsCert = service.countPublicKeyUserCertificateByImprint(publicKeyUserCertificate.getImprint());
+        if(existsCert > 0){
+            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_UPLOAD_EXISTS);
+        }
         PublicKeyUserCertificate response;
         try {
             response = service.savePublicKeyUserCertificate(publicKeyUserCertificate);
@@ -209,30 +213,62 @@ public class PublicKeyUserCertificateController {
         }
         publicKeyUserCertificate.setLogin(login);
         publicKeyUserCertificate.setDeleted(false);
-        publicKeyUserCertificate.setSerialNumber(certificate.getSerialNumber().toString());
+        publicKeyUserCertificate.setSerialNumber(certificate.getSerialNumber().toString(16));
         publicKeyUserCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
         publicKeyUserCertificate.setDateEnd(convertRFC1123ToIsoInstant(certificate.getNotAfter().toString()));
-
-        String cnIssuer = "";
-        var substr = certificate.getIssuerDN().getName().split(", ");
-        for(String s : substr) {
+        var substr1 = certificate.getIssuerDN().getName().split(", ");
+        String ogrnIssuer, innIssuer, streetIssuer, cIssuer, sIssuer, lIssuer, oIssuer, cnIssuer;
+        ogrnIssuer = innIssuer = streetIssuer = cIssuer = sIssuer = lIssuer = oIssuer = cnIssuer = "";
+        for(String s : substr1) {
             if(s.length()>2){
-                var st = s.substring(0,3);
-                if (st.equals("CN="))
-                {
+                if (s.startsWith("CN=")) {
                     cnIssuer = s.substring(3);
-                    break;
+                }
+                if (s.startsWith("O=")) {
+                    oIssuer = s.substring(2);
+                }
+                if (s.startsWith("STREET=")) {
+                    streetIssuer = s.substring(7);
+                }
+                if (s.startsWith("L=")) {
+                    lIssuer = s.substring(2);
+                }
+                if (s.startsWith("ST=")) {
+                    sIssuer = s.substring(3);
+                }
+                if (s.startsWith("C=")) {
+                    cIssuer = s.substring(2);
+                }
+                if(s.startsWith("OID.1.2.643.100.1=")){
+                    String hexStr = s.substring(23);
+                    StringBuilder output = new StringBuilder();
+                    for (int i = 0; i < hexStr.length(); i += 2) {
+                        String str1 = hexStr.substring(i, i + 2);
+                        output.append((char) Integer.parseInt(str1, 16));
+                    }
+                    ogrnIssuer = output.toString();
+                }
+                if(s.startsWith("OID.1.2.643.100.4=")){
+                    String hexStr = s.substring(23);
+                    StringBuilder output = new StringBuilder();
+                    for (int i = 0; i < hexStr.length(); i += 2) {
+                        String str1 = hexStr.substring(i, i + 2);
+                        output.append((char) Integer.parseInt(str1, 16));
+                    }
+                    innIssuer = output.toString();
                 }
             }
         }
-        System.out.println(cnIssuer);
+        publicKeyUserCertificate.setIssuerWho("ОГРН=" + ogrnIssuer + ", ИНН=" + innIssuer + ", STREET=" + streetIssuer + ", C=" + cIssuer + ", S=" + sIssuer + ", L=" + lIssuer + ", O=" + oIssuer + ", CN=" + cnIssuer);
 
         String oid1 = Extension.authorityKeyIdentifier.getId();
         byte[] extValue1 = certificate.getExtensionValue(oid1);
+        if (extValue1 == null) {
+            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NOT);
+        }
         ASN1OctetString akiOc1 = ASN1OctetString.getInstance(extValue1);
         AuthorityKeyIdentifier aki1 = AuthorityKeyIdentifier.getInstance(akiOc1.getOctets());
         String keyIdIssuer = new DEROctetString(aki1.getKeyIdentifier()).toString().substring(1);
-        System.out.println(keyIdIssuer);
 
         TypeUserCertificateEnum typeCert = TypeUserCertificateEnum.NOT_QUALIFIED;
         CertificateData certificateData;
@@ -250,9 +286,17 @@ public class PublicKeyUserCertificateController {
 
         String surname = "";
         String givenname = "";
+        String fio = "";
+        String inn = "";
         var substrSubject = certificate.getSubjectDN().getName().split(", ");
         for(String s : substrSubject) {
             if(s.length()>2){
+                if(s.startsWith("O=")){
+                    publicKeyUserCertificate.setOrganization(s.substring(2));
+                }
+                if(s.startsWith("CN=")){
+                    fio = s.substring(3);
+                }
                 if(s.startsWith("SURNAME=")){
                     surname = s.substring(8);
                 }
@@ -266,53 +310,46 @@ public class PublicKeyUserCertificateController {
                         String str1 = hexStr.substring(i, i + 2);
                         output.append((char) Integer.parseInt(str1, 16));
                     }
-                    publicKeyUserCertificate.setInn(output.toString());
+                    inn = output.toString();
                 }
             }
         }
-        if(!surname.isEmpty() && !givenname.isEmpty()){
-            publicKeyUserCertificate.setFio(surname + ' ' + givenname);
+        if(inn != ""){
+            publicKeyUserCertificate.setInn(inn);
+        } else {
+            publicKeyUserCertificate.setInn("632132430190");
         }
-
+        if(surname != "" && givenname != ""){
+            publicKeyUserCertificate.setFio(surname + ' ' + givenname);
+        } else if(fio != "") {
+            publicKeyUserCertificate.setFio(fio);
+        }
+        String dateStartPrivateKey = "";
+        String dateEndPrivateKey = "";
         String oid = Extension.privateKeyUsagePeriod.getId();
         byte[] extValue = certificate.getExtensionValue(oid);
-        ASN1OctetString akiOc = ASN1OctetString.getInstance(extValue);
-        PrivateKeyUsagePeriod aki = PrivateKeyUsagePeriod.getInstance(akiOc.getOctets());
+        if(extValue != null) {
+            ASN1OctetString akiOc = ASN1OctetString.getInstance(extValue);
+            PrivateKeyUsagePeriod aki = PrivateKeyUsagePeriod.getInstance(akiOc.getOctets());
+            dateStartPrivateKey = convertDateCertificateToIsoInstant(aki.getNotBefore().getTime());
+            dateEndPrivateKey = convertDateCertificateToIsoInstant(aki.getNotAfter().getTime());
+        } else {
+            dateStartPrivateKey = convertRFC1123ToIsoInstant(certificate.getNotBefore().toString());
+            dateEndPrivateKey = convertRFC1123ToIsoInstant(certificate.getNotAfter().toString());
+        }
+        publicKeyUserCertificate.setDateStartPrivateKey(dateStartPrivateKey); //2.5.29.16
+        publicKeyUserCertificate.setDateEndPrivateKey(dateEndPrivateKey);
 
-        publicKeyUserCertificate.setDateStartPrivateKey(convertDateCertificateToIsoInstant(aki.getNotBefore().getTime())); //2.5.29.16
-        publicKeyUserCertificate.setDateEndPrivateKey(convertDateCertificateToIsoInstant(aki.getNotAfter().getTime()));
         publicKeyUserCertificate.setCertificate(new String(sourceFile.getBytes()));
         publicKeyUserCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
         publicKeyUserCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
-        var substr1 = certificate.getIssuerDN().getName().split(", ");
-        for(String s : substr1) {
-            if(s.length()>2){
-                var st = s.substring(0,3);
-                if (st.equals("CN="))
-                {
-                    publicKeyUserCertificate.setIssuedWho(s.substring(3));
-                    break;
-                }
-            }
-        }
-        var existsCert = service.countPublicKeyUserCertificateByImprint(publicKeyUserCertificate.getImprint());
-        if(existsCert > 0){
-            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_UPLOAD_EXISTS);
-        }
+
         return publicKeyUserCertificate;
     }
 
     public PublicKeyUserCertificate parseCertificateDER(MultipartFile sourceFile, String login) {
         PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
         //Бинарный формат, который содержит сертификат в двоичном виде
-//            InputStream in = getResourceAsStream("/certyficate.cer");
-//            BufferedReader br = new BufferedReader(new InputStreamReader(in));
-//            try {
-//                CertificateFactory cf = CertificateFactory.getInstance("X.509");
-//                X509Certificate cert = (X509Certificate) cf.generateCertificate(in);
-//            } catch (CertificateException e) {
-//                // handle failure to decode certificate
-//            }
         return publicKeyUserCertificate;
     }
 

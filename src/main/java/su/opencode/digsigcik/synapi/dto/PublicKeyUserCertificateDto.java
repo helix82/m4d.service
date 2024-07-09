@@ -30,6 +30,9 @@ public class PublicKeyUserCertificateDto {
     @JsonProperty("inn")
     private String inn;
 
+    @JsonProperty("organization")
+    private String organization;
+
     @JsonProperty("dateStart")
     private String dateStart;
 
@@ -42,8 +45,8 @@ public class PublicKeyUserCertificateDto {
     @JsonProperty("dateEndPrivateKey")
     private String dateEndPrivateKey;
 
-    @JsonProperty("issuedWho")
-    private String issuedWho;
+    @JsonProperty("issuerWho")
+    private String issuerWho;
 
     @JsonProperty("certificate")
     private String certificate;

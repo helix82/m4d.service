@@ -55,6 +55,16 @@ public class PublicKeyUserCertificate {
     @JsonProperty("inn")
     private String inn;
 
+    @Column(name = "organization", columnDefinition = "VARCHAR(255)")
+    @Schema(example = "", required = false)
+    @JsonProperty("organization")
+    private String organization;
+
+    @Column(name = "issuer_who", columnDefinition = "TEXT")
+    @Schema(example = "", required = false)
+    @JsonProperty("issuerWho")
+    private String issuerWho;
+
     @Column(name = "date_start", columnDefinition = "VARCHAR(255)")
     @Schema(example = "", required = false)
     @JsonProperty("dateStart")
@@ -74,11 +84,6 @@ public class PublicKeyUserCertificate {
     @Schema(example = "", required = false)
     @JsonProperty("dateEndPrivateKey")
     private String dateEndPrivateKey;
-
-    @Column(name = "issued_who", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
-    @JsonProperty("issuedWho")
-    private String issuedWho;
 
     @Lob
     @Column(name = "certificate", columnDefinition = "bytea")
