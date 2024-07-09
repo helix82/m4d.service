@@ -246,9 +246,10 @@ CREATE MEMORY TABLE "PUBLIC"."USER_CERTIFICATE"(
                                                    "FIO" CHARACTER VARYING(255),
                                                    "IMPRINT" CHARACTER VARYING(255),
                                                    "INN" CHARACTER VARYING(255),
-                                                   "ISSUED_WHO" CHARACTER VARYING(255),
+                                                   "ISSUER_WHO" CHARACTER VARYING(255),
                                                    "KEY_ID" CHARACTER VARYING(255),
                                                    "LOGIN" CHARACTER VARYING(255),
+                                                   "ORGANIZATION" CHARACTER VARYING,
                                                    "SERIAL_NUMBER" CHARACTER VARYING(255),
                                                    "TYPE" CHARACTER VARYING(255)
 );
