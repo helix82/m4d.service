@@ -74,18 +74,12 @@ VALUES
     ('petrov', 'Петр', 'Петров', 'Петрович', '12345678', 'USER', '832061154574', 'SEP_ADMIN'),
     ('sokolov', 'Юрий', 'Соколов', 'Александрович', '12345678', 'ADMIN', '832061154574', 'TLS_ADMIN'),
     ('gudkov', 'Владимир', 'Гудков', 'Алексеевич', '12345678', 'ADMIN', '832061154574', 'IOK_OBJECTS_ADMIN');
-INSERT INTO containerFile (uuid, container_path)
+INSERT INTO containerFile (uuid, file_path)
 VALUES
     ('b3460860-815d-4a20-8671-875e2fd9f84f', './files/dscp/containerFile-2024-06-18T19-22-26.291956000.dscp'),
     ('f1316419-5edf-49c7-b2e1-8707abeb4a1b', './files/dscp/containerFile-2024-06-18T19-23-40.707683800.dscp'),
     ('fadd3ec7-9bf8-42f5-a661-a30b1b2321b1', './files/dscp/containerFile-2024-06-18T19-24-32.922951700.dscp'),
     ('6667c1b2-ea01-4cff-bae5-04d234d6a5ae', './files/dscp/containerFile-2024-06-18T19-25-29.204134800.dscp');
-INSERT INTO ses (user_login, file_hash, signature, operation_date, container_id)
-VALUES
-    ('ivanov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', 'b1120795d51648daa9440851f8fa3872736ae197968c8eb4d67153f669179374.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:22:26.291956', '2024-06-18T19:22:26.291956', 1),
-    ('petrov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', 'ae25bd29649627c85c54855d918879a0d46efddc6129a394011d81c116f0c702.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:23:40.707683800', '2024-06-18T19:23:40.707683800', 2),
-    ('sokolov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', 'bd2ab9815a11b9ccba17a6d7eb39b7f12710785b9d8eb1cd0c251ee5c8107a2f.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:24:32.922951700', '2024-06-18T19:24:32.922951700', 3),
-    ('gudkov', 'c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9', '837cf2ac5bbb55a95e32ee409181ab626e64ee1d2c5b92255c478e05c535707e.c17b255b2d4070cc4fa83cb790402144d28b43c856ce2cd2797fd96ada6496a9.2024-06-18T19:25:29.204134800', '2024-06-18T19:25:29.204134800', 4);
 
 INSERT INTO "PUBLIC"."ACMEACCOUNT" (PRIVATE_KEY, ACCOUNT_URL, DELETED, EMAIL, EXTERNAL_KEY, NAME) VALUES
     (U&'-----BEGIN EC PRIVATE KEY-----\000d\000aMIGkAgEBBDDjI3kvEfS0lGeiDHy269zZ48gDDWy260tirPp+lQm2HjyHvPPcxBTQ\000d\000aOtZ9nq87qaKgBwYFK4EEACKhZANiAAQCGW5Bo2f0G3+nSBuy31nAYefChkE9Jm04\000d\000aYQ4HSaTADsy9coY1T9uv5Cm5Vz+56gnbtM6tlm+KmVuGkNGSgUSF/FDFiFv78CS7\000d\000a/FGCyXmCo3kZsvjgYagwb4eqMt+6lXE=\000d\000a-----END EC PRIVATE KEY-----\000d\000a', 'https://192.168.0.53:4433/acme/acme/account/abdxqJpHmxu9mpndKMNljGlb1ZceKWnE', NULL, 'acme@account.mail', 'acme.account.key', 'acme.account.name');
