@@ -13,4 +13,5 @@ call mvn deploy:deploy-file -Dfile=./libs/J6CF.jar -DgroupId=ru.cryptopro.jcp -D
 call mvn deploy:deploy-file -Dfile=./libs/XMLDSigRI.jar -DgroupId=ru.cryptopro.jcp -DartifactId=XMLDSigRI -Dversion=5.0.42119-A -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
 call mvn deploy:deploy-file -Dfile=./libs/AdES-core.jar -DgroupId=ru.cryptopro.jcp -DartifactId=AdES-core -Dversion=5.0.42119-A -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
 call mvn deploy:deploy-file -Dfile=./libs/JCSP.jar -DgroupId=ru.cryptopro.jcp -DartifactId=JCSP -Dversion=5.0.42119-A -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
+call mvn deploy:deploy-file -Dfile=./libs/cpSSL.jar -DgroupId=ru.cryptopro.jcp -DartifactId=cpSSL -Dversion=5.0.42119-A -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
 

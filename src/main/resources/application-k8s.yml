@@ -76,3 +76,8 @@ tls:
   max_attempts: 50
   external_acknowledge: false
 
+cryptopro:
+  svs:
+#    url: http://localhost:8081/vs/api
+#    url: https://dss.cryptopro.ru/verify/rest/api
+    url: https://keylab/vs/api
