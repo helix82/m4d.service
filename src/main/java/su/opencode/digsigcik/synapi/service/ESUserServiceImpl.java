@@ -3,21 +3,14 @@ package su.opencode.digsigcik.synapi.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import su.opencode.digsigcik.synapi.dto.SigHashDto;
 import su.opencode.digsigcik.synapi.dto.UserDto;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
-import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.model.ESSUser;
 import su.opencode.digsigcik.synapi.repository.ESUserRepository;
-import su.opencode.digsigcik.synapi.util.HashUtils;
 
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
-import static su.opencode.digsigcik.synapi.util.Constant.EMPTY_BYTE_ARRAY_ERROR;
 import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
 
 @Service
@@ -39,7 +32,7 @@ public class ESUserServiceImpl implements ESUserService {
 
 
     @Override
-    public ESSUser createESSUser(@NotNull ESSUser essUser){
+    public ESSUser createESSUser(@NotNull ESSUser essUser) {
         return this.esUserRepository.save(essUser);
     }
 
@@ -63,7 +56,7 @@ public class ESUserServiceImpl implements ESUserService {
     }
 
     @Override
-    public void deleteESSUser(Long id){
+    public void deleteESSUser(Long id) {
         ESSUser essUser = this.esUserRepository.findESSUserById(id);
         if (essUser == null) {
             throw new MchdException(String.format("Can`t delete ESS user because ESS user %s", NOT_FOUND));

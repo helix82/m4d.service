@@ -12,7 +12,7 @@ import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.SesUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
-import su.opencode.digsigcik.synapi.exception.SesException;
+import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.SesVerifyException;
 import su.opencode.digsigcik.synapi.model.PinCode;
 import su.opencode.digsigcik.synapi.model.UserProjection;
@@ -50,7 +50,7 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
                                                         @NotNull ContainerUserInfoDto containerUserInfo) {
         UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(containerUserInfo.getLogin());
         if (userProjection == null) {
-            throw new SesException(USER_PROJECTION_NOT_FOUND);
+            throw new BadRequestException(USER_PROJECTION_NOT_FOUND);
         }
         PinCode pinCode1 = pinCodeRepository.getPinCodeByUserProjection(userProjection);
         containerUserInfo.setPinCodeHashAlgorithm(pinCode1.getAlgorithm()
@@ -59,7 +59,7 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
                 .getBytes(StandardCharsets.UTF_8), pinCode1.getAlgorithm());
         if (!pinCode1.getPinCodeHash()
                 .equals(pinCodeHash)) {
-            throw new SesException(PIN_CODE_ERROR_MESSAGE);
+            throw new BadRequestException(PIN_CODE_ERROR_MESSAGE);
         }
 
 
@@ -70,7 +70,7 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
         try {
             fileHash = generateHash(srcFile.getBytes(), pinCode1.getAlgorithm());
         } catch (IOException e) {
-            throw new SesException(EMPTY_BYTE_ARRAY_ERROR, e.getCause());
+            throw new BadRequestException(EMPTY_BYTE_ARRAY_ERROR, e.getCause());
         }
         String signature = createCustomSimpleSignature(pinCodeHash, fileHash, operationDateHash);
 
@@ -169,12 +169,14 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
     public Resource createSimpleSignatureResource(@NotNull MultipartFile srcFile,
                                                   @NotNull ContainerUserInfoDto containerUserInfo) throws IOException {
 
-        byte[] signature = createSignature(srcFile.getBytes(), containerUserInfo.getPrivateKey(),containerUserInfo.getTimestamp().toString());
+        byte[] signature = createSignature(srcFile.getBytes(), containerUserInfo.getPrivateKey(),
+                containerUserInfo.getTimestamp()
+                .toString());
 
         String sourceDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, SOURCE_DIRECTORY_PATH);
         String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "temp.sig");
         FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
-        FileUtils.createFile(sigFilePathName,combineSignatureAndPublicKey(signature,containerUserInfo.getPublicKey()
+        FileUtils.createFile(sigFilePathName, combineSignatureAndPublicKey(signature, containerUserInfo.getPublicKey()
                 .getEncoded()));
 
         MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
@@ -275,7 +277,7 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
         return String.format("%s.%s.%s", pinCodeHash, fileHash, operationDate);
     }
 
-    private static byte[]  combineSignatureAndPublicKey(byte[] signature, byte[] publicKey) {
+    private static byte[] combineSignatureAndPublicKey(byte[] signature, byte[] publicKey) {
         return (Base64.getEncoder()
                 .encodeToString(signature) + SIGNATURE_PUBLIC_KEY_SEPARATOR + Base64.getEncoder()
                 .encodeToString(publicKey)).getBytes();

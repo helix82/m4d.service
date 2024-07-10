@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import su.opencode.digsigcik.synapi.exception.SesException;
+import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.ContainerFile;
 import su.opencode.digsigcik.synapi.repository.ContainerFileRepository;
 import su.opencode.digsigcik.synapi.util.FileUtils;
@@ -46,7 +46,7 @@ public class ContainerFileController {
         ContainerFile containerFile = containerFileRepository.getContainerFileByUuid(uuid);
         String containerPath = containerFile.getFilePath();
         if (containerPath == null || containerPath.isEmpty()) {
-            throw new SesException("Container path is null!");
+            throw new BadRequestException("Container path is null!");
         }
         byte[] fileContent = FileUtils.getFileContentByPath(containerPath);
         Resource resource = new ByteArrayResource(fileContent);

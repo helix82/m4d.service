@@ -8,17 +8,10 @@ import su.opencode.digsigcik.synapi.annotation.SesExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.ResponseErrorDto;
 import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
-import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.exception.SesVerifyException;
 
 @ControllerAdvice(annotations = SesExceptionHandler.class)
 public class SesAdvice {
-
-    @ExceptionHandler(SesException.class)
-    public ResponseEntity<?> handleSesException(SesException error) {
-        ResponseErrorDto response = ResponseErrorDto.createResponseErrorDto(error.getMessage(), HttpStatus.OK);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<?> handleSesBadRequestException(BadRequestException error) {
