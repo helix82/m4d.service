@@ -22,7 +22,7 @@ RUN \
 
 RUN \
     cd /app \
-    && keytool -importcert -alias keylabca -keystore  /app/store.jks -storepass changeit -file /app/koren.cer
+    && keytool -importcert -alias keylabca -keystore  /app/store.jks -storepass changeit  -noprompt -file /app/koren.cer
 
 WORKDIR $PROJECT_HOME
 
