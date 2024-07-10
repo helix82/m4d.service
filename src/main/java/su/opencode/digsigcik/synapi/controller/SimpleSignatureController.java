@@ -53,7 +53,7 @@ public class SimpleSignatureController {
     private final UserProjectionRepository userProjectionRepository;
     private final EncryptionKeyRepository encryptionKeyRepository;
 
-    @PostMapping(value = "/create-custom-ses-container",
+    @PostMapping(value = "/create",
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createCustomSimpleSignatureContainer(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                                          @RequestParam String pinCode,

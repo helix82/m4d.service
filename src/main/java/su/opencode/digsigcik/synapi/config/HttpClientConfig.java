@@ -12,14 +12,14 @@ import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
 import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.config.Registry;
 import org.apache.hc.core5.http.config.RegistryBuilder;
-import org.apache.hc.core5.ssl.SSLContextBuilder;
-import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.TimeValue;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.*;
@@ -52,9 +52,9 @@ public class HttpClientConfig {
     public static final boolean RETRY_FAILED_REQUESTS_ON_CUSTOM_EXCEPTION_OR_CODES = false;
     public static final int MAX_RETRIES = 10;
     public static final long RETRY_INTERVAL_IN_SECONDS = 60;
-    Collection<Class<? extends IOException>> NOT_RETRY_ON_EXCEPTION_CLASSES = Arrays.asList ();
-    Collection<Integer> RETRY_ON_CODES= Arrays.asList ();
-    
+    Collection<Class<? extends IOException>> NOT_RETRY_ON_EXCEPTION_CLASSES = Arrays.asList();
+    Collection<Integer> RETRY_ON_CODES = Arrays.asList();
+
     private final RequestConfig requestConfig = RequestConfig.custom()
             .setRedirectsEnabled(true)
             .setDefaultKeepAlive(DEFAULT_KEEP_ALIVE_TIME_MILLIS, TimeUnit.MILLISECONDS)
@@ -72,18 +72,30 @@ public class HttpClientConfig {
 
     public PoolingHttpClientConnectionManager poolingConnectionManager() throws NoSuchAlgorithmException,
             KeyStoreException, KeyManagementException {
-        SSLContextBuilder builder = SSLContexts.custom();
-        builder.loadTrustMaterial(null, (chain, authType) -> true);
-        SSLContext sslContext = null;
+
+        SSLContext sslCtx = SSLContext.getInstance("GostTLS");
+        KeyStore trustedKeyStore = KeyStore.getInstance("JKS");
+        TrustManagerFactory tmf = null;
         try {
-            sslContext =new TLSGostContext().getContext();
-        } catch (IOException e) {
-            e.printStackTrace();
+            trustedKeyStore.load(new FileInputStream("store.jks"), "changeit".toCharArray());
+
+            tmf = TrustManagerFactory.getInstance("GostX509", "JTLS");
+        } catch (NoSuchProviderException | CertificateException | IOException e) {
+            throw new RuntimeException(e);
         }
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+        tmf.init(trustedKeyStore);
+
+
+        sslCtx.init(null, tmf.getTrustManagers(), null);
+        SSLConnectionSocketFactory sslSocketFactory = SSLConnectionSocketFactoryBuilder
+                .create()
+                .setSslContext(sslCtx)
+                .setHostnameVerifier(new NoopHostnameVerifier())
+                .build();
+
         Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                .register("https", sslsf)
+                .register("https", sslSocketFactory)
                 .build();
 
         PoolingHttpClientConnectionManager poolingConnectionManager =
@@ -125,11 +137,11 @@ public class HttpClientConfig {
 
     private HttpRequestRetryStrategy resolveHttpRequestRetryStrategy() {
         if (RETRY_FAILED_REQUESTS_ON_CUSTOM_EXCEPTION_OR_CODES) {
-            return  new CustomHttpRequestRetryStrategy(MAX_RETRIES,
+            return new CustomHttpRequestRetryStrategy(MAX_RETRIES,
                     TimeValue.ofSeconds(RETRY_INTERVAL_IN_SECONDS), NOT_RETRY_ON_EXCEPTION_CLASSES, RETRY_ON_CODES);
-        }
-        else {
-            return new CustomHttpRequestRetryStrategy(0,TimeValue.ofSeconds(0L), Collections.emptyList(),Collections.emptyList());
+        } else {
+            return new CustomHttpRequestRetryStrategy(0, TimeValue.ofSeconds(0L), Collections.emptyList(),
+                    Collections.emptyList());
         }
     }
 

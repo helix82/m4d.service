@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/signature")
+@Slf4j
 public class SignatureVerificationController {
 
     @Value("${cryptopro.svs.url}")
@@ -33,14 +35,14 @@ public class SignatureVerificationController {
 
     public SignatureVerificationController() throws NoSuchAlgorithmException, KeyStoreException,
             KeyManagementException {
-//        this.restClient = new RestClient("192.168.0.53", 3128);
+       // this.restClient = new RestClient("192.168.0.53", 3128);
         this.restClient = new RestClient();
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> uploadFile(@RequestPart("file1") MultipartFile file1, @RequestPart(
+    public ResponseEntity<String> uploadFile(@RequestPart("file1") MultipartFile file1, @RequestPart(
             "file2") MultipartFile file2) {
-        Map<String, Object> response = new HashMap<>();
+        String res = "";
         try {
             resetAll();
             String id1 = uploadDocument(file1).get("id")
@@ -51,13 +53,12 @@ public class SignatureVerificationController {
 
             JsonObject result = verifySignature2(id1,id2);
             resetAll();
-            response.put("success", convertToString(result));
+            res = convertToString(result);
         } catch (Exception e) {
-            response.put("error", "Ошибка загрузки файла: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(response);
+                    .body(res);
         }
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
     private JsonObject uploadDocument(MultipartFile file) throws URISyntaxException, IOException {
@@ -115,8 +116,7 @@ public class SignatureVerificationController {
 
 
 
-    private void resetAll() throws URISyntaxException, NoSuchAlgorithmException,
-            KeyStoreException, KeyManagementException, IOException {
+    private void resetAll() throws URISyntaxException, IOException {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("Accept", "application/json");
         RestRequest restRequest = RestRequest.builder()
