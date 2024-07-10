@@ -19,7 +19,6 @@ import su.opencode.digsigcik.synapi.service.PublicKeyVerificationCenterService;
 
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -87,7 +86,7 @@ public class PublicKeyVerificationCenterController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<?> findByPublicKeyVerificationCenterId(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1" ) Long id) throws IOException {
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1" ) Long id){
         PublicKeyVerificationCenter response;
         try {
             response = service.findByPublicKeyVerificationCenterId(id);
@@ -106,22 +105,23 @@ public class PublicKeyVerificationCenterController {
     public ResponseEntity<?> updatePublicKeyVerificationCenter(
             @RequestPart( "id" ) String id,
             @RequestPart( "name" ) String name,
-            @RequestPart( "templateRelease" ) MultipartFile templateRelease,
-            @RequestPart( "templateRecall" ) MultipartFile templateRecall) throws IOException {
-        PublicKeyVerificationCenterInputDto publicKeyVerificationCenterInputDto = new PublicKeyVerificationCenterInputDto();
-        publicKeyVerificationCenterInputDto.setId(Long.parseLong(id));
-        publicKeyVerificationCenterInputDto.setName(name);
-        publicKeyVerificationCenterInputDto.setTemplateRelease(templateRelease);
-        publicKeyVerificationCenterInputDto.setTemplateRecall(templateRecall);
-
-        PublicKeyVerificationCenter publicKeyVerificationCenter = convertToEntity(publicKeyVerificationCenterInputDto);
-        if(publicKeyVerificationCenterInputDto.getTemplateRelease() != null) {
-            publicKeyVerificationCenter.setContentTypeRelease(publicKeyVerificationCenterInputDto.getTemplateRelease().getContentType());
-            publicKeyVerificationCenter.setOriginalNameRelease(publicKeyVerificationCenterInputDto.getTemplateRelease().getOriginalFilename());
+            @RequestPart(value = "templateRelease", required = false) MultipartFile templateRelease,
+            @RequestPart(value = "templateRecall", required = false) MultipartFile templateRecall
+    ) throws IOException {
+        PublicKeyVerificationCenter publicKeyVerificationCenter = new PublicKeyVerificationCenter();
+        publicKeyVerificationCenter.setId(Long.parseLong(id));
+        publicKeyVerificationCenter.setName(name);
+        if(templateRelease != null) {
+            byte[] bytes = templateRelease.getBytes();
+            publicKeyVerificationCenter.setTemplateRelease(bytes);
+            publicKeyVerificationCenter.setContentTypeRelease(templateRelease.getContentType());
+            publicKeyVerificationCenter.setOriginalNameRelease(templateRelease.getOriginalFilename());
         }
-        if(publicKeyVerificationCenterInputDto.getTemplateRecall() != null) {
-            publicKeyVerificationCenter.setContentTypeRecall(publicKeyVerificationCenterInputDto.getTemplateRecall().getContentType());
-            publicKeyVerificationCenter.setOriginalNameRecall(publicKeyVerificationCenterInputDto.getTemplateRecall().getOriginalFilename());
+        if(templateRecall != null){
+            byte[] bytes1 = templateRecall.getBytes();
+            publicKeyVerificationCenter.setTemplateRecall(bytes1);
+            publicKeyVerificationCenter.setContentTypeRecall(templateRecall.getContentType());
+            publicKeyVerificationCenter.setOriginalNameRecall(templateRecall.getOriginalFilename());
         }
         PublicKeyVerificationCenter response;
         try {
@@ -159,7 +159,7 @@ public class PublicKeyVerificationCenterController {
     })
     @GetMapping(value = "/download_template_release/{id}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<?> downloadTemplateRelease(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1" ) Long id) throws UnsupportedEncodingException {
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1" ) Long id) {
         PublicKeyVerificationCenter downloadTempl;
         try {
             downloadTempl = service.findByPublicKeyVerificationCenterId(id);
