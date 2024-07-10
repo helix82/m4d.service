@@ -1,9 +1,12 @@
 server:
   port: 80
+
 web:
   cors:
     allow-origin: "*"
     allow-methods: OPTIONS, HEAD, POST, PUT, GET, DELETE
+  server:
+    uri: https://sp.essocode.ru
 logging:
   level:
     su.opencode.digsigcik.synapi: DEBUG
@@ -73,3 +76,7 @@ tls:
   max_attempts: 50
   external_acknowledge: false
 
+cryptopro:
+  svs:
+    internal_url: https://keylab/vs/api
+    external_url: https://dss.cryptopro.ru/verify/rest/api

@@ -12,12 +12,22 @@ RUN mkdir -p /app \
     && mkdir -p /app/files/source \
     && mkdir -p /app/files/dscp
 COPY --from=maven /app/target/${JAR_FILE}  $PROJECT_HOME/${JAR_FILE}
+# ACME TLS ROOT AND INTERMEDIATE CERTIFICATES
 COPY root_ca.crt $JAVA_HOME/lib/security
 COPY intermediate_ca.crt $JAVA_HOME/lib/security
+# CRYPTO PRO KEYLAB VM ROOT CERTIFICATE
+COPY koren.cer $JAVA_HOME/lib/security
 RUN \
     cd $JAVA_HOME/lib/security \
-    && keytool -keystore cacerts -storepass changeit -noprompt  -importcert -alias rootca -file root_ca.crt \
-    && keytool -keystore cacerts -storepass changeit -noprompt  -importcert -alias intermediateca -file intermediate_ca.crt
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias rootca -file root_ca.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias intermediateca -file intermediate_ca.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias keylabca -file koren.cer \
+    && keytool -keystore  /app/store.jks -storepass changeit -noprompt -importcert -alias keylabca -file koren.cer
+
+COPY security.zip /app
+RUN  unzip -o /app/security.zip -d $JAVA_HOME/conf \
+&& rm -rf  /app/security.zip
+
 WORKDIR $PROJECT_HOME
 
 ENTRYPOINT ["java", "-jar", "synapi-0.0.1-SNAPSHOT.jar]

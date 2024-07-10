@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.synapi.config;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Value;
 import org.modelmapper.ModelMapper;
@@ -20,6 +21,7 @@ public class WebConfigProperties {
     private static final List<String> WILDCARD = List.of(WILDCARD_VALUE);
 
     Cors cors;
+    Server server;
 
     @Getter
     public static class Cors {
@@ -27,10 +29,10 @@ public class WebConfigProperties {
 
         /**
          * A list of allowed request headers.
-         *
+         * <p>
          * CORS has a whitelisted headers that are alwyas allowed,
          * but specifying all headers is recommended.
-         *
+         * <p>
          * Authorization header must always be specified explicitly
          * even if the wildcard is used.
          */
@@ -63,6 +65,11 @@ public class WebConfigProperties {
             this.exposeHeaders = exposeHeaders;
             this.maxAge = maxAge;
         }
+    }
+
+    @Data
+    public static class Server {
+        String uri;
     }
 
     @Bean

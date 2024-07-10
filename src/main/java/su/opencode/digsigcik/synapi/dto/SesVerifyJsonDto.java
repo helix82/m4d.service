@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SesVerifyJsonDto {
+    private boolean valid;
     private String verifyResultMessage;
     private SesUserInfoDto userInfo;
 }

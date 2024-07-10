@@ -197,7 +197,6 @@ components:
         - userPatronymic
         - timestamp
         - userLogin
-        - detachedPub
         - signatureAlgorithm
     ContainerData:
       description: Keys are ContainerSelectorCode variants and values are base64 encoded files

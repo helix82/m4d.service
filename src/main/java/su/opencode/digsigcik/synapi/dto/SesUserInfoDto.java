@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class SesUserInfoDto {
     private String hashAlgorithmType;
     private String hashSignatureAlgorithm;
+    private String pinCodeHashAlgorithm;
     private String firstname;
     private String lastname;
     private String patronymic;

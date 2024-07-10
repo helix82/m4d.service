@@ -25,6 +25,10 @@
         <jackson-version>2.17.0</jackson-version>
         <jackson-databind-nullable-version>0.2.6</jackson-databind-nullable-version>
         <jsonwebtoken-version>0.9.1</jsonwebtoken-version>
+        <apache.httpclient5.version>5.2.3</apache.httpclient5.version>
+        <apache.httpcore5.version>5.2.4</apache.httpcore5.version>
+        <apache.httpcore5-h2.version>5.2.4</apache.httpcore5-h2.version>
+        <apache.commons.validator.version>1.8.0</apache.commons.validator.version>
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
 
@@ -126,6 +130,38 @@
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20240303</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>${apache.httpclient5.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5</artifactId>
+            <version>${apache.httpcore5.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5-h2</artifactId>
+            <version>${apache.httpcore5-h2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>${apache.commons.validator.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-collections</groupId>
+                    <artifactId>commons-collections</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
         </dependency>
 
         <dependency>
@@ -304,12 +340,10 @@
             <artifactId>hypersistence-utils-hibernate-55</artifactId>
             <version>3.8.0</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
         <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>1.70</version>
+            <groupId>ru.cryptopro.jcp</groupId>
+            <artifactId>JCSP</artifactId>
+            <version>5.0.45549-A</version>
         </dependency>
 
         <!--        <dependency>-->
@@ -322,86 +356,96 @@
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCPRevCheck</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>jcpRevTools</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>ASN1P</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>asn1rt</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>CAdES</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>forms_rt</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>J6Oscar</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCP</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <!--        <dependency>-->
         <!--            <groupId>ru.cryptopro.jcp</groupId>-->
         <!--            <artifactId>JCPinst</artifactId>-->
-        <!--            <version>5.0.42119-A</version>-->
+        <!--            <version>5.0.45549-A</version>-->
         <!--        </dependency>-->
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCPRequest</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCPxml</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCryptoP</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>J6CF</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>XMLDSigRI</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>AdES-core</artifactId>
-            <version>5.0.42119-A</version>
+            <version>5.0.45549-A</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.cryptopro.jcp</groupId>
+            <artifactId>cpSSL</artifactId>
+            <version>5.0.45549-A</version>
         </dependency>
 <!--        <dependency>-->
 <!--            <groupId>ru.cryptopro.jcp</groupId>-->
 <!--            <artifactId>samples</artifactId>-->
-<!--            <version>5.0.42119-A</version>-->
+<!--            <version>5.0.45549-A</version>-->
 <!--        </dependency>-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.60</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
             <version>1.60</version>
         </dependency>
 

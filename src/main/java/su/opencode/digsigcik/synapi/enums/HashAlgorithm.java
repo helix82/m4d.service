@@ -1,5 +1,8 @@
 package su.opencode.digsigcik.synapi.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum HashAlgorithm {
     GOST3411("GOST3411"),
     GOST3411_2012_256("GOST3411_2012_256"),
@@ -22,10 +25,6 @@ public enum HashAlgorithm {
 
     HashAlgorithm(String algorithmName) {
         this.algorithmName = algorithmName;
-    }
-
-    public String getAlgorithmName() {
-        return algorithmName;
     }
 
     public static HashAlgorithm fromString(String name) {

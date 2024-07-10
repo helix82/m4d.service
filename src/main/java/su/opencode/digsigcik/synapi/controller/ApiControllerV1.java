@@ -15,6 +15,8 @@ import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
+import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
+import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.service.ContainerService;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
@@ -29,7 +31,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class ApiControllerV1 {
     private static final Log log = LogFactory.getLog(ApiControllerV1.class);
-    private static final String DEFAULT_FILENAME = "container.dscp";
+    public static final String DEFAULT_FILENAME = "container.dscp";
     private final ContainerService containerService;
     private final JwtTokenUtils jwtTokenUtils;
 
@@ -38,8 +40,7 @@ public class ApiControllerV1 {
     public ResponseEntity<Resource> createPdfContainer(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             @RequestPart("srcFile") MultipartFile sourceFile,
-            @RequestPart("sigFile") MultipartFile sourceSig,
-            @RequestPart("pubFile") MultipartFile sourcePub) {
+            @RequestPart("sigFile") MultipartFile sourceSig) {
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
         ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
@@ -48,8 +49,35 @@ public class ApiControllerV1 {
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
+                .signatureAlgorithm("NOT IMPLEMENTED")
                 .build();
-        var res = containerService.createPdfContainer(sourceFile, sourceSig, sourcePub,containerUserInfo,null);
+        var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
+        if (res == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+        return resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME));
+    }
+
+    @PostMapping(value = "/create-pdf-container-custom",
+            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<Resource> createPdfContainerCustom(
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            SignatureAlgorithm signatureAlgorithm,
+            HashAlgorithm hashAlgorithm,
+            @RequestPart("srcFile") MultipartFile sourceFile,
+            @RequestPart("sigFile") MultipartFile sourceSig) {
+        JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
+
+        ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+                .login(jwtPayloadDto.getPreferredUsername())
+                .firstname(jwtPayloadDto.getFirstName())
+                .lastname(jwtPayloadDto.getLastName())
+                .patronymic(jwtPayloadDto.getPatronymic())
+                .timestamp(LocalDateTime.now())
+                .signatureAlgorithm(signatureAlgorithm.getAlgorithmName())
+                .hashAlgorithm(hashAlgorithm.getAlgorithmName())
+                .build();
+        var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
@@ -103,7 +131,7 @@ public class ApiControllerV1 {
         return resourceOctetStreamOrInternal(resource, contentType, filename);
     }
 
-    private static ResponseEntity<Resource> resourceOctetStreamOrInternal(
+    public static ResponseEntity<Resource> resourceOctetStreamOrInternal(
             @NotNull Resource resource,
             @NotNull String filename
     ) {
@@ -111,7 +139,7 @@ public class ApiControllerV1 {
         return resourceOctetStreamOrInternal(resource, contentType, filename);
     }
 
-    private static ResponseEntity<Resource> resourceOctetStreamOrInternal(
+    public static ResponseEntity<Resource> resourceOctetStreamOrInternal(
             @NotNull Resource resource,
             @NotNull MediaType contentType,
             @NotNull String filename
@@ -133,7 +161,7 @@ public class ApiControllerV1 {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private static String filename(@NotNull Resource resource,
+    public static String filename(@NotNull Resource resource,
                                    @NotNull String fallback) {
         return Optional.ofNullable(resource.getFilename()).orElse(fallback);
     }
