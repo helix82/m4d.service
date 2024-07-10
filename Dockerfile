@@ -13,7 +13,7 @@ RUN mkdir -p /app \
     && mkdir -p /app/files/dscp
 COPY --from=maven /app/target/${JAR_FILE}  $PROJECT_HOME/${JAR_FILE}
 COPY root_ca.crt $JAVA_HOME/lib/security
-COPY root_ca.crt $JAVA_HOME/lib/security
+COPY intermediate_ca.crt $JAVA_HOME/lib/security
 COPY koren.cer /app
 RUN \
     cd $JAVA_HOME/lib/security \
