@@ -12,29 +12,23 @@ import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
 import org.apache.hc.client5.http.socket.PlainConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.config.Registry;
 import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.TimeValue;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.*;
-import java.security.cert.CertificateException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-/**
- * - Supports both HTTP and HTTPS
- * - Uses a connection pool to re-use connections and save overhead of creating connections.
- * - Has a custom connection keep-alive strategy (to apply a default keep-alive if one isn't specified)
- * - Starts an idle connection monitor to continuously clean up stale connections.
- */
 @Slf4j
 public class HttpClientConfig {
     // Determines the timeout in SECONDS until a connection is established.
@@ -64,7 +58,7 @@ public class HttpClientConfig {
             .setConnectionRequestTimeout(REQUEST_TIMEOUT, TimeUnit.SECONDS)
             .build();
 
-    private final ConnectionConfig connectionConfig = ConnectionConfig.custom()
+    protected final ConnectionConfig connectionConfig = ConnectionConfig.custom()
             .setValidateAfterInactivity(VALIDATE_AFTER_INACTIVITY, TimeUnit.MILLISECONDS)
             .setConnectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
             .setSocketTimeout(RESPONSE_TIMEOUT, TimeUnit.MINUTES)
@@ -72,30 +66,13 @@ public class HttpClientConfig {
 
     public PoolingHttpClientConnectionManager poolingConnectionManager() throws NoSuchAlgorithmException,
             KeyStoreException, KeyManagementException {
-
-        SSLContext sslCtx = SSLContext.getInstance("GostTLS");
-        KeyStore trustedKeyStore = KeyStore.getInstance("JKS");
-        TrustManagerFactory tmf = null;
-        try {
-            trustedKeyStore.load(new FileInputStream("store.jks"), "changeit".toCharArray());
-
-            tmf = TrustManagerFactory.getInstance("GostX509", "JTLS");
-        } catch (NoSuchProviderException | CertificateException | IOException e) {
-            throw new RuntimeException(e);
-        }
-        tmf.init(trustedKeyStore);
-
-
-        sslCtx.init(null, tmf.getTrustManagers(), null);
-        SSLConnectionSocketFactory sslSocketFactory = SSLConnectionSocketFactoryBuilder
-                .create()
-                .setSslContext(sslCtx)
-                .setHostnameVerifier(new NoopHostnameVerifier())
-                .build();
-
+        SSLContextBuilder builder = SSLContexts.custom();
+        builder.loadTrustMaterial(null, (chain, authType) -> true);
+        SSLContext sslContext = builder.build();
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
         Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                .register("https", sslSocketFactory)
+                .register("https", sslsf)
                 .build();
 
         PoolingHttpClientConnectionManager poolingConnectionManager =

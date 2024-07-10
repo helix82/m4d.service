@@ -16,6 +16,7 @@ import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import su.opencode.digsigcik.synapi.config.HttpClientConfig;
+import su.opencode.digsigcik.synapi.config.HttpClientConfigGost;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +38,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RestClient {
     public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
-    //WrappedResource
     public static final String RESPONSE_MIME_TYPE = "responseMimeType";
     public static final String USER_MIME_TYPE = "userMimeType";
     public static final String UPSTREAM = "upstream";
@@ -56,30 +56,39 @@ public class RestClient {
 
     private CloseableHttpClient httpClient;
 
-
-    /**
-     * Constructors.
-     *
-     */
     public RestClient(
     ) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        super();
-        this.httpClient = new HttpClientConfig().httpClient();
+        new RestClient(false);
     }
 
-    /**
-     * Constructors.
-     *
-     * @param proxyHost proxyHost
-     * @param proxyPort proxyPort
-     */
     public RestClient(
             @NonNull final String proxyHost,
             @NonNull final Integer proxyPort
     ) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        new RestClient(false, proxyHost, proxyPort);
+    }
+
+    public RestClient(boolean isGost
+    ) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        super();
+        if (isGost) {
+            this.httpClient = new HttpClientConfigGost().httpClient();
+        } else {
+            this.httpClient = new HttpClientConfig().httpClient();
+        }
+    }
+
+    public RestClient(boolean isGost,
+                      @NonNull final String proxyHost,
+                      @NonNull final Integer proxyPort
+    ) throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         super();
         HttpHost proxy = new HttpHost(proxyHost, proxyPort);
-        this.httpClient = new HttpClientConfig().httpClient(proxy);
+        if (isGost) {
+            this.httpClient = new HttpClientConfigGost().httpClient();
+        } else {
+            this.httpClient = new HttpClientConfig().httpClient();
+        }
     }
 
     public String requestString(@NonNull final RestRequest restRequest) throws IOException {
@@ -146,8 +155,6 @@ public class RestClient {
                             .setMode(HttpMultipartMode.EXTENDED)
                             .addBinaryBody("document", restRequest.bytes, ContentType.DEFAULT_BINARY,
                                     restRequest.fileName)
-//                            .addTextBody(USER_MIME_TYPE, restRequest.mimeType)
-//                            .addTextBody(RESPONSE_MIME_TYPE, TEXT_XML)
                             .setContentType(ContentType.MULTIPART_FORM_DATA.withCharset(""))
                             .build();
                     request.setEntity(httpEntity);
@@ -184,12 +191,6 @@ public class RestClient {
         return result.isPresent() ? result.get() : requestJson(request);
     }
 
-    /**
-     * populate Custom Headers
-     *
-     * @param request request
-     * @param headers headers
-     */
     private void populateHeaders(@NonNull ClassicHttpRequest request, @NonNull final Map<String, String> headers) {
         for (Map.Entry<String, String> mapElement : headers.entrySet()) {
             if (request.getFirstHeader(mapElement.getKey()) != null) {

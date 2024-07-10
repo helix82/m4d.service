@@ -6,7 +6,7 @@ web:
     allow-origin: "*"
     allow-methods: OPTIONS, HEAD, POST, PUT, GET, DELETE
   server:
-    uri: http://localhost
+    uri: https://sp.essocode.ru
 logging:
   level:
     su.opencode.digsigcik.synapi: DEBUG
@@ -78,6 +78,5 @@ tls:
 
 cryptopro:
   svs:
-#    url: http://localhost:8081/vs/api
-#    url: https://dss.cryptopro.ru/verify/rest/api
-    url: https://keylab/vs/api
+    internal_url: https://keylab/vs/api
+    external_url: https://dss.cryptopro.ru/verify/rest/api
