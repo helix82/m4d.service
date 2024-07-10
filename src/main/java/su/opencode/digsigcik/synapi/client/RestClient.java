@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 
 /**
- * REST client for working with JAZZ.
+ * REST client for working with GOST TLS.
  */
 @Data
 @Slf4j
@@ -54,10 +54,6 @@ public class RestClient {
         }
     }
 
-
-    /**
-     * Technical user password for interacting with JAZZ.
-     */
     private CloseableHttpClient httpClient;
 
 
