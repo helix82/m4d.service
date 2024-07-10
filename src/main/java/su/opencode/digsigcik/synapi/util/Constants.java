@@ -258,6 +258,8 @@ public interface Constants {
 
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список сертификатов пользователей";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список сертификатов пользователей";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_PARSE_SUMMARY = "Распарсить сертификат пользователя";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_PARSE_DESCRIPTION = "Возвращает структуру сертификата пользователя";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_SAVE_SUMMARY = "Сохранить сертификат пользователя";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_SAVE_DESCRIPTION = "Возвращает созданный сертификат пользователя";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_BY_ID_SUMMARY = "Получить сертификат пользователя по ИД";
@@ -286,6 +288,7 @@ public interface Constants {
     String PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL = String.format("Verification center is %s!", NULL);
     String PUBLIC_KEY_STATEMENT_IS_NULL = String.format("Statement is %s!", NULL);
     String PUBLIC_KEY_USER_CERTIFICATE_IS_NULL = String.format("User certificate is %s!", NULL);
+    String PUBLIC_KEY_USER_CERTIFICATE_IS_NOT = "Не найден ИД ключа УЦ, не могу определить тип сертификата";
     String PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT = "Не известный формат добавляемого сертификата";
     String PUBLIC_KEY_USER_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый сертификат пользователя уже существует в базе!";
     String STATEMENT_RELEASE_FILE = "Заявление_выпуск_СКП_ЭП";

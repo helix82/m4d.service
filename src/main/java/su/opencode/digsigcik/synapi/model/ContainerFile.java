@@ -8,7 +8,7 @@ import javax.persistence.*;
 @Data
 @Builder
 @Entity
-@Table(name = "container_file")
+@Table(name = "containerfile")
 @Transactional
 @AllArgsConstructor
 @NoArgsConstructor

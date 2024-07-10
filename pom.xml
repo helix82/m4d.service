@@ -345,6 +345,21 @@
             <artifactId>JCSP</artifactId>
             <version>5.0.45549-A</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.70</version>
+        </dependency>
+
+        <!--        <dependency>-->
+        <!--            <groupId>ru.cryptopro.jcp</groupId>-->
+        <!--            <artifactId>jscp</artifactId>-->
+        <!--            <version>5.0.42119-A</version>-->
+        <!--            <scope>system</scope>-->
+        <!--            <systemPath>${pom.basedir}/libs/JCSP.jar</systemPath>-->
+        <!--        </dependency>-->
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCPRevCheck</artifactId>
