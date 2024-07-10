@@ -64,7 +64,6 @@ public class PublicKeyStatementController {
     public ResponseEntity<?> savePublicKeyStatement(@RequestBody PublicKeyStatementDto publicKeyStatementDto) {
         PublicKeyStatement publicKeyStatement = convertToEntity(publicKeyStatementDto);
         publicKeyStatement.setStatus(StatusStatementEnum.IN_PROGRESS);
-        publicKeyStatement.setType(TypeStatementEnum.RELEASE);
         PublicKeyStatement response;
         try {
             response = service.savePublicKeyStatement(publicKeyStatement);
