@@ -9,9 +9,6 @@ public class PublicKeyUserCertificateDto {
     @JsonProperty("id")
     private Long id;
 
-    @JsonProperty("login")
-    private String login;
-
     @JsonProperty("imprint")
     private String imprint;
 
@@ -50,4 +47,7 @@ public class PublicKeyUserCertificateDto {
 
     @JsonProperty("certificate")
     private String certificate;
+
+    @JsonProperty("statement_id")
+    private String statementId;
 }

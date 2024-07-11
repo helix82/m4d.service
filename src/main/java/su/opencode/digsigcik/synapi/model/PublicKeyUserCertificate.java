@@ -90,4 +90,8 @@ public class PublicKeyUserCertificate {
     @Schema(example = "", required = false)
     @JsonProperty("deleted")
     private boolean deleted;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "statement_id", referencedColumnName = "id")
+    private PublicKeyStatement publicKeyStatement;
 }

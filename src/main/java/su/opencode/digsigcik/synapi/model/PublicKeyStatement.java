@@ -45,8 +45,4 @@ public class PublicKeyStatement {
     @Schema(example = "", required = false)
     @JsonProperty("status")
     private StatusStatementEnum status;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_certificate_id", referencedColumnName = "id")
-    private PublicKeyUserCertificate publicKeyUserCertificate;
 }
