@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
-import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
+import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.SesUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;

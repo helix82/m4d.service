@@ -176,28 +176,9 @@ components:
       properties:
         code:
           $ref: "#/components/schemas/ContainerSelectorCode"
+
     ContainerSelectorCode:
-      type: string
-      enum:
-        - signCheck
-        - certData
-        - poaCheck
-        - checkHistory
-        - sourceFile
-        - preview
-        - detachedSign
-        - attachedSign
-        - hashType
-        - hash
-        - poaContainer
-        - poaDescription
-        - description
-        - userFirstname
-        - userLastname
-        - userPatronymic
-        - timestamp
-        - userLogin
-        - signatureAlgorithm
+      type: ContainerSelectorCode
     ContainerData:
       description: Keys are ContainerSelectorCode variants and values are base64 encoded files
       type: object
@@ -211,6 +192,9 @@ components:
         contentType:
           type: string
           description: MIME type
+        fileName:
+          type: string
+          description: File name
         data:
           type: string
           format: byte
