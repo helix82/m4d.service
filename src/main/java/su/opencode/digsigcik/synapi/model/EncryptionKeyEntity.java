@@ -14,7 +14,6 @@ public class EncryptionKeyEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //@ManyToOne(fetch = FetchType.EAGER)
     @OneToOne
     @JoinColumn(name = "user_projection_id")
     @Unique
@@ -22,11 +21,11 @@ public class EncryptionKeyEntity {
 
     @Column(name = "algorithm")
     private SignatureAlgorithm algorithm;
-
-    @Column(name = "private_key", columnDefinition = "BLOB")
+    @Lob
+    @Column(name = "private_key", columnDefinition = "bytea")
     private byte[] privateKey;
-
-    @Column(name = "public_key", columnDefinition = "BLOB")
+    @Lob
+    @Column(name = "public_key", columnDefinition = "bytea")
     private byte[] publicKey;
 
 }
