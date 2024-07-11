@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
-import su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.dscp.*;
 import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
@@ -121,6 +120,32 @@ public class ContainerServiceImpl implements ContainerService {
             @NotNull List<ContainerSelector> selectors,
             boolean reverify
     ) {
+
+        var rds = getRds(containerFile, selectors, reverify);
+
+        var res = new HashMap<String, ContainerPart>();
+        for (var rd : rds.entrySet()) {
+
+            var resultType = rd.getValue()
+                    .getResultType();
+            var contentType = rd.getValue()
+                    .getContentType();
+            var fileName = rd.getValue()
+                    .getFileName();
+            var data = rd.getValue()
+                    .getContent();
+            var containerPart = new ContainerPart()
+                    .contentType(contentType.toString())
+                    .fileName(fileName)
+                    .data(data);
+            res.put(resultType.getCode(), containerPart);
+        }
+        return res;
+    }
+
+    private Map<ResultTypeEnum, ResultFileDescription> getRds(@NotNull MultipartFile containerFile,
+                                                              @NotNull List<ContainerSelector> selectors,
+                                                              boolean reverify) {
         byte[] containerBytes = toBytes(containerFile);
         var container = ContainerUtils.readContainer(containerBytes);
         if (reverify && shouldVerify(selectors)) {
@@ -136,24 +161,38 @@ public class ContainerServiceImpl implements ContainerService {
             returnParts.add(rt);
         }
 
-        var rds = ContainerUtils.getFromContainer(container, returnParts, false);
+        return ContainerUtils.getFromContainer(container, returnParts, false);
+    }
 
-        var res = new HashMap<String, ContainerPart>();
+    @Override
+    public Map<String, String> getContainerDataJson(
+            @NotNull MultipartFile containerFile,
+            @NotNull List<ContainerSelector> selectors,
+            boolean reverify
+    ) {
+        var rds = getRds(containerFile, selectors, reverify);
+
+        var res = new HashMap<String, String>();
         for (var rd : rds.entrySet()) {
 
             var resultType = rd.getValue()
                     .getResultType();
-            var contentType = rd.getValue()
-                    .getContentType();
             var data = rd.getValue()
                     .getContent();
-            var containerPart = new ContainerPart()
-                    .contentType(contentType.toString())
-                    .data(data);
-            res.put(resultType.getCode(), containerPart);
+            if (rd.getValue()
+                    .getContentType()
+                    .equals(MediaType.APPLICATION_OCTET_STREAM) || rd.getValue()
+                    .getContentType()
+                    .equals(MediaType.APPLICATION_PDF)) {
+                res.put(resultType.getCode(), Base64.getEncoder()
+                        .encodeToString(data));
+            } else {
+                res.put(resultType.getCode(), new String(data));
+            }
         }
         return res;
     }
+
 
     @Override
     public ContainerPart getContainerPart(
@@ -167,6 +206,36 @@ public class ContainerServiceImpl implements ContainerService {
                 reverify);
         return res.get(selector.getCode()
                 .getValue());
+    }
+
+    @Override
+    public Map<String, String> getContainerPartJson(
+            @NotNull MultipartFile containerFile,
+            @NotNull ContainerSelector selector,
+            boolean reverify
+    ) {
+        var res = new HashMap<String, String>();
+        var containerData = getContainerData(
+                containerFile,
+                Collections.singletonList(selector),
+                reverify);
+        String contentType = containerData.get(selector.getCode()
+                        .getValue())
+                .getContentType();
+        if (contentType.equals(MediaType.APPLICATION_OCTET_STREAM.toString()) || contentType
+                .equals(MediaType.APPLICATION_PDF.toString())) {
+            res.put(selector.getCode()
+                    .getValue(), Base64.getEncoder()
+                    .encodeToString(containerData.get(selector.getCode()
+                                    .getValue())
+                            .getData()));
+        } else {
+            res.put(selector.getCode()
+                    .getValue(), new String(containerData.get(selector.getCode()
+                            .getValue())
+                    .getData()));
+        }
+        return res;
     }
 
     private boolean shouldVerify(List<ContainerSelector> selectors) {

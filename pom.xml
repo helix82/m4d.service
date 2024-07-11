@@ -482,6 +482,12 @@
                                 <useBeanValidation>true</useBeanValidation>
                                 <modelNameSuffix>Vo</modelNameSuffix>
                             </configOptions>
+                            <importMappings>
+                                ContainerSelectorCode=su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode
+                            </importMappings>
+                            <typeMappings>
+                                ContainerSelectorCode=ContainerSelectorCode
+                            </typeMappings>
                         </configuration>
                     </execution>
                 </executions>

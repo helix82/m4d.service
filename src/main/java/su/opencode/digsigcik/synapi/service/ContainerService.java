@@ -26,7 +26,16 @@ public interface ContainerService {
             @NotNull List<ContainerSelector> selectors,
             boolean reverify);
 
+    Map<String, String> getContainerDataJson(
+            @NotNull MultipartFile containerFile,
+            @NotNull List<ContainerSelector> selectors,
+            boolean reverify);
+
     ContainerPart getContainerPart(
+            @NotNull MultipartFile containerFile,
+            @NotNull ContainerSelector selector,
+            boolean reverify);
+    Map<String, String> getContainerPartJson(
             @NotNull MultipartFile containerFile,
             @NotNull ContainerSelector selector,
             boolean reverify);
