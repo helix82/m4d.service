@@ -5,7 +5,10 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -33,11 +36,13 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @MchdExceptionHandler
 @RequestMapping("/api/v1/verification_center")
 @AllArgsConstructor
+@Slf4j
 public class PublicKeyVerificationCenterController {
     private final PublicKeyVerificationCenterService service;
 
     @SneakyThrows
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_FIND_ALL_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_FIND_ALL_DESCRIPTION)
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_FIND_ALL_SUMMARY, description =
+            CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
@@ -50,10 +55,13 @@ public class PublicKeyVerificationCenterController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL);
         }
-        return new ResponseEntity<>(response.stream().map(this::convertToOutputDto).collect(Collectors.toList()), HttpStatus.OK);
+        return new ResponseEntity<>(response.stream()
+                .map(this::convertToOutputDto)
+                .collect(Collectors.toList()), HttpStatus.OK);
     }
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_SAVE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_SAVE_DESCRIPTION)
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_SAVE_SUMMARY, description =
+            CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_SAVE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
@@ -62,13 +70,17 @@ public class PublicKeyVerificationCenterController {
     public ResponseEntity<?> savePublicKeyVerificationCenter(@ModelAttribute PublicKeyVerificationCenterInputDto publicKeyVerificationCenterInputDto) throws IOException {
 
         PublicKeyVerificationCenter publicKeyVerificationCenter = convertToEntity(publicKeyVerificationCenterInputDto);
-        if(publicKeyVerificationCenterInputDto.getTemplateRelease() != null) {
-            publicKeyVerificationCenter.setContentTypeRelease(publicKeyVerificationCenterInputDto.getTemplateRelease().getContentType());
-            publicKeyVerificationCenter.setOriginalNameRelease(publicKeyVerificationCenterInputDto.getTemplateRelease().getOriginalFilename());
+        if (publicKeyVerificationCenterInputDto.getTemplateRelease() != null) {
+            publicKeyVerificationCenter.setContentTypeRelease(publicKeyVerificationCenterInputDto.getTemplateRelease()
+                    .getContentType());
+            publicKeyVerificationCenter.setOriginalNameRelease(publicKeyVerificationCenterInputDto.getTemplateRelease()
+                    .getOriginalFilename());
         }
-        if(publicKeyVerificationCenterInputDto.getTemplateRecall() != null) {
-            publicKeyVerificationCenter.setContentTypeRecall(publicKeyVerificationCenterInputDto.getTemplateRecall().getContentType());
-            publicKeyVerificationCenter.setOriginalNameRecall(publicKeyVerificationCenterInputDto.getTemplateRecall().getOriginalFilename());
+        if (publicKeyVerificationCenterInputDto.getTemplateRecall() != null) {
+            publicKeyVerificationCenter.setContentTypeRecall(publicKeyVerificationCenterInputDto.getTemplateRecall()
+                    .getContentType());
+            publicKeyVerificationCenter.setOriginalNameRecall(publicKeyVerificationCenterInputDto.getTemplateRecall()
+                    .getOriginalFilename());
         }
         PublicKeyVerificationCenter response;
         try {
@@ -79,14 +91,15 @@ public class PublicKeyVerificationCenterController {
         return new ResponseEntity<>(convertToOutputDto(response), HttpStatus.OK);
     }
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_FIND_BY_ID_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_FIND_BY_ID_DESCRIPTION)
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_FIND_BY_ID_SUMMARY, description =
+            CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_FIND_BY_ID_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping("/{id}")
     public ResponseEntity<?> findByPublicKeyVerificationCenterId(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1" ) Long id){
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1") Long id) {
         PublicKeyVerificationCenter response;
         try {
             response = service.findByPublicKeyVerificationCenterId(id);
@@ -96,53 +109,75 @@ public class PublicKeyVerificationCenterController {
         return new ResponseEntity<>(convertToOutputDto(response), HttpStatus.OK);
     }
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_UPDATE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_UPDATE_DESCRIPTION)
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Data
+    public static class PublicKeyVerificationCenterDTO {
+        private String name;
+        private String id;
+        private MultipartFile templateRelease;
+        private MultipartFile templateRecall;
+        boolean templateReleaseEmpty = false;
+        boolean templateRecallEmpty = false;
+
+        public void setTemplateRelease(String s) {
+            templateReleaseEmpty = true;
+            log.debug("Detected empty templateRelease...");
+        }
+
+        public void setTemplateRecall(String s) {
+            templateRecallEmpty = true;
+            log.debug("Detected empty templateRecall...");
+        }
+    }
+
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_UPDATE_SUMMARY, description =
+            CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_UPDATE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping(value = "update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updatePublicKeyVerificationCenter(
-            @RequestPart( "id" ) String id,
-            @RequestPart(value = "name", required = false) String name,
-            @RequestPart(value = "templateRelease", required = false) MultipartFile templateRelease,
-            @RequestPart(value = "templateRecall", required = false) MultipartFile templateRecall
+    public ResponseEntity<?> updatePublicKeyVerificationCenter(@ModelAttribute PublicKeyVerificationCenterDTO publicKeyVerificationCenterDTO
     ) throws IOException {
 
-        //  param == null - не был передан
-        //  param.isEmpty() - пуст
-        PublicKeyVerificationCenter publicKeyVerificationCenter = service.findByPublicKeyVerificationCenterId(Long.parseLong(id));
-        if(name != null) {
+        String name = publicKeyVerificationCenterDTO.getName();
+        String id = publicKeyVerificationCenterDTO.getId();
+        MultipartFile templateRelease = publicKeyVerificationCenterDTO.getTemplateRelease();
+        MultipartFile templateRecall = publicKeyVerificationCenterDTO.getTemplateRecall();
+        boolean isTemplateReleaseEmpty = publicKeyVerificationCenterDTO.isTemplateReleaseEmpty();
+        boolean isTemplateRecallEmpty = publicKeyVerificationCenterDTO.isTemplateRecallEmpty();
+
+        PublicKeyVerificationCenter publicKeyVerificationCenter =
+                service.findByPublicKeyVerificationCenterId(Long.parseLong(id));
+        if (name != null) {
             if (!name.isEmpty()) {
                 publicKeyVerificationCenter.setName(name);
             } else {
                 throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_NAME_IS_NULL);
             }
         }
-        if(templateRelease != null) {
-            if(templateRelease.isEmpty()){
-                publicKeyVerificationCenter.setTemplateRelease(null);
-                publicKeyVerificationCenter.setContentTypeRelease(null);
-                publicKeyVerificationCenter.setOriginalNameRelease(null);
-            } else {
-                byte[] bytes = templateRelease.getBytes();
-                publicKeyVerificationCenter.setTemplateRelease(bytes);
-                publicKeyVerificationCenter.setContentTypeRelease(templateRelease.getContentType());
-                publicKeyVerificationCenter.setOriginalNameRelease(templateRelease.getOriginalFilename());
-            }
-
+        if (isTemplateReleaseEmpty) {
+            publicKeyVerificationCenter.setTemplateRelease(null);
+            publicKeyVerificationCenter.setContentTypeRelease(null);
+            publicKeyVerificationCenter.setOriginalNameRelease(null);
         }
-        if(templateRecall != null){
-            if(templateRecall.isEmpty()){
-                publicKeyVerificationCenter.setTemplateRecall(null);
-                publicKeyVerificationCenter.setContentTypeRecall(null);
-                publicKeyVerificationCenter.setOriginalNameRecall(null);
-            } else {
-                byte[] bytes1 = templateRecall.getBytes();
-                publicKeyVerificationCenter.setTemplateRecall(bytes1);
-                publicKeyVerificationCenter.setContentTypeRecall(templateRecall.getContentType());
-                publicKeyVerificationCenter.setOriginalNameRecall(templateRecall.getOriginalFilename());
-            }
+        if (templateRelease != null) {
+            byte[] bytes = templateRelease.getBytes();
+            publicKeyVerificationCenter.setTemplateRelease(bytes);
+            publicKeyVerificationCenter.setContentTypeRelease(templateRelease.getContentType());
+            publicKeyVerificationCenter.setOriginalNameRelease(templateRelease.getOriginalFilename());
+        }
+        if (isTemplateRecallEmpty) {
+            publicKeyVerificationCenter.setTemplateRecall(null);
+            publicKeyVerificationCenter.setContentTypeRecall(null);
+            publicKeyVerificationCenter.setOriginalNameRecall(null);
+        }
+        if (templateRecall != null) {
+            byte[] bytes1 = templateRecall.getBytes();
+            publicKeyVerificationCenter.setTemplateRecall(bytes1);
+            publicKeyVerificationCenter.setContentTypeRecall(templateRecall.getContentType());
+            publicKeyVerificationCenter.setOriginalNameRecall(templateRecall.getOriginalFilename());
         }
         PublicKeyVerificationCenter response;
         try {
@@ -154,14 +189,15 @@ public class PublicKeyVerificationCenterController {
     }
 
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DELETE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DELETE_DESCRIPTION)
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DELETE_SUMMARY, description =
+            CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DELETE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @DeleteMapping("delete/{id}")
     public ResponseEntity<?> deletePublicKeyVerificationCenter(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1" ) Long id) {
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1") Long id) {
         try {
             service.deletePublicKeyVerificationCenter(id);
         } catch (ConstraintViolationException e) {
@@ -173,21 +209,22 @@ public class PublicKeyVerificationCenterController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RELEASE_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RELEASE_DESCRIPTION)
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RELEASE_SUMMARY, description =
+            CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RELEASE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(value = "/download_template_release/{id}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<?> downloadTemplateRelease(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1" ) Long id) {
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1") Long id) {
         PublicKeyVerificationCenter downloadTempl;
         try {
             downloadTempl = service.findByPublicKeyVerificationCenterId(id);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL);
         }
-        if(downloadTempl.getTemplateRelease() == null) {
+        if (downloadTempl.getTemplateRelease() == null) {
             return new ResponseEntity<>(TEMPLATE_RELEASE_IS_NULL, HttpStatus.NOT_FOUND);
         }
         var resource = new ByteArrayResource(downloadTempl.getTemplateRelease());
@@ -203,21 +240,22 @@ public class PublicKeyVerificationCenterController {
                 .body(resource);
     }
 
-    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RECALL_SUMMARY, description = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RECALL_DESCRIPTION)
+    @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RECALL_SUMMARY, description =
+            CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_DOWNLOAD_TEMPLATE_RECALL_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(value = "/download_template_recall/{id}", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<?> downloadTemplateRecall(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1" ) Long id) {
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1") Long id) {
         PublicKeyVerificationCenter downloadTempl;
         try {
             downloadTempl = service.findByPublicKeyVerificationCenterId(id);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL);
         }
-        if(downloadTempl.getTemplateRecall() == null) {
+        if (downloadTempl.getTemplateRecall() == null) {
             return new ResponseEntity<>(TEMPLATE_RECALL_IS_NULL, HttpStatus.NOT_FOUND);
         }
         var resource = new ByteArrayResource(downloadTempl.getTemplateRecall());
@@ -234,7 +272,8 @@ public class PublicKeyVerificationCenterController {
     }
 
     private PublicKeyVerificationCenterOutputDto convertToOutputDto(PublicKeyVerificationCenter publicKeyVerificationCenter) {
-        PublicKeyVerificationCenterOutputDto publicKeyVerificationCenterOutputDto = new PublicKeyVerificationCenterOutputDto();
+        PublicKeyVerificationCenterOutputDto publicKeyVerificationCenterOutputDto =
+                new PublicKeyVerificationCenterOutputDto();
         publicKeyVerificationCenterOutputDto.setId(publicKeyVerificationCenter.getId());
         publicKeyVerificationCenterOutputDto.setName(publicKeyVerificationCenter.getName());
         publicKeyVerificationCenterOutputDto.setOriginalNameRelease(publicKeyVerificationCenter.getOriginalNameRelease());
@@ -246,12 +285,14 @@ public class PublicKeyVerificationCenterController {
         PublicKeyVerificationCenter publicKeyVerificationCenter = new PublicKeyVerificationCenter();
         publicKeyVerificationCenter.setId(publicKeyVerificationCenterInputDto.getId());
         publicKeyVerificationCenter.setName(publicKeyVerificationCenterInputDto.getName());
-        if(publicKeyVerificationCenterInputDto.getTemplateRelease() != null) {
-            byte[] bytes = publicKeyVerificationCenterInputDto.getTemplateRelease().getBytes();
+        if (publicKeyVerificationCenterInputDto.getTemplateRelease() != null) {
+            byte[] bytes = publicKeyVerificationCenterInputDto.getTemplateRelease()
+                    .getBytes();
             publicKeyVerificationCenter.setTemplateRelease(bytes);
         }
-        if(publicKeyVerificationCenterInputDto.getTemplateRecall() != null){
-            byte[] bytes1 = publicKeyVerificationCenterInputDto.getTemplateRecall().getBytes();
+        if (publicKeyVerificationCenterInputDto.getTemplateRecall() != null) {
+            byte[] bytes1 = publicKeyVerificationCenterInputDto.getTemplateRecall()
+                    .getBytes();
             publicKeyVerificationCenter.setTemplateRecall(bytes1);
         }
         return publicKeyVerificationCenter;
