@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.controller;
 
 import lombok.AllArgsConstructor;
+import lombok.val;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +22,12 @@ import su.opencode.digsigcik.synapi.service.ContainerService;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -113,21 +116,38 @@ public class ApiControllerV1 {
         return ResponseEntity.ok(res);
     }
 
+    @PostMapping(value = "/test")
+    public ResponseEntity<Map<String, ContainerPart>> test(
+            @RequestPart("container") MultipartFile container,
+            @RequestPart("selectors") List<su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode> selectors,
+            @RequestParam(value = "reverify", required = false) Boolean reverify
+    ) {
+
+        if (reverify == null) reverify = Boolean.FALSE;
+        var res = containerService.getContainerData(
+                container, selectors.stream().map(ApiControllerV1::createContainerSelector).collect(Collectors.toList()), reverify);
+        if (res == null) {
+            return ResponseEntity.internalServerError().build();
+        }
+        return ResponseEntity.ok(res);
+    }
+
     @PostMapping(value = "/get-container-part")
     public ResponseEntity<Resource> getContainerPart(
             @RequestPart("container") MultipartFile container,
-            @RequestPart("selector") ContainerSelector selector,
+           su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode selector,
             @RequestPart(value = "reverify", required = false) Boolean reverify
     ) {
+        ContainerSelector containerSelector = createContainerSelector(selector);
         if (reverify == null) reverify = Boolean.FALSE;
         var res = containerService.getContainerPart(
-                container, selector, reverify);
+                container, containerSelector, reverify);
         if (res == null) {
             return ResponseEntity.internalServerError().build();
         }
         var resource = new ByteArrayResource(res.getData());
         var contentType = mediaType(res.getContentType());
-        var filename = filename(container, selector.getCode().getValue());
+        var filename = filename(container, containerSelector.getCode().getValue());
         return resourceOctetStreamOrInternal(resource, contentType, filename);
     }
 
@@ -185,4 +205,10 @@ public class ApiControllerV1 {
             throw new IllegalStateException("Invalid media type: " + type);
         }
     }
+    private static ContainerSelector createContainerSelector(su.opencode.digsigcik.synapi.api.model.ContainerSelectorCode containerSelectorCode) {
+        val selector = new ContainerSelector();
+        selector.setCode(containerSelectorCode);
+        return selector;
+    }
+
 }

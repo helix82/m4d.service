@@ -53,6 +53,12 @@ public class SimpleSignatureController {
     private final UserProjectionRepository userProjectionRepository;
     private final EncryptionKeyRepository encryptionKeyRepository;
 
+    @Operation(summary = CONTROLLER_SIMPLE_SIGNATURE_CONTAINER_CREATE,
+            description = CONTROLLER_SIMPLE_SIGNATURE_CONTAINER_CREATE)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    })
     @PostMapping(value = "/create",
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createCustomSimpleSignatureContainer(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
@@ -61,6 +67,12 @@ public class SimpleSignatureController {
         return createCustomSimpleSignatureContainerWithCustomHash(authToken, HashAlgorithm.SHA256, pinCode, file);
     }
 
+    @Operation(summary = CONTROLLER_SIMPLE_SIGNATURE_CONTAINER_CREATE_CUSTOM_HASH,
+            description = CONTROLLER_SIMPLE_SIGNATURE_CONTAINER_CREATE_CUSTOM_HASH)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    })
     @PostMapping(value = "/create-custom-ses-container-custom-hash",
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createCustomSimpleSignatureContainerWithCustomHash(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
@@ -104,8 +116,8 @@ public class SimpleSignatureController {
     }
 
 
-    @Operation(summary = CONTROLLER_SIMPLE_SIGNATURE_CREATE,
-            description = CONTROLLER_SIMPLE_SIGNATURE_CREATE)
+    @Operation(summary = CONTROLLER_SIMPLE_SIGNATURE_CREATE_CUSTOM_HASH,
+            description = CONTROLLER_SIMPLE_SIGNATURE_CREATE_CUSTOM_HASH)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
@@ -181,6 +193,12 @@ public class SimpleSignatureController {
         return new ResponseEntity<>(sesVerifyResponse, HttpStatus.OK);
     }
 
+    @Operation(summary = CONTROLLER_SIMPLE_SIGNATURE_VERIFY,
+            description = CONTROLLER_SIMPLE_SIGNATURE_VERIFY)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    })
 
     @PostMapping(value = "/create-ses-container-custom-hash",
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
