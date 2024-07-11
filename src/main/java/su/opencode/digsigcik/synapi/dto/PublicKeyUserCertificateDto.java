@@ -49,5 +49,5 @@ public class PublicKeyUserCertificateDto {
     private String certificate;
 
     @JsonProperty("statement_id")
-    private String statementId;
+    private Long statementId;
 }

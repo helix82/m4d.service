@@ -243,7 +243,7 @@ public interface Constants {
 
     String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_SUMMARY = "Получить список заявлений";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_DESCRIPTION = "Возвращает список заявлений";
-    String CONTROLLER_PUBLIC_KEY_STATEMENT_SAVE_SUMMARY = "Сохранить заявление на выпуск сертификата";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_SAVE_SUMMARY = "Сохранить заявление";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_SAVE_DESCRIPTION = "Возвращает созданное заявление";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_BY_ID_SUMMARY = "Получить заявление по ИД";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_BY_ID_DESCRIPTION = "Возвращает заявление по ИД";

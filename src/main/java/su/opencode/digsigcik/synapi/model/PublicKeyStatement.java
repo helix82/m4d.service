@@ -8,6 +8,8 @@ import su.opencode.digsigcik.synapi.enums.StatusStatementEnum;
 import su.opencode.digsigcik.synapi.enums.TypeStatementEnum;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -45,4 +47,8 @@ public class PublicKeyStatement {
     @Schema(example = "", required = false)
     @JsonProperty("status")
     private StatusStatementEnum status;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "statement_id")
+    private Set<PublicKeyUserCertificate> publicKeyUserCertificates = new HashSet<>();
 }

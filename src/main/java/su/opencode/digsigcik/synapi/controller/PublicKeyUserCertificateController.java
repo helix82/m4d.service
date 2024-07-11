@@ -74,16 +74,16 @@ public class PublicKeyUserCertificateController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "parse", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> parsePublicKeyUserCertificate(@RequestPart String login, @RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateException{
+    public ResponseEntity<?> parsePublicKeyUserCertificate(@RequestPart String statementId, @RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateException{
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         PublicKeyUserCertificate publicKeyUserCertificate;
         if(Objects.equals(extension, "cer")){ //crt
-            publicKeyUserCertificate = parseCertificateCER(sourceFile, login);
+            publicKeyUserCertificate = parseCertificateCER(sourceFile, statementId);
         } else if(Objects.equals(extension, "der")) {
-            //TODO @helix82 парсинг DER-сертификатов publicKeyUserCertificate = parseCertificateDER(sourceFile, login);
+            //TODO @helix82 парсинг DER-сертификатов publicKeyUserCertificate = parseCertificateDER(sourceFile, statementId);
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
         } else if(Objects.equals(extension, "pem")) {
-            //TODO @helix82 парсинг PEM-сертификатов publicKeyUserCertificate = parseCertificatePEM(sourceFile, login);
+            //TODO @helix82 парсинг PEM-сертификатов publicKeyUserCertificate = parseCertificatePEM(sourceFile, statementId);
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
         } else {
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
@@ -196,7 +196,7 @@ public class PublicKeyUserCertificateController {
         return instant1.toString();
     }
 
-    public PublicKeyUserCertificate parseCertificateCER(MultipartFile sourceFile, String login) throws IOException, CertificateEncodingException {
+    public PublicKeyUserCertificate parseCertificateCER(MultipartFile sourceFile, String statementId) throws IOException, CertificateEncodingException {
         PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
         String content = new String(sourceFile.getBytes(), StandardCharsets.UTF_8);
         X509Certificate certificate;
@@ -211,7 +211,7 @@ public class PublicKeyUserCertificateController {
         } else {
             certificate = CertUtil.decodeCertificate(sourceFile.getInputStream().readAllBytes());
         }
-        //publicKeyUserCertificate.setLogin(login);
+        publicKeyUserCertificate.setStatementId(Long.parseLong(statementId));
         publicKeyUserCertificate.setDeleted(false);
         publicKeyUserCertificate.setSerialNumber(certificate.getSerialNumber().toString(16));
         publicKeyUserCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
@@ -347,13 +347,13 @@ public class PublicKeyUserCertificateController {
         return publicKeyUserCertificate;
     }
 
-    public PublicKeyUserCertificate parseCertificateDER(MultipartFile sourceFile, String login) {
+    public PublicKeyUserCertificate parseCertificateDER(MultipartFile sourceFile, String statementId) {
         PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
         //Бинарный формат, который содержит сертификат в двоичном виде
         return publicKeyUserCertificate;
     }
 
-    public PublicKeyUserCertificate parseCertificatePEM(MultipartFile sourceFile, String login) {
+    public PublicKeyUserCertificate parseCertificatePEM(MultipartFile sourceFile, String statementId) {
         PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
         //Текстовый формат, который включает сертификат в виде закодированной в Base64 строки
         return publicKeyUserCertificate;
