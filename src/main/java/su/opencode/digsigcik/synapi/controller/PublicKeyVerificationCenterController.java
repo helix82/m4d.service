@@ -108,26 +108,41 @@ public class PublicKeyVerificationCenterController {
             @RequestPart(value = "templateRelease", required = false) MultipartFile templateRelease,
             @RequestPart(value = "templateRecall", required = false) MultipartFile templateRecall
     ) throws IOException {
-        PublicKeyVerificationCenter publicKeyVerificationCenter = new PublicKeyVerificationCenter();
-        if (null != id) {
-            publicKeyVerificationCenter = service.findByPublicKeyVerificationCenterId(Long.parseLong(id));
-        }
-        assert id != null;
-        publicKeyVerificationCenter.setId(Long.parseLong(id));
+
+        //  param == null - не был передан
+        //  param.isEmpty() - пуст
+        PublicKeyVerificationCenter publicKeyVerificationCenter = service.findByPublicKeyVerificationCenterId(Long.parseLong(id));
         if(name != null) {
-            publicKeyVerificationCenter.setName(name);
+            if (!name.isEmpty()) {
+                publicKeyVerificationCenter.setName(name);
+            } else {
+                throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_NAME_IS_NULL);
+            }
         }
         if(templateRelease != null) {
-            byte[] bytes = templateRelease.getBytes();
-            publicKeyVerificationCenter.setTemplateRelease(bytes);
-            publicKeyVerificationCenter.setContentTypeRelease(templateRelease.getContentType());
-            publicKeyVerificationCenter.setOriginalNameRelease(templateRelease.getOriginalFilename());
+            if(templateRelease.isEmpty()){
+                publicKeyVerificationCenter.setTemplateRelease(null);
+                publicKeyVerificationCenter.setContentTypeRelease(null);
+                publicKeyVerificationCenter.setOriginalNameRelease(null);
+            } else {
+                byte[] bytes = templateRelease.getBytes();
+                publicKeyVerificationCenter.setTemplateRelease(bytes);
+                publicKeyVerificationCenter.setContentTypeRelease(templateRelease.getContentType());
+                publicKeyVerificationCenter.setOriginalNameRelease(templateRelease.getOriginalFilename());
+            }
+
         }
         if(templateRecall != null){
-            byte[] bytes1 = templateRecall.getBytes();
-            publicKeyVerificationCenter.setTemplateRecall(bytes1);
-            publicKeyVerificationCenter.setContentTypeRecall(templateRecall.getContentType());
-            publicKeyVerificationCenter.setOriginalNameRecall(templateRecall.getOriginalFilename());
+            if(templateRecall.isEmpty()){
+                publicKeyVerificationCenter.setTemplateRecall(null);
+                publicKeyVerificationCenter.setContentTypeRecall(null);
+                publicKeyVerificationCenter.setOriginalNameRecall(null);
+            } else {
+                byte[] bytes1 = templateRecall.getBytes();
+                publicKeyVerificationCenter.setTemplateRecall(bytes1);
+                publicKeyVerificationCenter.setContentTypeRecall(templateRecall.getContentType());
+                publicKeyVerificationCenter.setOriginalNameRecall(templateRecall.getOriginalFilename());
+            }
         }
         PublicKeyVerificationCenter response;
         try {
