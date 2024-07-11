@@ -20,11 +20,6 @@ public class PublicKeyUserCertificate {
     @JsonProperty("id")
     private Long id;
 
-    @Column(name = "login", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
-    @JsonProperty("login")
-    private String login;
-
     @Column(name = "imprint", columnDefinition = "VARCHAR(255)")
     @Schema(example = "", required = false)
     @JsonProperty("imprint")

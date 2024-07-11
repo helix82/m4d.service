@@ -211,7 +211,7 @@ public class PublicKeyUserCertificateController {
         } else {
             certificate = CertUtil.decodeCertificate(sourceFile.getInputStream().readAllBytes());
         }
-        publicKeyUserCertificate.setLogin(login);
+        //publicKeyUserCertificate.setLogin(login);
         publicKeyUserCertificate.setDeleted(false);
         publicKeyUserCertificate.setSerialNumber(certificate.getSerialNumber().toString(16));
         publicKeyUserCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
