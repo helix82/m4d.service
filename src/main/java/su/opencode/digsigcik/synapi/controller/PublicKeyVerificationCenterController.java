@@ -109,6 +109,9 @@ public class PublicKeyVerificationCenterController {
             @RequestPart(value = "templateRecall", required = false) MultipartFile templateRecall
     ) throws IOException {
         PublicKeyVerificationCenter publicKeyVerificationCenter = new PublicKeyVerificationCenter();
+        if (null != id) {
+            publicKeyVerificationCenter = service.findByPublicKeyVerificationCenterId(Long.parseLong(id));
+        }
         publicKeyVerificationCenter.setId(Long.parseLong(id));
         publicKeyVerificationCenter.setName(name);
         if(templateRelease != null) {
