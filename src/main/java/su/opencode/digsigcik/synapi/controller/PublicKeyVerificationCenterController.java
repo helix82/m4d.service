@@ -104,7 +104,7 @@ public class PublicKeyVerificationCenterController {
     @PutMapping(value = "update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updatePublicKeyVerificationCenter(
             @RequestPart( "id" ) String id,
-            @RequestPart( "name" ) String name,
+            @RequestPart(value = "name", required = false) String name,
             @RequestPart(value = "templateRelease", required = false) MultipartFile templateRelease,
             @RequestPart(value = "templateRecall", required = false) MultipartFile templateRecall
     ) throws IOException {
@@ -112,8 +112,11 @@ public class PublicKeyVerificationCenterController {
         if (null != id) {
             publicKeyVerificationCenter = service.findByPublicKeyVerificationCenterId(Long.parseLong(id));
         }
+        assert id != null;
         publicKeyVerificationCenter.setId(Long.parseLong(id));
-        publicKeyVerificationCenter.setName(name);
+        if(name != null) {
+            publicKeyVerificationCenter.setName(name);
+        }
         if(templateRelease != null) {
             byte[] bytes = templateRelease.getBytes();
             publicKeyVerificationCenter.setTemplateRelease(bytes);
