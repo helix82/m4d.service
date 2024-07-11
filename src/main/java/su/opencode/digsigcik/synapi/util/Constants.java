@@ -286,6 +286,7 @@ public interface Constants {
     String TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .cer!";
     String CA_IS_NULL = String.format("CA is %s!", NULL);
     String PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL = String.format("Verification center is %s!", NULL);
+    String PUBLIC_KEY_VERIFICATION_CENTER_NAME_IS_NULL = "Наименование УЦ не может быть пустым";
     String PUBLIC_KEY_STATEMENT_IS_NULL = String.format("Statement is %s!", NULL);
     String PUBLIC_KEY_USER_CERTIFICATE_IS_NULL = String.format("User certificate is %s!", NULL);
     String PUBLIC_KEY_USER_CERTIFICATE_IS_NOT = "Не найден ИД ключа УЦ, не могу определить тип сертификата";
