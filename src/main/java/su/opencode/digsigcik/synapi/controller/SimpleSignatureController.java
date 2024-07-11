@@ -16,7 +16,6 @@ import su.opencode.digsigcik.synapi.config.WebConfigProperties;
 import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
-import su.opencode.digsigcik.synapi.exception.SesException;
 import su.opencode.digsigcik.synapi.exception.SesVerifyException;
 import su.opencode.digsigcik.synapi.model.ContainerFile;
 import su.opencode.digsigcik.synapi.model.EncryptionKeyEntity;
@@ -212,7 +211,7 @@ public class SimpleSignatureController {
         UserProjection userProjection =
                 userProjectionRepository.getUserProjectionByLogin(jwtPayloadDto.getPreferredUsername());
         if (userProjection == null) {
-            throw new SesException(USER_PROJECTION_NOT_FOUND);
+            throw new BadRequestException(USER_PROJECTION_NOT_FOUND);
         }
         EncryptionKeyEntity keyEntity =
                 encryptionKeyRepository.getEncryptionKeyEntitiesByUserProjection(userProjection);
@@ -271,12 +270,12 @@ public class SimpleSignatureController {
         UserProjection userProjection =
                 userProjectionRepository.getUserProjectionByLogin(jwtPayloadDto.getPreferredUsername());
         if (userProjection == null) {
-            throw new SesException(USER_PROJECTION_NOT_FOUND);
+            throw new BadRequestException(USER_PROJECTION_NOT_FOUND);
         }
         EncryptionKeyEntity keyEntity =
                 encryptionKeyRepository.getEncryptionKeyEntitiesByUserProjection(userProjection);
         if (keyEntity == null) {
-            throw new RuntimeException("keyEntity not found");
+            throw new BadRequestException("keyEntity not found");
         } else {
             KeyPair keyPair = getKeyPairByEncryptionKeyEntity(keyEntity);
             ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
@@ -364,7 +363,7 @@ public class SimpleSignatureController {
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(authToken);
         UserDto userDto = esUserService.getESSUserByLogin(jwtPayloadDto.getPreferredUsername());
         if (userDto == null) {
-            throw new SesException(JWT_USER_NOT_FOUND);
+            throw new BadRequestException(JWT_USER_NOT_FOUND);
         }
         return jwtPayloadDto;
     }
