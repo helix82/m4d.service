@@ -112,6 +112,7 @@ public class PublicKeyVerificationCenterController {
         if (null != id) {
             publicKeyVerificationCenter = service.findByPublicKeyVerificationCenterId(Long.parseLong(id));
         }
+        assert id != null;
         publicKeyVerificationCenter.setId(Long.parseLong(id));
         if(name != null) {
             publicKeyVerificationCenter.setName(name);
