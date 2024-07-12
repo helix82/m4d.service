@@ -1,13 +1,11 @@
 package su.opencode.digsigcik.synapi.util;
 
-import static su.opencode.digsigcik.synapi.util.Constant.NULL;
-
 /**
  * Descriptions of constants.
  */
 
 public interface Constants {
-
+    String SIGNATURE_PUBLIC_KEY_SEPARATOR = "---";
     String API_V_1_SES_FILES = "/api/v1/sesFiles";
     String GET_CONTAINER= "/getContainer";
     // namespaces
@@ -273,6 +271,10 @@ public interface Constants {
     String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
 
+    String NULL = "null";
+    String ID_IS_NULL = String.format("ID is %s", NULL);
+    String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);
+    String TOKEN_ERROR_MESSAGE = String.format("Token %s", NULL_OR_EMPTY_ERROR_MESSAGE);
     String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
     String MRPA_REGISTRY_CREDENTIAL_IS_NULL = String.format("Assign Credential to Mrpa registry is %s!", NULL);
     String CREDENTIAL_IS_NULL = String.format("Credential is %s!", NULL);
@@ -313,9 +315,18 @@ public interface Constants {
     String CONTROLLER_SIMPLE_SIGNATURE_VERIFY = "Проверяет простую электронную подпись";
     String CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE = "Создает неквалифицированную электронную подпись";
     String CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE_WITH_CUSTOM_HASH = "Создает неквалифицированную электронную подпись c указанием типа хэша";
-    String CONTROLLER_UNQUALIFIED_SIGNATURE_VERIFY = "Проверяет неквалифицированную электронную подпись";
     String CONTROLLER_ENCRYPTION_KEY_CREATE = "Создает пару закрытого и открытого ключа для пользователя";
     String CONTROLLER_ENCRYPTION_KEY_DELETE = "Удаляет пару закрытого и открытого ключа для пользователя";
     String CONTROLLER_ENCRYPTION_KEY_CREATE_WITH_CUSTOM_ALG  = "Создает пару закрытого и открытого ключа для пользователя c указанием алгоритма";
 
+    String CONTROLLER_SIGNATURE_VERIFY = "Проверяет электронную подпись";
+    String PIN_CODE_ERROR_MESSAGE = "PIN code incorrect!";
+    String NOT_FOUND = "not found!";
+    String USER_PROJECTION_NOT_FOUND = String.format("User projection %s", NOT_FOUND);
+    String JWT_USER_NOT_FOUND = String.format("JWT User %s", NOT_FOUND);
+    String EMPTY_BYTE_ARRAY_ERROR = "Empty byte array!";
+    String AUTH_ERROR = "Authorisation Error!";
+    String ROOT_FILE_STORAGE_PATH = ".";
+    String DSCP_DIRECTORY_PATH = "/files/dscp/";
+    String SOURCE_DIRECTORY_PATH = "/files/source/";
 }

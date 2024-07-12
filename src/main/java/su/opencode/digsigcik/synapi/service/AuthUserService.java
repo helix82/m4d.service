@@ -14,7 +14,7 @@ import su.opencode.digsigcik.synapi.repository.ESUserRepository;
 
 import java.util.List;
 
-import static su.opencode.digsigcik.synapi.util.Constant.JWT_USER_NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constants.JWT_USER_NOT_FOUND;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Service

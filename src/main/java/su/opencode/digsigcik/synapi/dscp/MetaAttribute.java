@@ -26,6 +26,8 @@ final class MetaAttribute {
 	static final MetaAttribute SIGNATURE_TYPE = new MetaAttribute(MetaObjectEnum.SIGNATURE_TYPE, "code");
 	static final MetaAttribute ENHANCE_TYPE = new MetaAttribute(MetaObjectEnum.SIGNATURE_TYPE, "enhance");
 	static final MetaAttribute ATTACHED_TYPE = new MetaAttribute(MetaObjectEnum.SIGNATURE_TYPE, "attachedType");
+	static final MetaAttribute SIGNATURE_TIMESTAMP = new MetaAttribute(MetaObjectEnum.SIGNATURE_TYPE, "timestamp");
+	static final MetaAttribute SIGNATURE_ALGORITHM = new MetaAttribute(MetaObjectEnum.SIGNATURE_TYPE, "signatureAlgorithm");
 	//Stamp
 	static final MetaAttribute STAMP_SIGN_PAGE = new MetaAttribute(MetaObjectEnum.STAMP, "signPage");
 	static final MetaAttribute STAMP_SIGN_X = new MetaAttribute(MetaObjectEnum.STAMP, "signX");
@@ -42,8 +44,7 @@ final class MetaAttribute {
 	static final MetaAttribute USER_FIRSTNAME = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userFirstname");
 	static final MetaAttribute USER_LASTNAME = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userLastname");
 	static final MetaAttribute USER_PATRONYMIC = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "userPatronymic");
-	static final MetaAttribute SIGNATURE_TIMESTAMP = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "timestamp");
-	static final MetaAttribute SIGNATURE_ALGORITHM = new MetaAttribute(MetaObjectEnum.SIGNATURE_DATA, "signatureAlgorithm");
+
 
 
 
