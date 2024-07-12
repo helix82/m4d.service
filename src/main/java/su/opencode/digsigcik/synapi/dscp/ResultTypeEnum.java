@@ -10,6 +10,13 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	POA_CHECK("poaCheck", MediaType.APPLICATION_JSON, ContainerFileEnum.LAST_POA_CHECK, "_poa_check", "json"),
 	CHECK_HISTORY("checkHistory", MediaType.APPLICATION_JSON, ContainerFileEnum.CHECK_HISTORY, "_check_history", "json"),
 	SOURCE_FILE("sourceFile", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.MAIN_FILE, null, null),
+	SOURCE_FILE_NAME ("sourceFileName", MetaAttribute.MAIN_FILE_NAME),
+	SOURCE_FILE_EXTENSION ("sourceFileExtension", MetaAttribute.MAIN_FILE_EXTENSION),
+	SOURCE_FILE_HASH_TYPE ("sourceFileHashType", MetaAttribute.MAIN_FILE_HASH_TYPE),
+	SOURCE_FILE_HASH ("sourceFileHash", MetaAttribute.MAIN_FILE_HASH),
+	SOURCE_FILE_CONTENT_TYPE  ("sourceFileContentType",MetaAttribute.MAIN_FILE_CONTENT_TYPE),
+	SOURCE_FILE_FULL_NAME  ("sourceFileFullName",MetaAttribute.MAIN_FILE_FULL_NAME ),
+	SOURCE_FILE_SIZE  ("sourceFileSize",MetaAttribute.MAIN_FILE_SIZE),
 	PREVIEW("preview", MediaType.APPLICATION_PDF, ContainerFileEnum.PREVIEW, "_preview", "pdf"),
 	DETACHED_SIGN("detachedSign", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.DETACHED_BES, null, "sig"),
 	ATTACHED_SIGN("attachedSign", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.ATTACHED_BES, null, null),
@@ -36,7 +43,9 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	PATRONYMIC("userPatronymic", MetaAttribute.USER_PATRONYMIC),
 	TIMESTAMP("timestamp", MetaAttribute.SIGNATURE_TIMESTAMP),
 	LOGIN("userLogin", MetaAttribute.USER_LOGIN),
-	SIGNATURE_ALGORITHM("signatureAlgorithm", MetaAttribute.SIGNATURE_ALGORITHM);
+	SIGNATURE_ALGORITHM("signatureAlgorithm", MetaAttribute.SIGNATURE_ALGORITHM),
+	SIGNATURE_TYPE("signatureType", MetaAttribute.SIGNATURE_TYPE),
+	CONTAINER_TYPE("containerType", MetaAttribute.CONTAINER_TYPE);
 
 	static {
 		InvariantUtils.fillCodes(ResultTypeEnum.class);

@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
-import static su.opencode.digsigcik.synapi.util.Constant.ID_IS_NULL;
+import static su.opencode.digsigcik.synapi.util.Constants.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 

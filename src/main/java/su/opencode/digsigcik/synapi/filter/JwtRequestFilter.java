@@ -1,4 +1,4 @@
-package su.opencode.digsigcik.synapi.filters;
+package su.opencode.digsigcik.synapi.filter;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.NonNull;

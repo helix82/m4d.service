@@ -11,9 +11,9 @@ import su.opencode.digsigcik.synapi.repository.PrincipalRepository;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
-import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
-import static su.opencode.digsigcik.synapi.util.Constant.NULL;
-import static su.opencode.digsigcik.synapi.util.Constant.NULL_OR_EMPTY_ERROR_MESSAGE;
+import static su.opencode.digsigcik.synapi.util.Constants.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constants.NULL;
+import static su.opencode.digsigcik.synapi.util.Constants.NULL_OR_EMPTY_ERROR_MESSAGE;
 
 @Service
 @Primary

@@ -9,7 +9,7 @@ import su.opencode.digsigcik.synapi.repository.CertificateDataRepository;
 
 import java.util.List;
 
-import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constants.NOT_FOUND;
 
 @Service
 @Primary

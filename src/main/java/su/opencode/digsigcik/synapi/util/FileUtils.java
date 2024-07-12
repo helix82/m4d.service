@@ -1,21 +1,25 @@
 package su.opencode.digsigcik.synapi.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.io.IOUtils;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import su.opencode.digsigcik.synapi.dscp.DscpContainerException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Slf4j
 public class FileUtils {
     public static byte[] getFileContentByPath(String filePathName) {
         Path filePath = Paths.get(filePathName);
@@ -63,5 +67,53 @@ public class FileUtils {
     public static void deleteFile(String filePathName) {
         File file = new File(filePathName);
         file.delete();
+    }
+
+    public static void saveMultipartFile(MultipartFile file, String filePath) {
+        try {
+            String originalFileName = file.getOriginalFilename();
+            Path targetLocation = Paths.get(filePath, originalFileName);
+            Files.copy(file.getInputStream(), targetLocation);
+        } catch (IOException e) {
+            throw new RuntimeException("Ошибка при сохранении файла: " + e.getMessage());
+        }
+    }
+
+    public static byte[] toBytes(MultipartFile file) {
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not read file into memory");
+        }
+    }
+
+    public static ResponseEntity<Resource> resourceOctetStreamOrInternal(
+            @NotNull Resource resource,
+            @NotNull String filename
+    ) {
+        var contentType = MediaType.APPLICATION_OCTET_STREAM;
+        return resourceOctetStreamOrInternal(resource, contentType, filename);
+    }
+
+    public static ResponseEntity<Resource> resourceOctetStreamOrInternal(
+            @NotNull Resource resource,
+            @NotNull MediaType contentType,
+            @NotNull String filename
+    ) {
+        try {
+            var disposition = ContentDisposition.attachment()
+                    .filename(filename)
+                    .build();
+            return ResponseEntity.ok()
+                    .contentLength(resource.contentLength())
+                    .contentType(contentType)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                    .body(resource);
+        } catch (IOException e) {
+            log.error("Could not create octet-stream from resource: "
+                    + "resource cannot be resolved", e);
+            return ResponseEntity.internalServerError()
+                    .build();
+        }
     }
 }

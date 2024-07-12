@@ -13,7 +13,7 @@ import su.opencode.digsigcik.synapi.dto.JwtTokenDto;
 import su.opencode.digsigcik.synapi.exception.UserAuthException;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
-import static su.opencode.digsigcik.synapi.util.Constant.AUTH_ERROR;
+import static su.opencode.digsigcik.synapi.util.Constants.AUTH_ERROR;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Service
