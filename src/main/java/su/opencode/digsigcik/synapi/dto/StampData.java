@@ -31,6 +31,10 @@ public class StampData {
     private Integer round;
     @JsonProperty("color")
     private String color;
+    @JsonProperty("inverse")
+    private Boolean inverse;
+
+
 
     @JsonProperty("items")
     private StampData[] items;
@@ -85,6 +89,10 @@ public class StampData {
 
     public String getStyle() {
         return style;
+    }
+
+    public Boolean getInverse() {
+        return inverse;
     }
 }
 
