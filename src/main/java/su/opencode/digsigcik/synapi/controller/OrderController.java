@@ -154,7 +154,7 @@ public class OrderController {
         try {
             order = new ObjectMapper().readValue(json, OrderDto.class);
         } catch (JsonProcessingException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid order format");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order format");
         }
         return acmeService.certificateOrder(httpSession, order.getDomain(), order.getNotAfter(), order.getProvider(), order.getData());
     }
