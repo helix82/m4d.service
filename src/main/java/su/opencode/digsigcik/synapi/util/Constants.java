@@ -318,4 +318,7 @@ public interface Constants {
     String CONTROLLER_ENCRYPTION_KEY_DELETE = "Удаляет пару закрытого и открытого ключа для пользователя";
     String CONTROLLER_ENCRYPTION_KEY_CREATE_WITH_CUSTOM_ALG  = "Создает пару закрытого и открытого ключа для пользователя c указанием алгоритма";
 
+    String CONTROLLER_ABOUT_ME_SUMMARY  = "Вывести информацию о текущем пользователе";
+    String CONTROLLER_ABOUT_ME_DESCRIPTION  = "Возвращает информацию о текущем пользователе";
+
 }

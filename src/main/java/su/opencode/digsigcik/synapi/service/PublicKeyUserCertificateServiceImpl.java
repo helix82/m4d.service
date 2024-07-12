@@ -26,6 +26,11 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
     }
 
     @Override
+    public List<PublicKeyUserCertificate> findAllPublicKeyUserCertificateByLogin(String login) {
+        return this.repository.findPublicKeyUserCertificateByLogin(login);
+    }
+
+    @Override
     public PublicKeyUserCertificate savePublicKeyUserCertificate(@NotNull PublicKeyUserCertificate publicKeyUserCertificate) {
         return this.repository.save(publicKeyUserCertificate);
     }
