@@ -4,12 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.client.RestClient;
 import su.opencode.digsigcik.synapi.client.RestMethod;
 import su.opencode.digsigcik.synapi.client.RestRequest;
 import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
+import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
 import su.opencode.digsigcik.synapi.dto.SesUserInfoDto;
 import su.opencode.digsigcik.synapi.dto.VerifyDto;
 import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
@@ -28,10 +30,10 @@ import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.LocalDateTime;
 import java.util.*;
-import org.springframework.beans.factory.annotation.Value;
+
 import static su.opencode.digsigcik.synapi.service.SimpleSignatureServiceImpl.createCustomSimpleSignature;
-import static su.opencode.digsigcik.synapi.util.Constants.USER_PROJECTION_NOT_FOUND;
 import static su.opencode.digsigcik.synapi.util.Constants.SIGNATURE_PUBLIC_KEY_SEPARATOR;
+import static su.opencode.digsigcik.synapi.util.Constants.USER_PROJECTION_NOT_FOUND;
 import static su.opencode.digsigcik.synapi.util.HashUtils.generateHash;
 
 @Service
@@ -64,7 +66,8 @@ public class VerificationServiceImpl implements VerificationService {
                         createContainerSelector(ContainerSelectorCode.SOURCE_FILE),
                         createContainerSelector(ContainerSelectorCode.DETACHEDSIGN),
                         createContainerSelector(ContainerSelectorCode.HASHTYPE),
-                        createContainerSelector(ContainerSelectorCode.SIGNATUREALGORITHM)
+                        createContainerSelector(ContainerSelectorCode.SIGNATUREALGORITHM),
+                        createContainerSelector(ContainerSelectorCode.SIGNATURE_TYPE)
                 ));
         try {
             var containerData = containerService.getContainerData(container,
@@ -91,10 +94,14 @@ public class VerificationServiceImpl implements VerificationService {
                     .getData();
             String signatureAlgorithm = new String(containerData.get("signatureAlgorithm")
                     .getData(), StandardCharsets.UTF_8);
+            String signatureType = new String(containerData.get("signatureType")
+                    .getData(), StandardCharsets.UTF_8);
             VerifyDto verifyDto = new VerifyDto();
-            if (signatureAlgorithm.equals("NOT IMPLEMENTED")) {
+            if (signatureType.equals(SignatureTypeEnum.UNQUALIFIED.getCode())
+                    || signatureType.equals(SignatureTypeEnum.QUALIFIED.getCode())
+                    || signatureType.equals(SignatureTypeEnum.UNKNOWN.getCode())) {
                 this.restClient = new RestClient(false);
-                if (detachedSign==null) {
+                if (detachedSign == null) {
                     resetAll(svc_uri);
                     String id1 = uploadDocument(svc_uri, srcFile).get("id")
                             .getAsString();
@@ -132,7 +139,7 @@ public class VerificationServiceImpl implements VerificationService {
                     return verifyDto;
                 }
 
-            } else if (signatureAlgorithm.equals("CUSTOM")) {
+            } else if (signatureType.equals(SignatureTypeEnum.SIMPLE.getCode()) && signatureAlgorithm.equals("CUSTOM")) {
                 UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(userLogin);
                 PinCode pinCode = pinCodeRepository.getPinCodeByUserProjection(userProjection);
                 if (userProjection == null) {
@@ -165,7 +172,7 @@ public class VerificationServiceImpl implements VerificationService {
                 }
 
                 return verifyDto;
-            } else if (Arrays.asList(SignatureAlgorithm.values())
+            } else if (signatureType.equals(SignatureTypeEnum.SIMPLE.getCode()) && Arrays.asList(SignatureAlgorithm.values())
                     .contains(SignatureAlgorithm.valueOf(signatureAlgorithm))) {
                 String[] parts = new String(detachedSign, StandardCharsets.UTF_8).split(SIGNATURE_PUBLIC_KEY_SEPARATOR);
                 byte[] signature = parts[0].getBytes();
