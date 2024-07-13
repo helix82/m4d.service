@@ -24,15 +24,18 @@ import su.opencode.digsigcik.synapi.model.RevokedCertificate;
 import su.opencode.digsigcik.synapi.service.RevokedCertificateService;
 
 import javax.validation.ConstraintViolationException;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.security.cert.CRLException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constants.*;
