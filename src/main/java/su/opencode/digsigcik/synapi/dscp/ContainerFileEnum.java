@@ -5,7 +5,8 @@ import java.util.Arrays;
 public enum ContainerFileEnum {
 
 	META("meta.json", true, false, null),
-	PREVIEW("preview/preview.pdf", false, true, null),
+	PREVIEW_PDF("preview/preview.pdf", false, true, null),
+	PREVIEW_PNG("preview/preview.png", false, true, null),
 	MAIN_FILE("main/mainFile", true, true, null),
 	DETACHED_BES("detached/sha256", true, true, EnhanceTypeEnum.ADES_BES),
 	DETACHED_T("detached/pkcs7t", false, true, EnhanceTypeEnum.ADES_T),

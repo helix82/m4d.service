@@ -20,11 +20,14 @@ import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.FileUtils;
 
 import javax.annotation.PostConstruct;
+import javax.imageio.ImageIO;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.SIMPLE_DETACHED;
 import static su.opencode.digsigcik.synapi.util.Constants.DSCP_DIRECTORY_PATH;
 import static su.opencode.digsigcik.synapi.util.Constants.ROOT_FILE_STORAGE_PATH;
 import static su.opencode.digsigcik.synapi.util.FileUtils.toBytes;
@@ -34,6 +37,7 @@ import static su.opencode.digsigcik.synapi.util.FileUtils.toBytes;
 @AllArgsConstructor
 @Slf4j
 public class ContainerServiceImpl implements ContainerService {
+    private final StampService stampService;
 
     private final Map<ContainerSelectorCode, ResultTypeEnum> SELECTOR_MAP =
             new EnumMap<>(ContainerSelectorCode.class);
@@ -86,8 +90,11 @@ public class ContainerServiceImpl implements ContainerService {
                 .getBytes(StandardCharsets.UTF_8);
         byte[] signatureAlgorithm = containerInputInfo.getSignatureAlgorithm()
                 .getBytes(StandardCharsets.UTF_8);
-        byte[] getSignatureType = containerInputInfo.getSignatureType().getCode()
+        byte[] getSignatureType = containerInputInfo.getSignatureType()
+                .getCode()
                 .getBytes(StandardCharsets.UTF_8);
+        byte[] previewPdf = createPdfPreviewWithStamp(srcFile, containerInputInfo);
+        byte[] previewPng = createPngPreviewWithStamp(srcFile, containerInputInfo);
 
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
         params.put(ResultTypeEnum.LOGIN, login);
@@ -97,6 +104,8 @@ public class ContainerServiceImpl implements ContainerService {
         params.put(ResultTypeEnum.TIMESTAMP, timestamp);
         params.put(ResultTypeEnum.SIGNATURE_ALGORITHM, signatureAlgorithm);
         params.put(ResultTypeEnum.SIGNATURE_TYPE, getSignatureType);
+        params.put(ResultTypeEnum.PREVIEW_PDF, previewPdf);
+        params.put(ResultTypeEnum.PREVIEW_PNG, previewPng);
 
         ContainerUtils.fillContainerByResult(container, params);
 
@@ -268,4 +277,125 @@ public class ContainerServiceImpl implements ContainerService {
         return null;
     }
 
+    private byte[] createPdfPreviewWithStamp(MultipartFile sourceFile,
+                                             @NotNull ContainerInputInfoDto containerInputInfo) {
+        byte[] preview = new byte[0];
+        Integer offsetX = -36;
+        Integer offsetY = 0;
+        Integer page = 0;
+        Integer scale = 30;
+        String stampdata = "[\n" +
+                "    {\"color\": \"#0000ADDD\"},\n" +
+                "    {\"type\": \"roundrect\", \"margin\": 0, \"padding\": 10, \"width\": 10, \"round\": 80,\n" +
+                "          \"items\": [\n" +
+                "                {\"color\": \"#0000ADDD\", \"size\": 5},\n" +
+                "                {\"text\": \"ДОКУМЕНТ ПОДПИСАН\", \"style\":\"bold\"},\n" +
+                "                {\"text\": \"ЭЛЕКТРОННОЙ ПОДПИСЬЮ\", \"style\":\"bold\"},\n" +
+                "                {\"size\": 30},\n" +
+                "                {\"type\": \"line\", \"width\": 3, \"margin\":7, \"padding\":0, \"color\": " +
+                "\"#000000DD\"},\n" +
+                "                {\"text\": \"СВЕДЕНИЯ О СЕРТИФИКАТЕ ЭП\",\"style\":\"bold\"},\n" +
+                "                {\"type\": \"line\", \"width\": 3, \"margin\":7, \"padding\":0, \"color\": " +
+                "\"#000000DD\"},\n" +
+                "                {\"size\": 28},\n" +
+                "                {\"text\": \"8912981293819381924890184902834902834234\", \"position\":\"left\", " +
+                "\"margin\": 5},\n" +
+                "                {\"text\": \"Действителен с: 14.06.2024 по 14.06.2025\", \"position\":\"left\", " +
+                "\"margin\": 5},\n" +
+                "                {\"text\": \"Владелец:" + containerInputInfo.getLastname() + " " + containerInputInfo.getFirstname() +
+                " " + containerInputInfo.getPatronymic() + "\", \"position\":\"left\", \"margin\": 5}\n" +
+                "          ]\n" +
+                "    }\n" +
+                "]";
+
+        InputStream stampStream = null;
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(stampService.makeStampImage(stampdata), "png", os);
+            stampStream = new ByteArrayInputStream(os.toByteArray());
+            if (sourceFile.getOriginalFilename()
+                    .endsWith(".docx")) {
+                preview = stampService.doStampDocx(sourceFile.getInputStream(), stampStream, page, offsetX, offsetY,
+                        scale);
+            } else {
+                preview = stampService.doStampPdf(sourceFile.getInputStream(), stampStream, page, offsetX, offsetY,
+                        scale);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (stampStream != null)
+                    stampStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return preview;
+    }
+
+    private byte[] createPngPreviewWithStamp(MultipartFile sourceFile,
+                                             @NotNull ContainerInputInfoDto containerInputInfo) {
+        byte[] preview = new byte[0];
+        Integer offsetX = -36;
+        Integer offsetY = 0;
+        Integer page = 0;
+        Integer scale = 30;
+        String stampdata = "[\n" +
+                "    {\"color\": \"#0000ADDD\"},\n" +
+                "    {\"type\": \"roundrect\", \"margin\": 0, \"padding\": 10, \"width\": 10, \"round\": 80,\n" +
+                "          \"items\": [\n" +
+                "                {\"color\": \"#0000ADDD\", \"size\": 5},\n" +
+                "                {\"text\": \"ДОКУМЕНТ ПОДПИСАН\", \"style\":\"bold\"},\n" +
+                "                {\"text\": \"ЭЛЕКТРОННОЙ ПОДПИСЬЮ\", \"style\":\"bold\"},\n" +
+                "                {\"size\": 30},\n" +
+                "                {\"type\": \"line\", \"width\": 3, \"margin\":7, \"padding\":0, \"color\": " +
+                "\"#000000DD\"},\n" +
+                "                {\"text\": \"СВЕДЕНИЯ О СЕРТИФИКАТЕ ЭП\",\"style\":\"bold\"},\n" +
+                "                {\"type\": \"line\", \"width\": 3, \"margin\":7, \"padding\":0, \"color\": " +
+                "\"#000000DD\"},\n" +
+                "                {\"size\": 28},\n" +
+                "                {\"text\": \"8912981293819381924890184902834902834234\", \"position\":\"left\", " +
+                "\"margin\": 5},\n" +
+                "                {\"text\": \"Действителен с: 14.06.2024 по 14.06.2025\", \"position\":\"left\", " +
+                "\"margin\": 5},\n" +
+                "                {\"text\": \"Владелец:" + containerInputInfo.getLastname() + " " + containerInputInfo.getFirstname() +
+                " " + containerInputInfo.getPatronymic() + "\", \"position\":\"left\", \"margin\": 5}\n" +
+                "          ]\n" +
+                "    }\n" +
+                "]";
+
+        InputStream stampStream = null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(stampService.makeStampImage(stampdata), "png", os);
+            stampStream = new ByteArrayInputStream(os.toByteArray());
+            if (sourceFile.getOriginalFilename()
+                    .endsWith(".docx")) {
+                ImageIO.write(stampService.doPreview(stampService.doStampDocx(sourceFile.getInputStream(), stampStream,
+                        page, offsetX, offsetY, scale), page), "png", baos);
+                baos.flush();
+                return baos.toByteArray();
+            } else {
+                ImageIO.write(stampService.doPreview(stampService.doStampPdf(sourceFile.getInputStream(), stampStream,
+                        page, offsetX, offsetY, scale), page), "png", baos);
+                baos.flush();
+                return baos.toByteArray();
+            }
+        } catch (
+                IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (stampStream != null)
+                    stampStream.close();
+                if (baos != null)
+                    baos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
 }

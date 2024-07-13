@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.controller;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -51,8 +52,8 @@ import static su.opencode.digsigcik.synapi.util.FileUtils.resourceOctetStreamOrI
 @RestController
 @RequestMapping("/api/v1")
 @AllArgsConstructor
+@Slf4j
 public class ApiControllerV1 {
-    private static final Log log = LogFactory.getLog(ApiControllerV1.class);
     public static final String DEFAULT_FILENAME = "container.dscp";
     private final ContainerService containerService;
     private final VerificationService verificationService;
