@@ -329,4 +329,7 @@ public interface Constants {
     String ROOT_FILE_STORAGE_PATH = ".";
     String DSCP_DIRECTORY_PATH = "/files/dscp/";
     String SOURCE_DIRECTORY_PATH = "/files/source/";
+
+    String CONTROLLER_ABOUT_ME_SUMMARY  = "Вывести информацию о текущем пользователе";
+    String CONTROLLER_ABOUT_ME_DESCRIPTION  = "Возвращает информацию о текущем пользователе";
 }

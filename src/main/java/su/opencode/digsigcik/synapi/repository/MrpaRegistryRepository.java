@@ -42,6 +42,17 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " where p.inn=?1 ")
     MrpaRegistryWithFioDTO findMrpaRegistriesByPrincipalInn(String inn);
 
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXmlPath, mr.recalledXmlPath, " +
+            "p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic," +
+            "rp.id, rp.dateIssue, rp.whoIssue, rp.seriesNumber, rp.departmentCode, o.id, o.inn, o.kpp, o.ogrn, o.name, o.regionCode, o.legalAddress) "
+            + " from MrpaRegistry mr"
+            + " left join Principal p on p.id=mr.principalId"
+            + " left join Organisation o on o.id=mr.organisationId"
+            + " left join Representative r on r.id=mr.representativeId "
+            + " left join RepresentativePassport rp on rp.representativeId=r.id"
+            + " where p.inn=?1 ")
+    MrpaRegistryFullDTO findMrpaRegistriesFullByPrincipalInn(String inn);
+
     @Query(value = "SELECT mr.* from mrpa_registry mr where mr.id=?1 ", nativeQuery = true)
     MrpaRegistry findMrpaById(Long id);
 

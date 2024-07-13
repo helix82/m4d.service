@@ -140,7 +140,7 @@ public class PublicKeyVerificationCenterController {
     @PutMapping(value = "update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updatePublicKeyVerificationCenter(@ModelAttribute PublicKeyVerificationCenterDTO publicKeyVerificationCenterDTO
     ) throws IOException {
-
+        //TODO @helix82 проблема: не работает обновление/удаление файлов
         String name = publicKeyVerificationCenterDTO.getName();
         String id = publicKeyVerificationCenterDTO.getId();
         MultipartFile templateRelease = publicKeyVerificationCenterDTO.getTemplateRelease();
