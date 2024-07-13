@@ -176,7 +176,8 @@ public class ContainerServiceImpl implements ContainerService {
             var resultType = rd.getValue().getResultType();
             var data = rd.getValue().getContent();
             if (rd.getValue().getContentType().equals(MediaType.APPLICATION_OCTET_STREAM)
-                    || rd.getValue().getContentType().equals(MediaType.APPLICATION_PDF)) {
+                    || rd.getValue().getContentType().equals(MediaType.APPLICATION_PDF)
+                    || rd.getValue().getContentType().equals(MediaType.IMAGE_PNG)) {
                 res.put(resultType.getCode(), Base64.getEncoder().encodeToString(data));
             } else {
                 res.put(resultType.getCode(), new String(data));
@@ -201,7 +202,8 @@ public class ContainerServiceImpl implements ContainerService {
         var containerData = getContainerData(containerFile, Collections.singletonList(selector), reverify);
         String contentType = containerData.get(selector.getCode().getValue()).getContentType();
         if (contentType.equals(MediaType.APPLICATION_OCTET_STREAM.toString())
-                || contentType.equals(MediaType.APPLICATION_PDF.toString())) {
+                || contentType.equals(MediaType.APPLICATION_PDF.toString())
+                || contentType.equals(MediaType.IMAGE_PNG.toString())) {
             res.put(selector.getCode().getValue(), Base64.getEncoder()
                     .encodeToString(containerData.get(selector.getCode().getValue()).getData()));
         } else {
