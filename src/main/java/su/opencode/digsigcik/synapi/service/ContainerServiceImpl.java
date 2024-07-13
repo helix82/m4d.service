@@ -24,19 +24,17 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.SIMPLE_DETACHED;
 import static su.opencode.digsigcik.synapi.util.Constants.DSCP_DIRECTORY_PATH;
 import static su.opencode.digsigcik.synapi.util.Constants.ROOT_FILE_STORAGE_PATH;
 import static su.opencode.digsigcik.synapi.util.FileUtils.toBytes;
 
-// TODO: add proper error handling, likely with exception handlers
 @Service
 @AllArgsConstructor
 @Slf4j
 public class ContainerServiceImpl implements ContainerService {
+    private final StampService stampService;
 
-    private final Map<ContainerSelectorCode, ResultTypeEnum> SELECTOR_MAP =
-            new EnumMap<>(ContainerSelectorCode.class);
+    private final Map<ContainerSelectorCode, ResultTypeEnum> SELECTOR_MAP = new EnumMap<>(ContainerSelectorCode.class);
 
     @PostConstruct
     void init() {
@@ -57,37 +55,22 @@ public class ContainerServiceImpl implements ContainerService {
                 || MediaType.APPLICATION_OCTET_STREAM_VALUE.equals(contentTypeStr)
                 ? null
                 : CommonUtils.toMediaType(contentTypeStr);
-        byte[] sourceFileContent;
-        try {
-            sourceFileContent = srcFile.getBytes();
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot get source file content", e);
-        }
-        byte[] sigFileContent;
-        try {
-            sigFileContent = sigFile.getBytes();
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot get sig file content", e);
-        }
+
+        byte[] sourceFileContent = getFileContent(srcFile);
+        byte[] sigFileContent = getFileContent(sigFile);
 
         Container container = ContainerUtils.createContainer(containerInputInfo.getContainerType(), sourceFileContent,
                 fileName, contentType, containerInputInfo.getHashAlgorithm());
 
-        byte[] login = containerInputInfo.getLogin()
-                .getBytes(StandardCharsets.UTF_8);
-        byte[] firstname = containerInputInfo.getFirstname()
-                .getBytes(StandardCharsets.UTF_8);
-        byte[] lastname = containerInputInfo.getLastname()
-                .getBytes(StandardCharsets.UTF_8);
-        byte[] patronymic = containerInputInfo.getPatronymic()
-                .getBytes(StandardCharsets.UTF_8);
-        byte[] timestamp = containerInputInfo.getTimestamp()
-                .toString()
-                .getBytes(StandardCharsets.UTF_8);
-        byte[] signatureAlgorithm = containerInputInfo.getSignatureAlgorithm()
-                .getBytes(StandardCharsets.UTF_8);
-        byte[] getSignatureType = containerInputInfo.getSignatureType().getCode()
-                .getBytes(StandardCharsets.UTF_8);
+        byte[] login = containerInputInfo.getLogin().getBytes(StandardCharsets.UTF_8);
+        byte[] firstname = containerInputInfo.getFirstname().getBytes(StandardCharsets.UTF_8);
+        byte[] lastname = containerInputInfo.getLastname().getBytes(StandardCharsets.UTF_8);
+        byte[] patronymic = containerInputInfo.getPatronymic().getBytes(StandardCharsets.UTF_8);
+        byte[] timestamp = containerInputInfo.getTimestamp().toString().getBytes(StandardCharsets.UTF_8);
+        byte[] signatureAlgorithm = containerInputInfo.getSignatureAlgorithm().getBytes(StandardCharsets.UTF_8);
+        byte[] getSignatureType = containerInputInfo.getSignatureType().getCode().getBytes(StandardCharsets.UTF_8);
+        byte[] previewPdf = createPdfPreview(srcFile, containerInputInfo);
+        byte[] previewPng = createPngPreview(srcFile, containerInputInfo);
 
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
         params.put(ResultTypeEnum.LOGIN, login);
@@ -97,18 +80,43 @@ public class ContainerServiceImpl implements ContainerService {
         params.put(ResultTypeEnum.TIMESTAMP, timestamp);
         params.put(ResultTypeEnum.SIGNATURE_ALGORITHM, signatureAlgorithm);
         params.put(ResultTypeEnum.SIGNATURE_TYPE, getSignatureType);
+        params.put(ResultTypeEnum.PREVIEW_PDF, previewPdf);
+        params.put(ResultTypeEnum.PREVIEW_PNG, previewPng);
 
         ContainerUtils.fillContainerByResult(container, params);
 
         byte[] containerBytes = ContainerUtils.containerContent(container);
         String dscpDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, DSCP_DIRECTORY_PATH);
         String containerPath = String.format("%scontainer-%s.dscp", dscpDirectoryPathName,
-                DateUtils.formatDate(containerInputInfo.getTimestamp())
-        );
+                DateUtils.formatDate(containerInputInfo.getTimestamp()));
         FileUtils.createDirectoryIfSheNotExist(dscpDirectoryPathName);
         FileUtils.createFile(containerPath, containerBytes);
 
         return new ByteArrayResource(containerBytes);
+    }
+
+    private byte[] getFileContent(MultipartFile file) {
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot get file content", e);
+        }
+    }
+
+    private byte[] createPdfPreview(MultipartFile srcFile, ContainerInputInfoDto containerInputInfo) {
+        try {
+            return stampService.createPdfPreviewWithStamp(srcFile, containerInputInfo);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create pdf preview", e);
+        }
+    }
+
+    private byte[] createPngPreview(MultipartFile srcFile, ContainerInputInfoDto containerInputInfo) {
+        try {
+            return stampService.createPngPreviewWithStamp(srcFile, containerInputInfo);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create png preview", e);
+        }
     }
 
     @Override
@@ -118,25 +126,16 @@ public class ContainerServiceImpl implements ContainerService {
     }
 
     @Override
-    public Map<String, ContainerPart> getContainerData(
-            @NotNull MultipartFile containerFile,
-            @NotNull List<ContainerSelector> selectors,
-            boolean reverify
-    ) {
-
+    public Map<String, ContainerPart> getContainerData(@NotNull MultipartFile containerFile,
+                                                       @NotNull List<ContainerSelector> selectors,
+                                                       boolean reverify) {
         var rds = getRds(containerFile, selectors, reverify);
-
         var res = new HashMap<String, ContainerPart>();
         for (var rd : rds.entrySet()) {
-
-            var resultType = rd.getValue()
-                    .getResultType();
-            var contentType = rd.getValue()
-                    .getContentType();
-            var fileName = rd.getValue()
-                    .getFileName();
-            var data = rd.getValue()
-                    .getContent();
+            var resultType = rd.getValue().getResultType();
+            var contentType = rd.getValue().getContentType();
+            var fileName = rd.getValue().getFileName();
+            var data = rd.getValue().getContent();
             var containerPart = new ContainerPart()
                     .contentType(contentType.toString())
                     .fileName(fileName)
@@ -168,29 +167,17 @@ public class ContainerServiceImpl implements ContainerService {
     }
 
     @Override
-    public Map<String, String> getContainerDataJson(
-            @NotNull MultipartFile containerFile,
-            @NotNull List<ContainerSelector> selectors,
-            boolean reverify
-    ) {
+    public Map<String, String> getContainerDataJson(@NotNull MultipartFile containerFile,
+                                                    @NotNull List<ContainerSelector> selectors,
+                                                    boolean reverify) {
         var rds = getRds(containerFile, selectors, reverify);
-
         var res = new HashMap<String, String>();
         for (var rd : rds.entrySet()) {
-
-            var resultType = rd.getValue()
-                    .getResultType();
-            var data = rd.getValue()
-                    .getContent();
-            if (rd.getValue()
-                    .getContentType()
-                    .equals(MediaType.APPLICATION_OCTET_STREAM) || rd.getValue()
-                    .getContentType()
-                    .equals(MediaType.APPLICATION_PDF) || rd.getValue()
-                    .getContentType()
-                    .equals(MediaType.IMAGE_PNG)) {
-                res.put(resultType.getCode(), Base64.getEncoder()
-                        .encodeToString(data));
+            var resultType = rd.getValue().getResultType();
+            var data = rd.getValue().getContent();
+            if (rd.getValue().getContentType().equals(MediaType.APPLICATION_OCTET_STREAM)
+                    || rd.getValue().getContentType().equals(MediaType.APPLICATION_PDF)) {
+                res.put(resultType.getCode(), Base64.getEncoder().encodeToString(data));
             } else {
                 res.put(resultType.getCode(), new String(data));
             }
@@ -198,48 +185,27 @@ public class ContainerServiceImpl implements ContainerService {
         return res;
     }
 
-
     @Override
-    public ContainerPart getContainerPart(
-            @NotNull MultipartFile containerFile,
-            @NotNull ContainerSelector selector,
-            boolean reverify
-    ) {
-        var res = getContainerData(
-                containerFile,
-                Collections.singletonList(selector),
-                reverify);
-        return res.get(selector.getCode()
-                .getValue());
+    public ContainerPart getContainerPart(@NotNull MultipartFile containerFile,
+                                          @NotNull ContainerSelector selector,
+                                          boolean reverify) {
+        var res = getContainerData(containerFile, Collections.singletonList(selector), reverify);
+        return res.get(selector.getCode().getValue());
     }
 
     @Override
-    public Map<String, String> getContainerPartJson(
-            @NotNull MultipartFile containerFile,
-            @NotNull ContainerSelector selector,
-            boolean reverify
-    ) {
+    public Map<String, String> getContainerPartJson(@NotNull MultipartFile containerFile,
+                                                    @NotNull ContainerSelector selector,
+                                                    boolean reverify) {
         var res = new HashMap<String, String>();
-        var containerData = getContainerData(
-                containerFile,
-                Collections.singletonList(selector),
-                reverify);
-        String contentType = containerData.get(selector.getCode()
-                        .getValue())
-                .getContentType();
-        if (contentType.equals(MediaType.APPLICATION_OCTET_STREAM.toString()) || contentType
-                .equals(MediaType.APPLICATION_PDF.toString()) || contentType
-                .equals(MediaType.IMAGE_PNG.toString())) {
-            res.put(selector.getCode()
-                    .getValue(), Base64.getEncoder()
-                    .encodeToString(containerData.get(selector.getCode()
-                                    .getValue())
-                            .getData()));
+        var containerData = getContainerData(containerFile, Collections.singletonList(selector), reverify);
+        String contentType = containerData.get(selector.getCode().getValue()).getContentType();
+        if (contentType.equals(MediaType.APPLICATION_OCTET_STREAM.toString())
+                || contentType.equals(MediaType.APPLICATION_PDF.toString())) {
+            res.put(selector.getCode().getValue(), Base64.getEncoder()
+                    .encodeToString(containerData.get(selector.getCode().getValue()).getData()));
         } else {
-            res.put(selector.getCode()
-                    .getValue(), new String(containerData.get(selector.getCode()
-                            .getValue())
-                    .getData()));
+            res.put(selector.getCode().getValue(), new String(containerData.get(selector.getCode().getValue()).getData()));
         }
         return res;
     }

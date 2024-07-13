@@ -21,11 +21,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateDto;
+import su.opencode.digsigcik.synapi.enums.StatusStatementEnum;
 import su.opencode.digsigcik.synapi.enums.TypeUserCertificateEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
+import su.opencode.digsigcik.synapi.model.PublicKeyStatement;
 import su.opencode.digsigcik.synapi.model.PublicKeyUserCertificate;
 import su.opencode.digsigcik.synapi.model.ca.CertificateData;
 import su.opencode.digsigcik.synapi.service.CertificateDataService;
+import su.opencode.digsigcik.synapi.service.PublicKeyStatementService;
 import su.opencode.digsigcik.synapi.service.PublicKeyUserCertificateService;
 
 import javax.validation.ConstraintViolationException;
@@ -49,6 +52,7 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @AllArgsConstructor
 public class PublicKeyUserCertificateController {
     private final PublicKeyUserCertificateService service;
+    private final PublicKeyStatementService statementService;
     private final CertificateDataService certificateDataService;
     private final ModelMapper modelMapper;
 
@@ -74,16 +78,16 @@ public class PublicKeyUserCertificateController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "parse", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> parsePublicKeyUserCertificate(@RequestPart String statementId, @RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateException{
+    public ResponseEntity<?> parsePublicKeyUserCertificate(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateException{
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         PublicKeyUserCertificate publicKeyUserCertificate;
         if(Objects.equals(extension, "cer")){ //crt
-            publicKeyUserCertificate = parseCertificateCER(sourceFile, statementId);
+            publicKeyUserCertificate = parseCertificateCER(sourceFile);
         } else if(Objects.equals(extension, "der")) {
-            //TODO @helix82 парсинг DER-сертификатов publicKeyUserCertificate = parseCertificateDER(sourceFile, statementId);
+            //TODO @helix82 парсинг DER-сертификатов publicKeyUserCertificate = parseCertificateDER(sourceFile);
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
         } else if(Objects.equals(extension, "pem")) {
-            //TODO @helix82 парсинг PEM-сертификатов publicKeyUserCertificate = parseCertificatePEM(sourceFile, statementId);
+            //TODO @helix82 парсинг PEM-сертификатов publicKeyUserCertificate = parseCertificatePEM(sourceFile);
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
         } else {
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
@@ -110,6 +114,18 @@ public class PublicKeyUserCertificateController {
         PublicKeyUserCertificate response;
         try {
             response = service.savePublicKeyUserCertificate(publicKeyUserCertificate);
+            PublicKeyStatement pkStatement;
+            try {
+                pkStatement = statementService.findByPublicKeyStatementId(response.getStatementId());
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+            }
+            pkStatement.setStatus(StatusStatementEnum.PROCESSED);
+            try {
+                statementService.updatePublicKeyStatement(pkStatement);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+            }
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NULL);
         }
@@ -174,6 +190,8 @@ public class PublicKeyUserCertificateController {
 
     private PublicKeyUserCertificateDto convertToDto(PublicKeyUserCertificate publicKeyUserCertificate){
         PublicKeyUserCertificateDto publicKeyUserCertificateDto = modelMapper.map(publicKeyUserCertificate, PublicKeyUserCertificateDto.class);
+        PublicKeyStatement publicKeyStatement = statementService.findByPublicKeyStatementId(publicKeyUserCertificate.getStatementId());
+        publicKeyUserCertificateDto.setLogin(publicKeyStatement.getLogin());
         return publicKeyUserCertificateDto;
     }
 
@@ -196,7 +214,7 @@ public class PublicKeyUserCertificateController {
         return instant1.toString();
     }
 
-    public PublicKeyUserCertificate parseCertificateCER(MultipartFile sourceFile, String statementId) throws IOException, CertificateEncodingException {
+    public PublicKeyUserCertificate parseCertificateCER(MultipartFile sourceFile) throws IOException, CertificateEncodingException {
         PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
         String content = new String(sourceFile.getBytes(), StandardCharsets.UTF_8);
         X509Certificate certificate;
@@ -211,7 +229,6 @@ public class PublicKeyUserCertificateController {
         } else {
             certificate = CertUtil.decodeCertificate(sourceFile.getInputStream().readAllBytes());
         }
-        publicKeyUserCertificate.setStatementId(Long.parseLong(statementId));
         publicKeyUserCertificate.setDeleted(false);
         publicKeyUserCertificate.setSerialNumber(certificate.getSerialNumber().toString(16));
         publicKeyUserCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
@@ -347,13 +364,13 @@ public class PublicKeyUserCertificateController {
         return publicKeyUserCertificate;
     }
 
-    public PublicKeyUserCertificate parseCertificateDER(MultipartFile sourceFile, String statementId) {
+    public PublicKeyUserCertificate parseCertificateDER(MultipartFile sourceFile) {
         PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
         //Бинарный формат, который содержит сертификат в двоичном виде
         return publicKeyUserCertificate;
     }
 
-    public PublicKeyUserCertificate parseCertificatePEM(MultipartFile sourceFile, String statementId) {
+    public PublicKeyUserCertificate parseCertificatePEM(MultipartFile sourceFile) {
         PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
         //Текстовый формат, который включает сертификат в виде закодированной в Base64 строки
         return publicKeyUserCertificate;
