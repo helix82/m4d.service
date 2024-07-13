@@ -7,8 +7,12 @@ import lombok.val;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
@@ -16,19 +20,28 @@ import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
+import su.opencode.digsigcik.synapi.dto.VerifyDto;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.service.ContainerService;
+import su.opencode.digsigcik.synapi.service.VerificationService;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.SIMPLE_DETACHED;
-import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.SIMPLE;
 import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.UNQUALIFIED;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.filename;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.mediaType;
@@ -42,6 +55,7 @@ public class ApiControllerV1 {
     private static final Log log = LogFactory.getLog(ApiControllerV1.class);
     public static final String DEFAULT_FILENAME = "container.dscp";
     private final ContainerService containerService;
+    private final VerificationService verificationService;
     private final JwtTokenUtils jwtTokenUtils;
 
     @PostMapping(value = "/create-pdf-container",
@@ -113,25 +127,30 @@ public class ApiControllerV1 {
         return resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME));
     }
 
+
     @NoArgsConstructor
     @AllArgsConstructor
     @Data
     public static class ContainerDataDTO {
         private MultipartFile container;
         private List<ContainerSelectorCode> selectors;
+    }
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Data
+    public static class ContainerDataDTOWithReverify extends ContainerDataDTO{
         private boolean reverify = false;
     }
-
     @PostMapping(value = "/get-container-data", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = MediaType.MULTIPART_FORM_DATA_VALUE)
+            produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE,
+                    MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> getContainerData(@ModelAttribute ContainerDataDTO containerDataDTO
     ) {
-
         var res = containerService.getContainerData(
                 containerDataDTO.getContainer(), containerDataDTO.getSelectors()
                         .stream()
                         .map(ApiControllerV1::createContainerSelector)
-                        .collect(Collectors.toList()), containerDataDTO.isReverify());
+                        .collect(Collectors.toList()), false);
         if (res == null) {
             return ResponseEntity.internalServerError()
                     .build();
@@ -140,32 +159,73 @@ public class ApiControllerV1 {
     }
 
     @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces =
-            "application/json")
+            MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Map<String, String> getContainerDataJson(@ModelAttribute ContainerDataDTO containerDataDTO
+    public Map<String, String> getContainerDataJson(@ModelAttribute ContainerDataDTOWithReverify containerDataDTOWithReverify
     ) {
+        if (containerDataDTOWithReverify.isReverify()) {
+            VerifyDto sesVerifyResponse;
+            try {
+                sesVerifyResponse = verificationService.verify(containerDataDTOWithReverify.getContainer());
+            } catch (Exception e) {
+                throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+            }
+
+            return convertObjectToMap(sesVerifyResponse);
+        }
         Map<String, String> res = containerService.getContainerDataJson(
-                containerDataDTO.getContainer(), containerDataDTO.getSelectors()
+                containerDataDTOWithReverify.getContainer(), containerDataDTOWithReverify.getSelectors()
                         .stream()
                         .map(ApiControllerV1::createContainerSelector)
-                        .collect(Collectors.toList()), containerDataDTO.isReverify());
+                        .collect(Collectors.toList()), containerDataDTOWithReverify.isReverify());
         if (res == null) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
         return res;
     }
 
+    @PostMapping(value = "/get-container-data-zip", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+            produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE,
+                    MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<?> getContainerDataZip(@ModelAttribute ContainerDataDTO containerDataDTO
+    ) {
+
+        Map<String, su.opencode.digsigcik.synapi.api.model.ContainerPart> res = containerService.getContainerData(
+                containerDataDTO.getContainer(), containerDataDTO.getSelectors()
+                        .stream()
+                        .map(ApiControllerV1::createContainerSelector)
+                        .collect(Collectors.toList()), false);
+        if (res == null) {
+            return ResponseEntity.internalServerError()
+                    .build();
+        }
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            try (ZipOutputStream zipOutputStream = new ZipOutputStream(baos)) {
+                addResourcesToZip(zipOutputStream, res);
+            }
+
+            byte[] zipBytes = baos.toByteArray();
+            Resource zipResource = new InputStreamResource(new ByteArrayInputStream(zipBytes));
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=container.zip")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(zipResource);
+        } catch (IOException e) {
+            // Handle exception
+            throw new RuntimeException("Error creating ZIP archive", e);
+        }
+    }
+
+
     @PostMapping(value = "/get-container-part")
     public ResponseEntity<?> getContainerPart(
             @RequestPart("container") MultipartFile container,
-            ContainerSelectorCode selector,
-            @RequestPart(value = "reverify", required = false) Boolean reverify
+            ContainerSelectorCode selector
     ) {
         ContainerSelector containerSelector = createContainerSelector(selector);
-        if (reverify == null)
-            reverify = Boolean.FALSE;
         var res = containerService.getContainerPart(
-                container, containerSelector, reverify);
+                container, containerSelector, false);
         if (res == null) {
             return ResponseEntity.internalServerError()
                     .build();
@@ -185,11 +245,24 @@ public class ApiControllerV1 {
     public Map<String, String> getContainerPartJson(
             @RequestPart("container") MultipartFile container,
             ContainerSelectorCode selector,
-            @RequestPart(value = "reverify", required = false) Boolean reverify
+            Boolean reverify
     ) {
-        ContainerSelector containerSelector = createContainerSelector(selector);
+        if (container.isEmpty()) {
+            throw new BadRequestException("Container is empty!");
+        }
         if (reverify == null)
             reverify = Boolean.FALSE;
+        if (reverify) {
+            VerifyDto sesVerifyResponse;
+            try {
+                sesVerifyResponse = verificationService.verify(container);
+            } catch (Exception e) {
+                throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+            }
+
+            return convertObjectToMap(sesVerifyResponse);
+        }
+        ContainerSelector containerSelector = createContainerSelector(selector);
         var res = containerService.getContainerPartJson(
                 container, containerSelector, reverify);
         if (res == null) {
@@ -198,10 +271,60 @@ public class ApiControllerV1 {
         return res;
     }
 
+    public static Map<String, String> convertObjectToMap(Object obj) {
+        Map<String, String> map = new HashMap<>();
+
+        // Get the class of the object
+        Class<?> clazz = obj.getClass();
+
+        // Get all the fields of the object
+        Field[] fields = clazz.getDeclaredFields();
+
+        // Iterate through the fields and add them to the map
+        for (Field field : fields) {
+            field.setAccessible(true);
+            try {
+                map.put(field.getName(), field.get(obj)
+                        .toString());
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return map;
+    }
 
     private static ContainerSelector createContainerSelector(ContainerSelectorCode containerSelectorCode) {
         val selector = new ContainerSelector();
         selector.setCode(containerSelectorCode);
         return selector;
+    }
+
+    private static void addResourcesToZip(ZipOutputStream zipOutputStream, Map<String,
+            su.opencode.digsigcik.synapi.api.model.ContainerPart> res) throws IOException {
+        res.values()
+                .forEach(i -> {
+                    try {
+                        addResourceToZip(zipOutputStream, new ByteArrayResource(i
+                                .getData()), i.getFileName());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                });
+    }
+
+    private static void addResourceToZip(ZipOutputStream zipOutputStream, Resource resource, String filename) throws IOException {
+        ZipEntry zipEntry = new ZipEntry(filename);
+        zipOutputStream.putNextEntry(zipEntry);
+
+        try (InputStream inputStream = resource.getInputStream()) {
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                zipOutputStream.write(buffer, 0, bytesRead);
+            }
+        }
+        zipOutputStream.closeEntry();
     }
 }
