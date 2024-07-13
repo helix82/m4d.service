@@ -48,4 +48,9 @@ public class RevokedCertificateServiceImpl implements RevokedCertificateService{
         }
         this.repository.deleteById(id);
     }
+
+    @Override
+    public Integer countRevokedCertificateByImprint(String imprint){
+        return this.repository.countRevokedCertificateByImprint(imprint);
+    }
 }

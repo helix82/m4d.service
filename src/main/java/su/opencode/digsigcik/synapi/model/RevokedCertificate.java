@@ -14,8 +14,6 @@ public class RevokedCertificate {
     private Long id;
     @Column(name = "imprint")
     private String imprint;
-    @Column(name = "serial_number")
-    private String serialNumber;
     @Column(name = "key_id")
     private String keyId;
     @Column(name = "issued_to", columnDefinition = "Text")
@@ -26,8 +24,4 @@ public class RevokedCertificate {
     private String dateEnd;
     @Column(name = "certificate", columnDefinition = "Text")
     private String certificate;
-    @Column(name = "type_input")
-    private String typeInput;
-    @Column(name = "accreditation_status")
-    private String accreditationStatus;
 }
