@@ -10,4 +10,5 @@ public interface RevokedCertificateService {
     RevokedCertificate findByRevokedCertificateId(Long id);
     RevokedCertificate updateRevokedCertificate(RevokedCertificate revokedCertificate);
     void deleteRevokedCertificate(Long id);
+    Integer countRevokedCertificateByImprint(String imprint);
 }

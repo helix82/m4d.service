@@ -210,6 +210,8 @@ public interface Constants {
     String CONTROLLER_REVOKED_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает измененный отозванный сертификат";
     String CONTROLLER_REVOKED_CERTIFICATE_DELETE_SUMMARY = "Удалить отозванный сертификат по ИД";
     String CONTROLLER_REVOKED_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_REVOKED_CERTIFICATE_UPLOAD_SUMMARY = "Загрузить список отозванных сертификатов";
+    String CONTROLLER_REVOKED_CERTIFICATE_UPLOAD_DESCRIPTION = "Возвращает информацию о добавленном списке отозванных сертификатов";
 
     String CONTROLLER_TRUSTED_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список доверенных сертификатов";
     String CONTROLLER_TRUSTED_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список доверенных сертификатов";
@@ -299,7 +301,8 @@ public interface Constants {
     String TEMPLATE_RELEASE_IS_NULL = "Шаблон заявления на выпуск не загружен в СЭП";
     String TEMPLATE_RECALL_IS_NULL = "Шаблон заявления на отзыв не загружен в СЭП";
     String TEMPLATE_IS_NULL = "Не достаточно данных для выгрузки шаблона заявления";
-
+    String REVOKED_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый список отозванных сертификатов уже существует в базе!";
+    String REVOKED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .crl!";
 
     String CONTROLLER_PIN_CODE_GET_ALL = "Возвращает хэши пинкодов всех пользователей";
     String CONTROLLER_PIN_CODE_CREATE = "Создает пинкод для пользователя";
