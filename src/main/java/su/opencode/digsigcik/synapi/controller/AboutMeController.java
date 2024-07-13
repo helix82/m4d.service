@@ -31,7 +31,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
-import static su.opencode.digsigcik.synapi.util.Constant.JWT_USER_NOT_FOUND;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @RestController
