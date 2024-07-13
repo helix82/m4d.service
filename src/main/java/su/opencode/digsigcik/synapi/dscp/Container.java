@@ -165,7 +165,7 @@ public class Container {
 					LOG.debug(String.format("File type %s content of length %d was removed", fileEntry.getKey(), oldValue.length));
 					if (fileEntry.getKey() == ContainerFileEnum.POA_DSCP)
 						hasPoa = Boolean.FALSE; //Should change HAS_POA to false
-					else if (fileEntry.getKey() == ContainerFileEnum.PREVIEW)
+					else if (fileEntry.getKey() == ContainerFileEnum.PREVIEW_PDF || fileEntry.getKey() == ContainerFileEnum.PREVIEW_PNG)
 						hasPreview = Boolean.FALSE; //Should change HAS_PREVIEW to false
 				}
 			} else {
@@ -178,7 +178,7 @@ public class Container {
 					LOG.debug(String.format("File type %s content of length %d is added", fileEntry.getKey(), fileEntry.getValue().length));
 					if (fileEntry.getKey() == ContainerFileEnum.POA_DSCP)
 						hasPoa = Boolean.TRUE; //Should change HAS_POA to true
-					else if (fileEntry.getKey() == ContainerFileEnum.PREVIEW)
+					else if (fileEntry.getKey() == ContainerFileEnum.PREVIEW_PDF || fileEntry.getKey() == ContainerFileEnum.PREVIEW_PNG)
 						hasPreview = Boolean.TRUE; //Should change HAS_PREVIEW to true
 				}
 
