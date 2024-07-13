@@ -145,8 +145,8 @@ public class RevokedCertificateController {
 
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         X509CRL crl;
-        try (InputStream inputStream = sourceFile.getInputStream()) {
-            crl = (X509CRL) cf.generateCRL(inputStream);
+        try (BufferedInputStream bis = new BufferedInputStream(sourceFile.getInputStream())) {
+            crl = (X509CRL) cf.generateCRL(bis);
         }
 
         RevokedCertificate revokedCertificate = new RevokedCertificate();
@@ -185,6 +185,7 @@ public class RevokedCertificateController {
 
         return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
+
 
 
     private RevokedCertificateDTO convertToDto(RevokedCertificate revokedCertificate){
