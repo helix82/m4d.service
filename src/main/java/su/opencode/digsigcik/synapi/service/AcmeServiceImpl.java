@@ -143,15 +143,15 @@ public class AcmeServiceImpl implements AcmeService {
             } catch (IOException e) {
                 ret.put("error", "io exception");
                 ret.put("exception", e.getMessage());
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
             }
         } else {
             ret.put("error", "no account");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -182,15 +182,15 @@ public class AcmeServiceImpl implements AcmeService {
             } catch (IOException e) {
                 ret.put("error", "io exception");
                 ret.put("exception", e.getMessage());
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
             }
         } else {
             ret.put("error", "no account");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -203,7 +203,7 @@ public class AcmeServiceImpl implements AcmeService {
             return new ResponseEntity<>(ret, HttpStatus.OK);
         } else {
             ret.put("error", "no account");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -245,7 +245,7 @@ public class AcmeServiceImpl implements AcmeService {
                     // авторизация уже прошла или испытание выполнено
                     ret.put("result", "done");
                     ret.put("description", "Auth and challenge done");
-                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.OK);
                 }
 
                 AcmeOrder acmeOrder = new AcmeOrder(acmeDomain);
@@ -298,15 +298,15 @@ public class AcmeServiceImpl implements AcmeService {
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
             } catch (IOException e) {
                 ret.put("error", "io exception");
                 ret.put("exception", e.getMessage());
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
             }
         } else {
             ret.put("error", "no login");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -348,7 +348,7 @@ public class AcmeServiceImpl implements AcmeService {
                     // авторизация уже прошла или испытание выполнено
                     ret.put("result", "done");
                     ret.put("description", "Auth and challenge done");
-                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.OK);
                 }
                 ret.put("token", challenge.getToken());
                 ret.put("authorization", challenge.getAuthorization());
@@ -367,12 +367,12 @@ public class AcmeServiceImpl implements AcmeService {
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
                 ret.put("exception", e.getMessage());
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
 
             }
         } else {
             ret.put("error", "no login");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -391,7 +391,7 @@ public class AcmeServiceImpl implements AcmeService {
         if(acmeOrder!=null) {
             if(!certificateRepository.findByOrderId(orderId).isEmpty()) {
                 ret.put("error", "certificate already released");
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
             } else {
                 if(loginDefaultAccount(httpSession)){
                     Login login = (Login)httpSession.getAttribute("login");
@@ -435,24 +435,24 @@ public class AcmeServiceImpl implements AcmeService {
                         } catch (AcmeException e) {
                             ret.put("error", "acme exception");
                             ret.put("exception", e.getMessage());
-                            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                            return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
                         } catch (IOException e) {
                             ret.put("error", "io exception");
                             ret.put("exception", e.getMessage());
-                            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                            return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
                         }
                     } else {
                         ret.put("error", "no login");
-                        return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                        return new ResponseEntity<>(ret, HttpStatus.UNAUTHORIZED);
                     }
                 } else {
                     ret.put("error", "no login");
-                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.UNAUTHORIZED);
                 }
             }
         } else {
             ret.put("error", "no order");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -467,7 +467,7 @@ public class AcmeServiceImpl implements AcmeService {
         AcmeDomain acmeDomain= domainRepository.findDomainById(domainId);
         if(acmeDomain==null) {
             ret.put("error", "no domain");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
         }
 
         if(loginDefaultAccount(httpSession)){
@@ -475,7 +475,7 @@ public class AcmeServiceImpl implements AcmeService {
             Account account = login.getAccount();
             if(account.getStatus() != Status.VALID){
                 ret.put("error", "invalid status");
-                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
             } else {
 
                 try {
@@ -527,16 +527,16 @@ public class AcmeServiceImpl implements AcmeService {
                 } catch (AcmeException e) {
                     ret.put("error", "acme exception");
                     ret.put("exception", e.getMessage());
-                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
                 } catch (IOException e) {
                     ret.put("error", "io exception");
                     ret.put("exception", e.getMessage());
-                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
                 }
             }
         } else {
             ret.put("error", "no login");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.UNAUTHORIZED);
         }
     }
 
@@ -573,16 +573,16 @@ public class AcmeServiceImpl implements AcmeService {
                 } catch (AcmeException e) {
                     ret.put("error", "acme exception");
                     ret.put("exception", e.getMessage());
-                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
                 } catch (CertificateException e) {
                     ret.put("error", "cert exception");
                     ret.put("exception", e.getMessage());
-                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
                 }
             }
         } else {
             ret.put("error", "no login");
-            return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(ret, HttpStatus.UNAUTHORIZED);
 
         }
     }

@@ -11,7 +11,7 @@ import su.opencode.digsigcik.synapi.repository.ESUserRepository;
 
 import javax.validation.constraints.NotNull;
 
-import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constants.NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor

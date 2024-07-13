@@ -1,9 +1,8 @@
 package su.opencode.digsigcik.synapi.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -15,7 +14,7 @@ import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.dscp.*;
-import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
+import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 import su.opencode.digsigcik.synapi.util.CommonUtils;
 import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.FileUtils;
@@ -25,14 +24,16 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static su.opencode.digsigcik.synapi.util.Constant.DSCP_DIRECTORY_PATH;
-import static su.opencode.digsigcik.synapi.util.Constant.ROOT_FILE_STORAGE_PATH;
+import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.SIMPLE_DETACHED;
+import static su.opencode.digsigcik.synapi.util.Constants.DSCP_DIRECTORY_PATH;
+import static su.opencode.digsigcik.synapi.util.Constants.ROOT_FILE_STORAGE_PATH;
+import static su.opencode.digsigcik.synapi.util.FileUtils.toBytes;
 
 // TODO: add proper error handling, likely with exception handlers
 @Service
 @AllArgsConstructor
+@Slf4j
 public class ContainerServiceImpl implements ContainerService {
-    private static final Log LOG = LogFactory.getLog(ContainerServiceImpl.class);
 
     private final Map<ContainerSelectorCode, ResultTypeEnum> SELECTOR_MAP =
             new EnumMap<>(ContainerSelectorCode.class);
@@ -47,8 +48,8 @@ public class ContainerServiceImpl implements ContainerService {
     }
 
     @Override
-    public Resource createPdfContainer(@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
-                                       @NotNull ContainerUserInfoDto containerUserInfo) {
+    public Resource createContainer(@NotNull MultipartFile srcFile, @NotNull MultipartFile sigFile,
+                                    @NotNull ContainerInputInfoDto containerInputInfo) {
         Map<ResultTypeEnum, byte[]> params = new HashMap<>();
         String fileName = srcFile.getOriginalFilename();
         String contentTypeStr = srcFile.getContentType();
@@ -69,23 +70,24 @@ public class ContainerServiceImpl implements ContainerService {
             throw new IllegalStateException("Cannot get sig file content", e);
         }
 
-        Container container = ContainerUtils.createContainer(ContainerTypeEnum.SIMPLE_DETACHED, sourceFileContent,
-                fileName, contentType, containerUserInfo.getHashAlgorithm());
+        Container container = ContainerUtils.createContainer(containerInputInfo.getContainerType(), sourceFileContent,
+                fileName, contentType, containerInputInfo.getHashAlgorithm());
 
-        byte[] login = containerUserInfo.getLogin()
+        byte[] login = containerInputInfo.getLogin()
                 .getBytes(StandardCharsets.UTF_8);
-        byte[] firstname = containerUserInfo.getFirstname()
+        byte[] firstname = containerInputInfo.getFirstname()
                 .getBytes(StandardCharsets.UTF_8);
-        byte[] lastname = containerUserInfo.getLastname()
+        byte[] lastname = containerInputInfo.getLastname()
                 .getBytes(StandardCharsets.UTF_8);
-        byte[] patronymic = containerUserInfo.getPatronymic()
+        byte[] patronymic = containerInputInfo.getPatronymic()
                 .getBytes(StandardCharsets.UTF_8);
-        byte[] timestamp = containerUserInfo.getTimestamp()
+        byte[] timestamp = containerInputInfo.getTimestamp()
                 .toString()
                 .getBytes(StandardCharsets.UTF_8);
-        byte[] signatureAlgorithm = containerUserInfo.getSignatureAlgorithm()
+        byte[] signatureAlgorithm = containerInputInfo.getSignatureAlgorithm()
                 .getBytes(StandardCharsets.UTF_8);
-
+        byte[] getSignatureType = containerInputInfo.getSignatureType().getCode()
+                .getBytes(StandardCharsets.UTF_8);
 
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
         params.put(ResultTypeEnum.LOGIN, login);
@@ -94,13 +96,14 @@ public class ContainerServiceImpl implements ContainerService {
         params.put(ResultTypeEnum.PATRONYMIC, patronymic);
         params.put(ResultTypeEnum.TIMESTAMP, timestamp);
         params.put(ResultTypeEnum.SIGNATURE_ALGORITHM, signatureAlgorithm);
+        params.put(ResultTypeEnum.SIGNATURE_TYPE, getSignatureType);
 
         ContainerUtils.fillContainerByResult(container, params);
 
         byte[] containerBytes = ContainerUtils.containerContent(container);
         String dscpDirectoryPathName = String.format("%s%s", ROOT_FILE_STORAGE_PATH, DSCP_DIRECTORY_PATH);
         String containerPath = String.format("%scontainer-%s.dscp", dscpDirectoryPathName,
-                DateUtils.formatDate(containerUserInfo.getTimestamp())
+                DateUtils.formatDate(containerInputInfo.getTimestamp())
         );
         FileUtils.createDirectoryIfSheNotExist(dscpDirectoryPathName);
         FileUtils.createFile(containerPath, containerBytes);
@@ -109,8 +112,8 @@ public class ContainerServiceImpl implements ContainerService {
     }
 
     @Override
-    public Resource updatePdfContainerRegData(@NotNull MultipartFile containerFile,
-                                              @NotNull RegistrationData regData) {
+    public Resource updateContainerRegData(@NotNull MultipartFile containerFile,
+                                           @NotNull RegistrationData regData) {
         throw new IllegalArgumentException("Operation not supported yet");
     }
 
@@ -249,13 +252,6 @@ public class ContainerServiceImpl implements ContainerService {
         throw new IllegalArgumentException("Operation not supported yet");
     }
 
-    private static byte[] toBytes(MultipartFile file) {
-        try {
-            return file.getBytes();
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not read file into memory");
-        }
-    }
 
     // FIXME: no validation
     private static Resource getStaticPdf() {
@@ -271,4 +267,5 @@ public class ContainerServiceImpl implements ContainerService {
         }
         return null;
     }
+
 }

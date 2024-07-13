@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
-import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.model.audit.DateAudit;
 
 import javax.persistence.*;

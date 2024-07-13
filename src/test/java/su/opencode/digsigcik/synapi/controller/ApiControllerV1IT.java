@@ -113,7 +113,7 @@ class ApiControllerV1IT {
     void getContainerPart() {
         var containerFile = pdfContainer();
         ContainerSelectorCode[] selectorCodes = {
-                ContainerSelectorCode.SOURCEFILE,
+                ContainerSelectorCode.SOURCE_FILE,
         };
         for (var selectorCode : selectorCodes) {
             var selector = new ContainerSelector().code(selectorCode);

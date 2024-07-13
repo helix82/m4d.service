@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static su.opencode.digsigcik.synapi.util.Constant.TOKEN_ERROR_MESSAGE;
+import static su.opencode.digsigcik.synapi.util.Constants.TOKEN_ERROR_MESSAGE;
 
 //TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
 @Component

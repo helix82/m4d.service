@@ -6,9 +6,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import su.opencode.digsigcik.synapi.annotation.SesExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.ResponseErrorDto;
-import su.opencode.digsigcik.synapi.dto.SesVerifyJsonDto;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
-import su.opencode.digsigcik.synapi.exception.SesVerifyException;
 
 @ControllerAdvice(annotations = SesExceptionHandler.class)
 public class SesAdvice {
@@ -17,13 +15,5 @@ public class SesAdvice {
     public ResponseEntity<?> handleSesBadRequestException(BadRequestException error) {
         ResponseErrorDto response = ResponseErrorDto.createResponseErrorDto(error.getMessage(), HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(SesVerifyException.class)
-    public ResponseEntity<?> handleSesVerifyException(SesVerifyException error) {
-        SesVerifyJsonDto response = SesVerifyJsonDto.builder()
-                .verifyResultMessage(error.getMessage())
-                .build();
-        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

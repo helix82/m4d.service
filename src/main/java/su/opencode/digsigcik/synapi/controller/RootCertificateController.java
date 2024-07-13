@@ -153,9 +153,9 @@ public class RootCertificateController {
             RootCertificate _certificate = new RootCertificate(_provider, certContent);
             return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't upload certificate");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't upload certificate");
         } catch (CertificateException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid certificate");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid certificate");
         }
     }
 
@@ -209,7 +209,7 @@ public class RootCertificateController {
         try {
             certificate.setContent( new String(content.getBytes()));
         } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't upload certificate");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't upload certificate");
         }
         rootCertificateRepository.save(certificate);
         return new ResponseEntity<>(certificate, HttpStatus.OK);

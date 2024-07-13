@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.annotation.SesExceptionHandler;
 import su.opencode.digsigcik.synapi.config.WebConfigProperties;
+import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
 import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
-import su.opencode.digsigcik.synapi.exception.SesVerifyException;
 import su.opencode.digsigcik.synapi.model.ContainerFile;
 import su.opencode.digsigcik.synapi.model.EncryptionKeyEntity;
 import su.opencode.digsigcik.synapi.model.UserProjection;
@@ -36,8 +36,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static su.opencode.digsigcik.synapi.controller.ApiControllerV1.*;
-import static su.opencode.digsigcik.synapi.util.Constant.*;
+import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.SIMPLE_DETACHED;
+import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.SIMPLE;
+import static su.opencode.digsigcik.synapi.util.CommonUtils.filename;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
+import static su.opencode.digsigcik.synapi.util.FileUtils.resourceOctetStreamOrInternal;
 
 @RestController
 @SesExceptionHandler
@@ -81,18 +84,20 @@ public class SimpleSignatureController {
         checkIfPinCodeAndFileEmpty(pinCode, file);
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
 
-        ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+        ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
                 .signatureAlgorithm("CUSTOM")
+                .containerType(SIMPLE_DETACHED)
+                .signatureType(SIMPLE)
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .pinCode(pinCode)
                 .build();
 
-        var res = simpleSignatureService.createSimpleCustomSignatureResource(file, containerUserInfo);
+        var res = simpleSignatureService.createSimpleCustomSignatureResource(file, containerInputInfo);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
@@ -130,25 +135,27 @@ public class SimpleSignatureController {
         checkIfPinCodeAndFileEmpty(pinCode, file);
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
 
-        ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+        ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
                 .signatureAlgorithm("CUSTOM")
+                .containerType(SIMPLE_DETACHED)
+                .signatureType(SIMPLE)
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .pinCode(pinCode)
                 .build();
 
-        var res = simpleSignatureService.createSimpleCustomSignatureResource(file, containerUserInfo);
+        var res = simpleSignatureService.createSimpleCustomSignatureResource(file, containerInputInfo);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }
 
         String containerPath = String.format("%s%scontainer-%s.dscp", ROOT_FILE_STORAGE_PATH, DSCP_DIRECTORY_PATH,
-                DateUtils.formatDate(containerUserInfo.getTimestamp())
+                DateUtils.formatDate(containerInputInfo.getTimestamp())
         );
         UUID xmlUUID = UUID.randomUUID();
         containerFileRepository.save(ContainerFile.builder()
@@ -161,36 +168,14 @@ public class SimpleSignatureController {
                         .getUri() + API_V_1_SES_FILES + GET_CONTAINER + "?uuid=" + xmlUUID)
                 .UUID(xmlUUID.toString())
                 .sigType("simple")
-                .firstName(containerUserInfo.getFirstname())
-                .lastName(containerUserInfo.getLastname())
-                .patronymic(containerUserInfo.getPatronymic())
+                .firstName(containerInputInfo.getFirstname())
+                .lastName(containerInputInfo.getLastname())
+                .patronymic(containerInputInfo.getPatronymic())
                 .build();
 
         return new ResponseEntity<>(sesResponseDto, HttpStatus.OK);
     }
 
-
-    @Operation(summary = CONTROLLER_SIMPLE_SIGNATURE_VERIFY,
-            description = CONTROLLER_SIMPLE_SIGNATURE_VERIFY)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
-    })
-
-    @PostMapping(value = "/verify-custom-ses")
-    public ResponseEntity<?> verifyCustomSimpleSignature(@RequestPart("file") MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new SesVerifyException("Container is empty!");
-        }
-        SesVerifyJsonDto sesVerifyResponse;
-        try {
-            sesVerifyResponse = simpleSignatureService.verifyCustomSimpleSignature(file);
-        } catch (Exception e) {
-            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
-        }
-
-        return new ResponseEntity<>(sesVerifyResponse, HttpStatus.OK);
-    }
 
     @Operation(summary = CONTROLLER_SIMPLE_SIGNATURE_VERIFY,
             description = CONTROLLER_SIMPLE_SIGNATURE_VERIFY)
@@ -219,7 +204,7 @@ public class SimpleSignatureController {
             throw new RuntimeException("keyEntity not found");
         } else {
             KeyPair keyPair = getKeyPairByEncryptionKeyEntity(keyEntity);
-            ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+            ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                     .login(jwtPayloadDto.getPreferredUsername())
                     .firstname(jwtPayloadDto.getFirstName())
                     .lastname(jwtPayloadDto.getLastName())
@@ -228,12 +213,14 @@ public class SimpleSignatureController {
                     .signatureAlgorithm(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
-                    .pinCodeHashAlgorithm(hashAlgorithm.getAlgorithmName())
+                    .containerType(SIMPLE_DETACHED)
+                    .signatureType(SIMPLE)
+                    .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                     .privateKey(keyPair.getPrivate())
                     .publicKey(keyPair.getPublic())
                     .build();
 
-            var res = simpleSignatureService.createSimpleSignatureResource(file, containerUserInfo);
+            var res = simpleSignatureService.createSimpleSignatureResource(file, containerInputInfo);
             if (res == null) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(null);
@@ -278,7 +265,7 @@ public class SimpleSignatureController {
             throw new BadRequestException("keyEntity not found");
         } else {
             KeyPair keyPair = getKeyPairByEncryptionKeyEntity(keyEntity);
-            ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+            ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                     .login(jwtPayloadDto.getPreferredUsername())
                     .firstname(jwtPayloadDto.getFirstName())
                     .lastname(jwtPayloadDto.getLastName())
@@ -287,12 +274,14 @@ public class SimpleSignatureController {
                     .signatureAlgorithm(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
-                    .pinCodeHashAlgorithm(hashAlgorithm.getAlgorithmName())
+                    .containerType(SIMPLE_DETACHED)
+                    .signatureType(SIMPLE)
+                    .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                     .privateKey(keyPair.getPrivate())
                     .publicKey(keyPair.getPublic())
                     .build();
 
-            var res = simpleSignatureService.createSimpleSignatureResource(file, containerUserInfo);
+            var res = simpleSignatureService.createSimpleSignatureResource(file, containerInputInfo);
             if (res == null) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(null);
@@ -300,7 +289,7 @@ public class SimpleSignatureController {
 
 
             String containerPath = String.format("%s%scontainer-%s.dscp", ROOT_FILE_STORAGE_PATH, DSCP_DIRECTORY_PATH,
-                    DateUtils.formatDate(containerUserInfo.getTimestamp())
+                    DateUtils.formatDate(containerInputInfo.getTimestamp())
             );
             UUID xmlUUID = UUID.randomUUID();
             containerFileRepository.save(ContainerFile.builder()
@@ -315,9 +304,9 @@ public class SimpleSignatureController {
                     .sigType(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
-                    .firstName(containerUserInfo.getFirstname())
-                    .lastName(containerUserInfo.getLastname())
-                    .patronymic(containerUserInfo.getPatronymic())
+                    .firstName(containerInputInfo.getFirstname())
+                    .lastName(containerInputInfo.getLastname())
+                    .patronymic(containerInputInfo.getPatronymic())
                     .build();
 
             return new ResponseEntity<>(sesResponseDto, HttpStatus.OK);
@@ -336,24 +325,6 @@ public class SimpleSignatureController {
                                                    @RequestPart("file") MultipartFile file) throws IOException {
         return createSimpleSignatureCustomHash(authToken, HashAlgorithm.SHA256, file);
     }
-
-
-    @Operation(summary = CONTROLLER_UNQUALIFIED_SIGNATURE_VERIFY,
-            description = CONTROLLER_UNQUALIFIED_SIGNATURE_VERIFY)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
-    })
-    @PostMapping(value = "/verify")
-    public ResponseEntity<?> verifySimpleSignature(@RequestPart("file") MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new SesVerifyException("Container is empty!");
-        }
-
-        SesVerifyJsonDto sesVerifyResponse = simpleSignatureService.verifySimpleSignature(file);
-        return new ResponseEntity<>(sesVerifyResponse, HttpStatus.OK);
-    }
-
 
     private JwtPayloadDto extractAuthToken(String authToken) {
         if (authToken == null || authToken.trim()

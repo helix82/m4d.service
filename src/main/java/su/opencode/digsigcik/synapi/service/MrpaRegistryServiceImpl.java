@@ -20,7 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import static su.opencode.digsigcik.synapi.util.Constant.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constants.NOT_FOUND;
 
 @Service
 @Primary

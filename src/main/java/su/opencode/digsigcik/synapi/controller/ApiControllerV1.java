@@ -1,12 +1,11 @@
 package su.opencode.digsigcik.synapi.controller;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.val;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
@@ -15,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
-import su.opencode.digsigcik.synapi.dto.ContainerUserInfoDto;
+import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
@@ -23,14 +22,18 @@ import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.service.ContainerService;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.SIMPLE_DETACHED;
+import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.SIMPLE;
+import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.UNQUALIFIED;
+import static su.opencode.digsigcik.synapi.util.CommonUtils.filename;
+import static su.opencode.digsigcik.synapi.util.CommonUtils.mediaType;
 import static su.opencode.digsigcik.synapi.util.Constants.API_RESPONSE_CODE_400_MESSAGE;
+import static su.opencode.digsigcik.synapi.util.FileUtils.resourceOctetStreamOrInternal;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -49,15 +52,17 @@ public class ApiControllerV1 {
             @RequestPart("sigFile") MultipartFile sourceSig) {
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
-        ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+        ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
                 .signatureAlgorithm("NOT IMPLEMENTED")
+                .containerType(SIMPLE_DETACHED)
+                .signatureType(UNQUALIFIED)
                 .build();
-        var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
+        var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
@@ -75,16 +80,18 @@ public class ApiControllerV1 {
             @RequestPart("sigFile") MultipartFile sourceSig) {
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
-        ContainerUserInfoDto containerUserInfo = ContainerUserInfoDto.builder()
+        ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
                 .signatureAlgorithm(signatureAlgorithm.getAlgorithmName())
+                .containerType(SIMPLE_DETACHED)
+                .signatureType(UNQUALIFIED)
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .build();
-        var res = containerService.createPdfContainer(sourceFile, sourceSig, containerUserInfo);
+        var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
         if (res == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
@@ -98,7 +105,7 @@ public class ApiControllerV1 {
             @RequestPart("container") MultipartFile container,
             @RequestPart("regData") RegistrationData regData
     ) {
-        var res = containerService.updatePdfContainerRegData(container, regData);
+        var res = containerService.updateContainerRegData(container, regData);
         if (res == null) {
             return ResponseEntity.internalServerError()
                     .build();
@@ -121,7 +128,8 @@ public class ApiControllerV1 {
     ) {
 
         var res = containerService.getContainerData(
-                containerDataDTO.getContainer(), containerDataDTO.getSelectors().stream()
+                containerDataDTO.getContainer(), containerDataDTO.getSelectors()
+                        .stream()
                         .map(ApiControllerV1::createContainerSelector)
                         .collect(Collectors.toList()), containerDataDTO.isReverify());
         if (res == null) {
@@ -131,13 +139,14 @@ public class ApiControllerV1 {
         return ResponseEntity.ok(res);
     }
 
-    @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json")
+    @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces =
+            "application/json")
     @ResponseBody
     public Map<String, String> getContainerDataJson(@ModelAttribute ContainerDataDTO containerDataDTO
     ) {
-
         Map<String, String> res = containerService.getContainerDataJson(
-                containerDataDTO.getContainer(), containerDataDTO.getSelectors().stream()
+                containerDataDTO.getContainer(), containerDataDTO.getSelectors()
+                        .stream()
                         .map(ApiControllerV1::createContainerSelector)
                         .collect(Collectors.toList()), containerDataDTO.isReverify());
         if (res == null) {
@@ -170,6 +179,7 @@ public class ApiControllerV1 {
         }
         return resourceOctetStreamOrInternal(resource, contentType, filename);
     }
+
     @PostMapping(value = "/get-container-part-json")
     @ResponseBody
     public Map<String, String> getContainerPartJson(
@@ -187,67 +197,11 @@ public class ApiControllerV1 {
         }
         return res;
     }
-    public static ResponseEntity<Resource> resourceOctetStreamOrInternal(
-            @NotNull Resource resource,
-            @NotNull String filename
-    ) {
-        var contentType = MediaType.APPLICATION_OCTET_STREAM;
-        return resourceOctetStreamOrInternal(resource, contentType, filename);
-    }
 
-    public static ResponseEntity<Resource> resourceOctetStreamOrInternal(
-            @NotNull Resource resource,
-            @NotNull MediaType contentType,
-            @NotNull String filename
-    ) {
-        try {
-            var disposition = ContentDisposition.attachment()
-                    .filename(filename)
-                    .build();
-            return ResponseEntity.ok()
-                    .contentLength(resource.contentLength())
-                    .contentType(contentType)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
-                    .body(resource);
-        } catch (IOException e) {
-            log.error("Could not create octet-stream from resource: "
-                    + "resource cannot be resolved", e);
-            return ResponseEntity.internalServerError()
-                    .build();
-        }
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    public static String filename(@NotNull Resource resource,
-                                  @NotNull String fallback) {
-        return Optional.ofNullable(resource.getFilename())
-                .orElse(fallback);
-    }
-
-    private static String filename(@NotNull MultipartFile file,
-                                   @Nullable String prefix) {
-        String s = Optional.ofNullable(file.getOriginalFilename())
-                .orElse(file.getName());
-        return addPrefix(s, prefix);
-    }
-
-    private static String addPrefix(@NotNull String s,
-                                    @Nullable String prefix) {
-        return prefix == null ? s : String.join("_", prefix, s);
-    }
-
-    private static MediaType mediaType(@NotNull String type) {
-        try {
-            return MediaType.valueOf(type);
-        } catch (InvalidMediaTypeException e) {
-            throw new IllegalStateException("Invalid media type: " + type);
-        }
-    }
 
     private static ContainerSelector createContainerSelector(ContainerSelectorCode containerSelectorCode) {
         val selector = new ContainerSelector();
         selector.setCode(containerSelectorCode);
         return selector;
     }
-
 }

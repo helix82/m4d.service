@@ -67,5 +67,5 @@ tls:
 
 cryptopro:
   svs:
-    internal_url: https://keylab/vs/api
-    external_url: https://dss.cryptopro.ru/verify/rest/api
+    #    uri: https://keylab/vs/api
+    uri: https://dss.cryptopro.ru/verify/rest/api
