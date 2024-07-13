@@ -22,12 +22,12 @@ import su.opencode.digsigcik.synapi.service.PublicKeyVerificationCenterService;
 import javax.validation.ConstraintViolationException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static su.opencode.digsigcik.synapi.util.Constants.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @RestController
@@ -64,6 +64,9 @@ public class PublicKeyStatementController {
     public ResponseEntity<?> savePublicKeyStatement(@RequestBody PublicKeyStatementDto publicKeyStatementDto) {
         PublicKeyStatement publicKeyStatement = convertToEntity(publicKeyStatementDto);
         publicKeyStatement.setStatus(StatusStatementEnum.IN_PROGRESS);
+        Instant instant = Instant.now();
+        int nano = instant.getNano();
+        publicKeyStatement.setDtCreate(instant.minusNanos(nano).toString());
         PublicKeyStatement response;
         try {
             response = service.savePublicKeyStatement(publicKeyStatement);
