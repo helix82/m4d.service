@@ -1,10 +1,14 @@
 package su.opencode.digsigcik.synapi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -83,6 +87,9 @@ public interface StampService {
 
 
     BufferedImage makeStampImage(String json) throws JsonProcessingException;
-
+    byte[] createPdfPreviewWithStamp(MultipartFile sourceFile,
+                                     @NotNull ContainerInputInfoDto containerInputInfo) throws IOException;
+    byte[] createPngPreviewWithStamp(MultipartFile sourceFile,
+                                     @NotNull ContainerInputInfoDto containerInputInfo) throws IOException;
 
 }

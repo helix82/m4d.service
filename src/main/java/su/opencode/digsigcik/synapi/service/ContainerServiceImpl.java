@@ -21,6 +21,7 @@ import su.opencode.digsigcik.synapi.util.FileUtils;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -93,8 +94,18 @@ public class ContainerServiceImpl implements ContainerService {
         byte[] getSignatureType = containerInputInfo.getSignatureType()
                 .getCode()
                 .getBytes(StandardCharsets.UTF_8);
-        byte[] previewPdf = createPdfPreviewWithStamp(srcFile, containerInputInfo);
-        byte[] previewPng = createPngPreviewWithStamp(srcFile, containerInputInfo);
+        byte[] previewPdf = null;
+        try {
+            previewPdf = stampService.createPdfPreviewWithStamp(srcFile, containerInputInfo);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create pdf preview", e);
+        }
+        byte[] previewPng;
+        try {
+            previewPng = stampService.createPngPreviewWithStamp(srcFile, containerInputInfo);
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create png preview", e);
+        }
 
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
         params.put(ResultTypeEnum.LOGIN, login);
@@ -277,125 +288,4 @@ public class ContainerServiceImpl implements ContainerService {
         return null;
     }
 
-    private byte[] createPdfPreviewWithStamp(MultipartFile sourceFile,
-                                             @NotNull ContainerInputInfoDto containerInputInfo) {
-        byte[] preview = new byte[0];
-        Integer offsetX = -36;
-        Integer offsetY = 0;
-        Integer page = 0;
-        Integer scale = 30;
-        String stampdata = "[\n" +
-                "    {\"color\": \"#0000ADDD\"},\n" +
-                "    {\"type\": \"roundrect\", \"margin\": 0, \"padding\": 10, \"width\": 10, \"round\": 80,\n" +
-                "          \"items\": [\n" +
-                "                {\"color\": \"#0000ADDD\", \"size\": 5},\n" +
-                "                {\"text\": \"ДОКУМЕНТ ПОДПИСАН\", \"style\":\"bold\"},\n" +
-                "                {\"text\": \"ЭЛЕКТРОННОЙ ПОДПИСЬЮ\", \"style\":\"bold\"},\n" +
-                "                {\"size\": 30},\n" +
-                "                {\"type\": \"line\", \"width\": 3, \"margin\":7, \"padding\":0, \"color\": " +
-                "\"#000000DD\"},\n" +
-                "                {\"text\": \"СВЕДЕНИЯ О СЕРТИФИКАТЕ ЭП\",\"style\":\"bold\"},\n" +
-                "                {\"type\": \"line\", \"width\": 3, \"margin\":7, \"padding\":0, \"color\": " +
-                "\"#000000DD\"},\n" +
-                "                {\"size\": 28},\n" +
-                "                {\"text\": \"8912981293819381924890184902834902834234\", \"position\":\"left\", " +
-                "\"margin\": 5},\n" +
-                "                {\"text\": \"Действителен с: 14.06.2024 по 14.06.2025\", \"position\":\"left\", " +
-                "\"margin\": 5},\n" +
-                "                {\"text\": \"Владелец:" + containerInputInfo.getLastname() + " " + containerInputInfo.getFirstname() +
-                " " + containerInputInfo.getPatronymic() + "\", \"position\":\"left\", \"margin\": 5}\n" +
-                "          ]\n" +
-                "    }\n" +
-                "]";
-
-        InputStream stampStream = null;
-        try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(stampService.makeStampImage(stampdata), "png", os);
-            stampStream = new ByteArrayInputStream(os.toByteArray());
-            if (sourceFile.getOriginalFilename()
-                    .endsWith(".docx")) {
-                preview = stampService.doStampDocx(sourceFile.getInputStream(), stampStream, page, offsetX, offsetY,
-                        scale);
-            } else {
-                preview = stampService.doStampPdf(sourceFile.getInputStream(), stampStream, page, offsetX, offsetY,
-                        scale);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (stampStream != null)
-                    stampStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return preview;
-    }
-
-    private byte[] createPngPreviewWithStamp(MultipartFile sourceFile,
-                                             @NotNull ContainerInputInfoDto containerInputInfo) {
-        byte[] preview = new byte[0];
-        Integer offsetX = -36;
-        Integer offsetY = 0;
-        Integer page = 0;
-        Integer scale = 30;
-        String stampdata = "[\n" +
-                "    {\"color\": \"#0000ADDD\"},\n" +
-                "    {\"type\": \"roundrect\", \"margin\": 0, \"padding\": 10, \"width\": 10, \"round\": 80,\n" +
-                "          \"items\": [\n" +
-                "                {\"color\": \"#0000ADDD\", \"size\": 5},\n" +
-                "                {\"text\": \"ДОКУМЕНТ ПОДПИСАН\", \"style\":\"bold\"},\n" +
-                "                {\"text\": \"ЭЛЕКТРОННОЙ ПОДПИСЬЮ\", \"style\":\"bold\"},\n" +
-                "                {\"size\": 30},\n" +
-                "                {\"type\": \"line\", \"width\": 3, \"margin\":7, \"padding\":0, \"color\": " +
-                "\"#000000DD\"},\n" +
-                "                {\"text\": \"СВЕДЕНИЯ О СЕРТИФИКАТЕ ЭП\",\"style\":\"bold\"},\n" +
-                "                {\"type\": \"line\", \"width\": 3, \"margin\":7, \"padding\":0, \"color\": " +
-                "\"#000000DD\"},\n" +
-                "                {\"size\": 28},\n" +
-                "                {\"text\": \"8912981293819381924890184902834902834234\", \"position\":\"left\", " +
-                "\"margin\": 5},\n" +
-                "                {\"text\": \"Действителен с: 14.06.2024 по 14.06.2025\", \"position\":\"left\", " +
-                "\"margin\": 5},\n" +
-                "                {\"text\": \"Владелец:" + containerInputInfo.getLastname() + " " + containerInputInfo.getFirstname() +
-                " " + containerInputInfo.getPatronymic() + "\", \"position\":\"left\", \"margin\": 5}\n" +
-                "          ]\n" +
-                "    }\n" +
-                "]";
-
-        InputStream stampStream = null;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(stampService.makeStampImage(stampdata), "png", os);
-            stampStream = new ByteArrayInputStream(os.toByteArray());
-            if (sourceFile.getOriginalFilename()
-                    .endsWith(".docx")) {
-                ImageIO.write(stampService.doPreview(stampService.doStampDocx(sourceFile.getInputStream(), stampStream,
-                        page, offsetX, offsetY, scale), page), "png", baos);
-                baos.flush();
-                return baos.toByteArray();
-            } else {
-                ImageIO.write(stampService.doPreview(stampService.doStampPdf(sourceFile.getInputStream(), stampStream,
-                        page, offsetX, offsetY, scale), page), "png", baos);
-                baos.flush();
-                return baos.toByteArray();
-            }
-        } catch (
-                IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (stampStream != null)
-                    stampStream.close();
-                if (baos != null)
-                    baos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
 }
