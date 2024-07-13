@@ -5,8 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -59,12 +57,12 @@ public class ApiControllerV1 {
     private final VerificationService verificationService;
     private final JwtTokenUtils jwtTokenUtils;
 
-    @PostMapping(value = "/create-pdf-container",
-            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PostMapping(value = "/create-pdf-container", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createPdfContainer(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             @RequestPart("srcFile") MultipartFile sourceFile,
             @RequestPart("sigFile") MultipartFile sourceSig) {
+
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
@@ -77,22 +75,22 @@ public class ApiControllerV1 {
                 .containerType(SIMPLE_DETACHED)
                 .signatureType(UNQUALIFIED)
                 .build();
+
         var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
-        if (res == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
-        }
-        return resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME));
+
+        return (res != null) ? resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME))
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
-    @PostMapping(value = "/create-pdf-container-custom",
-            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+
+    @PostMapping(value = "/create-pdf-container-custom", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createPdfContainerCustom(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             SignatureAlgorithm signatureAlgorithm,
             HashAlgorithm hashAlgorithm,
             @RequestPart("srcFile") MultipartFile sourceFile,
             @RequestPart("sigFile") MultipartFile sourceSig) {
+
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
@@ -106,26 +104,23 @@ public class ApiControllerV1 {
                 .signatureType(UNQUALIFIED)
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .build();
+
         var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
-        if (res == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
-        }
-        return resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME));
+
+        return (res != null) ? resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME))
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
     }
 
-    @PutMapping(value = "/update-pdf-container-regdata",
-            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+
+    @PutMapping(value = "/update-pdf-container-regdata", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> updatePdfContainerRegData(
             @RequestPart("container") MultipartFile container,
-            @RequestPart("regData") RegistrationData regData
-    ) {
+            @RequestPart("regData") RegistrationData regData) {
+
         var res = containerService.updateContainerRegData(container, regData);
-        if (res == null) {
-            return ResponseEntity.internalServerError()
-                    .build();
-        }
-        return resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME));
+
+        return (res != null) ? resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME))
+                : ResponseEntity.internalServerError().build();
     }
 
 
@@ -136,70 +131,77 @@ public class ApiControllerV1 {
         private MultipartFile container;
         private List<ContainerSelectorCode> selectors;
     }
+
     @NoArgsConstructor
     @AllArgsConstructor
     @Data
-    public static class ContainerDataDTOWithReverify extends ContainerDataDTO{
+    public static class ContainerDataDTOWithReverify extends ContainerDataDTO {
         private boolean reverify = false;
     }
+
     @PostMapping(value = "/get-container-data", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE,
                     MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<?> getContainerData(@ModelAttribute ContainerDataDTO containerDataDTO
-    ) {
+    public ResponseEntity<?> getContainerData(@ModelAttribute ContainerDataDTO containerDataDTO) {
+
         var res = containerService.getContainerData(
-                containerDataDTO.getContainer(), containerDataDTO.getSelectors()
+                containerDataDTO.getContainer(),
+                containerDataDTO.getSelectors()
                         .stream()
                         .map(ApiControllerV1::createContainerSelector)
-                        .collect(Collectors.toList()), false);
-        if (res == null) {
-            return ResponseEntity.internalServerError()
-                    .build();
-        }
-        return ResponseEntity.ok(res);
+                        .collect(Collectors.toList()),
+                false);
+
+        return (res != null) ? ResponseEntity.ok(res)
+                : ResponseEntity.internalServerError().build();
     }
 
-    @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces =
-            MediaType.APPLICATION_JSON_VALUE)
+
+    @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Map<String, String> getContainerDataJson(@ModelAttribute ContainerDataDTOWithReverify containerDataDTOWithReverify
-    ) {
+    public Map<String, String> getContainerDataJson(@ModelAttribute ContainerDataDTOWithReverify containerDataDTOWithReverify) {
+
         if (containerDataDTOWithReverify.isReverify()) {
-            VerifyDto sesVerifyResponse;
             try {
-                sesVerifyResponse = verificationService.verify(containerDataDTOWithReverify.getContainer());
+                VerifyDto sesVerifyResponse = verificationService.verify(containerDataDTOWithReverify.getContainer());
+                return convertObjectToMap(sesVerifyResponse);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
-
-            return convertObjectToMap(sesVerifyResponse);
         }
+
         Map<String, String> res = containerService.getContainerDataJson(
-                containerDataDTOWithReverify.getContainer(), containerDataDTOWithReverify.getSelectors()
+                containerDataDTOWithReverify.getContainer(),
+                containerDataDTOWithReverify.getSelectors()
                         .stream()
                         .map(ApiControllerV1::createContainerSelector)
-                        .collect(Collectors.toList()), containerDataDTOWithReverify.isReverify());
+                        .collect(Collectors.toList()),
+                containerDataDTOWithReverify.isReverify());
+
         if (res == null) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
+
         return res;
     }
 
+
     @PostMapping(value = "/get-container-data-zip", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE,
-                    MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<?> getContainerDataZip(@ModelAttribute ContainerDataDTO containerDataDTO
-    ) {
+            produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<?> getContainerDataZip(@ModelAttribute ContainerDataDTO containerDataDTO) {
 
         Map<String, su.opencode.digsigcik.synapi.api.model.ContainerPart> res = containerService.getContainerData(
-                containerDataDTO.getContainer(), containerDataDTO.getSelectors()
+                containerDataDTO.getContainer(),
+                containerDataDTO.getSelectors()
                         .stream()
                         .map(ApiControllerV1::createContainerSelector)
-                        .collect(Collectors.toList()), false);
+                        .collect(Collectors.toList()),
+                false);
+
         if (res == null) {
-            return ResponseEntity.internalServerError()
-                    .build();
+            return ResponseEntity.internalServerError().build();
         }
+
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(baos)) {
                 addResourcesToZip(zipOutputStream, res);
@@ -222,22 +224,23 @@ public class ApiControllerV1 {
     @PostMapping(value = "/get-container-part")
     public ResponseEntity<?> getContainerPart(
             @RequestPart("container") MultipartFile container,
-            ContainerSelectorCode selector
-    ) {
+            ContainerSelectorCode selector) {
+
         ContainerSelector containerSelector = createContainerSelector(selector);
-        var res = containerService.getContainerPart(
-                container, containerSelector, false);
+        var res = containerService.getContainerPart(container, containerSelector, false);
+
         if (res == null) {
-            return ResponseEntity.internalServerError()
-                    .build();
+            return ResponseEntity.internalServerError().build();
         }
+
         var resource = new ByteArrayResource(res.getData());
         var contentType = mediaType(res.getContentType());
         var filename = res.getFileName();
+
         if (filename == null) {
-            return ResponseEntity.internalServerError()
-                    .build();
+            return ResponseEntity.internalServerError().build();
         }
+
         return resourceOctetStreamOrInternal(resource, contentType, filename);
     }
 
@@ -246,47 +249,44 @@ public class ApiControllerV1 {
     public Map<String, String> getContainerPartJson(
             @RequestPart("container") MultipartFile container,
             ContainerSelectorCode selector,
-            Boolean reverify
-    ) {
+            Boolean reverify) {
+
         if (container.isEmpty()) {
             throw new BadRequestException("Container is empty!");
         }
-        if (reverify == null)
+
+        if (reverify == null) {
             reverify = Boolean.FALSE;
+        }
+
         if (reverify) {
-            VerifyDto sesVerifyResponse;
             try {
-                sesVerifyResponse = verificationService.verify(container);
+                VerifyDto sesVerifyResponse = verificationService.verify(container);
+                return convertObjectToMap(sesVerifyResponse);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
-
-            return convertObjectToMap(sesVerifyResponse);
         }
+
         ContainerSelector containerSelector = createContainerSelector(selector);
-        var res = containerService.getContainerPartJson(
-                container, containerSelector, reverify);
+        var res = containerService.getContainerPartJson(container, containerSelector, reverify);
+
         if (res == null) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
+
         return res;
     }
 
     public static Map<String, String> convertObjectToMap(Object obj) {
         Map<String, String> map = new HashMap<>();
-
-        // Get the class of the object
         Class<?> clazz = obj.getClass();
-
-        // Get all the fields of the object
         Field[] fields = clazz.getDeclaredFields();
 
-        // Iterate through the fields and add them to the map
         for (Field field : fields) {
             field.setAccessible(true);
             try {
-                map.put(field.getName(), field.get(obj)
-                        .toString());
+                map.put(field.getName(), field.get(obj).toString());
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
@@ -301,18 +301,10 @@ public class ApiControllerV1 {
         return selector;
     }
 
-    private static void addResourcesToZip(ZipOutputStream zipOutputStream, Map<String,
-            su.opencode.digsigcik.synapi.api.model.ContainerPart> res) throws IOException {
-        res.values()
-                .forEach(i -> {
-                    try {
-                        addResourceToZip(zipOutputStream, new ByteArrayResource(i
-                                .getData()), i.getFileName());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                });
+    private static void addResourcesToZip(ZipOutputStream zipOutputStream, Map<String, su.opencode.digsigcik.synapi.api.model.ContainerPart> res) throws IOException {
+        for (var part : res.values()) {
+            addResourceToZip(zipOutputStream, new ByteArrayResource(part.getData()), part.getFileName());
+        }
     }
 
     private static void addResourceToZip(ZipOutputStream zipOutputStream, Resource resource, String filename) throws IOException {
@@ -326,6 +318,8 @@ public class ApiControllerV1 {
                 zipOutputStream.write(buffer, 0, bytesRead);
             }
         }
+
         zipOutputStream.closeEntry();
     }
+
 }

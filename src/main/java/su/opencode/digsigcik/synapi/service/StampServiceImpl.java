@@ -509,55 +509,41 @@ public class StampServiceImpl implements StampService {
 
     public byte[] createPdfPreviewWithStamp(MultipartFile sourceFile,
                                             @NotNull ContainerInputInfoDto containerInputInfo) throws IOException {
-        InputStream stampStream = null;
-        byte[] stampedPdf = null;
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             ImageIO.write(makeStampImage(generateStampData(containerInputInfo)), "png", os);
-            stampStream = new ByteArrayInputStream(os.toByteArray());
-
-            if (sourceFile.getOriginalFilename().endsWith(".docx")) {
-                stampedPdf = doStampDocx(sourceFile.getInputStream(), stampStream, 0, -36, 0, 30);
-            } else {
-                stampedPdf = doStampPdf(sourceFile.getInputStream(), stampStream, 0, -36, 0, 30);
-            }
-            return stampedPdf;
-        } finally {
-            if (stampStream != null) {
-                stampStream.close();
+            try (InputStream stampStream = new ByteArrayInputStream(os.toByteArray())) {
+                return getStampedPdf(sourceFile, stampStream);
             }
         }
     }
 
     public byte[] createPngPreviewWithStamp(MultipartFile sourceFile,
                                             @NotNull ContainerInputInfoDto containerInputInfo) throws IOException {
-        InputStream stampStream = null;
-        byte[] stampedBytes = null;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             ImageIO.write(makeStampImage(generateStampData(containerInputInfo)), "png", os);
-            stampStream = new ByteArrayInputStream(os.toByteArray());
-
-            if (sourceFile.getOriginalFilename().endsWith(".docx")) {
-                stampedBytes = doStampDocx(sourceFile.getInputStream(), stampStream, 0, -36, 0, 30);
-            } else {
-                stampedBytes = doStampPdf(sourceFile.getInputStream(), stampStream, 0, -36, 0, 30);
-            }
-            ImageIO.write(doPreview(stampedBytes, 0), "png", baos);
-            baos.flush();
-            return baos.toByteArray();
-        } finally {
-            if (stampStream != null) {
-                stampStream.close();
+            try (InputStream stampStream = new ByteArrayInputStream(os.toByteArray());
+                 ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                byte[] stampedBytes = getStampedPdf(sourceFile, stampStream);
+                ImageIO.write(doPreview(stampedBytes, 0), "png", baos);
+                baos.flush();
+                return baos.toByteArray();
             }
         }
     }
 
+    private byte[] getStampedPdf(MultipartFile sourceFile, InputStream stampStream) throws IOException {
+        if (sourceFile.getOriginalFilename().endsWith(".docx")) {
+            return doStampDocx(sourceFile.getInputStream(), stampStream, 0, -36, 0, 30);
+        } else {
+            return doStampPdf(sourceFile.getInputStream(), stampStream, 0, -36, 0, 30);
+        }
+    }
     private String generateStampData(ContainerInputInfoDto containerInputInfo) {
         return "[\n" +
                 "    {\"color\": \"#0000ADDD\"},\n" +
                 "    {\"type\": \"roundrect\", \"margin\": 0, \"padding\": 10, \"width\": 10, \"round\": 80,\n" +
                 "          \"items\": [\n" +
-                "                {\"color\": \"#0000ADDD\", \"size\": 5},\n" +
+                "                {\"color\": \"#0000ADDD\", \"size\": 45},\n" +
                 "                {\"text\": \"ДОКУМЕНТ ПОДПИСАН\", \"style\":\"bold\"},\n" +
                 "                {\"text\": \"ЭЛЕКТРОННОЙ ПОДПИСЬЮ\", \"style\":\"bold\"},\n" +
                 "                {\"size\": 30},\n" +
