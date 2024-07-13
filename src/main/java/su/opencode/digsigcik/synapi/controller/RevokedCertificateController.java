@@ -24,7 +24,8 @@ import su.opencode.digsigcik.synapi.model.RevokedCertificate;
 import su.opencode.digsigcik.synapi.service.RevokedCertificateService;
 
 import javax.validation.ConstraintViolationException;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.CRLException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -138,20 +139,24 @@ public class RevokedCertificateController {
     @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateException, CRLException {
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
-        if(!Objects.equals(extension, "crl")){
+        if (!"crl".equals(extension)) {
             throw new BadRequestException(REVOKED_CERTIFICATE_UPLOAD_WRONG_FORMAT);
         }
+
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509CRL crl = (X509CRL)cf.generateCRL(sourceFile.getInputStream());
+        X509CRL crl;
+        try (InputStream inputStream = sourceFile.getInputStream()) {
+            crl = (X509CRL) cf.generateCRL(inputStream);
+        }
+
         RevokedCertificate revokedCertificate = new RevokedCertificate();
-        var issuer = crl.getIssuerDN().getName().split(", ");
-        for(String s : issuer) {
-            if(s.length()>2){
-                if (s.startsWith("CN=")) {
-                    revokedCertificate.setIssuedTo(s.substring(3));
-                }
+        String[] issuer = crl.getIssuerDN().getName().split(", ");
+        for (String s : issuer) {
+            if (s.startsWith("CN=")) {
+                revokedCertificate.setIssuedTo(s.substring(3));
             }
         }
+
         revokedCertificate.setDateEnd(convertRFC1123ToIsoInstant(crl.getNextUpdate().toString()));
         revokedCertificate.setDateStart(convertRFC1123ToIsoInstant(crl.getThisUpdate().toString()));
 
@@ -163,21 +168,24 @@ public class RevokedCertificateController {
             String keyIdIssuer = new DEROctetString(aki.getKeyIdentifier()).toString().substring(1);
             revokedCertificate.setKeyId(keyIdIssuer);
         }
+
         revokedCertificate.setImprint(DigestUtils.sha1Hex(crl.getEncoded()));
         revokedCertificate.setCertificate(new String(sourceFile.getBytes()));
 
-        var existsCert = service.countRevokedCertificateByImprint(revokedCertificate.getImprint());
-        if(existsCert > 0){
+        if (service.countRevokedCertificateByImprint(revokedCertificate.getImprint()) > 0) {
             throw new BadRequestException(REVOKED_CERTIFICATE_UPLOAD_EXISTS);
         }
+
         RevokedCertificate response;
         try {
             response = service.saveRevokedCertificate(revokedCertificate);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(REVOKED_CERTIFICATE_IS_NULL);
         }
+
         return new ResponseEntity<>(convertToDto(response), HttpStatus.OK);
     }
+
 
     private RevokedCertificateDTO convertToDto(RevokedCertificate revokedCertificate){
         RevokedCertificateDTO revokedCertificateDTO = modelMapper.map(revokedCertificate, RevokedCertificateDTO.class);
