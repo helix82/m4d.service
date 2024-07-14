@@ -1,8 +1,8 @@
 FROM nexus.essocode.ru/adoptopenjdk/maven-openjdk11 AS maven
 WORKDIR /app
 COPY settings.xml /usr/share/maven/conf/
-RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -B
 COPY ./ /app/
+RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -B
 RUN --mount=type=cache,target=/root/.m2 mvn clean package -Dmaven.test.skip=true
 FROM nexus.essocode.ru/bellsoft/liberica-openjdk-alpine-musl:11
 RUN apk add --no-cache fontconfig ttf-dejavu
