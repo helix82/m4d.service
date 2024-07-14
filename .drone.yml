@@ -17,9 +17,9 @@ steps:
         - latest
         - ${DRONE_SOURCE_BRANCH/\//-}
         - ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
-#      cache_from:
-#        - nexus.essocode.ru:5001/ess/synapi:develop
-#        - nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
+      cache_from:
+        - nexus.essocode.ru:5001/ess/synapi:develop
+        - nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
       dockerfile: Dockerfile
       username:
         from_secret: docker_login
@@ -106,3 +106,4 @@ services:
 volumes:
   - name: out
     temp: {}
+

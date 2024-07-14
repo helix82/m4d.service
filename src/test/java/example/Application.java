@@ -2,12 +2,11 @@ package example;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.springframework.http.HttpMethod;
 import ru.CryptoPro.JCP.JCP;
 import ru.CryptoPro.reprov.RevCheck;
 import ru.CryptoPro.ssl.Provider;
-import su.opencode.digsigcik.synapi.client.RestClient;
-import su.opencode.digsigcik.synapi.client.RestMethod;
-import su.opencode.digsigcik.synapi.client.RestRequest;
+import su.opencode.digsigcik.synapi.client.RestTemplateClient;
 
 import java.net.URI;
 import java.security.Security;
@@ -29,7 +28,7 @@ public class Application {
             System.err.println("Error in initializing crypto pro : " + er);
         }
 
-        RestClient restClient = new RestClient();
+        RestTemplateClient restTemplateClient = new RestTemplateClient();
 //            HashMap<String, String> headers = new HashMap<>();
 //            headers.put("Accept", "application/json");
 //            RestRequest restRequest = RestRequest.builder()
@@ -41,13 +40,13 @@ public class Application {
 //            restClient.requestString(restRequest);
         HashMap<String, String> headers = new HashMap<>();
         headers.put("Accept", "application/json");
-        RestRequest restRequest = RestRequest.builder()
-                .httpMethod(RestMethod.POST)
+        RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest = RestTemplateClient.RestTemplateClientRequest.builder()
+                .httpMethod(HttpMethod.POST)
                 .requestUri(new URI("https://keylab/vs/api/documents/reset/all"))
                 .requestContent("")
                 .httpHeader(headers)
                 .build();
-        restClient.requestString(restRequest);
+        restTemplateClient.requestString(restTemplateClientRequest);
         log.info("Connection was successfully");
 
     }

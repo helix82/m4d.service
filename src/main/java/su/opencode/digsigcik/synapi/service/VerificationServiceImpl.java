@@ -5,11 +5,10 @@ import com.google.gson.JsonObject;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import su.opencode.digsigcik.synapi.client.RestClient;
-import su.opencode.digsigcik.synapi.client.RestMethod;
-import su.opencode.digsigcik.synapi.client.RestRequest;
+import su.opencode.digsigcik.synapi.client.RestTemplateClient;
 import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
 import su.opencode.digsigcik.synapi.dto.SesUserInfoDto;
@@ -43,7 +42,7 @@ public class VerificationServiceImpl implements VerificationService {
     @Value("${cryptopro.svs.uri}")
     private String svc_uri;
 
-    private RestClient restClient;
+    private RestTemplateClient restTemplateClient;
     private final ContainerService containerService;
     private final PinCodeRepository pinCodeRepository;
     private final UserProjectionRepository userProjectionRepository;
@@ -53,7 +52,6 @@ public class VerificationServiceImpl implements VerificationService {
         this.containerService = containerService;
         this.pinCodeRepository = pinCodeRepository;
         this.userProjectionRepository = userProjectionRepository;
-        //  this.restClient = new RestClient(false);
     }
 
     public VerifyDto verify(@NotNull MultipartFile container) {
@@ -67,7 +65,8 @@ public class VerificationServiceImpl implements VerificationService {
                         createContainerSelector(ContainerSelectorCode.DETACHEDSIGN),
                         createContainerSelector(ContainerSelectorCode.HASHTYPE),
                         createContainerSelector(ContainerSelectorCode.SIGNATUREALGORITHM),
-                        createContainerSelector(ContainerSelectorCode.SIGNATURE_TYPE)
+                        createContainerSelector(ContainerSelectorCode.SIGNATURE_TYPE),
+                        createContainerSelector(ContainerSelectorCode.SOURCE_FILE_FULL_NAME)
                 ));
         try {
             var containerData = containerService.getContainerData(container,
@@ -86,6 +85,8 @@ public class VerificationServiceImpl implements VerificationService {
                     .getData(), StandardCharsets.UTF_8);
             String userLogin = new String(containerData.get("userLogin")
                     .getData(), StandardCharsets.UTF_8);
+            String sourceFileFullName = new String(containerData.get("sourceFileFullName")
+                    .getData(), StandardCharsets.UTF_8);
             byte[] detachedSign = containerData.get("detachedSign")
                     .getData();
             String hashType = new String(containerData.get("hashType")
@@ -100,10 +101,10 @@ public class VerificationServiceImpl implements VerificationService {
             if (signatureType.equals(SignatureTypeEnum.UNQUALIFIED.getCode())
                     || signatureType.equals(SignatureTypeEnum.QUALIFIED.getCode())
                     || signatureType.equals(SignatureTypeEnum.UNKNOWN.getCode())) {
-                this.restClient = new RestClient(false);
+                this.restTemplateClient = new RestTemplateClient(true);
                 if (detachedSign == null) {
                     resetAll(svc_uri);
-                    String id1 = uploadDocument(svc_uri, srcFile).get("id")
+                    String id1 = uploadDocument(svc_uri, srcFile,sourceFileFullName).get("id")
                             .getAsString();
                     JsonObject result = verifyAttachedSignature(svc_uri, id1);
                     resetAll(svc_uri);
@@ -120,9 +121,9 @@ public class VerificationServiceImpl implements VerificationService {
                     return verifyDto;
                 } else {
                     resetAll(svc_uri);
-                    String id1 = uploadDocument(svc_uri, srcFile).get("id")
+                    String id1 = uploadDocument(svc_uri, srcFile,sourceFileFullName).get("id")
                             .getAsString();
-                    String id2 = uploadDocument(svc_uri, detachedSign).get("id")
+                    String id2 = uploadDocument(svc_uri, detachedSign,sourceFileFullName+".sig").get("id")
                             .getAsString();
                     JsonObject result = verifyDetachedSignature(svc_uri, id1, id2);
                     resetAll(svc_uri);
@@ -217,24 +218,24 @@ public class VerificationServiceImpl implements VerificationService {
         }
     }
 
-    private JsonObject uploadDocument(String uri, byte[] file) throws URISyntaxException, IOException {
-        RestRequest restRequest = RestRequest.builder()
-                .httpMethod(RestMethod.POST)
+    private JsonObject uploadDocument(String uri, byte[] file, String filename) throws URISyntaxException, IOException {
+        RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest = RestTemplateClient.RestTemplateClientRequest.builder()
+                .httpMethod(HttpMethod.POST)
                 .requestUri(new URI(uri + "/documents/"))
                 .bytes(file)
-                //     .fileName(file.getOriginalFilename())
+                .fileName(filename)
                 .build();
-        return restClient.requestJson(restRequest);
+        return restTemplateClient.requestJson(restTemplateClientRequest);
     }
 
     private JsonObject uploadDocument(String uri, MultipartFile file) throws URISyntaxException, IOException {
-        RestRequest restRequest = RestRequest.builder()
-                .httpMethod(RestMethod.POST)
+        RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest = RestTemplateClient.RestTemplateClientRequest.builder()
+                .httpMethod(HttpMethod.POST)
                 .requestUri(new URI(uri + "/documents/"))
                 .bytes(file.getBytes())
                 .fileName(file.getOriginalFilename())
                 .build();
-        return restClient.requestJson(restRequest);
+        return restTemplateClient.requestJson(restTemplateClientRequest);
     }
 
     private String listUploadedDocuments(String uri) throws URISyntaxException,
@@ -242,12 +243,12 @@ public class VerificationServiceImpl implements VerificationService {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("Content-type", "application/json");
         headers.put("Accept", "application/json");
-        RestRequest restRequest = RestRequest.builder()
-                .httpMethod(RestMethod.GET)
+        RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest = RestTemplateClient.RestTemplateClientRequest.builder()
+                .httpMethod(HttpMethod.GET)
                 .requestUri(new URI(uri + "/documents/"))
                 .httpHeader(headers)
                 .build();
-        return restClient.requestString(restRequest);
+        return restTemplateClient.requestString(restTemplateClientRequest);
     }
 
     private JsonObject verifyAttachedSignature(String uri, String id) throws URISyntaxException,
@@ -256,13 +257,13 @@ public class VerificationServiceImpl implements VerificationService {
         headers.put("Content-type", "application/json");
         headers.put("Accept", "application/json");
         String requestContent = "{\"DocumentIds\":[\"" + id + "\"],\"CustomParams\":{\"CertVerifiersPluginsIds\":[]}}";
-        RestRequest restRequest = RestRequest.builder()
-                .httpMethod(RestMethod.POST)
+        RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest = RestTemplateClient.RestTemplateClientRequest.builder()
+                .httpMethod(HttpMethod.POST)
                 .requestUri(new URI(uri + "/signatures/package/session"))
                 .httpHeader(headers)
                 .requestContent(requestContent)
                 .build();
-        return restClient.requestJson(restRequest);
+        return restTemplateClient.requestJson(restTemplateClientRequest);
     }
 
     private JsonObject verifyDetachedSignature(String uri, String id1, String id2) throws URISyntaxException,
@@ -272,26 +273,26 @@ public class VerificationServiceImpl implements VerificationService {
         headers.put("Accept", "application/json");
         String requestContent = "{\"DocumentIds\":[\"" + id1 + "\",\"" + id2 + "\"],\"CustomParams" +
                 "\":{\"CertVerifiersPluginsIds\":[]}}";
-        RestRequest restRequest = RestRequest.builder()
-                .httpMethod(RestMethod.POST)
+        RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest = RestTemplateClient.RestTemplateClientRequest.builder()
+                .httpMethod(HttpMethod.POST)
                 .requestUri(new URI(uri + "/signatures/package/session"))
                 .httpHeader(headers)
                 .requestContent(requestContent)
                 .build();
-        return restClient.requestJson(restRequest);
+        return restTemplateClient.requestJson(restTemplateClientRequest);
     }
 
 
     private void resetAll(String uri) throws URISyntaxException, IOException {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("Accept", "application/json");
-        RestRequest restRequest = RestRequest.builder()
-                .httpMethod(RestMethod.POST)
+        RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest = RestTemplateClient.RestTemplateClientRequest.builder()
+                .httpMethod(HttpMethod.POST)
                 .requestUri(new URI(uri + "/documents/reset/all"))
                 .requestContent("")
                 .httpHeader(headers)
                 .build();
-        restClient.requestString(restRequest);
+        restTemplateClient.requestString(restTemplateClientRequest);
     }
 
     public static String convertToString(JsonObject jsonObject) {
