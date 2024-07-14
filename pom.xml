@@ -25,9 +25,6 @@
         <jackson-version>2.17.0</jackson-version>
         <jackson-databind-nullable-version>0.2.6</jackson-databind-nullable-version>
         <jsonwebtoken-version>0.9.1</jsonwebtoken-version>
-        <apache.httpclient5.version>5.2.3</apache.httpclient5.version>
-        <apache.httpcore5.version>5.2.4</apache.httpcore5.version>
-        <apache.httpcore5-h2.version>5.2.4</apache.httpcore5-h2.version>
         <apache.commons.validator.version>1.8.0</apache.commons.validator.version>
         <maven.deploy.skip>true</maven.deploy.skip>
     </properties>
@@ -95,12 +92,6 @@
         </dependency>
 
         <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.15</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.18</version>
@@ -131,32 +122,6 @@
             <artifactId>json</artifactId>
             <version>20240303</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
-            <version>${apache.httpclient5.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents.core5</groupId>
-            <artifactId>httpcore5</artifactId>
-            <version>${apache.httpcore5.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents.core5</groupId>
-            <artifactId>httpcore5-h2</artifactId>
-            <version>${apache.httpcore5-h2.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-validator</groupId>
-            <artifactId>commons-validator</artifactId>
-            <version>${apache.commons.validator.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-collections</groupId>
-                    <artifactId>commons-collections</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -178,10 +143,6 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
@@ -191,11 +152,6 @@
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -288,18 +244,6 @@
 <!--            <scope>runtime</scope>-->
         </dependency>
         <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>24.1.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>24.1.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
             <version>3.2.0</version>
@@ -345,14 +289,6 @@
             <artifactId>JCSP</artifactId>
             <version>5.0.45549-A</version>
         </dependency>
-
-        <!--        <dependency>-->
-        <!--            <groupId>ru.cryptopro.jcp</groupId>-->
-        <!--            <artifactId>jscp</artifactId>-->
-        <!--            <version>5.0.42119-A</version>-->
-        <!--            <scope>system</scope>-->
-        <!--            <systemPath>${pom.basedir}/libs/JCSP.jar</systemPath>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCPRevCheck</artifactId>
@@ -393,11 +329,6 @@
             <artifactId>JCP</artifactId>
             <version>5.0.45549-A</version>
         </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>ru.cryptopro.jcp</groupId>-->
-        <!--            <artifactId>JCPinst</artifactId>-->
-        <!--            <version>5.0.45549-A</version>-->
-        <!--        </dependency>-->
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>JCPRequest</artifactId>
@@ -433,11 +364,6 @@
             <artifactId>cpSSL</artifactId>
             <version>5.0.45549-A</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>ru.cryptopro.jcp</groupId>-->
-<!--            <artifactId>samples</artifactId>-->
-<!--            <version>5.0.45549-A</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
