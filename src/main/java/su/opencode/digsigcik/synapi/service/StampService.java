@@ -39,7 +39,7 @@ public interface StampService {
     int defaultWidth = 0;
     int defaultHeight = 0;
     Color defaultColor = new Color(0,0,0,255);
-    String defaultFamily = "TimesRoman";
+    String defaultFamily = "SansSerif";
     String defaultStyle = "bold"; //Font.BOLD
     int defaultSize= 14;
     boolean defaultInverse= false;
