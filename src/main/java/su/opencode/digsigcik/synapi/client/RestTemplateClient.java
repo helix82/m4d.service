@@ -117,7 +117,19 @@ public class RestTemplateClient {
             return response;
         }));
     }
+    public byte[] downloadFile(String url) throws IOException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_OCTET_STREAM));
+        HttpEntity<String> entity = new HttpEntity<>(headers);
 
+        ResponseEntity<byte[]> response = restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return response.getBody();
+        } else {
+            throw new IOException("Failed to download file: " + response.getStatusCode());
+        }
+    }
     public String requestString(@NonNull final RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest) throws IOException {
         HttpEntity<?> requestEntity = populateRequest(restTemplateClientRequest);
         ResponseEntity<String> response = restTemplate.exchange(restTemplateClientRequest.getRequestUri(), restTemplateClientRequest.getHttpMethod(), requestEntity, String.class);

@@ -21,6 +21,7 @@ public enum ContainerFileEnum {
 	POA_DSCP("poa/poa.dscp", false, true, null),
 	POA_DESCRIPTION("poa/poa.json", false, true, null),
 	LAST_SIGN_CHECK("check/lastSignCheck.json", false, true, null),
+	LAST_SIGN_REPORT("check/lastSignReport.pdf", false, true, null),
 	LAST_CERT_DATA("check/lastCertData.json", false, true, null),
 	LAST_POA_CHECK("check/lastPoaCheck.json", false, true, null),
 	CHECK_HISTORY("check/checkHistory.json", false, true, null);

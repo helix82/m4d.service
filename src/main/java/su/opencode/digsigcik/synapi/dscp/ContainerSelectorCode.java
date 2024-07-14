@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum ContainerSelectorCode {
 
     SIGNCHECK("signCheck"),
+    SIGNREPORT("signReport"),
     CERTDATA("certData"),
     POACHECK("poaCheck"),
     CHECKHISTORY("checkHistory"),

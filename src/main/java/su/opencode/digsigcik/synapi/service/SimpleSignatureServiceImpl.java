@@ -37,71 +37,73 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
     @Override
     public Resource createSimpleCustomSignatureResource(@NotNull MultipartFile srcFile,
                                                         @NotNull ContainerInputInfoDto containerInputInfo) {
-        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(containerInputInfo.getLogin());
+        UserProjection userProjection =
+                userProjectionRepository.getUserProjectionByLogin(containerInputInfo.getLogin());
         if (userProjection == null) {
             throw new BadRequestException(Constants.USER_PROJECTION_NOT_FOUND);
         }
-        PinCode pinCode1 = pinCodeRepository.getPinCodeByUserProjection(userProjection);
-        containerInputInfo.setPinCodeHashAlgorithm(pinCode1.getAlgorithm()
+
+        PinCode pinCode = pinCodeRepository.getPinCodeByUserProjection(userProjection);
+        containerInputInfo.setPinCodeHashAlgorithm(pinCode.getAlgorithm()
                 .getAlgorithmName());
+
         String pinCodeHash = generateHash(containerInputInfo.getPinCode()
-                .getBytes(StandardCharsets.UTF_8), pinCode1.getAlgorithm());
-        if (!pinCode1.getPinCodeHash()
+                .getBytes(StandardCharsets.UTF_8), pinCode.getAlgorithm());
+        if (!pinCode.getPinCodeHash()
                 .equals(pinCodeHash)) {
             throw new BadRequestException(Constants.PIN_CODE_ERROR_MESSAGE);
         }
 
-
         String operationDateHash = generateHash(containerInputInfo.getTimestamp()
                 .toString()
-                .getBytes(), pinCode1.getAlgorithm());
+                .getBytes(), pinCode.getAlgorithm());
         String fileHash;
         try {
-            fileHash = generateHash(srcFile.getBytes(), pinCode1.getAlgorithm());
+            fileHash = generateHash(srcFile.getBytes(), pinCode.getAlgorithm());
         } catch (IOException e) {
             throw new BadRequestException(Constants.EMPTY_BYTE_ARRAY_ERROR, e.getCause());
         }
-        String signature = createCustomSimpleSignature(pinCodeHash, fileHash, operationDateHash);
 
-        String sourceDirectoryPathName = String.format("%s%s", Constants.ROOT_FILE_STORAGE_PATH, Constants.SOURCE_DIRECTORY_PATH);
-        String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "SHA256sig.sig");
-        FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
-        FileUtils.createFile(sigFilePathName, signature.getBytes());
+        String signature = createCustomSimpleSignature(pinCodeHash, fileHash, operationDateHash);
+        String sigFilePathName = createSignatureFile(signature.getBytes(), "SHA256sig.sig");
 
         MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
-        File sigFile = new File(sigFilePathName);
-        if (sigFile.exists()) {
-            FileUtils.deleteFile(sigFilePathName);
-        }
+        deleteFileIfExists(sigFilePathName);
+
         return containerService.createContainer(srcFile, sigMultipartFile, containerInputInfo);
     }
-
 
     @Override
     public Resource createSimpleSignatureResource(@NotNull MultipartFile srcFile,
                                                   @NotNull ContainerInputInfoDto containerInputInfo) throws IOException {
-
         byte[] signature = createSignature(srcFile.getBytes(), containerInputInfo.getPrivateKey(),
                 containerInputInfo.getTimestamp()
                 .toString());
-
-        String sourceDirectoryPathName = String.format("%s%s", Constants.ROOT_FILE_STORAGE_PATH, Constants.SOURCE_DIRECTORY_PATH);
-        String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, "temp.sig");
-        FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
-        FileUtils.createFile(sigFilePathName, combineSignatureAndPublicKey(signature, containerInputInfo.getPublicKey()
-                .getEncoded()));
+        String sigFilePathName = createSignatureFile(combineSignatureAndPublicKey(signature,
+                containerInputInfo.getPublicKey()
+                .getEncoded()), "temp.sig");
 
         MultipartFile sigMultipartFile = FileUtils.mapFileToMultipart(sigFilePathName);
-
-        File sigFile = new File(sigFilePathName);
-        if (sigFile.exists()) {
-            FileUtils.deleteFile(sigFilePathName);
-        }
+        deleteFileIfExists(sigFilePathName);
 
         return containerService.createContainer(srcFile, sigMultipartFile, containerInputInfo);
     }
 
+    private String createSignatureFile(byte[] signature, String fileName) {
+        String sourceDirectoryPathName = String.format("%s%s", Constants.ROOT_FILE_STORAGE_PATH,
+                Constants.SOURCE_DIRECTORY_PATH);
+        String sigFilePathName = String.format("%s%s", sourceDirectoryPathName, fileName);
+        FileUtils.createDirectoryIfSheNotExist(sourceDirectoryPathName);
+        FileUtils.createFile(sigFilePathName, signature);
+        return sigFilePathName;
+    }
 
+    private void deleteFileIfExists(String filePath) {
+        File file = new File(filePath);
+        if (file.exists()) {
+            FileUtils.deleteFile(filePath);
+        }
+    }
 
     static String createCustomSimpleSignature(String pinCodeHash, String fileHash, String operationDate) {
         return String.format("%s.%s.%s", pinCodeHash, fileHash, operationDate);
@@ -115,21 +117,18 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
 
     @Override
     public PrivateKey getPrivateKey(byte[] privateKeyBytes, String pinCode, String algorithm) {
-        try {
-            byte[] decryptedPrivateKeyBytes = decryptPrivateKey(privateKeyBytes, pinCode, algorithm);
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decryptedPrivateKeyBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance(getKeyAlgorithm(algorithm));
-            return keyFactory.generatePrivate(keySpec);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
-            e.printStackTrace();
-            return null;
-        }
+        return getPrivateKey(privateKeyBytes, pinCode, algorithm, true);
     }
 
     @Override
     public PrivateKey getPrivateKey(byte[] privateKeyBytes, String algorithm) {
+        return getPrivateKey(privateKeyBytes, null, algorithm, false);
+    }
+
+    private PrivateKey getPrivateKey(byte[] privateKeyBytes, String pinCode, String algorithm, boolean usePinCode) {
         try {
-            byte[] decryptedPrivateKeyBytes = decryptPrivateKey(privateKeyBytes, algorithm);
+            byte[] decryptedPrivateKeyBytes = usePinCode ? decryptPrivateKey(privateKeyBytes, pinCode, algorithm) :
+                    decryptPrivateKey(privateKeyBytes, algorithm);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decryptedPrivateKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance(getKeyAlgorithm(algorithm));
             return keyFactory.generatePrivate(keySpec);
@@ -165,15 +164,14 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
     }
 
     public String getKeyAlgorithm(String signatureAlgorithm) {
-        String keyAlgorithm = signatureAlgorithm;
-        if (keyAlgorithm.endsWith("RSA")) {
-            keyAlgorithm = "RSA";
-        } else if (keyAlgorithm.endsWith("ECDSA")) {
-            keyAlgorithm = "EC";
-        } else if (keyAlgorithm.endsWith("DSA")) {
-            keyAlgorithm = "DSA";
+        if (signatureAlgorithm.endsWith("RSA")) {
+            return "RSA";
+        } else if (signatureAlgorithm.endsWith("ECDSA")) {
+            return "EC";
+        } else if (signatureAlgorithm.endsWith("DSA")) {
+            return "DSA";
         }
-        return keyAlgorithm;
+        return signatureAlgorithm;
     }
 
     private byte[] decryptPrivateKey(byte[] privateKeyBytes, String pinCode, String algorithm) throws InvalidKeyException {
