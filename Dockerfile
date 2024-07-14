@@ -1,11 +1,11 @@
-FROM nexus.essocode.ru/maven:3.9.6-eclipse-temurin-11 AS maven
+FROM nexus.essocode.ru/adoptopenjdk/maven-openjdk11 AS maven
 WORKDIR /app
 COPY settings.xml /usr/share/maven/conf/
-COPY ./ /app/
-
 RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -B
+COPY ./ /app/
 RUN --mount=type=cache,target=/root/.m2 mvn clean package -Dmaven.test.skip=true
-FROM nexus.essocode.ru/bellsoft/liberica-openjdk-alpine:11
+FROM nexus.essocode.ru/bellsoft/liberica-openjdk-alpine-musl:11
+RUN apk add --no-cache fontconfig ttf-dejavu
 ARG JAR_FILE=synapi-0.0.1-SNAPSHOT.jar
 ENV PROJECT_HOME /app 
 RUN mkdir -p /app \
