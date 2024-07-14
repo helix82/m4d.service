@@ -15,6 +15,8 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import su.opencode.digsigcik.synapi.dscp.DscpContainerException;
 
 import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -101,8 +103,9 @@ public class FileUtils {
             @NotNull String filename
     ) {
         try {
+            String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8.toString());
             var disposition = ContentDisposition.attachment()
-                    .filename(filename)
+                    .filename(encodedFilename)
                     .build();
             return ResponseEntity.ok()
                     .contentLength(resource.contentLength())
