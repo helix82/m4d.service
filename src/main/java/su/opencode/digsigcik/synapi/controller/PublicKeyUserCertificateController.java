@@ -247,7 +247,9 @@ public class PublicKeyUserCertificateController {
         for(String s : substr1) {
             if(s.length()>2){
                 if (s.startsWith("CN=")) {
-                    cnIssuer = s.substring(3);
+                    var sub = s.substring(3).replace("\\","");
+                        sub = sub.replace("\"", "");
+                    cnIssuer = sub.toLowerCase();
                 }
                 if (s.startsWith("O=")) {
                     oIssuer = s.substring(2);
@@ -298,9 +300,12 @@ public class PublicKeyUserCertificateController {
         TypeUserCertificateEnum typeCert = TypeUserCertificateEnum.NOT_QUALIFIED;
         CertificateData certificateData;
         try {
-            certificateData = certificateDataService.findCertificateDataByKeyId(keyIdIssuer);
+            certificateData = certificateDataService.findCertificateDataByKeyId(keyIdIssuer.toUpperCase());
             if(certificateData != null){
-                if(certificateData.getIssuedTo().equals(cnIssuer)){
+                var sub = certificateData.getIssuedTo().replace("\\","");
+                sub = sub.replace("\"", "");
+                var certIssuer = sub.toLowerCase();
+                if(certIssuer.equals(cnIssuer)){
                     typeCert = TypeUserCertificateEnum.QUALIFIED;
                 }
             }
