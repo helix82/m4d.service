@@ -107,6 +107,9 @@ public class PublicKeyUserCertificateController {
     @PostMapping(value = "save", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> savePublicKeyUserCertificate(@RequestBody PublicKeyUserCertificateDto publicKeyUserCertificateDto) {
         PublicKeyUserCertificate publicKeyUserCertificate = convertToEntity(publicKeyUserCertificateDto);
+        if(publicKeyUserCertificate.getStatementId() == null){
+            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_STATEMENT_ID_NOT_FOUND);
+        }
         var existsCert = service.countPublicKeyUserCertificateByImprint(publicKeyUserCertificate.getImprint());
         if(existsCert > 0){
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_UPLOAD_EXISTS);
