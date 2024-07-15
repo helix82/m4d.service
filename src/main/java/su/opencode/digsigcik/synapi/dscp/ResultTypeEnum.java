@@ -6,6 +6,7 @@ import org.springframework.http.MediaType;
 public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 
 	SIGN_CHECK("signCheck", MediaType.APPLICATION_JSON, ContainerFileEnum.LAST_SIGN_CHECK, "_sign_check", "json"),
+	SIGN_REPORT("signReport", MediaType.APPLICATION_PDF, ContainerFileEnum.LAST_SIGN_REPORT, "_sign_report", "pdf"),
 	CERT_DATA("certData", MediaType.APPLICATION_JSON, ContainerFileEnum.LAST_CERT_DATA, "_cert_data", "json"),
 	POA_CHECK("poaCheck", MediaType.APPLICATION_JSON, ContainerFileEnum.LAST_POA_CHECK, "_poa_check", "json"),
 	CHECK_HISTORY("checkHistory", MediaType.APPLICATION_JSON, ContainerFileEnum.CHECK_HISTORY, "_check_history", "json"),

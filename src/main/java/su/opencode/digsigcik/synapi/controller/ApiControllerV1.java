@@ -19,7 +19,7 @@ import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
-import su.opencode.digsigcik.synapi.dto.VerifyDto;
+import su.opencode.digsigcik.synapi.dto.ReportContainerDTO;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
@@ -31,9 +31,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -62,9 +61,13 @@ public class ApiControllerV1 {
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             @RequestPart("srcFile") MultipartFile sourceFile,
             @RequestPart("sigFile") MultipartFile sourceSig) {
-
+        ReportContainerDTO reportContainerDTO;
+        try {
+            reportContainerDTO = verificationService.verify(sourceFile,sourceSig);
+        } catch (IOException | URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
-
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
@@ -74,6 +77,8 @@ public class ApiControllerV1 {
                 .signatureAlgorithm("NOT IMPLEMENTED")
                 .containerType(SIMPLE_DETACHED)
                 .signatureType(UNQUALIFIED)
+                .signCheck(reportContainerDTO.getSignCheck())
+                .signReport(reportContainerDTO.getSignReport())
                 .build();
 
         var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
@@ -158,13 +163,11 @@ public class ApiControllerV1 {
 
 
     @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public Map<String, String> getContainerDataJson(@ModelAttribute ContainerDataDTOWithReverify containerDataDTOWithReverify) {
+    public ResponseEntity<?>  getContainerDataJson(@ModelAttribute ContainerDataDTOWithReverify containerDataDTOWithReverify) {
 
         if (containerDataDTOWithReverify.isReverify()) {
             try {
-                VerifyDto sesVerifyResponse = verificationService.verify(containerDataDTOWithReverify.getContainer());
-                return convertObjectToMap(sesVerifyResponse);
+                return new ResponseEntity<>(verificationService.verify(containerDataDTOWithReverify.getContainer()), HttpStatus.OK);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
@@ -182,7 +185,7 @@ public class ApiControllerV1 {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
 
-        return res;
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
 
@@ -245,8 +248,7 @@ public class ApiControllerV1 {
     }
 
     @PostMapping(value = "/get-container-part-json")
-    @ResponseBody
-    public Map<String, String> getContainerPartJson(
+    public ResponseEntity<?> getContainerPartJson(
             @RequestPart("container") MultipartFile container,
             ContainerSelectorCode selector,
             Boolean reverify) {
@@ -261,8 +263,7 @@ public class ApiControllerV1 {
 
         if (reverify) {
             try {
-                VerifyDto sesVerifyResponse = verificationService.verify(container);
-                return convertObjectToMap(sesVerifyResponse);
+                return new ResponseEntity<>(verificationService.verify(container), HttpStatus.OK);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
@@ -275,24 +276,7 @@ public class ApiControllerV1 {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
 
-        return res;
-    }
-
-    public static Map<String, String> convertObjectToMap(Object obj) {
-        Map<String, String> map = new HashMap<>();
-        Class<?> clazz = obj.getClass();
-        Field[] fields = clazz.getDeclaredFields();
-
-        for (Field field : fields) {
-            field.setAccessible(true);
-            try {
-                map.put(field.getName(), field.get(obj).toString());
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return map;
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
     private static ContainerSelector createContainerSelector(ContainerSelectorCode containerSelectorCode) {

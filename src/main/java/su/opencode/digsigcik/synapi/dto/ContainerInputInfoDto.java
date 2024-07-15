@@ -29,5 +29,7 @@ public class ContainerInputInfoDto {
     private String pinCodeHashAlgorithm;
     private PrivateKey privateKey;
     private PublicKey publicKey;
+    private byte[] signCheck;
+    private byte[] signReport;
 
 }

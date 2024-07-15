@@ -68,9 +68,12 @@ public class ContainerServiceImpl implements ContainerService {
         byte[] patronymic = containerInputInfo.getPatronymic().getBytes(StandardCharsets.UTF_8);
         byte[] timestamp = containerInputInfo.getTimestamp().toString().getBytes(StandardCharsets.UTF_8);
         byte[] signatureAlgorithm = containerInputInfo.getSignatureAlgorithm().getBytes(StandardCharsets.UTF_8);
-        byte[] getSignatureType = containerInputInfo.getSignatureType().getCode().getBytes(StandardCharsets.UTF_8);
+        byte[] signatureType = containerInputInfo.getSignatureType().getCode().getBytes(StandardCharsets.UTF_8);
         byte[] previewPdf = createPdfPreview(srcFile, containerInputInfo);
         byte[] previewPng = createPngPreview(srcFile, containerInputInfo);
+        byte[] signCheck = containerInputInfo.getSignCheck();
+        byte[] signReport = containerInputInfo.getSignReport();
+
 
         params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
         params.put(ResultTypeEnum.LOGIN, login);
@@ -79,10 +82,19 @@ public class ContainerServiceImpl implements ContainerService {
         params.put(ResultTypeEnum.PATRONYMIC, patronymic);
         params.put(ResultTypeEnum.TIMESTAMP, timestamp);
         params.put(ResultTypeEnum.SIGNATURE_ALGORITHM, signatureAlgorithm);
-        params.put(ResultTypeEnum.SIGNATURE_TYPE, getSignatureType);
-        params.put(ResultTypeEnum.PREVIEW_PDF, previewPdf);
-        params.put(ResultTypeEnum.PREVIEW_PNG, previewPng);
-
+        params.put(ResultTypeEnum.SIGNATURE_TYPE, signatureType);
+        if (previewPdf!=null) {
+            params.put(ResultTypeEnum.PREVIEW_PDF, previewPdf);
+        }
+        if (previewPng!=null) {
+            params.put(ResultTypeEnum.PREVIEW_PNG, previewPng);
+        }
+        if (signCheck!=null) {
+            params.put(ResultTypeEnum.SIGN_CHECK, signCheck);
+        }
+        if (signReport!=null) {
+            params.put(ResultTypeEnum.SIGN_REPORT, signReport);
+        }
         ContainerUtils.fillContainerByResult(container, params);
 
         byte[] containerBytes = ContainerUtils.containerContent(container);
@@ -102,6 +114,7 @@ public class ContainerServiceImpl implements ContainerService {
             throw new IllegalStateException("Cannot get file content", e);
         }
     }
+
 
     private byte[] createPdfPreview(MultipartFile srcFile, ContainerInputInfoDto containerInputInfo) {
         try {
