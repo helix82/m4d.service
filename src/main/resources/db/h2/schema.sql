@@ -247,7 +247,7 @@ CREATE MEMORY TABLE "PUBLIC"."USER_CERTIFICATE"(
                                                    "KEY_ID" CHARACTER VARYING(255),
                                                    "ORGANIZATION" CHARACTER VARYING(255),
                                                    "SERIAL_NUMBER" CHARACTER VARYING(255),
-                                                   "STATEMENT_ID" BOOLEAN,
+                                                   "STATEMENT_ID" BIGINT,
                                                    "TYPE" CHARACTER VARYING(255)
 );
 ALTER TABLE "PUBLIC"."USER_CERTIFICATE" ADD CONSTRAINT "PUBLIC"."CONSTRAINT_1" PRIMARY KEY("ID");
