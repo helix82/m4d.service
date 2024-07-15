@@ -91,7 +91,7 @@ public class PublicKeyUserCertificate {
     @JsonProperty("deleted")
     private boolean deleted;
 
-    @Column(name = "statement_id", columnDefinition = "BOOLEAN")
+    @Column(name = "statement_id")
     @Schema(example = "", required = false)
     @JsonProperty("statementId")
     private Long statementId;
