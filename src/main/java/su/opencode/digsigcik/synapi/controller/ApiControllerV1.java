@@ -95,7 +95,12 @@ public class ApiControllerV1 {
             HashAlgorithm hashAlgorithm,
             @RequestPart("srcFile") MultipartFile sourceFile,
             @RequestPart("sigFile") MultipartFile sourceSig) {
-
+        ReportContainerDTO reportContainerDTO;
+        try {
+            reportContainerDTO = verificationService.verify(sourceFile,sourceSig);
+        } catch (IOException | URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
@@ -107,6 +112,8 @@ public class ApiControllerV1 {
                 .signatureAlgorithm(signatureAlgorithm.getAlgorithmName())
                 .containerType(SIMPLE_DETACHED)
                 .signatureType(UNQUALIFIED)
+                .signCheck(reportContainerDTO.getSignCheck())
+                .signReport(reportContainerDTO.getSignReport())
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .build();
 
