@@ -167,7 +167,7 @@ VALUES
        (NULL, NULL, U&'\0424\0435\0434\0435\0440\0430\043b\044c\043d\044b\0439 \0446\0435\043d\0442\0440 \0438\043d\0444\043e\0440\043c\0430\0442\0438\0437\0430\0446\0438\0438', NULL, NULL, NULL, NULL);
 
 INSERT INTO "PUBLIC"."STATEMENT" (dt_create, login, status, type, verification_center_id) VALUES
-    ('2024-07-13T21:00:00Z', 'ivanov', '0', '0', '1');
+    ('2024-07-13T21:00:00Z', 'ivanov', '1', '0', '1');
 
 
 INSERT INTO "PUBLIC"."USER_CERTIFICATE" (certificate, date_end, date_end_private_key, date_start, date_start_private_key, deleted, fio, imprint, inn, issuer_who, key_id, organization, serial_number, statement_id, type) VALUES
