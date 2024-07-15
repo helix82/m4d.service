@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
@@ -64,8 +65,12 @@ public class ApiControllerV1 {
         ReportContainerDTO reportContainerDTO;
         try {
             reportContainerDTO = verificationService.verify(sourceFile,sourceSig);
-        } catch (IOException | URISyntaxException e) {
-            throw new RuntimeException(e);
+        } catch (ResourceAccessException | IOException | URISyntaxException e) {
+            log.warn("Не удалось подключиться к сервису верификации");
+            reportContainerDTO = ReportContainerDTO.builder()
+                    .signReport(null)
+                    .signCheck(null)
+                    .build();
         }
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
@@ -95,7 +100,16 @@ public class ApiControllerV1 {
             HashAlgorithm hashAlgorithm,
             @RequestPart("srcFile") MultipartFile sourceFile,
             @RequestPart("sigFile") MultipartFile sourceSig) {
-
+        ReportContainerDTO reportContainerDTO;
+        try {
+            reportContainerDTO = verificationService.verify(sourceFile,sourceSig);
+        } catch (ResourceAccessException | IOException | URISyntaxException e) {
+            log.warn("Не удалось подключиться к сервису верификации");
+            reportContainerDTO = ReportContainerDTO.builder()
+                    .signReport(null)
+                    .signCheck(null)
+                    .build();
+        }
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
 
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
@@ -107,6 +121,8 @@ public class ApiControllerV1 {
                 .signatureAlgorithm(signatureAlgorithm.getAlgorithmName())
                 .containerType(SIMPLE_DETACHED)
                 .signatureType(UNQUALIFIED)
+                .signCheck(reportContainerDTO.getSignCheck())
+                .signReport(reportContainerDTO.getSignReport())
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .build();
 

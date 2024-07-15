@@ -137,7 +137,19 @@ public class StampServiceImpl implements StampService {
         }
         return null;
     }
-
+    @Override
+    public byte[] doStampDocx(InputStream document, InputStream stamp, Integer offsetX, Integer offsetY, Integer scale) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            PdfOptions options = PdfOptions.create();
+            PdfConverter.getInstance().convert(new XWPFDocument(document), outputStream, options);
+            try (InputStream pdfStream = new ByteArrayInputStream(outputStream.toByteArray())) {
+                return doStampPdf(pdfStream, stamp, offsetX, offsetY, scale);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     @Override
     public byte[] doStampDocx(InputStream document, InputStream stamp, Integer page, Integer offsetX, Integer offsetY
             , Integer scale) {
@@ -150,6 +162,68 @@ public class StampServiceImpl implements StampService {
             return doStampPdf(pdfStream, stamp, page, offsetX, offsetY, scale);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public byte[] doStampPdf(InputStream document, InputStream stamp, Integer offsetX, Integer offsetY, Integer scale) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PdfReader reader = null;
+        PdfStamper stamper = null;
+
+        try {
+            reader = new PdfReader(document);
+            stamper = new PdfStamper(reader, baos, '\0', true);
+
+            Image img = Image.getInstance(ImageIO.read(stamp), null);
+            if (scale != null) {
+                img.scalePercent(scale);
+            }
+
+            float w = img.getScaledWidth();
+            float h = img.getScaledHeight();
+
+            int pagesCount = reader.getNumberOfPages();
+            for (int i = 1; i <= pagesCount; i++) {
+                Rectangle pagesize = reader.getPageSize(i);
+                int oX = (int) (pagesize.getWidth() - w);
+                int oY = 0;
+                if (offsetX != null) {
+                    oX = ((offsetX < 0) ? ((int) (pagesize.getWidth() - w)) : 0) + offsetX;
+                }
+                if (offsetY != null) {
+                    oY = ((offsetY < 0) ? ((int) (pagesize.getHeight() - h)) : 0) + offsetY;
+                }
+                Rectangle location = new Rectangle(oX, oY, oX + w, oY + h);
+
+                PdfAnnotation stampAnnot = PdfAnnotation.createStamp(stamper.getWriter(), location, null, "ITEXT");
+                stampAnnot.setFlags(PdfAnnotation.FLAGS_LOCKED | PdfAnnotation.FLAGS_READONLY | PdfAnnotation.FLAGS_PRINT);
+                img.setAbsolutePosition(0, 0);
+                PdfContentByte cb = new PdfContentByte(stamper.getWriter());
+                PdfAppearance app = cb.createAppearance(w, h);
+                app.addImage(img);
+                stampAnnot.setAppearance(PdfName.N, app);
+
+                stamper.addAnnotation(stampAnnot, i);
+            }
+
+            stamper.close();
+            reader.close();
+            return baos.toByteArray();
+        } catch (IOException | DocumentException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (document != null) {
+                    document.close();
+                }
+                if (stamp != null) {
+                    stamp.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return null;
     }
@@ -530,9 +604,9 @@ public class StampServiceImpl implements StampService {
 
     private byte[] getStampedPdf(MultipartFile sourceFile, InputStream stampStream) throws IOException {
         if (sourceFile.getOriginalFilename().endsWith(".docx")) {
-            return doStampDocx(sourceFile.getInputStream(), stampStream, 0, -36, 0, 30);
+            return doStampDocx(sourceFile.getInputStream(), stampStream,  -36, 0, 30);
         } else {
-            return doStampPdf(sourceFile.getInputStream(), stampStream, 0, -36, 0, 30);
+            return doStampPdf(sourceFile.getInputStream(), stampStream, -36, 0, 30);
         }
     }
     private String generateStampData(ContainerInputInfoDto containerInputInfo) {

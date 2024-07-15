@@ -69,8 +69,19 @@ public class ContainerServiceImpl implements ContainerService {
         byte[] timestamp = containerInputInfo.getTimestamp().toString().getBytes(StandardCharsets.UTF_8);
         byte[] signatureAlgorithm = containerInputInfo.getSignatureAlgorithm().getBytes(StandardCharsets.UTF_8);
         byte[] signatureType = containerInputInfo.getSignatureType().getCode().getBytes(StandardCharsets.UTF_8);
-        byte[] previewPdf = createPdfPreview(srcFile, containerInputInfo);
-        byte[] previewPng = createPngPreview(srcFile, containerInputInfo);
+        byte[] previewPdf = new byte[0];
+        try {
+            previewPdf = createPdfPreview(srcFile, containerInputInfo);
+        } catch (Exception e) {
+            log.warn("Не удалось создать pdf превью ");
+        }
+        byte[] previewPng = new byte[0];
+        try {
+            previewPng = createPngPreview(srcFile, containerInputInfo);
+        } catch (Exception e) {
+            log.warn("Не удалось создать png превью ");
+        }
+
         byte[] signCheck = containerInputInfo.getSignCheck();
         byte[] signReport = containerInputInfo.getSignReport();
 

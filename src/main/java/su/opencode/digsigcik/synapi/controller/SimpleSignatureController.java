@@ -1,5 +1,7 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.annotation.SesExceptionHandler;
 import su.opencode.digsigcik.synapi.config.WebConfigProperties;
-import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
+import java.io.IOException;
 import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
@@ -28,7 +30,7 @@ import su.opencode.digsigcik.synapi.service.SimpleSignatureService;
 import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -65,7 +67,7 @@ public class SimpleSignatureController {
             produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createCustomSimpleSignatureContainer(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                                          @RequestParam String pinCode,
-                                                                         @RequestPart("file") MultipartFile file) {
+                                                                         @RequestPart("file") MultipartFile file) throws JsonProcessingException {
         return createCustomSimpleSignatureContainerWithCustomHash(authToken, HashAlgorithm.SHA256, pinCode, file);
     }
 
@@ -80,21 +82,31 @@ public class SimpleSignatureController {
     public ResponseEntity<Resource> createCustomSimpleSignatureContainerWithCustomHash(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                                                        HashAlgorithm hashAlgorithm,
                                                                                        @RequestParam String pinCode,
-                                                                                       @RequestPart("file") MultipartFile file) {
+                                                                                       @RequestPart("file") MultipartFile file) throws JsonProcessingException {
         checkIfPinCodeAndFileEmpty(pinCode, file);
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
-
+        LocalDateTime timestamp = LocalDateTime.now();
+        ReportDTO reportDTO = ReportDTO.builder()
+                .Message("Простая подпись валидна")
+                .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                .build();
+        ObjectMapper objectMapper = new ObjectMapper();
+        String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
+        byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
+        byte[] signReport = new byte[0];
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
-                .timestamp(LocalDateTime.now())
+                .timestamp(timestamp)
                 .signatureAlgorithm("CUSTOM")
                 .containerType(SIMPLE_DETACHED)
                 .signatureType(SIMPLE)
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .pinCode(pinCode)
+                .signCheck(signCheck)
+                .signReport(signReport)
                 .build();
 
         var res = simpleSignatureService.createSimpleCustomSignatureResource(file, containerInputInfo);
@@ -114,7 +126,7 @@ public class SimpleSignatureController {
     @PostMapping(value = "/create-custom-ses")
     public ResponseEntity<?> createCustomSimpleSignature(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                          @RequestParam String pinCode,
-                                                         @RequestPart("file") MultipartFile file) {
+                                                         @RequestPart("file") MultipartFile file) throws JsonProcessingException {
 
         return createCustomSimpleSignatureWithCustomHash(authToken, HashAlgorithm.SHA256, pinCode, file);
     }
@@ -130,22 +142,32 @@ public class SimpleSignatureController {
     public ResponseEntity<?> createCustomSimpleSignatureWithCustomHash(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                                        HashAlgorithm hashAlgorithm,
                                                                        @RequestParam String pinCode,
-                                                                       @RequestPart("file") MultipartFile file) {
+                                                                       @RequestPart("file") MultipartFile file) throws JsonProcessingException {
 
         checkIfPinCodeAndFileEmpty(pinCode, file);
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
-
+        LocalDateTime timestamp = LocalDateTime.now();
+        ReportDTO reportDTO = ReportDTO.builder()
+                .Message("Простая подпись валидна")
+                .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                .build();
+        ObjectMapper objectMapper = new ObjectMapper();
+        String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
+        byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
+        byte[] signReport = new byte[0];
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
-                .timestamp(LocalDateTime.now())
+                .timestamp(timestamp)
                 .signatureAlgorithm("CUSTOM")
                 .containerType(SIMPLE_DETACHED)
                 .signatureType(SIMPLE)
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .pinCode(pinCode)
+                .signCheck(signCheck)
+                .signReport(signReport)
                 .build();
 
         var res = simpleSignatureService.createSimpleCustomSignatureResource(file, containerInputInfo);
@@ -203,13 +225,22 @@ public class SimpleSignatureController {
         if (keyEntity == null) {
             throw new RuntimeException("keyEntity not found");
         } else {
+            LocalDateTime timestamp = LocalDateTime.now();
+            ReportDTO reportDTO = ReportDTO.builder()
+                    .Message("Простая подпись валидна")
+                    .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                    .build();
+            ObjectMapper objectMapper = new ObjectMapper();
+            String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
+            byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
+            byte[] signReport = new byte[0];
             KeyPair keyPair = getKeyPairByEncryptionKeyEntity(keyEntity);
             ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                     .login(jwtPayloadDto.getPreferredUsername())
                     .firstname(jwtPayloadDto.getFirstName())
                     .lastname(jwtPayloadDto.getLastName())
                     .patronymic(jwtPayloadDto.getPatronymic())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(timestamp)
                     .signatureAlgorithm(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
@@ -218,6 +249,8 @@ public class SimpleSignatureController {
                     .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                     .privateKey(keyPair.getPrivate())
                     .publicKey(keyPair.getPublic())
+                    .signCheck(signCheck)
+                    .signReport(signReport)
                     .build();
 
             var res = simpleSignatureService.createSimpleSignatureResource(file, containerInputInfo);
@@ -264,13 +297,22 @@ public class SimpleSignatureController {
         if (keyEntity == null) {
             throw new BadRequestException("keyEntity not found");
         } else {
+            LocalDateTime timestamp = LocalDateTime.now();
+            ReportDTO reportDTO = ReportDTO.builder()
+                    .Message("Простая подпись валидна")
+                    .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                    .build();
+            ObjectMapper objectMapper = new ObjectMapper();
+            String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
+            byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
+            byte[] signReport = new byte[0];
             KeyPair keyPair = getKeyPairByEncryptionKeyEntity(keyEntity);
             ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                     .login(jwtPayloadDto.getPreferredUsername())
                     .firstname(jwtPayloadDto.getFirstName())
                     .lastname(jwtPayloadDto.getLastName())
                     .patronymic(jwtPayloadDto.getPatronymic())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(timestamp)
                     .signatureAlgorithm(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
@@ -279,6 +321,8 @@ public class SimpleSignatureController {
                     .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                     .privateKey(keyPair.getPrivate())
                     .publicKey(keyPair.getPublic())
+                    .signCheck(signCheck)
+                    .signReport(signReport)
                     .build();
 
             var res = simpleSignatureService.createSimpleSignatureResource(file, containerInputInfo);

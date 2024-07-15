@@ -7,10 +7,8 @@ import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public interface StampService {
 
@@ -78,11 +76,11 @@ public interface StampService {
     byte[] doStampDocx(InputStream document, String stampUrl, Integer page, Integer offsetX, Integer offsetY, Integer scale);
 
     byte[] doStampPdf(InputStream document, String stampUrl, Integer page, Integer offsetX, Integer offsetY, Integer scale);
-
+    byte[] doStampDocx(InputStream document, InputStream stamp, Integer offsetX, Integer offsetY, Integer scale);
     byte[] doStampDocx(InputStream document, InputStream stamp, Integer page, Integer offsetX, Integer offsetY, Integer scale);
 
     byte[] doStampPdf(InputStream document, InputStream stamp, Integer page, Integer offsetX, Integer offsetY, Integer scale);
-
+    byte[] doStampPdf(InputStream document, InputStream stamp, Integer offsetX, Integer offsetY, Integer scale);
     BufferedImage doPreview(byte[] pdfData, Integer page);
 
 

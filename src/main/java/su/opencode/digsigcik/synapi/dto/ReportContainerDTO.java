@@ -1,9 +1,9 @@
 package su.opencode.digsigcik.synapi.dto;
 
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 
-@Getter
+@Data
 @Builder
 public class ReportContainerDTO {
     private byte[] signCheck;
