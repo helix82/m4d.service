@@ -31,6 +31,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
@@ -51,8 +52,8 @@ public class RestTemplateClient {
     public static final String UPLOAD = "upload";
     public static final String UPLOAD_FILE = "upfile";
     public static final String TEXT_XML = "text/xml";
-    protected static final int CONNECT_TIMEOUT = 10000;
-    protected static final int READ_TIMEOUT = 300000;
+    protected static final int CONNECT_TIMEOUT = 5000;
+    protected static final int READ_TIMEOUT = 5000;
     private RestTemplate restTemplate;
     private HttpHeaders sessionHeaders = new HttpHeaders();
 
@@ -75,9 +76,13 @@ public class RestTemplateClient {
             Security.addProvider(new RevCheck());
             Security.addProvider(new Provider());
             SSLContext sslContext = SSLContext.getInstance("GostTLS");
-            KeyStore trustedKeyStore = KeyStore.getInstance("JKS");
+            String javaHome = System.getProperty("java.home");
+            String cacertsPath = Paths.get(javaHome, "lib", "security", "cacerts").toString();
+
+            KeyStore trustedKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            FileInputStream fis = new FileInputStream(cacertsPath);
+            trustedKeyStore.load(fis, "changeit".toCharArray());
             TrustManagerFactory tmf = TrustManagerFactory.getInstance("GostX509", "JTLS");
-            trustedKeyStore.load(new FileInputStream("store.jks"), "changeit".toCharArray());
             tmf.init(trustedKeyStore);
             sslContext.init(null, tmf.getTrustManagers(), null);
             SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
@@ -130,19 +135,19 @@ public class RestTemplateClient {
             throw new IOException("Failed to download file: " + response.getStatusCode());
         }
     }
-    public String requestString(@NonNull final RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest) throws IOException {
+    public String requestString(@NonNull final RestTemplateClientRequest restTemplateClientRequest) throws IOException {
         HttpEntity<?> requestEntity = populateRequest(restTemplateClientRequest);
         ResponseEntity<String> response = restTemplate.exchange(restTemplateClientRequest.getRequestUri(), restTemplateClientRequest.getHttpMethod(), requestEntity, String.class);
         return response.getBody();
     }
 
-    public JsonObject requestJson(@NonNull final RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest) throws IOException {
+    public JsonObject requestJson(@NonNull final RestTemplateClientRequest restTemplateClientRequest) throws IOException {
         HttpEntity<?> requestEntity = populateRequest(restTemplateClientRequest);
         ResponseEntity<String> response = restTemplate.exchange(restTemplateClientRequest.getRequestUri(), restTemplateClientRequest.getHttpMethod(), requestEntity, String.class);
         return new Gson().fromJson(response.getBody(), JsonObject.class);
     }
 
-    private HttpEntity<?> populateRequest(@NonNull RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest) throws IOException {
+    private HttpEntity<?> populateRequest(@NonNull RestTemplateClientRequest restTemplateClientRequest) throws IOException {
         HttpHeaders headers = new HttpHeaders();
         if (restTemplateClientRequest.getHttpHeader() != null) {
             headers.setAll(restTemplateClientRequest.getHttpHeader());

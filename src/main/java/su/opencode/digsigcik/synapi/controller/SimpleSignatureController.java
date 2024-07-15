@@ -2,18 +2,10 @@ package su.opencode.digsigcik.synapi.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.pdf.BaseFont;
-import com.lowagie.text.pdf.PdfDocument;
-import com.lowagie.text.pdf.PdfWriter;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.json.JSONObject;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.annotation.SesExceptionHandler;
 import su.opencode.digsigcik.synapi.config.WebConfigProperties;
-import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
+import java.io.IOException;
 import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
@@ -38,8 +30,6 @@ import su.opencode.digsigcik.synapi.service.SimpleSignatureService;
 import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -103,7 +93,7 @@ public class SimpleSignatureController {
         ObjectMapper objectMapper = new ObjectMapper();
         String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
         byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
-        byte[] signReport = convertTextToPdf(signCheckJsonString);
+        byte[] signReport = new byte[0];
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
@@ -136,7 +126,7 @@ public class SimpleSignatureController {
     @PostMapping(value = "/create-custom-ses")
     public ResponseEntity<?> createCustomSimpleSignature(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                          @RequestParam String pinCode,
-                                                         @RequestPart("file") MultipartFile file) {
+                                                         @RequestPart("file") MultipartFile file) throws JsonProcessingException {
 
         return createCustomSimpleSignatureWithCustomHash(authToken, HashAlgorithm.SHA256, pinCode, file);
     }
@@ -152,22 +142,32 @@ public class SimpleSignatureController {
     public ResponseEntity<?> createCustomSimpleSignatureWithCustomHash(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                                        HashAlgorithm hashAlgorithm,
                                                                        @RequestParam String pinCode,
-                                                                       @RequestPart("file") MultipartFile file) {
+                                                                       @RequestPart("file") MultipartFile file) throws JsonProcessingException {
 
         checkIfPinCodeAndFileEmpty(pinCode, file);
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
-
+        LocalDateTime timestamp = LocalDateTime.now();
+        ReportDTO reportDTO = ReportDTO.builder()
+                .Message("Простая подпись валидна")
+                .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                .build();
+        ObjectMapper objectMapper = new ObjectMapper();
+        String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
+        byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
+        byte[] signReport = new byte[0];
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
-                .timestamp(LocalDateTime.now())
+                .timestamp(timestamp)
                 .signatureAlgorithm("CUSTOM")
                 .containerType(SIMPLE_DETACHED)
                 .signatureType(SIMPLE)
                 .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .pinCode(pinCode)
+                .signCheck(signCheck)
+                .signReport(signReport)
                 .build();
 
         var res = simpleSignatureService.createSimpleCustomSignatureResource(file, containerInputInfo);
@@ -225,13 +225,22 @@ public class SimpleSignatureController {
         if (keyEntity == null) {
             throw new RuntimeException("keyEntity not found");
         } else {
+            LocalDateTime timestamp = LocalDateTime.now();
+            ReportDTO reportDTO = ReportDTO.builder()
+                    .Message("Простая подпись валидна")
+                    .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                    .build();
+            ObjectMapper objectMapper = new ObjectMapper();
+            String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
+            byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
+            byte[] signReport = new byte[0];
             KeyPair keyPair = getKeyPairByEncryptionKeyEntity(keyEntity);
             ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                     .login(jwtPayloadDto.getPreferredUsername())
                     .firstname(jwtPayloadDto.getFirstName())
                     .lastname(jwtPayloadDto.getLastName())
                     .patronymic(jwtPayloadDto.getPatronymic())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(timestamp)
                     .signatureAlgorithm(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
@@ -240,6 +249,8 @@ public class SimpleSignatureController {
                     .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                     .privateKey(keyPair.getPrivate())
                     .publicKey(keyPair.getPublic())
+                    .signCheck(signCheck)
+                    .signReport(signReport)
                     .build();
 
             var res = simpleSignatureService.createSimpleSignatureResource(file, containerInputInfo);
@@ -286,13 +297,22 @@ public class SimpleSignatureController {
         if (keyEntity == null) {
             throw new BadRequestException("keyEntity not found");
         } else {
+            LocalDateTime timestamp = LocalDateTime.now();
+            ReportDTO reportDTO = ReportDTO.builder()
+                    .Message("Простая подпись валидна")
+                    .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                    .build();
+            ObjectMapper objectMapper = new ObjectMapper();
+            String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
+            byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
+            byte[] signReport = new byte[0];
             KeyPair keyPair = getKeyPairByEncryptionKeyEntity(keyEntity);
             ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                     .login(jwtPayloadDto.getPreferredUsername())
                     .firstname(jwtPayloadDto.getFirstName())
                     .lastname(jwtPayloadDto.getLastName())
                     .patronymic(jwtPayloadDto.getPatronymic())
-                    .timestamp(LocalDateTime.now())
+                    .timestamp(timestamp)
                     .signatureAlgorithm(keyEntity
                             .getAlgorithm()
                             .getAlgorithmName())
@@ -301,6 +321,8 @@ public class SimpleSignatureController {
                     .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                     .privateKey(keyPair.getPrivate())
                     .publicKey(keyPair.getPublic())
+                    .signCheck(signCheck)
+                    .signReport(signReport)
                     .build();
 
             var res = simpleSignatureService.createSimpleSignatureResource(file, containerInputInfo);
@@ -392,22 +414,5 @@ public class SimpleSignatureController {
         return new KeyPair(publicKey, privateKey);
     }
 
-    private static byte[] convertTextToPdf (String text) {
-        try {
-            com.lowagie.text.Document document = new com.lowagie.text.Document();
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            PdfWriter.getInstance(document, byteArrayOutputStream);
-            document.open();
-            // Используем встроенный шрифт Helvetica с поддержкой кириллицы
-            Font font = FontFactory.getFont(FontFactory.HELVETICA, "Cp1251", true);
-
-            // Добавляем текст в документ с использованием шрифта
-            document.add(new Paragraph(text, font));
-            document.close();
-            return byteArrayOutputStream.toByteArray();
-        } catch (DocumentException e) {
-            throw new RuntimeException("failed to convert text to pdf");
-        }
-    }
 }
 
