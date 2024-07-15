@@ -95,7 +95,7 @@ public class PublicKeyUserCertificateController {
         if(publicKeyUserCertificate == null){
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NULL);
         }
-        return new ResponseEntity<>(convertToDto(publicKeyUserCertificate), HttpStatus.OK);
+        return new ResponseEntity<>(convertWithoutStatementToDto(publicKeyUserCertificate), HttpStatus.OK);
     }
 
 
@@ -192,6 +192,11 @@ public class PublicKeyUserCertificateController {
         PublicKeyUserCertificateDto publicKeyUserCertificateDto = modelMapper.map(publicKeyUserCertificate, PublicKeyUserCertificateDto.class);
         PublicKeyStatement publicKeyStatement = statementService.findByPublicKeyStatementId(publicKeyUserCertificate.getStatementId());
         publicKeyUserCertificateDto.setLogin(publicKeyStatement.getLogin());
+        return publicKeyUserCertificateDto;
+    }
+
+    private PublicKeyUserCertificateDto convertWithoutStatementToDto(PublicKeyUserCertificate publicKeyUserCertificate){
+        PublicKeyUserCertificateDto publicKeyUserCertificateDto = modelMapper.map(publicKeyUserCertificate, PublicKeyUserCertificateDto.class);
         return publicKeyUserCertificateDto;
     }
 
