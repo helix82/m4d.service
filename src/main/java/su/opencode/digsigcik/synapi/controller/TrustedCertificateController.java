@@ -148,7 +148,7 @@ public class TrustedCertificateController {
         trustedCertificate.setCertificate(new String(sourceFile.getBytes()));
         trustedCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
         trustedCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
-        var substr = certificate.getIssuerDN().getName().split(", ");
+        var substr = certificate.getSubjectDN().getName().split(", ");
         for(String s : substr) {
             if(s.length()>2){
                 var st = s.substring(0,3);
