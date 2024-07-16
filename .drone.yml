@@ -13,7 +13,7 @@ steps:
       mount:
         - /cache
 
-  - name: build
+  - name: build-synapi
     image: plugins/docker
     environment:
       DOCKER_BUILDKIT: 1
@@ -52,7 +52,7 @@ steps:
       mount:
         - /cache
 
-  - name: run
+  - name: run-synapi
     settings:
       insecure: true
     image: nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
@@ -65,19 +65,19 @@ steps:
       - cd /app
       - java -Dspring.profiles.active=k8s -jar synapi-0.0.1-SNAPSHOT.jar
     depends_on:
-      - build
+      - build-synapi
 
-  - name: check
+  - name: check-synapi
     image: curlimages/curl
     environment:
       SYNAPI_URL: http://synapi
     commands:
       - while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' $SYNAPI_URL/swagger-ui/index.html#)" != "200" ]]; do sleep 5; done
     depends_on:
-      - run
+      - run-synapi
       - postgres
 
-  - name: deploy
+  - name: deploy-synapi
     image: ghcr.io/bh90210/dron8s:latest
     settings:
       yaml: ./k8s-synapi-ocode-dev.yaml
@@ -85,7 +85,7 @@ steps:
       kubeconfig:
         from_secret: kubeconfig
     depends_on:
-      - check
+      - check-synapi
     when:
       branch:
         - develop
