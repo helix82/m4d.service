@@ -28,7 +28,7 @@ public class ChallengeController {
         return challengeStore.get(aToken);
     }
 
-    @PostMapping
+    @PostMapping("/.well-known/acme-challenge/")
     public void uploadChallenge (@RequestPart("tokenFile") MultipartFile tokenFile) {
         logger.info("Upload challenge for {}", tokenFile.getOriginalFilename());
         StringBuilder content = new StringBuilder();
