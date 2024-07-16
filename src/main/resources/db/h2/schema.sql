@@ -245,6 +245,7 @@ CREATE MEMORY TABLE "PUBLIC"."USER_CERTIFICATE"(
                                                    "INN" CHARACTER VARYING(255),
                                                    "ISSUER_WHO" CHARACTER VARYING,
                                                    "KEY_ID" CHARACTER VARYING(255),
+                                                   "LOGIN" CHARACTER VARYING(255),
                                                    "ORGANIZATION" CHARACTER VARYING(255),
                                                    "SERIAL_NUMBER" CHARACTER VARYING(255),
                                                    "STATEMENT_ID" BIGINT,
