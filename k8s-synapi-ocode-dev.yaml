@@ -98,7 +98,6 @@ spec:
                 name: synapi-ocode-dev-service
                 port:
                   number: 80
-
   tls:
     - hosts:
         - sp.essocode.ru
@@ -111,4 +110,4 @@ metadata:
   name: tcp-services
   namespace: ingress-nginx
 data:
-  5005: "default/synapi-ocode-dev-service:5005"
+  5005: "ocode-dev/synapi-ocode-dev-service:5005"

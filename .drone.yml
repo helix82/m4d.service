@@ -13,7 +13,7 @@ steps:
       mount:
         - /cache
 
-  - name: publish synapi
+  - name: build
     image: plugins/docker
     environment:
       DOCKER_BUILDKIT: 1
@@ -52,7 +52,7 @@ steps:
       mount:
         - /cache
 
-  - name: synapi
+  - name: run
     settings:
       insecure: true
     image: nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
@@ -67,7 +67,7 @@ steps:
     depends_on:
       - publish synapi
 
-  - name: curl synapi
+  - name: check
     image: curlimages/curl
     environment:
       SYNAPI_URL: http://synapi
