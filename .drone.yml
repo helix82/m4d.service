@@ -27,8 +27,6 @@ steps:
         from_secret: docker_pass
       config:
         from_secret: dockerconfig
-      build_args:
-        - BUILDKIT_INLINE_CACHE=1
 
   - name: synapi
     settings:
