@@ -17,16 +17,6 @@ spec:
     - name: http
       port: 80
       targetPort: 80
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: synapi-ocode-dev-debug-service
-spec:
-  selector:
-    app: synapi-ocode-dev
-  ports:
     - protocol: TCP
       port: 5005
       targetPort: 5005
@@ -108,26 +98,17 @@ spec:
                 name: synapi-ocode-dev-service
                 port:
                   number: 80
+
   tls:
     - hosts:
         - sp.essocode.ru
       secretName: synapi-ocode-dev-tls
 ---
 
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: synapi-ocode-dev-debug-ingress
-  namespace: ocode-dev
-spec:
-  rules:
-    - host: your-app.example.com
-      http:
-        paths:
-          - path: /debug
-            pathType: Prefix
-            backend:
-              service:
-                name: java-debug-service
-                port:
-                  number: 5005
+  name: tcp-services
+  namespace: ingress-nginx
+data:
+  5005: "default/synapi-ocode-dev-service:5005"
