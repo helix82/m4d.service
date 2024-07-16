@@ -5,8 +5,6 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
@@ -29,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static su.opencode.digsigcik.synapi.util.Constants.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @RestController
@@ -107,28 +104,6 @@ public class PublicKeyVerificationCenterController {
             throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL);
         }
         return new ResponseEntity<>(convertToOutputDto(response), HttpStatus.OK);
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Data
-    public static class PublicKeyVerificationCenterDTO {
-        private String name;
-        private String id;
-        private MultipartFile templateRelease;
-        private MultipartFile templateRecall;
-        boolean templateReleaseEmpty = false;
-        boolean templateRecallEmpty = false;
-
-        public void setTemplateRelease(String s) {
-            templateReleaseEmpty = true;
-            log.debug("Detected empty templateRelease...");
-        }
-
-        public void setTemplateRecall(String s) {
-            templateRecallEmpty = true;
-            log.debug("Detected empty templateRecall...");
-        }
     }
 
     @Operation(summary = CONTROLLER_PUBLIC_KEY_VERIFICATION_CENTER_UPDATE_SUMMARY, description =
