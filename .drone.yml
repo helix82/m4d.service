@@ -77,7 +77,7 @@ steps:
       - run
       - postgres
 
-  - name: deploy dev
+  - name: deploy
     image: ghcr.io/bh90210/dron8s:latest
     settings:
       yaml: ./k8s-synapi-ocode-dev.yaml

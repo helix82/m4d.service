@@ -98,6 +98,7 @@ spec:
                 name: synapi-ocode-dev-service
                 port:
                   number: 80
+
   tls:
     - hosts:
         - sp.essocode.ru
