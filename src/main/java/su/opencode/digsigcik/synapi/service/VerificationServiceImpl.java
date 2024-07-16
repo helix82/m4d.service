@@ -367,7 +367,6 @@ public class VerificationServiceImpl implements VerificationService {
         return selector;
     }
 
-
     public String getKeyAlgorithm(String signatureAlgorithm) {
         String keyAlgorithm = signatureAlgorithm;
         if (keyAlgorithm.endsWith("RSA")) {
