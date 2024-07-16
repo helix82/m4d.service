@@ -17,10 +17,9 @@ spec:
     - name: http
       port: 80
       targetPort: 80
-    - name: "5005"
+    - protocol: TCP
       port: 5005
       targetPort: 5005
-
 ---
 
 apiVersion: apps/v1
@@ -99,7 +98,17 @@ spec:
                 name: synapi-ocode-dev-service
                 port:
                   number: 80
+
   tls:
     - hosts:
         - sp.essocode.ru
       secretName: synapi-ocode-dev-tls
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tcp-services
+  namespace: ocode-dev
+data:
+  5005: "ocode-dev/synapi-ocode-dev-service:5005"
