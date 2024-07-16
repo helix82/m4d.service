@@ -381,6 +381,7 @@ public class AcmeServiceImpl implements AcmeService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
         httpResponse.setContentType ("text/plain");
         httpResponse.setHeader ("Content-Disposition", "attachment; filename="+order.getChallengeToken());
+        challengeStore.put(order.getChallengeToken(), order.getChallengeContent());
         return new ResponseEntity<>(order.getChallengeContent(), HttpStatus.OK);
     }
 
