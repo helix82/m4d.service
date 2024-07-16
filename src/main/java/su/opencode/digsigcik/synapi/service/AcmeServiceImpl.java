@@ -363,6 +363,7 @@ public class AcmeServiceImpl implements AcmeService {
                 acmeOrder.setChallengeContent(challenge.getAuthorization());
                 acmeOrder.setData(data);
                 orderRepository.save(acmeOrder);
+                challengeStore.put(challenge.getToken(), challenge.getAuthorization());
                 return new ResponseEntity<>(orderInfo(acmeOrder), HttpStatus.OK);
             } catch (AcmeException e) {
                 ret.put("error", "acme exception");
@@ -381,7 +382,6 @@ public class AcmeServiceImpl implements AcmeService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
         httpResponse.setContentType ("text/plain");
         httpResponse.setHeader ("Content-Disposition", "attachment; filename="+order.getChallengeToken());
-        challengeStore.put(order.getChallengeToken(), order.getChallengeContent());
         return new ResponseEntity<>(order.getChallengeContent(), HttpStatus.OK);
     }
 
