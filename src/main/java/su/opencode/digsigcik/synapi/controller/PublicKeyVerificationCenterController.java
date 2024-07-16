@@ -138,47 +138,60 @@ public class PublicKeyVerificationCenterController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping(value = "update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updatePublicKeyVerificationCenter(@ModelAttribute PublicKeyVerificationCenterDTO publicKeyVerificationCenterDTO
+    public ResponseEntity<?> updatePublicKeyVerificationCenter(@RequestParam @Parameter(name = "id",
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION, example = "1") String id,
+                                                               @RequestParam(required = false) @Parameter(name = "name",
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_NAME_DESCRIPTION, example = "1") String name,
+                                                               @RequestParam(required = false) @Parameter(name = "templateRelease",
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_TEMPLATE_RELEASE_DESCRIPTION, example = "1") MultipartFile templateRelease,
+                                                               @RequestParam(required = false) @Parameter(name = "templateRecall",
+            description = PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_TEMPLATE_RECALL_DESCRIPTION, example = "1") MultipartFile templateRecall
     ) throws IOException {
-        //TODO @helix82 проблема: не работает обновление/удаление файлов
-        String name = publicKeyVerificationCenterDTO.getName();
-        String id = publicKeyVerificationCenterDTO.getId();
-        MultipartFile templateRelease = publicKeyVerificationCenterDTO.getTemplateRelease();
-        MultipartFile templateRecall = publicKeyVerificationCenterDTO.getTemplateRecall();
-        boolean isTemplateReleaseEmpty = publicKeyVerificationCenterDTO.isTemplateReleaseEmpty();
-        boolean isTemplateRecallEmpty = publicKeyVerificationCenterDTO.isTemplateRecallEmpty();
+
+        if(id != null) {
+            if (id.isEmpty()) {
+                throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_ID_IS_NULL);
+            }
+        } else {
+            throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_ID_IS_NULL);
+        }
 
         PublicKeyVerificationCenter publicKeyVerificationCenter =
                 service.findByPublicKeyVerificationCenterId(Long.parseLong(id));
-        if (name != null) {
-            if (!name.isEmpty()) {
-                publicKeyVerificationCenter.setName(name);
-            } else {
+        if(name != null) {
+            if (name.isEmpty()) {
                 throw new BadRequestException(PUBLIC_KEY_VERIFICATION_CENTER_NAME_IS_NULL);
+            } else {
+                publicKeyVerificationCenter.setName(name);
             }
         }
-        if (isTemplateReleaseEmpty) {
-            publicKeyVerificationCenter.setTemplateRelease(null);
-            publicKeyVerificationCenter.setContentTypeRelease(null);
-            publicKeyVerificationCenter.setOriginalNameRelease(null);
+
+        if(templateRelease != null) {
+            if (templateRelease.isEmpty()) {
+                publicKeyVerificationCenter.setTemplateRelease(null);
+                publicKeyVerificationCenter.setContentTypeRelease(null);
+                publicKeyVerificationCenter.setOriginalNameRelease(null);
+            } else if (!templateRelease.isEmpty()) {
+                byte[] bytes = templateRelease.getBytes();
+                publicKeyVerificationCenter.setTemplateRelease(bytes);
+                publicKeyVerificationCenter.setContentTypeRelease(templateRelease.getContentType());
+                publicKeyVerificationCenter.setOriginalNameRelease(templateRelease.getOriginalFilename());
+            }
         }
-        if (templateRelease != null) {
-            byte[] bytes = templateRelease.getBytes();
-            publicKeyVerificationCenter.setTemplateRelease(bytes);
-            publicKeyVerificationCenter.setContentTypeRelease(templateRelease.getContentType());
-            publicKeyVerificationCenter.setOriginalNameRelease(templateRelease.getOriginalFilename());
+
+        if(templateRecall != null) {
+            if (templateRecall.isEmpty()) {
+                publicKeyVerificationCenter.setTemplateRecall(null);
+                publicKeyVerificationCenter.setContentTypeRecall(null);
+                publicKeyVerificationCenter.setOriginalNameRecall(null);
+            } else if (!templateRecall.isEmpty()) {
+                byte[] bytes1 = templateRecall.getBytes();
+                publicKeyVerificationCenter.setTemplateRecall(bytes1);
+                publicKeyVerificationCenter.setContentTypeRecall(templateRecall.getContentType());
+                publicKeyVerificationCenter.setOriginalNameRecall(templateRecall.getOriginalFilename());
+            }
         }
-        if (isTemplateRecallEmpty) {
-            publicKeyVerificationCenter.setTemplateRecall(null);
-            publicKeyVerificationCenter.setContentTypeRecall(null);
-            publicKeyVerificationCenter.setOriginalNameRecall(null);
-        }
-        if (templateRecall != null) {
-            byte[] bytes1 = templateRecall.getBytes();
-            publicKeyVerificationCenter.setTemplateRecall(bytes1);
-            publicKeyVerificationCenter.setContentTypeRecall(templateRecall.getContentType());
-            publicKeyVerificationCenter.setOriginalNameRecall(templateRecall.getOriginalFilename());
-        }
+
         PublicKeyVerificationCenter response;
         try {
             response = service.updatePublicKeyVerificationCenter(publicKeyVerificationCenter);

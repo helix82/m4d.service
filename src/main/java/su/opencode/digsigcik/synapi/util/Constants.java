@@ -103,7 +103,10 @@ public interface Constants {
     String PARAMETER_REPRESENTATIVE_PASSPORT_ID_DESCRIPTION = "ИД паспорта представителя";
     String PARAMETER_REVOKED_CERTIFICATE_ID_DESCRIPTION = "ИД отозванного сертификата";
     String PARAMETER_TRUSTED_CERTIFICATE_ID_DESCRIPTION = "ИД доверенного сертификата";
-    String PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION = "ИД шаблона заявления";
+    String PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_ID_DESCRIPTION = "ИД УЦ";
+    String PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_NAME_DESCRIPTION = "Наименование УЦ";
+    String PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_TEMPLATE_RELEASE_DESCRIPTION = "Шаблон заявления УЦ на выпуск";
+    String PARAMETER_PUBLIC_KEY_VERIFICATION_CENTER_TEMPLATE_RECALL_DESCRIPTION = "Шаблон заявления УЦ на отзыв";
     String PARAMETER_PUBLIC_KEY_USER_CERTIFICATE_ID_DESCRIPTION = "ИД сертификата пользователя";
     String PARAMETER_PUBLIC_KEY_STATEMENT_ID_DESCRIPTION = "ИД заявления";
 
@@ -291,6 +294,7 @@ public interface Constants {
     String CA_IS_NULL = String.format("CA is %s!", NULL);
     String PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL = String.format("Verification center is %s!", NULL);
     String PUBLIC_KEY_VERIFICATION_CENTER_NAME_IS_NULL = "Наименование УЦ не может быть пустым";
+    String PUBLIC_KEY_VERIFICATION_CENTER_ID_IS_NULL = "ИД УЦ не передан или пустой";
     String PUBLIC_KEY_STATEMENT_IS_NULL = String.format("Statement is %s!", NULL);
     String PUBLIC_KEY_USER_CERTIFICATE_IS_NULL = String.format("User certificate is %s!", NULL);
     String PUBLIC_KEY_USER_CERTIFICATE_IS_NOT = "Не найден ИД ключа УЦ, не могу определить тип сертификата";
