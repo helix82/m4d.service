@@ -107,9 +107,6 @@ public class PublicKeyUserCertificateController {
     @PostMapping(value = "save", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> savePublicKeyUserCertificate(@RequestBody PublicKeyUserCertificateDto publicKeyUserCertificateDto) {
         PublicKeyUserCertificate publicKeyUserCertificate = convertToEntity(publicKeyUserCertificateDto);
-        if(publicKeyUserCertificate.getStatementId() == null){
-            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_STATEMENT_ID_NOT_FOUND);
-        }
         var existsCert = service.countPublicKeyUserCertificateByImprint(publicKeyUserCertificate.getImprint());
         if(existsCert > 0){
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_UPLOAD_EXISTS);
@@ -117,17 +114,19 @@ public class PublicKeyUserCertificateController {
         PublicKeyUserCertificate response;
         try {
             response = service.savePublicKeyUserCertificate(publicKeyUserCertificate);
-            PublicKeyStatement pkStatement;
-            try {
-                pkStatement = statementService.findByPublicKeyStatementId(response.getStatementId());
-            } catch (ConstraintViolationException e) {
-                throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
-            }
-            pkStatement.setStatus(StatusStatementEnum.PROCESSED);
-            try {
-                statementService.updatePublicKeyStatement(pkStatement);
-            } catch (ConstraintViolationException e) {
-                throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+            if(publicKeyUserCertificate.getStatementId() != null) {
+                PublicKeyStatement pkStatement;
+                try {
+                    pkStatement = statementService.findByPublicKeyStatementId(response.getStatementId());
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+                }
+                pkStatement.setStatus(StatusStatementEnum.PROCESSED);
+                try {
+                    statementService.updatePublicKeyStatement(pkStatement);
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+                }
             }
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NULL);
@@ -193,8 +192,13 @@ public class PublicKeyUserCertificateController {
 
     private PublicKeyUserCertificateDto convertToDto(PublicKeyUserCertificate publicKeyUserCertificate){
         PublicKeyUserCertificateDto publicKeyUserCertificateDto = modelMapper.map(publicKeyUserCertificate, PublicKeyUserCertificateDto.class);
-        PublicKeyStatement publicKeyStatement = statementService.findByPublicKeyStatementId(publicKeyUserCertificate.getStatementId());
-        publicKeyUserCertificateDto.setLogin(publicKeyStatement.getLogin());
+        if(publicKeyUserCertificate.getStatementId() != null){
+            PublicKeyStatement publicKeyStatement = statementService.findByPublicKeyStatementId(publicKeyUserCertificate.getStatementId());
+            publicKeyUserCertificateDto.setLogin(publicKeyStatement.getLogin());
+        }
+        if(publicKeyUserCertificateDto.getLogin() == null){
+            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_STATEMENT_ID_AND_LOGIN_NOT_FOUND);
+        }
         return publicKeyUserCertificateDto;
     }
 
@@ -205,6 +209,13 @@ public class PublicKeyUserCertificateController {
 
     private PublicKeyUserCertificate convertToEntity(PublicKeyUserCertificateDto publicKeyUserCertificateDto){
         PublicKeyUserCertificate publicKeyUserCertificate = modelMapper.map(publicKeyUserCertificateDto, PublicKeyUserCertificate.class);
+        if(publicKeyUserCertificateDto.getStatementId() != null){
+            PublicKeyStatement publicKeyStatement = statementService.findByPublicKeyStatementId(publicKeyUserCertificateDto.getStatementId());
+            publicKeyUserCertificate.setLogin(publicKeyStatement.getLogin());
+        }
+        if(publicKeyUserCertificate.getLogin() == null){
+            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_STATEMENT_ID_AND_LOGIN_NOT_FOUND);
+        }
         return publicKeyUserCertificate;
     }
 
