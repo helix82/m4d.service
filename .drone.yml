@@ -3,6 +3,15 @@ name: default
 type: docker
 
 steps:
+  - name: restore-cache
+    image: drillster/drone-volume-cache
+    volumes:
+      - name: cache
+        path: /cache
+    settings:
+      restore: true
+      mount:
+        - /cache
 
   - name: publish synapi
     image: plugins/docker
@@ -27,6 +36,21 @@ steps:
         from_secret: docker_pass
       config:
         from_secret: dockerconfig
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: cache
+        path: /cache
+
+  - name: rebuild-cache
+    image: drillster/drone-volume-cache
+    volumes:
+      - name: cache
+        path: /cache
+    settings:
+      rebuild: true
+      mount:
+        - /cache
 
   - name: synapi
     settings:
@@ -104,4 +128,9 @@ services:
 volumes:
   - name: out
     temp: {}
-
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock
+  - name: cache
+    host:
+      path: /tmp/.buildx-cache
