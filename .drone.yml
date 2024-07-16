@@ -52,7 +52,7 @@ steps:
       mount:
         - /cache
 
-  - name: run
+  - name: synapi
     settings:
       insecure: true
     image: nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
@@ -70,11 +70,11 @@ steps:
   - name: check
     image: curlimages/curl
     environment:
-      SYNAPI_URL: http://run
+      SYNAPI_URL: http://synapi
     commands:
-      - curl -s -f -o /dev/null $SYNAPI_URL/swagger-ui/index.html# || exit 1
+        - curl -s -f -o /dev/null $SYNAPI_URL/swagger-ui/index.html# || exit 1
     depends_on:
-      - run
+      - synapi
       - postgres
 
   - name: deploy
