@@ -18,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
+import su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum;
+import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
 import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.dto.ReportContainerDTO;
@@ -61,45 +63,11 @@ public class ApiControllerV1 {
     public ResponseEntity<Resource> createPdfContainer(
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             @RequestPart("srcFile") MultipartFile sourceFile,
-            @RequestPart("sigFile") MultipartFile sourceSig) {
-        ReportContainerDTO reportContainerDTO;
-        try {
-            reportContainerDTO = verificationService.verify(sourceFile,sourceSig);
-        } catch (ResourceAccessException | IOException | URISyntaxException e) {
-            log.warn("Не удалось подключиться к сервису верификации");
-            reportContainerDTO = ReportContainerDTO.builder()
-                    .signReport(null)
-                    .signCheck(null)
-                    .build();
-        }
-        JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
-        ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
-                .login(jwtPayloadDto.getPreferredUsername())
-                .firstname(jwtPayloadDto.getFirstName())
-                .lastname(jwtPayloadDto.getLastName())
-                .patronymic(jwtPayloadDto.getPatronymic())
-                .timestamp(LocalDateTime.now())
-                .signatureAlgorithm("NOT IMPLEMENTED")
-                .containerType(SIMPLE_DETACHED)
-                .signatureType(UNQUALIFIED)
-                .signCheck(reportContainerDTO.getSignCheck())
-                .signReport(reportContainerDTO.getSignReport())
-                .build();
-
-        var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
-
-        return (res != null) ? resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME))
-                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-    }
-
-
-    @PostMapping(value = "/create-pdf-container-custom", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<Resource> createPdfContainerCustom(
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
+            @RequestPart("sigFile") MultipartFile sourceSig,
+            ContainerTypeEnum containerType,
+            SignatureTypeEnum signatureType,
             SignatureAlgorithm signatureAlgorithm,
-            HashAlgorithm hashAlgorithm,
-            @RequestPart("srcFile") MultipartFile sourceFile,
-            @RequestPart("sigFile") MultipartFile sourceSig) {
+            HashAlgorithm hashAlgorithm) {
         ReportContainerDTO reportContainerDTO;
         try {
             reportContainerDTO = verificationService.verify(sourceFile,sourceSig);
@@ -111,19 +79,18 @@ public class ApiControllerV1 {
                     .build();
         }
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
-
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
-                .signatureAlgorithm(signatureAlgorithm.getAlgorithmName())
-                .containerType(SIMPLE_DETACHED)
-                .signatureType(UNQUALIFIED)
+                .signatureAlgorithm(signatureAlgorithm != null ? signatureAlgorithm.getAlgorithmName(): "NOT IMPLEMENTED")
+                .hashAlgorithm(hashAlgorithm != null ? hashAlgorithm.getAlgorithmName():HashAlgorithm.SHA256.getAlgorithmName())
+                .containerType(containerType != null ? containerType:SIMPLE_DETACHED)
+                .signatureType(signatureType != null ? signatureType:UNQUALIFIED)
                 .signCheck(reportContainerDTO.getSignCheck())
                 .signReport(reportContainerDTO.getSignReport())
-                .hashAlgorithm(hashAlgorithm.getAlgorithmName())
                 .build();
 
         var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
