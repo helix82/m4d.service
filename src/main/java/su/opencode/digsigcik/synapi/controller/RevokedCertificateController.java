@@ -159,7 +159,7 @@ public class RevokedCertificateController {
                 revokedCertificate.setIssuedTo(s.substring(3));
             }
         }
-
+        revokedCertificate.setOriginalFilename(sourceFile.getOriginalFilename());
         revokedCertificate.setDateEnd(convertRFC1123ToIsoInstant(crl.getNextUpdate().toString()));
         revokedCertificate.setDateStart(convertRFC1123ToIsoInstant(crl.getThisUpdate().toString()));
 

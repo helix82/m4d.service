@@ -26,6 +26,8 @@ public class TrustedCertificate {
     private String dateEnd;
     @Column(name = "certificate", columnDefinition = "Text")
     private String certificate;
+    @Column(name = "original_filename")
+    private String originalFilename;
     @Column(name = "type_input")
     private String typeInput;
     @Column(name = "accreditation_status")

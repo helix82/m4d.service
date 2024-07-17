@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.cryptacular.util.CertUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,8 @@ import su.opencode.digsigcik.synapi.service.TrustedCertificateService;
 
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -138,7 +141,19 @@ public class TrustedCertificateController {
         if(!Objects.equals(extension, "cer")){
             throw new BadRequestException(TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT);
         }
-        X509Certificate certificate = CertUtil.decodeCertificate(sourceFile.getBytes());
+        String content = new String(sourceFile.getBytes(), StandardCharsets.UTF_8);
+        X509Certificate certificate;
+        if(!content.startsWith("-----BEGIN CERTIFICATE-----")){
+            String certHeader = "-----BEGIN CERTIFICATE-----\r\n";
+            String certFooter = "\r\n-----END CERTIFICATE-----";
+            String LINE_SEPARATOR = System.lineSeparator();
+            byte[] certBytes = sourceFile.getBytes();
+            String cert = certHeader + LINE_SEPARATOR + new String(certBytes) + LINE_SEPARATOR + certFooter;
+            InputStream stream = IOUtils.toInputStream(cert);
+            certificate = CertUtil.decodeCertificate(stream.readAllBytes());
+        } else {
+            certificate = CertUtil.decodeCertificate(sourceFile.getInputStream().readAllBytes());
+        }
         TrustedCertificate trustedCertificate = new TrustedCertificate();
         trustedCertificate.setSerialNumber(certificate.getSerialNumber().toString());
         trustedCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
@@ -146,6 +161,7 @@ public class TrustedCertificateController {
         trustedCertificate.setTypeInput(CONTROLLER_CA_TYPE_INPUT_AUTO);
         trustedCertificate.setAccreditationStatus(AccreditationStatusEnum.VALID.name());
         trustedCertificate.setCertificate(new String(sourceFile.getBytes()));
+        trustedCertificate.setOriginalFilename(sourceFile.getOriginalFilename());
         trustedCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
         trustedCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
         var substr = certificate.getSubjectDN().getName().split(", ");

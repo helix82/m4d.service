@@ -91,6 +91,11 @@ public class PublicKeyUserCertificate {
     @JsonProperty("certificate")
     private String certificate;
 
+    @Column(name = "original_filename")
+    @Schema(example = "", required = false)
+    @JsonProperty("originalFilename")
+    private String originalFilename;
+
     @Column(name = "deleted", columnDefinition = "BOOLEAN")
     @Schema(example = "", required = false)
     @JsonProperty("deleted")
