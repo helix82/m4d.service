@@ -124,13 +124,13 @@ public class MrpaRegistryController {
     @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id) {
-        MrpaRegistryWithFioDTO mrpaRegistryFind;
+        MrpaRegistryFullDTO mrpaRegistryFind;
         try {
-            mrpaRegistryFind = mrpaRegistryService.findByMrpaRegistryId(id);
+            mrpaRegistryFind = mrpaRegistryService.findMrpaRegistryFullById(id);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        mrpaRegistryFind.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryFind.getId());
+        mrpaRegistryFind.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistryFind.getId());
         return new ResponseEntity<>(mrpaRegistryFind, HttpStatus.OK);
     }
 
