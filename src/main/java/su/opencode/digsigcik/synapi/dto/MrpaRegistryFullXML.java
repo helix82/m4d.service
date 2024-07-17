@@ -4,6 +4,7 @@ import lombok.Data;
 
 import javax.xml.bind.annotation.*;
 import java.util.List;
+
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @XmlRootElement(name = XML_ELEMENT_MCHD)
@@ -248,20 +249,30 @@ public class MrpaRegistryFullXML {
             }
 
             @XmlElement(name = XML_ELEMENT_CREDENTIAL)
-            public Credential credential;
+            public Credentials credential;
 
             @XmlRootElement
             @XmlAccessorType(XmlAccessType.FIELD)
             @Data
-            public static class Credential{
+            public static class Credentials{
                 @XmlAttribute(name = XML_ATTRIBUTE_CREDENTIAL_TYPE)
                 private String typeCredential; //0
                 @XmlAttribute(name = XML_ATTRIBUTE_CREDENTIAL_IMPL)
                 private String implCredential; //1
                 @XmlAttribute(name = XML_ATTRIBUTE_CREDENTIAL_LOSS)
                 private String lossCredential; //1
-                @XmlElement(name = XML_ELEMENT_CREDENTIAL_NAME)
-                public List<String> name;
+                @XmlElement(name = XML_ELEMENT_CREDENTIAL_LIST)
+                public List<Credential> credentials;
+
+                @XmlRootElement
+                @XmlAccessorType(XmlAccessType.FIELD)
+                @Data
+                public static class Credential{
+                    @XmlAttribute(name = XML_ATTRIBUTE_CREDENTIAL_CODE)
+                    private String code;
+                    @XmlAttribute(name = XML_ATTRIBUTE_CREDENTIAL_NAME)
+                    private String name;
+                }
             }
         }
     }

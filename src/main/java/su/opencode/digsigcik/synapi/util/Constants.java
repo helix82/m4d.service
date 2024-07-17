@@ -87,7 +87,9 @@ public interface Constants {
     String XML_ATTRIBUTE_CREDENTIAL_TYPE = "ТипПолн";
     String XML_ATTRIBUTE_CREDENTIAL_IMPL = "ПрСовмПолн";
     String XML_ATTRIBUTE_CREDENTIAL_LOSS = "ПрУтрПолн";
-    String XML_ELEMENT_CREDENTIAL_NAME = "ТекстПолн";
+    String XML_ELEMENT_CREDENTIAL_LIST = "МашПолн";
+    String XML_ATTRIBUTE_CREDENTIAL_CODE = "КодПолн";
+    String XML_ATTRIBUTE_CREDENTIAL_NAME = "НаимПолн";
 
     String SCHEMA_CA_TYPE_INPUT_EXAMPLE = "Вручную";
     String SCHEMA_CA_ACCREDITATION_STATUS_EXAMPLE = "Действует";
@@ -282,6 +284,7 @@ public interface Constants {
     String TOKEN_ERROR_MESSAGE = String.format("Token %s", NULL_OR_EMPTY_ERROR_MESSAGE);
     String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
     String MRPA_REGISTRY_CREDENTIAL_IS_NULL = String.format("Assign Credential to Mrpa registry is %s!", NULL);
+    String MRPA_REGISTRY_XML_IS_NULL = "XML МЧД не найден";
     String CREDENTIAL_IS_NULL = String.format("Credential is %s!", NULL);
     String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
     String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);

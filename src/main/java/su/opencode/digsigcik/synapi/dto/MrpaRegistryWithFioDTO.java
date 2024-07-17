@@ -39,8 +39,11 @@ public class MrpaRegistryWithFioDTO {
     @JsonProperty("sigPath")
     private String sigPath;
 
-    @JsonProperty("mrpaXmlPath")
-    private String mrpaXmlPath;
+    @JsonProperty("mrpaXml")
+    private String mrpaXml;
+
+    @JsonProperty("mrpaXmlFilename")
+    private String mrpaXmlFilename;
 
     @JsonProperty("recalledXmlPath")
     private String recalledXmlPath;
@@ -64,7 +67,7 @@ public class MrpaRegistryWithFioDTO {
     }
 
     public MrpaRegistryWithFioDTO(Long id, String guid, String internalNumber, String startDate, String endDate, @NotNull StatusTypeEnum status,
-                                  String sigPath, String mrpaXmlPath, String recalledXmlPath, Long organizationId,
+                                  String sigPath, String mrpaXml, String mrpaXmlFilename, String recalledXmlPath, Long organizationId,
                                   Long principalId, Long representativeId, String principalSurname, String principalName, String principalPatronymic,
                                   String representativeSurname, String representativeName, String representativePatronymic) {
         super();
@@ -78,7 +81,8 @@ public class MrpaRegistryWithFioDTO {
         this.endDate = endDate;
         this.status = status.toString();
         this.sigPath = sigPath;
-        this.mrpaXmlPath = mrpaXmlPath;
+        this.mrpaXml = mrpaXml;
+        this.mrpaXmlFilename = mrpaXmlFilename;
         this.recalledXmlPath = recalledXmlPath;
         this.principalFio = principalSurname + ' ' + principalName + ' ' + principalPatronymic;
         this.representativeFio = representativeSurname + ' ' + representativeName + ' ' + representativePatronymic;
