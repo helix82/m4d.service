@@ -31,6 +31,6 @@ public class AboutMeDto {
         private String validTo; //dateEnd
         private String dateStartPrivateKey;
         private String dateEndPrivateKey;
-        private MrpaRegistryFullDTO m4d;
+        private List<MrpaRegistryFullDTO> m4d;
     }
 }

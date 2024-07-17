@@ -96,11 +96,13 @@ public class AboutMeController {
                 certificates.setDateStartPrivateKey(s.getDateStartPrivateKey());
                 certificates.setDateEndPrivateKey(s.getDateEndPrivateKey());
                 if(s.getInn() != null){
-                    MrpaRegistryFullDTO mrpaRegistryFullDTO = mrpaRegistryRepository.findMrpaRegistriesFullByPrincipalInn(s.getInn());
+                    List<MrpaRegistryFullDTO> mrpaRegistryFullDTO = mrpaRegistryRepository.findMrpaRegistriesFullByPrincipalInn(s.getInn());
                     if(mrpaRegistryFullDTO != null) {
-                        mrpaRegistryFullDTO.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistryFullDTO.getId());
-                        certificates.setM4d(mrpaRegistryFullDTO);
+                        for(MrpaRegistryFullDTO m : mrpaRegistryFullDTO){
+                            m.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(m.getId());
+                        }
                     }
+                    certificates.setM4d(mrpaRegistryFullDTO);
                 }
                 certificatesList.add(certificates);
             }
