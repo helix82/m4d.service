@@ -116,8 +116,8 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_ALL_DESCRIPTION = "Возвращает список МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_SAVE_SUMMARY = "Сохранить данные по МЧД с привязкой полномочий в БД";
     String CONTROLLER_MRPA_SAVE_DESCRIPTION = "Возвращает созданную МЧД с ФИО представителя и ФИО доверителя";
-    String CONTROLLER_MRPA_FIND_BY_ID_SUMMARY = "Получить МЧД с ФИО представителя и ФИО доверителя по ИД МЧД";
-    String CONTROLLER_MRPA_FIND_BY_ID_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_FIND_BY_ID_SUMMARY = "Получить МЧД по ИД МЧД";
+    String CONTROLLER_MRPA_FIND_BY_ID_DESCRIPTION = "Возвращает МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
