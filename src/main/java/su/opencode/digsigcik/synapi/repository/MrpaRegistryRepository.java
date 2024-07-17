@@ -51,7 +51,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join Representative r on r.id=mr.representativeId "
             + " left join RepresentativePassport rp on rp.representativeId=r.id"
             + " where p.inn=?1 ")
-    MrpaRegistryFullDTO findMrpaRegistriesFullByPrincipalInn(String inn);
+    List<MrpaRegistryFullDTO> findMrpaRegistriesFullByPrincipalInn(String inn);
 
     @Query(value = "SELECT mr.* from mrpa_registry mr where mr.id=?1 ", nativeQuery = true)
     MrpaRegistry findMrpaById(Long id);
