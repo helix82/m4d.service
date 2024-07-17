@@ -51,13 +51,13 @@ VALUES
     ('2018-05-30T21:00:00Z', '480-001', 4, '4211 156127', U&'\0423\041c\0412\0414 \0420\041e\0421\0421\0418\0418 \041f\041e \0420\041e\0421\0422\041e\0412\0421\041a\041e\0419 \041e\0411\041b\0410\0421\0422\0418'),
     ('2002-10-04T21:00:00Z', '782-024', 5, '4208 140349', U&'24 \041e\0422\0414\0415\041b\041e\041c \041c\0418\041b\0418\0426\0418\0418 \041d\0415\0412\0421\041a\041e\0413\041e \0420\0410\0419\041e\041d\0410 \0421\0410\041d\041a\0422-\041f\0415\0422\0415\0420\0411\0423\0420\0413\0410');
 
-INSERT INTO mrpa_registry (end_date, guid, internal_number, mrpa_xml_path, organisation_id, principal_id, recalled_xml_path, representative_id, sig_path, start_date, status)
+INSERT INTO mrpa_registry (end_date, guid, internal_number, mrpa_xml, mrpa_xml_filename, organisation_id, principal_id, recalled_xml_path, representative_id, sig_path, start_date, status)
 VALUES
-    ('2025-06-09T21:00:00Z', '2bd5bf62-6795-4fa0-a157-a673a98da556', NULL, NULL, 1, 1, NULL, 1, NULL, '2024-06-10T21:00:00Z', 'NOT_SIGNED'),
-    ('2025-06-17T21:00:00Z', '270220da-575b-44a0-8490-8b91b9f0b8fe', NULL, NULL, 2, 2, NULL, 2, NULL, '2024-06-18T21:00:00Z', 'NOT_SIGNED'),
-    ('2024-06-16T21:00:00Z', 'a8fc500b-ce1d-40e9-8474-9e0ced2cecbe', NULL, NULL, 3, 3, NULL, 3, NULL, '2023-06-17T21:00:00Z', 'NOT_SIGNED'),
-    ('2025-05-16T21:00:00Z', '66f3bf6f-2736-49dd-8993-5faf4ca69ebd', NULL, NULL, 4, 4, NULL, 4, NULL, '2024-05-17T21:00:00Z', 'NOT_SIGNED'),
-    ('2025-05-21T21:00:00Z', 'fe9d07ba-b8a5-417a-994c-e90a60e88d07', NULL, NULL, 5, 5, NULL, 5, NULL, '2024-05-22T21:00:00Z', 'NOT_SIGNED');
+    ('2025-06-09T21:00:00Z', '2bd5bf62-6795-4fa0-a157-a673a98da556', NULL, NULL, NULL, 1, 1, NULL, 1, NULL, '2024-06-10T21:00:00Z', 'NOT_SIGNED'),
+    ('2025-06-17T21:00:00Z', '270220da-575b-44a0-8490-8b91b9f0b8fe', NULL, NULL, NULL, 2, 2, NULL, 2, NULL, '2024-06-18T21:00:00Z', 'NOT_SIGNED'),
+    ('2024-06-16T21:00:00Z', 'a8fc500b-ce1d-40e9-8474-9e0ced2cecbe', NULL, NULL, NULL, 3, 3, NULL, 3, NULL, '2023-06-17T21:00:00Z', 'NOT_SIGNED'),
+    ('2025-05-16T21:00:00Z', '66f3bf6f-2736-49dd-8993-5faf4ca69ebd', NULL, NULL, NULL, 4, 4, NULL, 4, NULL, '2024-05-17T21:00:00Z', 'NOT_SIGNED'),
+    ('2025-05-21T21:00:00Z', 'fe9d07ba-b8a5-417a-994c-e90a60e88d07', NULL, NULL, NULL, 5, 5, NULL, 5, NULL, '2024-05-22T21:00:00Z', 'NOT_SIGNED');
 INSERT INTO mrpa_registry_credential (credential_id, mrpa_registry_id)
 VALUES
     (1, 1),

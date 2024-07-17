@@ -6,6 +6,7 @@ import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 
 import javax.validation.constraints.NotNull;
+import java.text.ParseException;
 import java.util.List;
 
 public interface MrpaRegistryService {
@@ -31,5 +32,7 @@ public interface MrpaRegistryService {
 
     List<MrpaRegistryFullDTO.CredentialDTO> getCredentialByMrpaRegistryFullId(Long mrpaId);
 
-    MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO);
+    MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO) throws ParseException;
+
+    void saveMrpaXml(Long id, String xmlData, String xmlFilename);
 }

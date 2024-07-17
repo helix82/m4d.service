@@ -15,6 +15,7 @@ import su.opencode.digsigcik.synapi.repository.*;
 import javax.validation.constraints.NotNull;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -156,9 +157,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
-    public MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO) {
+    public MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO){
         DateFormat dateFormatShort = new SimpleDateFormat("yyyyMMdd");
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         Date date = new Date();
         String idFile = "ON_EMCHD_"+ dateFormatShort.format(date)+"_"+mrpaRegistryFullDTO.getGuid();
 
@@ -181,8 +181,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
         mrpas.setGuid(mrpaRegistryFullDTO.getGuid());
 
-        mrpas.setStartDate(mrpaRegistryFullDTO.getStartDate());
-        mrpas.setEndDate(mrpaRegistryFullDTO.getEndDate());
+        mrpas.setStartDate(convertDateIsoInstantToMchdXml(mrpaRegistryFullDTO.getStartDate()));
+        mrpas.setEndDate(convertDateIsoInstantToMchdXml(mrpaRegistryFullDTO.getEndDate()));
         mrpas.setInfoSystem("sep.cik");
 
         MrpaRegistryFullXML.Document document = new MrpaRegistryFullXML.Document();
@@ -237,7 +237,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         detailRepresentative.setSnils(mrpaRegistryFullDTO.representative.getSnils());
         MrpaRegistryFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual infoIndividual = new MrpaRegistryFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual();
         detailRepresentative.setInfoIndividual(infoIndividual);
-        infoIndividual.setBirthDate(mrpaRegistryFullDTO.representative.getBirthDate());
+        infoIndividual.setBirthDate(convertDateIsoInstantToMchdXml(mrpaRegistryFullDTO.representative.getBirthDate()));
         MrpaRegistryFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative fioRepresentative = new MrpaRegistryFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative();
         infoIndividual.setFioRepresentative(fioRepresentative);
         fioRepresentative.setName(mrpaRegistryFullDTO.representative.getName());
@@ -247,22 +247,40 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         infoIndividual.setRepresentativePassport(representativePassport);
         representativePassport.setTypeDocument("21");
         representativePassport.setSeriesNumber(mrpaRegistryFullDTO.representative.representativePassport.getSeriesNumber());
-        representativePassport.setDateIssue(mrpaRegistryFullDTO.representative.representativePassport.getDateIssue());
+        representativePassport.setDateIssue(convertDateIsoInstantToMchdXml(mrpaRegistryFullDTO.representative.representativePassport.getDateIssue()));
         representativePassport.setWhoIssue(mrpaRegistryFullDTO.representative.representativePassport.getWhoIssue());
         representativePassport.setDepartmentCode(mrpaRegistryFullDTO.representative.representativePassport.getDepartmentCode());
-        MrpaRegistryFullXML.Document.PowerAttorneys.Credential credential = new MrpaRegistryFullXML.Document.PowerAttorneys.Credential();
-        credential.setTypeCredential("0");
-        credential.setImplCredential("1");
-        credential.setLossCredential("1");
-
-        List<String> credentialList = new ArrayList<>();
+        MrpaRegistryFullXML.Document.PowerAttorneys.Credentials credentials = new MrpaRegistryFullXML.Document.PowerAttorneys.Credentials();
+        credentials.setTypeCredential("1");
+        credentials.setImplCredential("1");
+        credentials.setLossCredential("1");
+        ArrayList<MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential> credentialList = new ArrayList<>();
         for(MrpaRegistryFullDTO.CredentialDTO credentialDTO: mrpaRegistryFullDTO.credential){
-            credentialList.add(credentialDTO.getName());
+            MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential credential = new MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential();
+            credential.setCode(credentialDTO.getCode());
+            credential.setName(credentialDTO.getName());
+            credentialList.add(credential);
         }
-        credential.setName(credentialList);
-        powerAttorneys.setCredential(credential);
+        credentials.setCredentials(credentialList);
+        powerAttorneys.setCredential(credentials);
 
         return mrpaRegistryFullXML;
+    }
+
+    private static String convertDateIsoInstantToMchdXml(String date){
+        Date myDate = Date.from(Instant.parse(date));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        String formattedDate = formatter.format(myDate);
+        return formattedDate;
+    }
+
+    @Override
+    public void saveMrpaXml(Long id, String xmlData, String xmlFilename) {
+        MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
+        if (mrpaRegistry == null) {
+            throw new MchdException(String.format("Can`t save xml mrpa registry because mrpa registry %s", NOT_FOUND));
+        }
+        this.mrpaRegistryRepository.saveMrpaXml(id, xmlData, xmlFilename);
     }
 
 }
