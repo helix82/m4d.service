@@ -72,7 +72,7 @@ steps:
     environment:
       SYNAPI_URL: http://run
     commands:
-      - timeout 120 sh -c 'while ! curl -s -f -o /dev/null $SYNAPI_URL/swagger-ui/index.html#; do sleep 5; done'
+      - timeout 60 sh -c 'while ! curl -s -f -o /dev/null $SYNAPI_URL/swagger-ui/index.html#; do sleep 5; done'
     depends_on:
       - run
       - postgres
