@@ -79,12 +79,13 @@ public class PublicKeyUserCertificateController {
     })
     @PostMapping(value = "parse", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> parsePublicKeyUserCertificate(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateException{
+        System.out.println(sourceFile.getContentType());
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         PublicKeyUserCertificate publicKeyUserCertificate;
         if(Objects.equals(extension, "cer")){ //crt
             publicKeyUserCertificate = parseCertificateCER(sourceFile);
-        } else if(Objects.equals(extension, "der")) {
-            //TODO @helix82 парсинг DER-сертификатов publicKeyUserCertificate = parseCertificateDER(sourceFile);
+        } else if(Objects.equals(extension, "crt")) {
+            //TODO @helix82 парсинг CRT-сертификатов publicKeyUserCertificate = parseCertificateCRT(sourceFile);
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
         } else if(Objects.equals(extension, "pem")) {
             //TODO @helix82 парсинг PEM-сертификатов publicKeyUserCertificate = parseCertificatePEM(sourceFile);
@@ -379,13 +380,14 @@ public class PublicKeyUserCertificateController {
         publicKeyUserCertificate.setDateEndPrivateKey(dateEndPrivateKey);
 
         publicKeyUserCertificate.setCertificate(new String(sourceFile.getBytes()));
+        publicKeyUserCertificate.setOriginalFilename(sourceFile.getOriginalFilename());
         publicKeyUserCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
         publicKeyUserCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
 
         return publicKeyUserCertificate;
     }
 
-    public PublicKeyUserCertificate parseCertificateDER(MultipartFile sourceFile) {
+    public PublicKeyUserCertificate parseCertificateCRT(MultipartFile sourceFile) {
         PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
         //Бинарный формат, который содержит сертификат в двоичном виде
         return publicKeyUserCertificate;

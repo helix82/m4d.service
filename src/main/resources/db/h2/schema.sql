@@ -195,7 +195,8 @@ CREATE MEMORY TABLE "PUBLIC"."REVOKED_CERTIFICATE"(
                                                       "DATE_START" CHARACTER VARYING(255),
                                                       "IMPRINT" CHARACTER VARYING(255),
                                                       "ISSUED_TO" CHARACTER VARYING,
-                                                      "KEY_ID" CHARACTER VARYING(255)
+                                                      "KEY_ID" CHARACTER VARYING(255),
+                                                      "ORIGINAL_FILENAME" CHARACTER VARYING(255)
 );
 ALTER TABLE "PUBLIC"."REVOKED_CERTIFICATE" ADD CONSTRAINT "PUBLIC"."CONSTRAINT_E" PRIMARY KEY("ID");
 -- 0 +/- SELECT COUNT(*) FROM PUBLIC.REVOKED_CERTIFICATE;
@@ -227,6 +228,7 @@ CREATE MEMORY TABLE "PUBLIC"."TRUSTED_CERTIFICATE"(
                                                       "IMPRINT" CHARACTER VARYING(255),
                                                       "ISSUED_TO" CHARACTER VARYING,
                                                       "KEY_ID" CHARACTER VARYING(255),
+                                                      "ORIGINAL_FILENAME" CHARACTER VARYING(255),
                                                       "SERIAL_NUMBER" CHARACTER VARYING(255),
                                                       "TYPE_INPUT" CHARACTER VARYING(255)
 );

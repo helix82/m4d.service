@@ -24,4 +24,6 @@ public class RevokedCertificate {
     private String dateEnd;
     @Column(name = "certificate", columnDefinition = "Text")
     private String certificate;
+    @Column(name = "original_filename")
+    private String originalFilename;
 }

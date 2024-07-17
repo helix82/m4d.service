@@ -35,6 +35,8 @@ public class PublicKeyUserCertificateDto {
     private String issuerWho;
     @JsonProperty("certificate")
     private String certificate;
+    @JsonProperty("originalFilename")
+    private String originalFilename;
     @JsonProperty("statement_id")
     private Long statementId;
 }

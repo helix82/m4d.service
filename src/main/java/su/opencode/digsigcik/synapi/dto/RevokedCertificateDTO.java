@@ -19,4 +19,6 @@ public class RevokedCertificateDTO {
     private String dateEnd;
     @JsonProperty("certificate")
     private String certificate;
+    @JsonProperty("originalFilename")
+    private String originalFilename;
 }
