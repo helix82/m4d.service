@@ -68,9 +68,8 @@ public class ProviderController {
         if(acmeProvider.getDescription()!=null)_acmeProvider.setDescription(acmeProvider.getDescription());
         if(acmeProvider.getAutomatedRelease()!=null)_acmeProvider.setAutomatedRelease(acmeProvider.getAutomatedRelease());
         if(acmeProvider.getDeleted()!=null)_acmeProvider.setDeleted(acmeProvider.getDeleted());
-
+        if(acmeProvider.getData()!=null)_acmeProvider.setData(acmeProvider.getData());
         providerRepository.save(_acmeProvider);
-
         return new ResponseEntity<>(_acmeProvider, HttpStatus.CREATED);
     }
 
@@ -92,7 +91,7 @@ public class ProviderController {
         if(acmeProvider.getDirectoryUrl()!=null)_acmeProvider.setDirectoryUrl(acmeProvider.getDirectoryUrl());
         if(acmeProvider.getAutomatedRelease()!=null)_acmeProvider.setAutomatedRelease(acmeProvider.getAutomatedRelease());
         if(acmeProvider.getDeleted()!=null)_acmeProvider.setDeleted(acmeProvider.getDeleted());
-
+        if(acmeProvider.getData()!=null)_acmeProvider.setData(acmeProvider.getData());
         return new ResponseEntity<>(providerRepository.save(_acmeProvider), HttpStatus.OK);
     }
 

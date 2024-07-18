@@ -1,9 +1,12 @@
 package su.opencode.digsigcik.synapi.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import lombok.Getter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.CascadeType;
@@ -16,11 +19,14 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Entity
 @Table(name="rootcertificate")
 @Transactional
+@TypeDef(name = "json", typeClass = JsonType.class)
 // AcmeCertificate settings for acme
 public class RootCertificate {
     @Id
@@ -42,6 +48,10 @@ public class RootCertificate {
     @JsonIgnore
     @Column(name = "content", columnDefinition = "VARCHAR(16000)")
     private String content;
+
+    @Type(type = "json")
+    @Column(name = "data", columnDefinition = "json")
+    private Map<String, Object> data = new HashMap<>();
 
     public RootCertificate() {
     }
@@ -85,5 +95,13 @@ public class RootCertificate {
 
     public void setRevoked(Boolean revoked) {
         this.revoked = revoked;
+    }
+
+    public Map<String, Object> getData() {
+        return data;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
     }
 }

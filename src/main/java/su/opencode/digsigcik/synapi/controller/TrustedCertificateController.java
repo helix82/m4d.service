@@ -22,7 +22,9 @@ import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.TrustedCertificate;
 import su.opencode.digsigcik.synapi.service.TrustedCertificateService;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -32,6 +34,8 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static su.opencode.digsigcik.synapi.util.Constants.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
@@ -58,6 +62,23 @@ public class TrustedCertificateController {
             throw new BadRequestException(TRUSTED_CERTIFICATE_IS_NULL);
         }
         return new ResponseEntity<>(findAll.stream().map(this::convertToDtoList).collect(Collectors.toList()), HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_TRUSTED_CERTIFICATE_AS_ARCHIVE_SUMMARY, description = CONTROLLER_TRUSTED_CERTIFICATE_AS_ARCHIVE_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @GetMapping(value = "/archive", produces = "application/zip")
+    public byte[] findAllTrustedCertificateAsArchive(HttpServletResponse response) {
+        try {
+            response.setHeader("Content-Disposition", "attachment; filename=\"certificates.zip\"");
+            return certificatesToZip(service.findAllTrustedCertificate());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(TRUSTED_CERTIFICATE_IS_NULL);
+        } catch (IOException e) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
     }
 
     @Operation(summary = CONTROLLER_TRUSTED_CERTIFICATE_SAVE_SUMMARY, description = CONTROLLER_TRUSTED_CERTIFICATE_SAVE_DESCRIPTION)
@@ -212,4 +233,20 @@ public class TrustedCertificateController {
         Instant instant1 = formatter.parse(date, Instant::from);
         return instant1.toString();
     }
+
+    private byte[] certificatesToZip(List<TrustedCertificate> certificates) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(baos);
+
+        for(TrustedCertificate certificate:certificates) {
+            ZipEntry entry = new ZipEntry(certificate.getOriginalFilename());
+            entry.setSize(certificate.getCertificate().length());
+            zos.putNextEntry(entry);
+            zos.write(certificate.getCertificate().getBytes());
+            zos.closeEntry();
+        }
+        zos.close();
+        return baos.toByteArray();
+    }
+
 }

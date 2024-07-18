@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.Type;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.CascadeType;
@@ -17,6 +18,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Entity
@@ -64,6 +67,10 @@ public class AcmeCertificate {
     @JsonIgnore
     @Column(name = "content", columnDefinition = "VARCHAR(16000)")
     private String content;
+
+    @Type(type = "json")
+    @Column(name = "data", columnDefinition = "json")
+    private Map<String, Object> data = new HashMap<>();
 
     public AcmeCertificate() {
     }
@@ -147,5 +154,13 @@ public class AcmeCertificate {
 
     public void setNotAfter(Date notAfter) {
         this.notAfter = notAfter;
+    }
+
+    public Map<String, Object> getData() {
+        return data;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
     }
 }

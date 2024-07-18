@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,8 +52,6 @@ public class RootCertificateController {
     public static Map certInfo(RootCertificate certificate) {
         HashMap<String, Object> ret = new HashMap<>();
 
-
-
         ret.put("id", certificate.getId());
         AcmeProvider provider = certificate.getProvider();
         if(provider!=null) {
@@ -61,6 +60,7 @@ public class RootCertificateController {
         }
         ret.put("deleted", certificate.getDeleted());
         ret.put("revoked", certificate.getRevoked());
+        ret.put("data", certificate.getData());
 
         if(certificate.getContent() != null) {
             try {
@@ -139,7 +139,7 @@ public class RootCertificateController {
     })
     @PostMapping("/root/certificates/upload")
     public ResponseEntity<RootCertificate> uploadAndCreateRootCertificate(
-            @RequestPart(value = "provider", required = false) @Parameter(name = "provider", description="Поставщик сертификата", example = "provider") Long provider,
+            @RequestParam(value = "provider", required = false) @Parameter(name = "provider", description="Поставщик сертификата", example = "provider") Long provider,
             @RequestPart("content") @Parameter(name = "content", description="Содержимое корневого сертификата", example = "", required = true) MultipartFile content
     ) {
         try {
@@ -151,6 +151,10 @@ public class RootCertificateController {
             Map certInfo = CertUtils.certInfo(certContent);
 
             RootCertificate _certificate = new RootCertificate(_provider, certContent);
+
+            HashMap<String,Object> data = new HashMap<>();
+            data.put("fileName", content.getOriginalFilename());
+            _certificate.setData(data);
             return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't upload certificate");

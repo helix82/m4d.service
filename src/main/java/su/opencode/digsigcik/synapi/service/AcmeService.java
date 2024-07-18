@@ -19,8 +19,6 @@ public interface AcmeService {
     );
     ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long id
     );
-    ResponseEntity<Map> certificate(HttpSession httpSession, Long domainId
-    );
     ResponseEntity<Map> revoke(HttpSession httpSession, Long id
     );
     Map orderInfo(AcmeOrder order);
