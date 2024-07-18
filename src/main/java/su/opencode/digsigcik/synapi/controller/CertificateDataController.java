@@ -14,18 +14,23 @@ import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.CertificateDataListDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
+import su.opencode.digsigcik.synapi.model.TrustedCertificate;
 import su.opencode.digsigcik.synapi.model.ca.CAXml;
 import su.opencode.digsigcik.synapi.model.ca.CertificateData;
 import su.opencode.digsigcik.synapi.service.CertificateDataService;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static su.opencode.digsigcik.synapi.util.Constants.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
@@ -125,6 +130,24 @@ public class CertificateDataController {
         return new ResponseEntity<>(CAFindByInn.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
     }
 
+    @Operation(summary = CONTROLLER_CA_AS_ARCHIVE_SUMMARY, description = CONTROLLER_CA_AS_ARCHIVE_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @GetMapping(value = "/archive", produces = "application/zip")
+    public byte[] findAllTrustedCertificateAsArchive(HttpServletResponse response) {
+        try {
+            response.setHeader("Content-Disposition", "attachment; filename=\"certificates.zip\"");
+            return certificatesToZip(certificateDataService.findAllCertificateData());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(TRUSTED_CERTIFICATE_IS_NULL);
+        } catch (IOException e) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
+    }
+
+
     @Operation(summary = CONTROLLER_CA_SAVE_SUMMARY, description = CONTROLLER_CA_SAVE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
@@ -203,6 +226,22 @@ public class CertificateDataController {
     private CertificateData convertToEntity(CertificateDataListDTO certificateDataListDTO){
         CertificateData certificateData = modelMapper.map(certificateDataListDTO, CertificateData.class);
         return certificateData;
+    }
+
+    private byte[] certificatesToZip(List<CertificateData> certificates) throws IOException {
+        String extension = ".cer";
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(baos);
+
+        for(CertificateData certificate:certificates) {
+            ZipEntry entry = new ZipEntry(certificate.getSerialNumber() + extension);
+            entry.setSize(certificate.getCertificate().length());
+            zos.putNextEntry(entry);
+            zos.write(certificate.getCertificate().getBytes());
+            zos.closeEntry();
+        }
+        zos.close();
+        return baos.toByteArray();
     }
 
 }

@@ -1,6 +1,9 @@
 package su.opencode.digsigcik.synapi.model;
 
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import lombok.Getter;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.Column;
@@ -9,11 +12,14 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Entity
 @Table(name="acmeprovider")
 @Transactional
+@TypeDef(name = "json", typeClass = JsonType.class)
 // AcmeAccount settings for acme
 public class AcmeProvider {
     @Id
@@ -41,6 +47,10 @@ public class AcmeProvider {
 
     @Column(name = "deleted", columnDefinition = "BOOLEAN")
     private Boolean deleted;
+
+    @Type(type = "json")
+    @Column(name = "data", columnDefinition = "json")
+    private Map<String, Object> data = new HashMap<>();
 
     public AcmeProvider() {
     }
@@ -109,4 +119,13 @@ public class AcmeProvider {
     public void setIp(String ip) {
         this.ip = ip;
     }
+
+    public Map<String, Object> getData() {
+        return data;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
+    }
+
 }

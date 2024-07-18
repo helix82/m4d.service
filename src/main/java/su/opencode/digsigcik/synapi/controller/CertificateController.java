@@ -3,7 +3,9 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +15,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
@@ -28,8 +32,11 @@ import su.opencode.digsigcik.synapi.util.CertUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +44,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @AllArgsConstructor
+@Slf4j
 public class CertificateController {
     @Autowired
     private DomainRepository domainRepository;
@@ -93,6 +101,7 @@ public class CertificateController {
         ret.put("id", certificate.getId());
         ret.put("deleted", certificate.getDeleted());
         ret.put("revoked", certificate.getRevoked());
+        ret.put("data", certificate.getData());
         AcmeProvider provider = certificate.getProvider();
         if(provider!=null) {
             ret.put("provider", String.valueOf(provider.getName()));
@@ -180,20 +189,11 @@ public class CertificateController {
         data.remove("provider");
         data.remove("domain");
         data.remove("notAfter");
-        return acmeService.certificate(httpSession,domain, notAfter, providerId, data);
-    }
-
-    @Operation(summary = "Выпустить новый сертификат в автоматическом режиме для указанного домена",
-            description = "Выпускает новый сертификат в автоматическом режиме для указанного домена" )
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Сертификат успешно выпущен" ),
-            @ApiResponse(code = 404, message = "Not found" )
-    })
-    @PostMapping("/domains/{domainId}/certificate")
-    public ResponseEntity<Map> certificateReleaseDomain(HttpSession httpSession,
-                           @PathVariable(value = "domainId") Long domainId
-    ) {
-        return acmeService.certificate(httpSession,domainId);
+        HashMap<String, Object> out = new HashMap<>();
+        data.forEach((key, value) -> {
+            out.put((String)key, Arrays.stream((String[])value).findFirst().get());
+        });
+        return acmeService.certificate(httpSession,domain, notAfter, providerId, out);
     }
 
     @Operation(summary = "Отозвать сертификат",
@@ -258,5 +258,46 @@ public class CertificateController {
             certificateRepository.save(certificate);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @Operation(summary = "Загрузить сертификат",
+            description = "Загружает сертификат" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно загружен и создан" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping(value = "/certificate/upload")
+    public ResponseEntity<AcmeCertificate> uploadCertificate(
+            @RequestParam(value = "provider", required = false) @Parameter(name = "provider", description="Поставщик сертификата", example = "provider") Long provider,
+            @RequestParam(value = "domain", required = false) @Parameter(name = "domain", description="Домен", example = "domain") Long domain,
+            @RequestPart("content") @Parameter(name = "content", description="Содержимое сертификата", example = "", required = true) MultipartFile content
+    ) {
+        try {
+            AcmeProvider _provider = providerRepository.findById(provider)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + provider));
+
+            AcmeDomain _domain = domainRepository.findById(domain)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with id = " + domain));
+
+
+            String certContent = new String(content.getBytes());
+            Map certInfo = CertUtils.certInfo(certContent);
+
+            AcmeCertificate acmeCertificate = new AcmeCertificate(_domain, certContent);
+            if(certInfo.containsKey("notAfter")) acmeCertificate.setNotAfter((Date)(certInfo.get("notAfter")));
+            if(certInfo.containsKey("notBefore")) acmeCertificate.setNotBefore((Date)(certInfo.get("notBefore")));
+            acmeCertificate.setProvider(_provider);
+
+            HashMap<String,Object> data = new HashMap<>();
+            data.put("fileName", content.getOriginalFilename());
+            acmeCertificate.setData(data);
+
+            certificateRepository.save(acmeCertificate);
+            return new ResponseEntity<>(acmeCertificate, HttpStatus.CREATED);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't upload certificate");
+        } catch (CertificateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid certificate");
+        }
     }
 }

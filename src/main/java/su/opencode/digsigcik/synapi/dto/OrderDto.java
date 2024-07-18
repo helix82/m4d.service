@@ -14,7 +14,7 @@ public class OrderDto {
     @JsonProperty("provider")
     private Long provider;
     @JsonProperty("data")
-    private Map<String, String[]> data;
+    private Map<String, Object> data;
 
     public String getDomain() {
         return domain;
@@ -28,7 +28,7 @@ public class OrderDto {
         return provider;
     }
 
-    public Map<String, String[]> getData() {
+    public Map<String, Object> getData() {
         return data;
     }
 }

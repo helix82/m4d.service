@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +140,11 @@ public class OrderController {
         data.remove("provider");
         data.remove("domain");
         data.remove("notAfter");
-        return acmeService.certificateOrder(httpSession, domain, notAfter, providerId, data);
+        HashMap<String, Object> out = new HashMap<>();
+        data.forEach((key, value) -> {
+            out.put((String)key, Arrays.stream((String[])value).findFirst().get());
+        });
+        return acmeService.certificateOrder(httpSession, domain, notAfter, providerId, out);
     }
 
     @Operation(summary = "Сформировать заявку на выпуск нового сертификата (json)",

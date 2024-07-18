@@ -103,7 +103,7 @@ public class AcmeServiceImpl implements AcmeService {
         ret.put("challengeToken", order.getChallengeToken());
         ret.put("challengeContent", order.getChallengeContent());
 
-        Map<String, String[]> data = order.getData();
+        Map<String, Object> data = order.getData();
         if(data != null && !data.isEmpty()) {
             ret.put("data", order.getData());
         }
@@ -271,7 +271,24 @@ public class AcmeServiceImpl implements AcmeService {
                 }
                 KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
 
-                order.execute(domainKeyPair);
+                order.execute(domainKeyPair, csrBuilder -> {
+                    Map<String,Object> orderData = acmeOrder.getData();
+                    if(orderData.containsKey("state")) csrBuilder.setState(String.valueOf(orderData.get("state")));
+                    if(orderData.containsKey("country")) csrBuilder.setCountry(String.valueOf(orderData.get("country")));
+                    if(orderData.containsKey("locality")) csrBuilder.setLocality(String.valueOf(orderData.get("locality")));
+                    if(orderData.containsKey("organization")) csrBuilder.setOrganization(String.valueOf(orderData.get("organization")));
+                    if(orderData.containsKey("commonName")) csrBuilder.setCommonName(String.valueOf(orderData.get("commonName")));
+                    if(orderData.containsKey("ST")) csrBuilder.setState(String.valueOf(orderData.get("ST")));
+                    if(orderData.containsKey("C")) csrBuilder.setCountry(String.valueOf(orderData.get("C")));
+                    if(orderData.containsKey("L")) csrBuilder.setLocality(String.valueOf(orderData.get("L")));
+                    if(orderData.containsKey("O")) csrBuilder.setOrganization(String.valueOf(orderData.get("O")));
+                    if(orderData.containsKey("CN")) csrBuilder.setCommonName(String.valueOf(orderData.get("CN")));
+                    if(orderData.containsKey("region") || orderData.containsKey("city")) {
+                        csrBuilder.setCountry(String.valueOf("RU"));
+                        if(orderData.containsKey("region")) csrBuilder.setState(String.valueOf(orderData.get("region")));
+                        if(orderData.containsKey("city")) csrBuilder.setLocality(String.valueOf(orderData.get("city")));
+                    }
+                });
 
                 // Wait for the order to complete
                 Status status = waitForCompletion(order::getStatus, order::fetch);
@@ -413,7 +430,24 @@ public class AcmeServiceImpl implements AcmeService {
                             }
                             KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
 
-                            order.execute(domainKeyPair);
+                            order.execute(domainKeyPair, csrBuilder -> {
+                                Map<String,Object> orderData = acmeOrder.getData();
+                                if(orderData.containsKey("state")) csrBuilder.setState(String.valueOf(orderData.get("state")));
+                                if(orderData.containsKey("country")) csrBuilder.setCountry(String.valueOf(orderData.get("country")));
+                                if(orderData.containsKey("locality")) csrBuilder.setLocality(String.valueOf(orderData.get("locality")));
+                                if(orderData.containsKey("organization")) csrBuilder.setOrganization(String.valueOf(orderData.get("organization")));
+                                if(orderData.containsKey("commonName")) csrBuilder.setCommonName(String.valueOf(orderData.get("commonName")));
+                                if(orderData.containsKey("ST")) csrBuilder.setState(String.valueOf(orderData.get("ST")));
+                                if(orderData.containsKey("C")) csrBuilder.setCountry(String.valueOf(orderData.get("C")));
+                                if(orderData.containsKey("L")) csrBuilder.setLocality(String.valueOf(orderData.get("L")));
+                                if(orderData.containsKey("O")) csrBuilder.setOrganization(String.valueOf(orderData.get("O")));
+                                if(orderData.containsKey("CN")) csrBuilder.setCommonName(String.valueOf(orderData.get("CN")));
+                                if(orderData.containsKey("region") || orderData.containsKey("city")) {
+                                    csrBuilder.setCountry(String.valueOf("RU"));
+                                    if(orderData.containsKey("region")) csrBuilder.setState(String.valueOf(orderData.get("region")));
+                                    if(orderData.containsKey("city")) csrBuilder.setLocality(String.valueOf(orderData.get("city")));
+                                }
+                            });
 
                             // Wait for the order to complete
                             Status status = waitForCompletion(order::getStatus, order::fetch);
@@ -431,6 +465,7 @@ public class AcmeServiceImpl implements AcmeService {
                             acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
                             acmeCertificate.setProvider(acmeOrder.getProvider());
                             acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
+                            acmeCertificate.setData(acmeOrder.getData());
                             certificateRepository.save(acmeCertificate);
                             return new ResponseEntity<>(CertificateController.certInfo(acmeCertificate), HttpStatus.OK);
                         } catch (AcmeException e) {
@@ -454,90 +489,6 @@ public class AcmeServiceImpl implements AcmeService {
         } else {
             ret.put("error", "no order");
             return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    public ResponseEntity<Map> certificate(HttpSession httpSession, Long domainId) {
-        HashMap<String, String> ret = new HashMap<>();
-        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
-        if(acmeAccount==null) {
-            acmeAccount = new AcmeAccount(ACME_ACCOUNT_NAME, ACME_ACCOUNT_KEY);
-            acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
-            accountRepository.save(acmeAccount);
-        }
-        AcmeDomain acmeDomain= domainRepository.findDomainById(domainId);
-        if(acmeDomain==null) {
-            ret.put("error", "no domain");
-            return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
-        }
-
-        if(loginDefaultAccount(httpSession)){
-            Login login = (Login)httpSession.getAttribute("login");
-            Account account = login.getAccount();
-            if(account.getStatus() != Status.VALID){
-                ret.put("error", "invalid status");
-                return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
-            } else {
-
-                try {
-                    Order order = account
-                            .newOrder()
-                            .domain(acmeDomain.getDomainUrl())
-                            .create();
-
-                    Http01Challenge challenge = challenge(order.getAuthorizations().get(0));
-                    if(challenge==null) {
-                        // авторизация уже прошла или испытание выполнено
-                        ret.put("result", "done");
-                        ret.put("description", "Auth and challenge done");
-                        return new ResponseEntity<>(ret, HttpStatus.OK);
-                    }
-                    doChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
-
-                    challenge.trigger();
-
-                    if(acmeDomain.getDomainPrivateKey()==null) {
-                        StringWriter sw = new StringWriter();
-                        KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(4096), sw);
-                        acmeDomain.setDomainPrivateKey(sw.toString());
-                        domainRepository.save(acmeDomain);
-                    }
-                    KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
-
-                    order.execute(domainKeyPair);
-
-                    // Wait for the order to complete
-                    Status status = waitForCompletion(order::getStatus, order::fetch);
-                    if (status != Status.VALID) {
-                        throw new AcmeException("Order failed... Giving up.");
-                    }
-                    if (EXTERNAL_ACKNOWLEDGE) {
-                        clearChallenge(acmeDomain.getDomainUrl(), "/upload", challenge);
-                    }
-                    Certificate certificate = order.getCertificate();
-
-                    StringWriter writer = new StringWriter();
-                    certificate.writeCertificate(writer);
-
-                    AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
-                    acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
-                    certificateRepository.save(acmeCertificate);
-
-                    ret.put("url", certificate.getLocation().toString());
-                    return new ResponseEntity<>(ret, HttpStatus.OK);
-                } catch (AcmeException e) {
-                    ret.put("error", "acme exception");
-                    ret.put("exception", e.getMessage());
-                    return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
-                } catch (IOException e) {
-                    ret.put("error", "io exception");
-                    ret.put("exception", e.getMessage());
-                    return new ResponseEntity<>(ret, HttpStatus.BAD_REQUEST);
-                }
-            }
-        } else {
-            ret.put("error", "no login");
-            return new ResponseEntity<>(ret, HttpStatus.UNAUTHORIZED);
         }
     }
 

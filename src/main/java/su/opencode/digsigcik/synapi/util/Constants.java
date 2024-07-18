@@ -146,6 +146,8 @@ public interface Constants {
     String CONTROLLER_CA_UPDATE_DESCRIPTION = "Возвращает запись аккредитованной УЦ";
     String CONTROLLER_CA_DELETE_SUMMARY = "Удалить запись аккредитованной УЦ по ИД";
     String CONTROLLER_CA_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_CA_AS_ARCHIVE_SUMMARY = "Получить содержимое аккредитованных сертификатов в архиве";
+    String CONTROLLER_CA_AS_ARCHIVE_DESCRIPTION = "Возвращает содержимое аккредитованных сертификатов в архиве";
 
     String CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY = "Получить список полномочий";
     String CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION = "Возвращает список полномочий";
@@ -220,6 +222,8 @@ public interface Constants {
 
     String CONTROLLER_TRUSTED_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список доверенных сертификатов";
     String CONTROLLER_TRUSTED_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список доверенных сертификатов";
+    String CONTROLLER_TRUSTED_CERTIFICATE_AS_ARCHIVE_SUMMARY = "Получить содержимое доверенных сертификатов в архиве";
+    String CONTROLLER_TRUSTED_CERTIFICATE_AS_ARCHIVE_DESCRIPTION = "Возвращает содержимое доверенных сертификатов в архиве";
     String CONTROLLER_TRUSTED_CERTIFICATE_SAVE_SUMMARY = "Сохранить доверенный сертификат";
     String CONTROLLER_TRUSTED_CERTIFICATE_SAVE_DESCRIPTION = "Возвращает созданный доверенный сертификат";
     String CONTROLLER_TRUSTED_CERTIFICATE_FIND_BY_ID_SUMMARY = "Получить доверенный сертификат по ИД";
