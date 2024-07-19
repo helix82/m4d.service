@@ -172,10 +172,9 @@ public class OrderController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/orders/{id}/download")
-    public ResponseEntity<String> downloadOrder(HttpServletResponse httpResponse,
-                                                        @PathVariable(value = "id") Long id
+    public ResponseEntity<byte[]> downloadOrder(@PathVariable(value = "id") Long id
     ) {
-        return acmeService.downloadChallengeFile(httpResponse,id);
+        return acmeService.downloadChallengeFile(id);
     }
 
     @Operation(summary = "Выпустить новый сертификат по ранее сформированной заявке",

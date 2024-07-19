@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,6 +33,7 @@ import su.opencode.digsigcik.synapi.util.CertUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
@@ -40,6 +42,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -167,8 +171,7 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/certificates/{id}/info")
-    public ResponseEntity<Map> getCertificateInfoBylId(HttpServletResponse httpResponse,
-                                                            @PathVariable(value = "id") Long id) {
+    public ResponseEntity<Map> getCertificateInfoBylId(@PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + id));
         return new ResponseEntity<>(certInfo(certificate), HttpStatus.OK);
@@ -217,13 +220,62 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/certificates/{id}/download")
-    public ResponseEntity<String> downloadCertificateBylId(HttpServletResponse httpResponse,
-                                                                    @PathVariable(value = "id") Long id) {
+    public ResponseEntity<byte[]> downloadCertificateBylId(@PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + id));
-        httpResponse.setContentType ("application/width-x509-user-cert");
-        httpResponse.setHeader ("Content-Disposition", "attachment; filename="+certificate.getDomain().getDomainUrl()+"-chain.crt");
-        return new ResponseEntity<>(certificate.getContent(), HttpStatus.OK);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, "application/width-x509-user-cert");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+certificate.getDomain().getDomainUrl()+"-chain.crt");
+        return new ResponseEntity<>(certificate.getContent().getBytes(), headers, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Получить файл сертификата с ключём домена",
+            description = "Возвращает файл сертификата с ключём домена" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно получено" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @GetMapping("/certificates/{id}/download/archive")
+    public ResponseEntity<byte[]> downloadCertificateArchiveBylId(@PathVariable(value = "id") Long id) {
+        AcmeCertificate certificate = certificateRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + id));
+
+        AcmeDomain domain = certificate.getDomain();
+        String certExtension = ".cer";
+        String keyExtension = ".key";
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(baos);
+
+        Map<String, Object> certData = certificate.getData();
+        String certFileName = certificate.getId()+certExtension;
+        if(certData!=null && certData.containsKey("fileName")) {
+            certFileName = String.valueOf(certData.get("fileName"));
+        }
+
+        try {
+            ZipEntry certEntry = new ZipEntry(certFileName);
+            certEntry.setSize(certificate.getContent().length());
+            zos.putNextEntry(certEntry);
+            zos.write(certificate.getContent().getBytes());
+            zos.closeEntry();
+
+            String keyFileName = domain.getDomainUrl()+keyExtension;
+            ZipEntry keyEntry = new ZipEntry(keyFileName);
+            keyEntry.setSize(domain.getDomainPrivateKey().length());
+            zos.putNextEntry(keyEntry);
+            zos.write(domain.getDomainPrivateKey().getBytes());
+            zos.closeEntry();
+
+            zos.close();
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't create certificate archive");
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, "application/zip");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+certificate.getDomain().getDomainUrl()+".zip");
+        return new ResponseEntity<>(baos.toByteArray(), headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Удалить указанный сертификат",
