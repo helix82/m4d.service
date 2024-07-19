@@ -94,11 +94,11 @@ public class RootCertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/root/certificates/{id}")
-    public ResponseEntity<RootCertificate> getRootCertificateBylId(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<Map> getRootCertificateBylId(@PathVariable(value = "id") Long id) {
         RootCertificate certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found RootCertificate with id = " + id));
 
-        return new ResponseEntity<>(certificate, HttpStatus.OK);
+        return new ResponseEntity<>(certInfo(certificate), HttpStatus.OK);
     }
 
     @Operation(summary = "Получить расширенную информацию о корневой сертификате",
@@ -121,11 +121,11 @@ public class RootCertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/root/certificates")
-    public ResponseEntity<RootCertificate> saveRootCertificate(@RequestBody RootCertificate certificate) {
+    public ResponseEntity<Map> saveRootCertificate(@RequestBody RootCertificate certificate) {
         RootCertificate _certificate  = new RootCertificate(certificate.getProvider(), certificate.getContent());
         if(certificate.getDeleted()!=null)_certificate.setDeleted(certificate.getDeleted());
         if(certificate.getRevoked()!=null)_certificate.setRevoked(certificate.getRevoked());
-        return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
+        return new ResponseEntity<>(certInfo(rootCertificateRepository.save(_certificate)), HttpStatus.CREATED);
     }
 
     @Operation(summary = "Загрузить и создать корневой сертификат",
@@ -135,7 +135,7 @@ public class RootCertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/root/certificates/upload")
-    public ResponseEntity<RootCertificate> uploadAndCreateRootCertificate(
+    public ResponseEntity<Map> uploadAndCreateRootCertificate(
             @RequestParam(value = "provider") @Parameter(name = "provider", description="Поставщик сертификата", example = "provider") Long provider,
             @RequestPart("content") @Parameter(name = "content", description="Содержимое корневого сертификата", example = "", required = true) MultipartFile content
     ) {
@@ -149,7 +149,7 @@ public class RootCertificateController {
             HashMap<String,Object> data = new HashMap<>();
             data.put("fileName", content.getOriginalFilename());
             _certificate.setData(data);
-            return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.CREATED);
+            return new ResponseEntity<>(certInfo(rootCertificateRepository.save(_certificate)), HttpStatus.CREATED);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't upload certificate");
         } catch (CertificateException e) {
@@ -165,7 +165,7 @@ public class RootCertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PutMapping("/root/certificates/{id}")
-    public ResponseEntity<RootCertificate> updateRootCertificate(@PathVariable Long id, @RequestBody RootCertificate certificate) {
+    public ResponseEntity<Map> updateRootCertificate(@PathVariable Long id, @RequestBody RootCertificate certificate) {
         RootCertificate _certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found RootCertificate with id = " + id));
 
@@ -173,7 +173,7 @@ public class RootCertificateController {
         if(certificate.getContent()!=null)_certificate.setContent(certificate.getContent());
         if(certificate.getDeleted()!=null)_certificate.setDeleted(certificate.getDeleted());
         if(certificate.getRevoked()!=null)_certificate.setRevoked(certificate.getRevoked());
-        return new ResponseEntity<>(rootCertificateRepository.save(_certificate), HttpStatus.OK);
+        return new ResponseEntity<>(certInfo(rootCertificateRepository.save(_certificate)), HttpStatus.OK);
     }
 
     @Operation(summary = "Получить файл корневого сертификата",
@@ -204,7 +204,7 @@ public class RootCertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/root/certificates/{id}/upload")
-    public ResponseEntity<RootCertificate> uploadRootCertificateBylId(@PathVariable(value = "id") Long id,
+    public ResponseEntity<Map> uploadRootCertificateBylId(@PathVariable(value = "id") Long id,
            @RequestPart("content") @Parameter(name = "content", description="Содержимое корневого сертификата", example = "", required = true) MultipartFile content
     ) {
         RootCertificate certificate = rootCertificateRepository.findById(id)
@@ -215,7 +215,7 @@ public class RootCertificateController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't upload certificate");
         }
         rootCertificateRepository.save(certificate);
-        return new ResponseEntity<>(certificate, HttpStatus.OK);
+        return new ResponseEntity<>(certInfo(certificate), HttpStatus.OK);
     }
 
     @Operation(summary = "Удалить указанный корневой сертификат",

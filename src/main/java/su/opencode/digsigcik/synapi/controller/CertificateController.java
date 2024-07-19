@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import su.opencode.digsigcik.synapi.model.AcmeAccount;
 import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
@@ -33,7 +32,6 @@ import su.opencode.digsigcik.synapi.service.AcmeService;
 import su.opencode.digsigcik.synapi.util.CertUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -74,12 +72,18 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/domains/{domainId}/certificates")
-    public ResponseEntity<List<AcmeCertificate>> getAllCertificatesByDomainId(@PathVariable(value = "domainId") Long domainId) {
+    public ResponseEntity<List<Map>> getAllCertificatesByDomainId(@PathVariable(value = "domainId") Long domainId) {
         if (!domainRepository.existsById(domainId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with id = " + domainId);
         }
+        ArrayList<Map> list = new ArrayList<>();
         List<AcmeCertificate> certificates = certificateRepository.findByDomainId(domainId);
-        return new ResponseEntity<>(certificates, HttpStatus.OK);
+        for(AcmeCertificate certificate:certificates) {
+            if(!certificate.getDeleted()) {
+                list.add(certInfo(certificate));
+            }
+        }
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
     @Operation(summary = "Получить список сертификатов указанного провайдера",
@@ -89,12 +93,18 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/providers/{providerId}/certificates")
-    public ResponseEntity<List<AcmeCertificate>> getAllCertificatesByProviderId(@PathVariable(value = "providerId") Long providerId) {
+    public ResponseEntity<List<Map>> getAllCertificatesByProviderId(@PathVariable(value = "providerId") Long providerId) {
         if (!providerRepository.existsById(providerId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId);
         }
+        ArrayList<Map> list = new ArrayList<>();
         List<AcmeCertificate> certificates = certificateRepository.findByProviderId(providerId);
-        return new ResponseEntity<>(certificates, HttpStatus.OK);
+        for(AcmeCertificate certificate:certificates) {
+            if(!certificate.getDeleted()) {
+                list.add(certInfo(certificate));
+            }
+        }
+        return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
     public static Map certInfo(AcmeCertificate certificate) {
@@ -162,11 +172,11 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/certificates/{id}")
-    public ResponseEntity<AcmeCertificate> getCertificateBylId(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<Map> getCertificateBylId(@PathVariable(value = "id") Long id) {
         AcmeCertificate certificate = certificateRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + id));
 
-        return new ResponseEntity<>(certificate, HttpStatus.OK);
+        return new ResponseEntity<>(certInfo(certificate), HttpStatus.OK);
     }
 
     @Operation(summary = "Получить расширенную информацю о сертификате",
@@ -324,7 +334,7 @@ public class CertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping(value = "/certificate/upload")
-    public ResponseEntity<AcmeCertificate> uploadCertificate(
+    public ResponseEntity<Map> uploadCertificate(
             @RequestParam(value = "provider") @Parameter(name = "provider", description="Поставщик сертификата", example = "1") Long provider,
             @RequestParam(value = "domain") @Parameter(name = "domain", description="Домен", example = "domain.site") String domain,
             @RequestPart("content") @Parameter(name = "content", description="Содержимое сертификата", example = "", required = true) MultipartFile content
@@ -351,7 +361,7 @@ public class CertificateController {
             acmeCertificate.setData(data);
 
             certificateRepository.save(acmeCertificate);
-            return new ResponseEntity<>(acmeCertificate, HttpStatus.CREATED);
+            return new ResponseEntity<>(certInfo(acmeCertificate), HttpStatus.CREATED);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't upload certificate");
         } catch (CertificateException e) {
