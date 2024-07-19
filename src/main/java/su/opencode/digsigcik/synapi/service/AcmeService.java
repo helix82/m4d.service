@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.service;
 
 import org.springframework.http.ResponseEntity;
+import su.opencode.digsigcik.synapi.model.AcmeAccount;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
 
 import javax.servlet.http.HttpServletResponse;
@@ -21,5 +22,6 @@ public interface AcmeService {
     );
     ResponseEntity<Map> revoke(HttpSession httpSession, Long id
     );
+    AcmeAccount defaultAccount();
     Map orderInfo(AcmeOrder order);
 }

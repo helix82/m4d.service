@@ -83,6 +83,19 @@ public class AcmeServiceImpl implements AcmeService {
     @Autowired
     ChallengeStore challengeStore;
 
+
+
+    @Override
+    public AcmeAccount defaultAccount(){
+        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
+        if(acmeAccount==null) {
+            acmeAccount = new AcmeAccount(ACME_ACCOUNT_NAME, ACME_ACCOUNT_KEY);
+            acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
+            accountRepository.save(acmeAccount);
+        }
+        return acmeAccount;
+    }
+
     public Map orderInfo(AcmeOrder order) {
         HashMap<String, Object> ret = new HashMap<>();
 
