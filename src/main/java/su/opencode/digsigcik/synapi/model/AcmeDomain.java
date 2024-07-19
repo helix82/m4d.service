@@ -36,8 +36,8 @@ public class AcmeDomain {
     @Column(name = "domain_url", columnDefinition = "VARCHAR(2000)")
     private String domainUrl;
 
-    @Column(name = "private_key", columnDefinition = "VARCHAR(8000)")
-    private String domainPrivateKey;
+    @Column(name = "private_key", columnDefinition = "BYTEA")
+    private byte[] domainPrivateKey;
 
     @Column(name = "deleted", columnDefinition = "BOOLEAN")
     private Boolean deleted;
@@ -71,11 +71,11 @@ public class AcmeDomain {
         this.domainUrl = domainUrl;
     }
 
-    public String getDomainPrivateKey() {
+    public byte[] getDomainPrivateKey() {
         return domainPrivateKey;
     }
 
-    public void setDomainPrivateKey(String domainPrivateKey) {
+    public void setDomainPrivateKey(byte[] domainPrivateKey) {
         this.domainPrivateKey = domainPrivateKey;
     }
 

@@ -46,8 +46,8 @@ public class RootCertificate {
     private Boolean revoked;
 
     @JsonIgnore
-    @Column(name = "content", columnDefinition = "VARCHAR(16000)")
-    private String content;
+    @Column(name = "content", columnDefinition = "BYTEA")
+    private byte[] content;
 
     @Type(type = "json")
     @Column(name = "data", columnDefinition = "json")
@@ -56,7 +56,7 @@ public class RootCertificate {
     public RootCertificate() {
     }
 
-    public RootCertificate(AcmeProvider provider, String content) {
+    public RootCertificate(AcmeProvider provider, byte[] content) {
         this.provider = provider;
         this.content = content;
     }
@@ -73,11 +73,11 @@ public class RootCertificate {
         this.provider = provider;
     }
 
-    public String getContent() {
+    public byte[] getContent() {
         return content;
     }
 
-    public void setContent(String content) {
+    public void setContent(byte[] content) {
         this.content = content;
     }
 

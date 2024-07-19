@@ -39,8 +39,8 @@ public class AcmeAccount {
     @Column(name = "account_url", columnDefinition = "VARCHAR(2000)")
     private String accountUrl;
 
-    @Column(name = "private_key", columnDefinition = "VARCHAR(2000)")
-    private String accountPrivateKey;
+    @Column(name = "private_key", columnDefinition = "BYTEA")
+    private byte[] accountPrivateKey;
 
     @Column(name = "deleted", columnDefinition = "BOOLEAN")
     private Boolean deleted;
@@ -69,7 +69,7 @@ public class AcmeAccount {
         return externalKey;
     }
 
-    public String getAccountPrivateKey() {
+    public byte[] getAccountPrivateKey() {
         return accountPrivateKey;
     }
 
@@ -93,7 +93,7 @@ public class AcmeAccount {
         this.externalKey = externalKey;
     }
 
-    public void setAccountPrivateKey(String accountPrivateKey) {
+    public void setAccountPrivateKey(byte[] accountPrivateKey) {
         this.accountPrivateKey = accountPrivateKey;
     }
 
