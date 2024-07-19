@@ -9,6 +9,7 @@ import org.shredzone.acme4j.exception.AcmeException;
 import org.shredzone.acme4j.util.KeyPairUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -394,12 +395,13 @@ public class AcmeServiceImpl implements AcmeService {
         }
     }
 
-    public ResponseEntity<String> downloadChallengeFile(HttpServletResponse httpResponse, Long id) {
+    public ResponseEntity<byte[]> downloadChallengeFile(Long id) {
         AcmeOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeOrder with id = " + id));
-        httpResponse.setContentType ("text/plain");
-        httpResponse.setHeader ("Content-Disposition", "attachment; filename="+order.getChallengeToken());
-        return new ResponseEntity<>(order.getChallengeContent(), HttpStatus.OK);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, "text/plain");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+order.getChallengeToken());
+        return new ResponseEntity<>(order.getChallengeContent().getBytes(), headers, HttpStatus.OK);
     }
 
     public ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long orderId) {

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -189,13 +190,18 @@ public class RootCertificateController {
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/root/certificates/{id}/download")
-    public ResponseEntity<String> downloadRootCertificateBylId(HttpServletResponse httpResponse,
-                                                                    @PathVariable(value = "id") Long id) {
+    public ResponseEntity<byte[]> downloadRootCertificateBylId(@PathVariable(value = "id") Long id) {
         RootCertificate certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found RootCertificate with id = " + id));
-        httpResponse.setContentType ("application/width-x509-user-cert");
-        httpResponse.setHeader ("Content-Disposition", "attachment; filename=root_ca.crt");
-        return new ResponseEntity<>(certificate.getContent(), HttpStatus.OK);
+        Map<String, Object> rootCertData = certificate.getData();
+        String rootCertFileName = "root_ca.crt";
+        if(rootCertData!=null && rootCertData.containsKey("fileName")) {
+            rootCertFileName = String.valueOf(rootCertData.get("fileName"));
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_TYPE, "application/width-x509-user-cert");
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+rootCertFileName);
+        return new ResponseEntity<>(certificate.getContent().getBytes(), headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Загрузить файл корневого сертификата",

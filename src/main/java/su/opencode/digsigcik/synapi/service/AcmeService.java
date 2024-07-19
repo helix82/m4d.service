@@ -15,7 +15,7 @@ public interface AcmeService {
     );
     ResponseEntity<Map> certificateOrder(HttpSession httpSession, String domain, String notAfter, Long providerId, Map data
     );
-    ResponseEntity<String> downloadChallengeFile(HttpServletResponse httpResponse, Long id
+    ResponseEntity<byte[]> downloadChallengeFile(Long id
     );
     ResponseEntity<Map> certificateRelease(HttpSession httpSession, Long id
     );
