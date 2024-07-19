@@ -7,7 +7,6 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.dto.OrderDto;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
-import su.opencode.digsigcik.synapi.model.AcmeDomain;
-import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
 import su.opencode.digsigcik.synapi.repository.OrderRepository;
@@ -31,7 +28,6 @@ import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 import su.opencode.digsigcik.synapi.service.AcmeService;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,9 +47,6 @@ public class OrderController {
 
     @Autowired
     private OrderRepository orderRepository;
-
-    @Autowired
-    private CertificateRepository certificateRepository;
 
     @Autowired
     private AcmeService acmeService;

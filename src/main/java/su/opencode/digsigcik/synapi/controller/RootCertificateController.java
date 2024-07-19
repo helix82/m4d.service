@@ -27,12 +27,8 @@ import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 import su.opencode.digsigcik.synapi.repository.RootCertificateRepository;
 import su.opencode.digsigcik.synapi.util.CertUtils;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -140,7 +136,7 @@ public class RootCertificateController {
     })
     @PostMapping("/root/certificates/upload")
     public ResponseEntity<RootCertificate> uploadAndCreateRootCertificate(
-            @RequestParam(value = "provider", required = false) @Parameter(name = "provider", description="Поставщик сертификата", example = "provider") Long provider,
+            @RequestParam(value = "provider") @Parameter(name = "provider", description="Поставщик сертификата", example = "provider") Long provider,
             @RequestPart("content") @Parameter(name = "content", description="Содержимое корневого сертификата", example = "", required = true) MultipartFile content
     ) {
         try {

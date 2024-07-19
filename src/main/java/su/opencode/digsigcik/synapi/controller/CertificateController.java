@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import su.opencode.digsigcik.synapi.model.AcmeAccount;
 import su.opencode.digsigcik.synapi.model.AcmeCertificate;
 import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
 import su.opencode.digsigcik.synapi.model.AcmeProvider;
+import su.opencode.digsigcik.synapi.repository.AccountRepository;
 import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
@@ -50,6 +52,9 @@ import java.util.zip.ZipOutputStream;
 @AllArgsConstructor
 @Slf4j
 public class CertificateController {
+    @Autowired
+    AccountRepository accountRepository;
+
     @Autowired
     private DomainRepository domainRepository;
 
@@ -320,22 +325,24 @@ public class CertificateController {
     })
     @PostMapping(value = "/certificate/upload")
     public ResponseEntity<AcmeCertificate> uploadCertificate(
-            @RequestParam(value = "provider", required = false) @Parameter(name = "provider", description="Поставщик сертификата", example = "provider") Long provider,
-            @RequestParam(value = "domain", required = false) @Parameter(name = "domain", description="Домен", example = "domain") Long domain,
+            @RequestParam(value = "provider") @Parameter(name = "provider", description="Поставщик сертификата", example = "1") Long provider,
+            @RequestParam(value = "domain") @Parameter(name = "domain", description="Домен", example = "domain.site") String domain,
             @RequestPart("content") @Parameter(name = "content", description="Содержимое сертификата", example = "", required = true) MultipartFile content
     ) {
         try {
             AcmeProvider _provider = providerRepository.findById(provider)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + provider));
 
-            AcmeDomain _domain = domainRepository.findById(domain)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with id = " + domain));
-
+            AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domain);
+            if(acmeDomain==null) {
+                acmeDomain = new AcmeDomain(acmeService.defaultAccount(), domain);
+                domainRepository.save(acmeDomain);
+            }
 
             String certContent = new String(content.getBytes());
             Map certInfo = CertUtils.certInfo(certContent);
 
-            AcmeCertificate acmeCertificate = new AcmeCertificate(_domain, certContent);
+            AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, certContent);
             if(certInfo.containsKey("notAfter")) acmeCertificate.setNotAfter((Date)(certInfo.get("notAfter")));
             if(certInfo.containsKey("notBefore")) acmeCertificate.setNotBefore((Date)(certInfo.get("notBefore")));
             acmeCertificate.setProvider(_provider);
