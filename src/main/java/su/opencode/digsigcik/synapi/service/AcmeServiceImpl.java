@@ -142,10 +142,10 @@ public class AcmeServiceImpl implements AcmeService {
                 if(acmeAccount.getAccountPrivateKey()==null) {
                     StringWriter sw = new StringWriter();
                     KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
-                    acmeAccount.setAccountPrivateKey(sw.toString());
+                    acmeAccount.setAccountPrivateKey(sw.toString().getBytes());
                     accountRepository.save(acmeAccount);
                 }
-                KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
+                KeyPair userKeyPair = makeKeyPair(new String(acmeAccount.getAccountPrivateKey()));
                 Login login = new AccountBuilder()
                         .onlyExisting()         // Do not create a new acmeAccount
                         .agreeToTermsOfService()
@@ -178,10 +178,10 @@ public class AcmeServiceImpl implements AcmeService {
                 if(acmeAccount.getAccountPrivateKey()==null) {
                     StringWriter sw = new StringWriter();
                     KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
-                    acmeAccount.setAccountPrivateKey(sw.toString());
+                    acmeAccount.setAccountPrivateKey(sw.toString().getBytes());
                     accountRepository.save(acmeAccount);
                 }
-                KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
+                KeyPair userKeyPair = makeKeyPair(new String(acmeAccount.getAccountPrivateKey()));
                 Account acct = new AccountBuilder()
                         .addContact("mailto:"+acmeAccount.getEmail())
                         .agreeToTermsOfService()
@@ -280,10 +280,10 @@ public class AcmeServiceImpl implements AcmeService {
                 if(acmeDomain.getDomainPrivateKey()==null) {
                     StringWriter sw = new StringWriter();
                     KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(4096), sw);
-                    acmeDomain.setDomainPrivateKey(sw.toString());
+                    acmeDomain.setDomainPrivateKey(sw.toString().getBytes());
                     domainRepository.save(acmeDomain);
                 }
-                KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
+                KeyPair domainKeyPair = makeKeyPair(new String(acmeDomain.getDomainPrivateKey()));
 
                 order.execute(domainKeyPair, csrBuilder -> {
                     Map<String,Object> orderData = acmeOrder.getData();
@@ -318,7 +318,7 @@ public class AcmeServiceImpl implements AcmeService {
                 StringWriter writer = new StringWriter();
                 certificate.writeCertificate(writer);
 
-                AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
+                AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString().getBytes());
                 acmeCertificate.setOrder(acmeOrder);
                 acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
                 acmeCertificate.setProvider(acmeOrder.getProvider());
@@ -440,10 +440,10 @@ public class AcmeServiceImpl implements AcmeService {
                             if(acmeDomain.getDomainPrivateKey()==null) {
                                 StringWriter sw = new StringWriter();
                                 KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(4096), sw);
-                                acmeDomain.setDomainPrivateKey(sw.toString());
+                                acmeDomain.setDomainPrivateKey(sw.toString().getBytes());
                                 domainRepository.save(acmeDomain);
                             }
-                            KeyPair domainKeyPair = makeKeyPair(acmeDomain.getDomainPrivateKey());
+                            KeyPair domainKeyPair = makeKeyPair(new String(acmeDomain.getDomainPrivateKey()));
 
                             order.execute(domainKeyPair, csrBuilder -> {
                                 Map<String,Object> orderData = acmeOrder.getData();
@@ -475,7 +475,7 @@ public class AcmeServiceImpl implements AcmeService {
                             StringWriter writer = new StringWriter();
                             certificate.writeCertificate(writer);
 
-                            AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString());
+                            AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString().getBytes());
                             acmeCertificate.setOrder(acmeOrder);
                             acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
                             acmeCertificate.setProvider(acmeOrder.getProvider());
@@ -529,7 +529,7 @@ public class AcmeServiceImpl implements AcmeService {
                 try {
                     CertificateFactory fac = null;
                     fac = CertificateFactory.getInstance("X509");
-                    X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(acmeCertificate.getContent().getBytes()));
+                    X509Certificate cert = (X509Certificate) fac.generateCertificate(new ByteArrayInputStream(acmeCertificate.getContent()));
 
                     Certificate.revoke(login, cert, RevocationReason.KEY_COMPROMISE);
 
@@ -663,10 +663,10 @@ public class AcmeServiceImpl implements AcmeService {
                 if(acmeAccount.getAccountPrivateKey()==null) {
                     StringWriter sw = new StringWriter();
                     KeyPairUtils.writeKeyPair(KeyPairUtils.createKeyPair(), sw);
-                    acmeAccount.setAccountPrivateKey(sw.toString());
+                    acmeAccount.setAccountPrivateKey(sw.toString().getBytes());
                     accountRepository.save(acmeAccount);
                 }
-                KeyPair userKeyPair = makeKeyPair(acmeAccount.getAccountPrivateKey());
+                KeyPair userKeyPair = makeKeyPair(new String(acmeAccount.getAccountPrivateKey()));
                 if(acmeAccount.getAccountUrl()==null) {
                     // register on acme server
                     Account acct = new AccountBuilder()

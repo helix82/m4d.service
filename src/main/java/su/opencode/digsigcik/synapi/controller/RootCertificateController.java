@@ -61,7 +61,7 @@ public class RootCertificateController {
 
         if(certificate.getContent() != null) {
             try {
-                ret.putAll(CertUtils.certInfo(certificate.getContent()));
+                ret.putAll(CertUtils.certInfo(new String(certificate.getContent())));
             } catch (CertificateException e) {
                 ret.put("error", "invalid certificate");
             }
@@ -143,12 +143,9 @@ public class RootCertificateController {
             AcmeProvider _provider = providerRepository.findById(provider)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + provider));
 
-            String certContent = new String(content.getBytes());
+            Map certInfo = CertUtils.certInfo(new String(content.getBytes()));
 
-            Map certInfo = CertUtils.certInfo(certContent);
-
-            RootCertificate _certificate = new RootCertificate(_provider, certContent);
-
+            RootCertificate _certificate = new RootCertificate(_provider, content.getBytes());
             HashMap<String,Object> data = new HashMap<>();
             data.put("fileName", content.getOriginalFilename());
             _certificate.setData(data);
@@ -197,7 +194,7 @@ public class RootCertificateController {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, "application/width-x509-user-cert");
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+rootCertFileName);
-        return new ResponseEntity<>(certificate.getContent().getBytes(), headers, HttpStatus.OK);
+        return new ResponseEntity<>(certificate.getContent(), headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Загрузить файл корневого сертификата",
@@ -213,7 +210,7 @@ public class RootCertificateController {
         RootCertificate certificate = rootCertificateRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found RootCertificate with id = " + id));
         try {
-            certificate.setContent( new String(content.getBytes()));
+            certificate.setContent(content.getBytes());
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can't upload certificate");
         }

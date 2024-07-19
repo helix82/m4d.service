@@ -129,7 +129,7 @@ public class CertificateController {
 
         try {
             ret.put("status", "unknown");
-            ret.putAll(CertUtils.certInfo(certificate.getContent()));
+            ret.putAll(CertUtils.certInfo(new String(certificate.getContent())));
         } catch (CertificateException e) {
             ret.put("error", "invalid certificate");
             ret.put("status", "error");
@@ -231,7 +231,7 @@ public class CertificateController {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_TYPE, "application/width-x509-user-cert");
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename="+certificate.getDomain().getDomainUrl()+"-chain.crt");
-        return new ResponseEntity<>(certificate.getContent().getBytes(), headers, HttpStatus.OK);
+        return new ResponseEntity<>(certificate.getContent(), headers, HttpStatus.OK);
     }
 
     @Operation(summary = "Получить файл сертификата с ключём домена",
@@ -260,16 +260,16 @@ public class CertificateController {
 
         try {
             ZipEntry certEntry = new ZipEntry(certFileName);
-            certEntry.setSize(certificate.getContent().length());
+            certEntry.setSize(certificate.getContent().length);
             zos.putNextEntry(certEntry);
-            zos.write(certificate.getContent().getBytes());
+            zos.write(certificate.getContent());
             zos.closeEntry();
 
             String keyFileName = domain.getDomainUrl()+keyExtension;
             ZipEntry keyEntry = new ZipEntry(keyFileName);
-            keyEntry.setSize(domain.getDomainPrivateKey().length());
+            keyEntry.setSize(domain.getDomainPrivateKey().length);
             zos.putNextEntry(keyEntry);
-            zos.write(domain.getDomainPrivateKey().getBytes());
+            zos.write(domain.getDomainPrivateKey());
             zos.closeEntry();
 
             zos.close();
@@ -339,10 +339,9 @@ public class CertificateController {
                 domainRepository.save(acmeDomain);
             }
 
-            String certContent = new String(content.getBytes());
-            Map certInfo = CertUtils.certInfo(certContent);
+            Map certInfo = CertUtils.certInfo(new String(content.getBytes()));
 
-            AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, certContent);
+            AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, content.getBytes());
             if(certInfo.containsKey("notAfter")) acmeCertificate.setNotAfter((Date)(certInfo.get("notAfter")));
             if(certInfo.containsKey("notBefore")) acmeCertificate.setNotBefore((Date)(certInfo.get("notBefore")));
             acmeCertificate.setProvider(_provider);
