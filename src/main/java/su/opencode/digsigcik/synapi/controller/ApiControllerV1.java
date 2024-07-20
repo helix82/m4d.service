@@ -71,7 +71,8 @@ public class ApiControllerV1 {
             ContainerTypeEnum containerType,
             SignatureTypeEnum signatureType,
             SignatureAlgorithm signatureAlgorithm,
-            HashAlgorithm hashAlgorithm) {
+            HashAlgorithm hashAlgorithm,
+            boolean signatureDetached) {
         ReportContainerDTO reportContainerDTO;
         if (sourceFile == null || sourceFile.isEmpty()) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
@@ -81,7 +82,11 @@ public class ApiControllerV1 {
         }
         if (isSourceFilePoa(sourceFile))  containerType = ContainerTypeEnum.POA;
         try {
-            reportContainerDTO = verificationService.verify(sourceFile, sourceSig);
+            if (signatureDetached) {
+                reportContainerDTO = verificationService.verifyDetached(sourceFile, sourceSig);
+            } else {
+                reportContainerDTO = verificationService.verifyAttached(sourceSig);
+            }
         } catch (ResourceAccessException | IOException | URISyntaxException e) {
             log.warn("Не удалось подключиться к сервису верификации");
             reportContainerDTO = ReportContainerDTO.builder()
@@ -104,6 +109,7 @@ public class ApiControllerV1 {
                 .signatureType(signatureType != null ? signatureType : UNQUALIFIED)
                 .signCheck(reportContainerDTO.getSignCheck())
                 .signReport(reportContainerDTO.getSignReport())
+                .signatureDetached(signatureDetached)
                 .build();
 
         var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
@@ -167,7 +173,7 @@ public class ApiControllerV1 {
 
         if (containerDataDTOWithReverify.isReverify()) {
             try {
-                return new ResponseEntity<>(verificationService.verify(containerDataDTOWithReverify.getContainer()),
+                return new ResponseEntity<>(verificationService.verifyContainer(containerDataDTOWithReverify.getContainer()),
                         HttpStatus.OK);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
@@ -268,7 +274,7 @@ public class ApiControllerV1 {
 
         if (reverify) {
             try {
-                return new ResponseEntity<>(verificationService.verify(container), HttpStatus.OK);
+                return new ResponseEntity<>(verificationService.verifyContainer(container), HttpStatus.OK);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
