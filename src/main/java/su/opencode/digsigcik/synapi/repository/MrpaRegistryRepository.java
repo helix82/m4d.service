@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioListDto;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 
 import java.util.List;
@@ -23,14 +24,13 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " where mr.id=?1 ")
     MrpaRegistryWithFioDTO findMrpaRegistryById(Long id);
 
-    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.guid, " +
-            "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXml, mr.mrpaXmlFilename, " +
-            "mr.recalledXmlPath, mr.organisationId, mr.principalId, mr.representativeId,"
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioListDto(mr.id, mr.guid, " +
+            "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.mrpaXmlFilename, mr.organisationId, mr.principalId, mr.representativeId,"
             + "p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
             + " from MrpaRegistry mr"
             + " left join Principal p on p.id=mr.principalId"
             + " left join Representative r on r.id=mr.representativeId ")
-    List<MrpaRegistryWithFioDTO> findAllMrpaRegistries();
+    List<MrpaRegistryWithFioListDto> findAllMrpaRegistries();
 
     @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.guid, " +
             "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXml, mr.mrpaXmlFilename, mr.recalledXmlPath, " +

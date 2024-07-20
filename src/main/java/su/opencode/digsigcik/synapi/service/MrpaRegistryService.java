@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.service;
 
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioListDto;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
@@ -10,7 +11,7 @@ import java.text.ParseException;
 import java.util.List;
 
 public interface MrpaRegistryService {
-    List<MrpaRegistryWithFioDTO> findAllMrpaRegistry();
+    List<MrpaRegistryWithFioListDto> findAllMrpaRegistry();
 
     MrpaRegistry saveMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry);
 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioListDto;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
@@ -34,7 +35,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     private final CredentialRepository credentialRepository;
 
     @Override
-    public List<MrpaRegistryWithFioDTO> findAllMrpaRegistry() {
+    public List<MrpaRegistryWithFioListDto> findAllMrpaRegistry() {
         return this.mrpaRegistryRepository.findAllMrpaRegistries();
     }
 
