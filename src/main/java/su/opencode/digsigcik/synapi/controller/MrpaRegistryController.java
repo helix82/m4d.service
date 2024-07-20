@@ -30,7 +30,6 @@ import su.opencode.digsigcik.synapi.util.XMLUtil;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -59,7 +58,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> findAllMrpaRegistry() throws UnsupportedEncodingException {
+    public ResponseEntity<?> findAllMrpaRegistry(){
         List<MrpaRegistryWithFioListDto> mrpaRegistryFindAll;
         try {
             mrpaRegistryFindAll = mrpaRegistryService.findAllMrpaRegistry();
