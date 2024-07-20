@@ -23,6 +23,7 @@ import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
 import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.dto.ReportContainerDTO;
+import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
@@ -30,6 +31,9 @@ import su.opencode.digsigcik.synapi.service.ContainerService;
 import su.opencode.digsigcik.synapi.service.VerificationService;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -69,8 +73,15 @@ public class ApiControllerV1 {
             SignatureAlgorithm signatureAlgorithm,
             HashAlgorithm hashAlgorithm) {
         ReportContainerDTO reportContainerDTO;
+        if (sourceFile == null || sourceFile.isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
+        if (sourceSig == null || sourceSig.isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
+        if (isSourceFilePoa(sourceFile))  containerType = ContainerTypeEnum.POA;
         try {
-            reportContainerDTO = verificationService.verify(sourceFile,sourceSig);
+            reportContainerDTO = verificationService.verify(sourceFile, sourceSig);
         } catch (ResourceAccessException | IOException | URISyntaxException e) {
             log.warn("Не удалось подключиться к сервису верификации");
             reportContainerDTO = ReportContainerDTO.builder()
@@ -85,10 +96,12 @@ public class ApiControllerV1 {
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
-                .signatureAlgorithm(signatureAlgorithm != null ? signatureAlgorithm.getAlgorithmName(): "NOT IMPLEMENTED")
-                .hashAlgorithm(hashAlgorithm != null ? hashAlgorithm.getAlgorithmName():HashAlgorithm.SHA256.getAlgorithmName())
-                .containerType(containerType != null ? containerType:SIMPLE_DETACHED)
-                .signatureType(signatureType != null ? signatureType:UNQUALIFIED)
+                .signatureAlgorithm(signatureAlgorithm != null ? signatureAlgorithm.getAlgorithmName() : "NOT " +
+                        "IMPLEMENTED")
+                .hashAlgorithm(hashAlgorithm != null ? hashAlgorithm.getAlgorithmName() :
+                        HashAlgorithm.SHA256.getAlgorithmName())
+                .containerType(containerType != null ? containerType : SIMPLE_DETACHED)
+                .signatureType(signatureType != null ? signatureType : UNQUALIFIED)
                 .signCheck(reportContainerDTO.getSignCheck())
                 .signReport(reportContainerDTO.getSignReport())
                 .build();
@@ -96,7 +109,8 @@ public class ApiControllerV1 {
         var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
 
         return (res != null) ? resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME))
-                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+                : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null);
     }
 
 
@@ -108,7 +122,8 @@ public class ApiControllerV1 {
         var res = containerService.updateContainerRegData(container, regData);
 
         return (res != null) ? resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME))
-                : ResponseEntity.internalServerError().build();
+                : ResponseEntity.internalServerError()
+                .build();
     }
 
 
@@ -141,16 +156,19 @@ public class ApiControllerV1 {
                 false);
 
         return (res != null) ? ResponseEntity.ok(res)
-                : ResponseEntity.internalServerError().build();
+                : ResponseEntity.internalServerError()
+                .build();
     }
 
 
-    @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?>  getContainerDataJson(@ModelAttribute ContainerDataDTOWithReverify containerDataDTOWithReverify) {
+    @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces =
+            MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getContainerDataJson(@ModelAttribute ContainerDataDTOWithReverify containerDataDTOWithReverify) {
 
         if (containerDataDTOWithReverify.isReverify()) {
             try {
-                return new ResponseEntity<>(verificationService.verify(containerDataDTOWithReverify.getContainer()), HttpStatus.OK);
+                return new ResponseEntity<>(verificationService.verify(containerDataDTOWithReverify.getContainer()),
+                        HttpStatus.OK);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
@@ -173,7 +191,8 @@ public class ApiControllerV1 {
 
 
     @PostMapping(value = "/get-container-data-zip", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE, MediaType.APPLICATION_JSON_VALUE})
+            produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE,
+                    MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> getContainerDataZip(@ModelAttribute ContainerDataDTO containerDataDTO) {
 
         Map<String, su.opencode.digsigcik.synapi.api.model.ContainerPart> res = containerService.getContainerData(
@@ -185,7 +204,8 @@ public class ApiControllerV1 {
                 false);
 
         if (res == null) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError()
+                    .build();
         }
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -216,7 +236,8 @@ public class ApiControllerV1 {
         var res = containerService.getContainerPart(container, containerSelector, false);
 
         if (res == null) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError()
+                    .build();
         }
 
         var resource = new ByteArrayResource(res.getData());
@@ -224,7 +245,8 @@ public class ApiControllerV1 {
         var filename = res.getFileName();
 
         if (filename == null) {
-            return ResponseEntity.internalServerError().build();
+            return ResponseEntity.internalServerError()
+                    .build();
         }
 
         return resourceOctetStreamOrInternal(resource, contentType, filename);
@@ -268,7 +290,8 @@ public class ApiControllerV1 {
         return selector;
     }
 
-    private static void addResourcesToZip(ZipOutputStream zipOutputStream, Map<String, su.opencode.digsigcik.synapi.api.model.ContainerPart> res) throws IOException {
+    private static void addResourcesToZip(ZipOutputStream zipOutputStream, Map<String,
+            su.opencode.digsigcik.synapi.api.model.ContainerPart> res) throws IOException {
         for (var part : res.values()) {
             addResourceToZip(zipOutputStream, new ByteArrayResource(part.getData()), part.getFileName());
         }
@@ -289,4 +312,18 @@ public class ApiControllerV1 {
         zipOutputStream.closeEntry();
     }
 
+    private static boolean isSourceFilePoa(MultipartFile sourceFile) {
+        return sourceFile.getOriginalFilename().endsWith(".xml") && isMrpaRegistryFullXml(sourceFile);
+    }
+
+    private static boolean isMrpaRegistryFullXml(MultipartFile sourceFile) {
+        try {
+            JAXBContext context = JAXBContext.newInstance(MrpaRegistryFullXML.class);
+            Unmarshaller unmarshaller = context.createUnmarshaller();
+            unmarshaller.unmarshal(sourceFile.getInputStream());
+            return true;
+        } catch (JAXBException | IOException e) {
+            return false;
+        }
+    }
 }
