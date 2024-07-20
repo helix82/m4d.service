@@ -1,4 +1,4 @@
-package su.opencode.digsigcik.synapi.dto;
+package su.opencode.digsigcik.synapi.dto.m4d;
 
 import lombok.Data;
 

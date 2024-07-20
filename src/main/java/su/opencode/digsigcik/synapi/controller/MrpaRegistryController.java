@@ -12,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullXML;
+import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistrySaveWithCredentialDTO;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
