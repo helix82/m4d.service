@@ -50,7 +50,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join Organisation o on o.id=mr.organisationId"
             + " left join Representative r on r.id=mr.representativeId "
             + " left join RepresentativePassport rp on rp.representativeId=r.id"
-            + " where p.inn=?1 ")
+            + " where mr.status<>'NOT_SIGNED' and p.inn=?1 ")
     List<MrpaRegistryFullDTO> findMrpaRegistriesFullByPrincipalInn(String inn);
 
     @Query(value = "SELECT mr.* from mrpa_registry mr where mr.id=?1 ", nativeQuery = true)
