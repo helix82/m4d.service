@@ -40,7 +40,10 @@ import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.security.cert.CertificateException;
 import java.time.LocalDateTime;
@@ -162,7 +165,10 @@ public class ApiControllerV1 {
     public ResponseEntity<Resource> updatePdfContainerRegData(
             @RequestPart("container") MultipartFile container,
             @RequestPart("regData") RegistrationData regData) {
-
+        // Проверить, пустой ли файл
+        if (container == null || container.isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
         var res = containerService.updateContainerRegData(container, regData);
 
         return (res != null) ? resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME))
@@ -190,7 +196,15 @@ public class ApiControllerV1 {
             produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE,
                     MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> getContainerData(@ModelAttribute ContainerDataDTO containerDataDTO) {
-
+        // Проверить, пустой ли файл
+        if (containerDataDTO.getContainer() == null || containerDataDTO.getContainer()
+                .isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
+        // Проверить, пустые ли селекторы
+        if (containerDataDTO.getSelectors() == null) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
         var res = containerService.getContainerData(
                 containerDataDTO.getContainer(),
                 containerDataDTO.getSelectors()
@@ -208,12 +222,21 @@ public class ApiControllerV1 {
     @PostMapping(value = "/get-container-data-json", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces =
             MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getContainerDataJson(@ModelAttribute ContainerDataDTOWithReverify containerDataDTOWithReverify) {
-
+        // Проверить, пустой ли файл
+        if (containerDataDTOWithReverify.getContainer() == null || containerDataDTOWithReverify.getContainer()
+                .isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
         if (containerDataDTOWithReverify.isReverify()) {
             try {
                 return new ResponseEntity<>(verificationService.verifyContainer(containerDataDTOWithReverify.getContainer()),
                         HttpStatus.OK);
             } catch (Exception e) {
+                throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+            }
+        } else {
+            // Проверить, пустые ли селекторы
+            if (containerDataDTOWithReverify.getSelectors() == null) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
         }
@@ -238,7 +261,15 @@ public class ApiControllerV1 {
             produces = {MediaType.APPLICATION_OCTET_STREAM_VALUE, MediaType.TEXT_PLAIN_VALUE,
                     MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> getContainerDataZip(@ModelAttribute ContainerDataDTO containerDataDTO) {
-
+        // Проверить, пустой ли файл
+        if (containerDataDTO.getContainer() == null || containerDataDTO.getContainer()
+                .isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
+        // Проверить, пустые ли селекторы
+        if (containerDataDTO.getSelectors() == null) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
         Map<String, su.opencode.digsigcik.synapi.api.model.ContainerPart> res = containerService.getContainerData(
                 containerDataDTO.getContainer(),
                 containerDataDTO.getSelectors()
@@ -275,7 +306,14 @@ public class ApiControllerV1 {
     public ResponseEntity<?> getContainerPart(
             @RequestPart("container") MultipartFile container,
             ContainerSelectorCode selector) {
-
+        // Проверить, пустой ли файл
+        if (container == null || container.isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
+        // Проверить, пустые ли селекторы
+        if (selector == null) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
         ContainerSelector containerSelector = createContainerSelector(selector);
         var res = containerService.getContainerPart(container, containerSelector, false);
 
@@ -301,10 +339,11 @@ public class ApiControllerV1 {
             @RequestPart("container") MultipartFile container,
             ContainerSelectorCode selector,
             Boolean reverify) {
-
-        if (container.isEmpty()) {
-            throw new BadRequestException("Container is empty!");
+        // Проверить, пустой ли файл
+        if (container == null || container.isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
+
 
         if (reverify == null) {
             reverify = Boolean.FALSE;
@@ -314,6 +353,11 @@ public class ApiControllerV1 {
             try {
                 return new ResponseEntity<>(verificationService.verifyContainer(container), HttpStatus.OK);
             } catch (Exception e) {
+                throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+            }
+        } else {
+            // Проверить, пустые ли селекторы
+            if (selector == null) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
         }
@@ -376,11 +420,13 @@ public class ApiControllerV1 {
         try {
             byte[] bytes = multipartFile.getBytes();
             ContentInfo contentInfo = ContentInfo.getInstance(bytes);
-            if (!contentInfo.getContentType().equals(CMSObjectIdentifiers.signedData)) {
+            if (!contentInfo.getContentType()
+                    .equals(CMSObjectIdentifiers.signedData)) {
                 throw new RuntimeException("Плохой файл подписи");
             }
             SignedData signedData = SignedData.getInstance(contentInfo.getContent());
-            return signedData.getEncapContentInfo().getContent() == null;
+            return signedData.getEncapContentInfo()
+                    .getContent() == null;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
