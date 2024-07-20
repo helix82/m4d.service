@@ -5,6 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
+import org.bouncycastle.asn1.cms.ContentInfo;
+import org.bouncycastle.asn1.cms.SignedData;
+import org.bouncycastle.cms.CMSException;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -34,11 +40,9 @@ import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URISyntaxException;
+import java.security.cert.CertificateException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +50,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.SIMPLE_DETACHED;
+import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.*;
 import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.UNQUALIFIED;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.filename;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.mediaType;
@@ -68,19 +72,49 @@ public class ApiControllerV1 {
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             @RequestPart("srcFile") MultipartFile sourceFile,
             @RequestPart("sigFile") MultipartFile sourceSig,
-            ContainerTypeEnum containerType,
             SignatureTypeEnum signatureType,
             SignatureAlgorithm signatureAlgorithm,
-            HashAlgorithm hashAlgorithm,
-            boolean signatureDetached) {
-        ReportContainerDTO reportContainerDTO;
+            HashAlgorithm hashAlgorithm) throws IOException, CertificateException, CMSException {
+
+        boolean signatureDetached;
+        ContainerTypeEnum containerType;
+        // Проверить, пустые ли файлы
         if (sourceFile == null || sourceFile.isEmpty()) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
         if (sourceSig == null || sourceSig.isEmpty()) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
-        if (isSourceFilePoa(sourceFile))  containerType = ContainerTypeEnum.POA;
+
+        // Проверить, является ли подпись отсоединенной
+        if (isDetachedSignature(sourceSig)) {
+            signatureDetached = true;
+            containerType = SIMPLE_DETACHED;
+            if (isSourceFilePoa(sourceFile)) {
+                containerType = ContainerTypeEnum.POA_DETACHED;
+            }
+            if (isValidPdf(sourceFile)) {
+                containerType = PDF_DETACHED;
+            }
+            if (isValidDocx(sourceFile)) {
+                containerType = DOCX_DETACHED;
+            }
+        } else {
+            signatureDetached = false;
+            containerType = SIMPLE_ATTACHED;
+            if (isSourceFilePoa(sourceFile)) {
+                containerType = POA_ATTACHED;
+            }
+            if (isValidPdf(sourceFile)) {
+                containerType = PDF_ATTACHED;
+            }
+            if (isValidDocx(sourceFile)) {
+                containerType = DOCX_ATTACHED;
+            }
+        }
+
+        // Выполнить проверку подписи
+        ReportContainerDTO reportContainerDTO;
         try {
             if (signatureDetached) {
                 reportContainerDTO = verificationService.verifyDetached(sourceFile, sourceSig);
@@ -94,7 +128,11 @@ public class ApiControllerV1 {
                     .signCheck(null)
                     .build();
         }
+
+        // Получить информацию о токене JWT
         JwtPayloadDto jwtPayloadDto = jwtTokenUtils.parseJwtPayload(token);
+
+        // Создать информацию о контейнере
         ContainerInputInfoDto containerInputInfo = ContainerInputInfoDto.builder()
                 .login(jwtPayloadDto.getPreferredUsername())
                 .firstname(jwtPayloadDto.getFirstName())
@@ -105,20 +143,20 @@ public class ApiControllerV1 {
                         "IMPLEMENTED")
                 .hashAlgorithm(hashAlgorithm != null ? hashAlgorithm.getAlgorithmName() :
                         HashAlgorithm.SHA256.getAlgorithmName())
-                .containerType(containerType != null ? containerType : SIMPLE_DETACHED)
+                .containerType(containerType)
                 .signatureType(signatureType != null ? signatureType : UNQUALIFIED)
                 .signCheck(reportContainerDTO.getSignCheck())
                 .signReport(reportContainerDTO.getSignReport())
                 .signatureDetached(signatureDetached)
                 .build();
 
+        // Создать контейнер
         var res = containerService.createContainer(sourceFile, sourceSig, containerInputInfo);
 
         return (res != null) ? resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME))
                 : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(null);
     }
-
 
     @PutMapping(value = "/update-pdf-container-regdata", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> updatePdfContainerRegData(
@@ -319,7 +357,8 @@ public class ApiControllerV1 {
     }
 
     private static boolean isSourceFilePoa(MultipartFile sourceFile) {
-        return sourceFile.getOriginalFilename().endsWith(".xml") && isMrpaRegistryFullXml(sourceFile);
+        return sourceFile.getOriginalFilename()
+                .endsWith(".xml") && isMrpaRegistryFullXml(sourceFile);
     }
 
     private static boolean isMrpaRegistryFullXml(MultipartFile sourceFile) {
@@ -332,4 +371,53 @@ public class ApiControllerV1 {
             return false;
         }
     }
+
+    public static boolean isDetachedSignature(MultipartFile multipartFile) {
+        try {
+            byte[] bytes = multipartFile.getBytes();
+            ContentInfo contentInfo = ContentInfo.getInstance(bytes);
+            if (!contentInfo.getContentType().equals(CMSObjectIdentifiers.signedData)) {
+                throw new RuntimeException("Плохой файл подписи");
+            }
+            SignedData signedData = SignedData.getInstance(contentInfo.getContent());
+            return signedData.getEncapContentInfo().getContent() == null;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static boolean isValidPdf(MultipartFile multipartFile) {
+        try {
+            byte[] bytes = multipartFile.getBytes();
+            if (bytes.length < 100) {
+                return false;
+            }
+            if (!new String(bytes, 0, 5).equals("%PDF-")) {
+                return false;
+            }
+            if (!new String(bytes, bytes.length - 5, 5).equals("%%EOF")) {
+                return false;
+            }
+            PDDocument document = PDDocument.load(bytes);
+            document.close();
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public static boolean isValidDocx(MultipartFile multipartFile) {
+        try {
+            byte[] bytes = multipartFile.getBytes();
+            OPCPackage opcPackage = OPCPackage.open(new ByteArrayInputStream(bytes));
+            opcPackage.close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
+
+
+
+
