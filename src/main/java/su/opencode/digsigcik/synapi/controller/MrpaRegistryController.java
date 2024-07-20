@@ -5,12 +5,16 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
+import org.apache.commons.io.FilenameUtils;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
+import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
+import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
+import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistrySaveWithCredentialDTO;
@@ -19,8 +23,10 @@ import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.model.MrpaRegistryCredential;
+import su.opencode.digsigcik.synapi.service.ContainerService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryCredentialService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
+import su.opencode.digsigcik.synapi.service.VerificationService;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
@@ -30,9 +36,10 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import static su.opencode.digsigcik.synapi.controller.ApiControllerV1.createContainerSelector;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
-import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
 @RestController
 @MchdExceptionHandler
@@ -41,6 +48,8 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 public class MrpaRegistryController {
     private final MrpaRegistryService mrpaRegistryService;
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
+    private final VerificationService verificationService;
+    private final ContainerService containerService;
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION)
@@ -199,10 +208,24 @@ public class MrpaRegistryController {
     @PostMapping(value = "/{id}/upload_sig", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("sigFile") MultipartFile sourceSig) throws IOException {
-        String content = new String(sourceSig.getBytes());
-        Document document = convertStringToDocument(content);
-        assert document != null;
+        String extension = FilenameUtils.getExtension(sourceSig.getOriginalFilename());
+//        if(!Objects.equals(extension, "dscp")) {
+//            throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT);
+//        }
+//        String content = new String(sourceSig.getBytes());
+//        Document document = convertStringToDocument(content);
+//        assert document != null;
         //TODO: @helix82 Проверка валидности сигнатуры и загрузка на сервер в базу
+        ReportDTO reportDTO = verificationService.verify(sourceSig);
+        boolean verify = reportDTO.getResults().stream().map(x->x.getVerificationResults().stream().map(ReportDTO.Result.VerificationResult::isResult).collect(Collectors.toList())).isParallel();
+        if(!verify){
+            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
+        }
+        ContainerSelector containerSelector = createContainerSelector(ContainerSelectorCode.SOURCE_FILE);
+        su.opencode.digsigcik.synapi.api.model.ContainerPart res = containerService.getContainerPart(sourceSig, containerSelector, false);
+        var resource = new ByteArrayResource(res.getData());
+System.out.println(resource);
+
         MrpaRegistry mrpaRegistry = mrpaRegistryService.findById(id);
         if (mrpaRegistry == null) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
