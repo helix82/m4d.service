@@ -56,8 +56,8 @@ public class VerificationServiceImpl implements VerificationService {
         this.restTemplateClient = new RestTemplateClient(true);
     }
 
-    public ReportContainerDTO verify(@NotNull MultipartFile sourceFile,
-                                     @NotNull MultipartFile detachedSign) throws IOException, URISyntaxException {
+    public ReportContainerDTO verifyDetached(@NotNull MultipartFile sourceFile,
+                                             @NotNull MultipartFile detachedSign) throws IOException, URISyntaxException {
         resetAll(svc_uri);
         String id1 = uploadDocument(svc_uri, sourceFile.getBytes(), sourceFile.getOriginalFilename()).get("id")
                 .getAsString();
@@ -74,8 +74,23 @@ public class VerificationServiceImpl implements VerificationService {
                 .build();
     }
 
+    public ReportContainerDTO verifyAttached(@NotNull MultipartFile attachedSign) throws IOException, URISyntaxException {
+        resetAll(svc_uri);
+        String id = uploadDocument(svc_uri, attachedSign.getBytes(), attachedSign.getOriginalFilename()).get("id")
+                .getAsString();
+        String metaJsonStr = verifyAttachedSignature(svc_uri, id);
+        byte[] reportFile = getReportFile(svc_uri);
+        resetAll(svc_uri);
+        JSONObject json = new JSONObject(metaJsonStr);
+        byte[] metaJsonContent = json.toString(4).getBytes(StandardCharsets.UTF_8);
+        return ReportContainerDTO.builder()
+                .signCheck(metaJsonContent)
+                .signReport(reportFile)
+                .build();
+    }
 
-    public ReportDTO verify(@NotNull MultipartFile container) {
+
+    public ReportDTO verifyContainer(@NotNull MultipartFile container) {
         List<ContainerSelector> containerSelectors = createContainerSelectors();
         try {
             var containerData = containerService.getContainerData(container, containerSelectors, false);
@@ -111,6 +126,7 @@ public class VerificationServiceImpl implements VerificationService {
                 createContainerSelector(ContainerSelectorCode.TIMESTAMP),
                 createContainerSelector(ContainerSelectorCode.SOURCE_FILE),
                 createContainerSelector(ContainerSelectorCode.DETACHEDSIGN),
+                createContainerSelector(ContainerSelectorCode.ATTACHEDSIGN),
                 createContainerSelector(ContainerSelectorCode.HASHTYPE),
                 createContainerSelector(ContainerSelectorCode.SIGNATUREALGORITHM),
                 createContainerSelector(ContainerSelectorCode.SIGNATURE_TYPE),
@@ -141,22 +157,30 @@ public class VerificationServiceImpl implements VerificationService {
     }
 
     private ReportDTO handleQualifiedSignature(Map<String, ContainerPart> containerData) throws Exception {
-        byte[] detachedSign = containerData.get("detachedSign")
-                .getData();
-        byte[] srcFile = containerData.get("sourceFile")
-                .getData();
+        byte[] detachedSign = getByteArrayData(containerData, "detachedSign");
+        byte[] attachedSign = getByteArrayData(containerData, "attachedSign");
+        byte[] srcFile = getByteArrayData(containerData, "sourceFile");
         String sourceFileFullName = getStringData(containerData, "sourceFileFullName");
 
         if (detachedSign.length > 0) {
             return verifyDetachedSignature(srcFile, detachedSign, sourceFileFullName);
+        } else if (attachedSign.length > 0) {
+            return verifyAttachedSignature(attachedSign, sourceFileFullName);
         } else {
-            return verifyAttachedSignature(srcFile, sourceFileFullName);
+            throw new IllegalArgumentException("Both detachedSign and attachedSign are empty");
         }
+    }
+
+    private byte[] getByteArrayData(Map<String, ContainerPart> containerData, String key) {
+        if (containerData.containsKey(key)) {
+            return containerData.get(key).getData();
+        }
+        return new byte[0];
     }
 
     private ReportDTO verifyAttachedSignature(byte[] srcFile, String sourceFileFullName) throws Exception {
         resetAll(svc_uri);
-        String id1 = uploadDocument(svc_uri, srcFile, sourceFileFullName).get("id")
+        String id1 = uploadDocument(svc_uri, srcFile, sourceFileFullName+".sig").get("id")
                 .getAsString();
         String result = verifyAttachedSignature(svc_uri, id1);
         resetAll(svc_uri);
@@ -171,7 +195,6 @@ public class VerificationServiceImpl implements VerificationService {
         String id2 = uploadDocument(svc_uri, detachedSign, sourceFileFullName + ".sig").get("id")
                 .getAsString();
         String result = verifyDetachedSignature(svc_uri, id1, id2);
-        byte[] reportFile = getReportFile(svc_uri);
         resetAll(svc_uri);
         Gson gson = new Gson();
         return gson.fromJson(result, ReportDTO.class);

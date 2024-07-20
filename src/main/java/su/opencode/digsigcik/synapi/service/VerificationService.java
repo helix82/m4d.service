@@ -9,8 +9,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 public interface VerificationService {
-    ReportDTO verify(@NotNull MultipartFile container);
+    ReportDTO verifyContainer(@NotNull MultipartFile container);
 
-    ReportContainerDTO verify(@NotNull MultipartFile sourceFile,
-                              @NotNull MultipartFile detachedSign) throws IOException, URISyntaxException;
+    ReportContainerDTO verifyDetached(@NotNull MultipartFile sourceFile,
+                                      @NotNull MultipartFile detachedSign) throws IOException, URISyntaxException;
+    ReportContainerDTO verifyAttached(@NotNull MultipartFile attachedSign) throws IOException, URISyntaxException;
 }

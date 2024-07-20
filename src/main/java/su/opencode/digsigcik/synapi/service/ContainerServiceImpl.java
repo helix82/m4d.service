@@ -85,8 +85,11 @@ public class ContainerServiceImpl implements ContainerService {
         byte[] signCheck = containerInputInfo.getSignCheck();
         byte[] signReport = containerInputInfo.getSignReport();
 
-
-        params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
+        if (containerInputInfo.isSignatureDetached()) {
+            params.put(ResultTypeEnum.DETACHED_SIGN, sigFileContent);
+        } else {
+            params.put(ResultTypeEnum.ATTACHED_SIGN, sigFileContent);
+        }
         params.put(ResultTypeEnum.LOGIN, login);
         params.put(ResultTypeEnum.FIRSTNAME, firstname);
         params.put(ResultTypeEnum.LASTNAME, lastname);
