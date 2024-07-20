@@ -290,7 +290,7 @@ public class ApiControllerV1 {
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 
-    private static ContainerSelector createContainerSelector(ContainerSelectorCode containerSelectorCode) {
+    static ContainerSelector createContainerSelector(ContainerSelectorCode containerSelectorCode) {
         val selector = new ContainerSelector();
         selector.setCode(containerSelectorCode);
         return selector;

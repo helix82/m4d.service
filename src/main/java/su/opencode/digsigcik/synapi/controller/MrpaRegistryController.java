@@ -5,34 +5,41 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
+import org.apache.commons.io.FilenameUtils;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.api.model.ContainerPart;
+import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
+import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
+import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistrySaveWithCredentialDTO;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.model.MrpaRegistryCredential;
+import su.opencode.digsigcik.synapi.service.ContainerService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryCredentialService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
+import su.opencode.digsigcik.synapi.service.VerificationService;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.cert.CertificateException;
 import java.text.ParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import static su.opencode.digsigcik.synapi.controller.ApiControllerV1.createContainerSelector;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
-import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
 @RestController
 @MchdExceptionHandler
@@ -41,6 +48,8 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 public class MrpaRegistryController {
     private final MrpaRegistryService mrpaRegistryService;
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
+    private final VerificationService verificationService;
+    private final ContainerService containerService;
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION)
@@ -49,14 +58,14 @@ public class MrpaRegistryController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> findAllMrpaRegistry() {
-        List<MrpaRegistryWithFioDTO> mrpaRegistryFindAll;
+    public ResponseEntity<?> findAllMrpaRegistry(){
+        List<MrpaRegistryWithFioListDto> mrpaRegistryFindAll;
         try {
             mrpaRegistryFindAll = mrpaRegistryService.findAllMrpaRegistry();
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        for(MrpaRegistryWithFioDTO m: mrpaRegistryFindAll){
+        for(MrpaRegistryWithFioListDto m: mrpaRegistryFindAll){
             m.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(m.getId());
         }
         return new ResponseEntity<>(mrpaRegistryFindAll, HttpStatus.OK);
@@ -103,7 +112,7 @@ public class MrpaRegistryController {
         MrpaRegistryFullXML mrpaRegistryFullXML = mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
         String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
         try {
-            mrpaRegistryService.saveMrpaXml(mrpaRegistrySaved.getId(), xmlString, mrpaRegistryFullXML.getIdFile());
+            mrpaRegistryService.saveMrpaXml(mrpaRegistrySaved.getId(), Arrays.toString(xmlString.getBytes()), mrpaRegistryFullXML.getIdFile());
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_XML_IS_NULL);
         }
@@ -196,18 +205,40 @@ public class MrpaRegistryController {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @PostMapping(value = "/{id}/upload_sig", produces = "application/json; charset=UTF-8")
+    @PostMapping(value = "/{id}/upload_dscp", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("sigFile") MultipartFile sourceSig) throws IOException {
-        String content = new String(sourceSig.getBytes());
-        Document document = convertStringToDocument(content);
-        assert document != null;
-        //TODO: @helix82 Проверка валидности сигнатуры и загрузка на сервер в базу
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("container") MultipartFile container) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, KeyManagementException {
+        String extension = FilenameUtils.getExtension(container.getOriginalFilename());
+        if(!Objects.equals(extension, "dscp")) {
+            throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT);
+        }
+
+        ReportDTO reportDTO = verificationService.verifyContainer(container);
+
+        reportDTO.getResults().stream()
+                .flatMap(result -> result.getVerificationResults().stream())
+                .findFirst()
+                .ifPresent(verificationResult -> {
+                    boolean isResultTrue = verificationResult.isResult();
+                    System.out.println("Result value: " + isResultTrue);
+                    if(!isResultTrue){
+                        throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
+                    }
+                });
+
+        ContainerSelector containerSelector = createContainerSelector(ContainerSelectorCode.SOURCE_FILE);
+        ContainerPart res = containerService.getContainerPart(container, containerSelector, false);
+        var resource = new ByteArrayResource(res.getData());
         MrpaRegistry mrpaRegistry = mrpaRegistryService.findById(id);
         if (mrpaRegistry == null) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
+        if(!Arrays.equals(resource.getByteArray(), mrpaRegistry.getMrpaXml().getBytes())){
+            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
+        }
+
         mrpaRegistry.setStatus(StatusTypeEnum.VALID);
+        mrpaRegistry.setSigPath(Arrays.toString(container.getBytes()));
         MrpaRegistry mrpaRegistrySaved;
         try {
             mrpaRegistrySaved = mrpaRegistryService.saveMrpaRegistry(mrpaRegistry);
@@ -236,21 +267,5 @@ public class MrpaRegistryController {
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(id);
         mrpaRegistryWithFioDTOS.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(id);
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
-    }
-
-    @Operation(summary = CONTROLLER_MRPA_DOWNLOAD_SUMMARY, description = CONTROLLER_MRPA_DOWNLOAD_DESCRIPTION)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
-    })
-    @GetMapping(value = "/download/{id}", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> download(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id) throws IOException, JAXBException, ParseException {
-        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTO = mrpaRegistryService.findByMrpaRegistryId(id);
-        Map<String, String> body = new HashMap<>();
-        body.put("xml_data", mrpaRegistryWithFioDTO.getMrpaXml());
-        body.put("xml_filename", mrpaRegistryWithFioDTO.getMrpaXmlFilename());
-
-        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 }
