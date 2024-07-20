@@ -4,7 +4,6 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import lombok.AllArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -22,9 +21,9 @@ import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.MrpaRegistry;
 import su.opencode.digsigcik.synapi.model.MrpaRegistryCredential;
 import su.opencode.digsigcik.synapi.service.ContainerService;
+import su.opencode.digsigcik.synapi.service.ContainerVerificationService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryCredentialService;
 import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
-import su.opencode.digsigcik.synapi.service.VerificationService;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
@@ -44,12 +43,18 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @RestController
 @MchdExceptionHandler
 @RequestMapping("/api/v1/mrpa_registry" )
-@AllArgsConstructor
 public class MrpaRegistryController {
     private final MrpaRegistryService mrpaRegistryService;
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
-    private final VerificationService verificationService;
+    private final ContainerVerificationService containerVerificationService;
     private final ContainerService containerService;
+
+    public MrpaRegistryController(MrpaRegistryService mrpaRegistryService, MrpaRegistryCredentialService mrpaRegistryCredentialService, ContainerVerificationService containerVerificationService, ContainerService containerService) {
+        this.mrpaRegistryService = mrpaRegistryService;
+        this.mrpaRegistryCredentialService = mrpaRegistryCredentialService;
+        this.containerVerificationService = containerVerificationService;
+        this.containerService = containerService;
+    }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION)
@@ -213,7 +218,7 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT);
         }
 
-        ReportDTO reportDTO = verificationService.verifyContainer(container);
+        ReportDTO reportDTO = containerVerificationService.verifyContainer(container);
 
         reportDTO.getResults().stream()
                 .flatMap(result -> result.getVerificationResults().stream())
