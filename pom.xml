@@ -366,6 +366,11 @@
         </dependency>
         <dependency>
             <groupId>ru.cryptopro.jcp</groupId>
+            <artifactId>XAdES</artifactId>
+            <version>5.0.45549-A</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.cryptopro.jcp</groupId>
             <artifactId>sspiSSL</artifactId>
             <version>5.0.45549-A</version>
         </dependency>
