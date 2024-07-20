@@ -41,6 +41,8 @@ steps:
         path: /var/run/docker.sock
       - name: cache
         path: /cache
+    depends_on:
+      - restore-cache
 
   - name: rebuild-cache
     image: drillster/drone-volume-cache
@@ -51,6 +53,8 @@ steps:
       rebuild: true
       mount:
         - /cache
+    depends_on:
+      - build
 
   - name: run
     settings:
