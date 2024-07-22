@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface SettingsRepository extends JpaRepository<SettingsEntity, Long> {
-    Optional<SettingsEntity> findBySettingKey(String settingKey);
+    Optional<SettingsEntity> findByKey(String settingKey);
 }
