@@ -87,8 +87,8 @@ public class SimpleSignatureController {
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
         LocalDateTime timestamp = LocalDateTime.now();
         ReportDTO reportDTO = ReportDTO.builder()
-                .Message("Простая подпись валидна")
-                .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                .message("Простая подпись валидна")
+                .messageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
                 .build();
         ObjectMapper objectMapper = new ObjectMapper();
         String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
@@ -149,8 +149,8 @@ public class SimpleSignatureController {
         JwtPayloadDto jwtPayloadDto = extractAuthToken(authToken);
         LocalDateTime timestamp = LocalDateTime.now();
         ReportDTO reportDTO = ReportDTO.builder()
-                .Message("Простая подпись валидна")
-                .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                .message("Простая подпись валидна")
+                .messageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
                 .build();
         ObjectMapper objectMapper = new ObjectMapper();
         String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
@@ -229,8 +229,8 @@ public class SimpleSignatureController {
         } else {
             LocalDateTime timestamp = LocalDateTime.now();
             ReportDTO reportDTO = ReportDTO.builder()
-                    .Message("Простая подпись валидна")
-                    .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                    .message("Простая подпись валидна")
+                    .messageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
                     .build();
             ObjectMapper objectMapper = new ObjectMapper();
             String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);
@@ -302,8 +302,8 @@ public class SimpleSignatureController {
         } else {
             LocalDateTime timestamp = LocalDateTime.now();
             ReportDTO reportDTO = ReportDTO.builder()
-                    .Message("Простая подпись валидна")
-                    .MessageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
+                    .message("Простая подпись валидна")
+                    .messageDetail("Простая подпись пользователя " + jwtPayloadDto.getPatronymic() + " " + jwtPayloadDto.getFirstName() + " " + jwtPayloadDto.getLastName() + " валидна. Дата подписи: " + timestamp.toString())
                     .build();
             ObjectMapper objectMapper = new ObjectMapper();
             String signCheckJsonString = objectMapper.writeValueAsString(reportDTO);

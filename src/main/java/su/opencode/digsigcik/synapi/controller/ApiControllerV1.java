@@ -10,7 +10,8 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.asn1.cms.SignedData;
-import org.bouncycastle.cms.CMSException;
+import org.bouncycastle.cms.*;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
@@ -34,7 +35,8 @@ import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.service.ContainerService;
-import su.opencode.digsigcik.synapi.service.VerificationService;
+import su.opencode.digsigcik.synapi.service.ContainerVerificationService;
+import su.opencode.digsigcik.synapi.service.SignatureVerificationService;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
 import javax.xml.bind.JAXBContext;
@@ -62,13 +64,21 @@ import static su.opencode.digsigcik.synapi.util.FileUtils.resourceOctetStreamOrI
 
 @RestController
 @RequestMapping("/api/v1")
-@AllArgsConstructor
+
 @Slf4j
 public class ApiControllerV1 {
     public static final String DEFAULT_FILENAME = "container.dscp";
     private final ContainerService containerService;
-    private final VerificationService verificationService;
+    private final ContainerVerificationService containerVerificationService;
+    private final SignatureVerificationService signatureVerificationService;
     private final JwtTokenUtils jwtTokenUtils;
+
+    public ApiControllerV1(ContainerService containerService, ContainerVerificationService containerVerificationService, @Qualifier("cryptopro-keylab") SignatureVerificationService signatureVerificationService, JwtTokenUtils jwtTokenUtils) {
+        this.containerService = containerService;
+        this.containerVerificationService = containerVerificationService;
+        this.signatureVerificationService = signatureVerificationService;
+        this.jwtTokenUtils = jwtTokenUtils;
+    }
 
     @PostMapping(value = "/create-pdf-container", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<Resource> createPdfContainer(
@@ -78,7 +88,6 @@ public class ApiControllerV1 {
             SignatureTypeEnum signatureType,
             SignatureAlgorithm signatureAlgorithm,
             HashAlgorithm hashAlgorithm) throws IOException, CertificateException, CMSException {
-
         boolean signatureDetached;
         ContainerTypeEnum containerType;
         // Проверить, пустые ли файлы
@@ -94,7 +103,7 @@ public class ApiControllerV1 {
             signatureDetached = true;
             containerType = SIMPLE_DETACHED;
             if (isSourceFilePoa(sourceFile)) {
-                containerType = ContainerTypeEnum.POA_DETACHED;
+                containerType = POA_DETACHED;
             }
             if (isValidPdf(sourceFile)) {
                 containerType = PDF_DETACHED;
@@ -120,11 +129,17 @@ public class ApiControllerV1 {
         ReportContainerDTO reportContainerDTO;
         try {
             if (signatureDetached) {
-                reportContainerDTO = verificationService.verifyDetached(sourceFile, sourceSig);
+                reportContainerDTO = signatureVerificationService.verifyDetached(sourceFile, sourceSig);
             } else {
-                reportContainerDTO = verificationService.verifyAttached(sourceSig);
+                reportContainerDTO = signatureVerificationService.verifyAttached(sourceSig);
             }
         } catch (ResourceAccessException | IOException | URISyntaxException e) {
+            log.warn("Не удалось подключиться к сервису верификации");
+            reportContainerDTO = ReportContainerDTO.builder()
+                    .signReport(null)
+                    .signCheck(null)
+                    .build();
+        } catch (Exception e) {
             log.warn("Не удалось подключиться к сервису верификации");
             reportContainerDTO = ReportContainerDTO.builder()
                     .signReport(null)
@@ -229,7 +244,7 @@ public class ApiControllerV1 {
         }
         if (containerDataDTOWithReverify.isReverify()) {
             try {
-                return new ResponseEntity<>(verificationService.verifyContainer(containerDataDTOWithReverify.getContainer()),
+                return new ResponseEntity<>(containerVerificationService.verifyContainer(containerDataDTOWithReverify.getContainer()),
                         HttpStatus.OK);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
@@ -351,7 +366,7 @@ public class ApiControllerV1 {
 
         if (reverify) {
             try {
-                return new ResponseEntity<>(verificationService.verifyContainer(container), HttpStatus.OK);
+                return new ResponseEntity<>(containerVerificationService.verifyContainer(container), HttpStatus.OK);
             } catch (Exception e) {
                 throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
             }
@@ -462,8 +477,5 @@ public class ApiControllerV1 {
             return false;
         }
     }
+
 }
-
-
-
-

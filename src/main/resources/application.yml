@@ -73,4 +73,5 @@ tls:
 cryptopro:
   svs:
     uri: https://keylab/vs/api
+    gost: true
 #    uri: https://dss.cryptopro.ru/verify/rest/api
