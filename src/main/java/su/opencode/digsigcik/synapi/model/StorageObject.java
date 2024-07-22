@@ -5,27 +5,15 @@ import lombok.Getter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.Type;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import java.util.Date;
+import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
 
 @Getter
 @Entity
-@Table(name="storageobject")
-@Transactional
+@Table(name = "storageobject")
 // AcmeCertificate settings for acme
 public class StorageObject {
     @Id
@@ -57,8 +45,8 @@ public class StorageObject {
         String mimeType = fileTypeMap.getContentType(fileName);
         HashMap<String, Object> data = new HashMap<>();
         data.put("fileName", fileName);
-        data.put("mimeType",mimeType);
-        data.put("fileSize",content.length);
+        data.put("mimeType", mimeType);
+        data.put("fileSize", content.length);
         this.content = content;
         this.data = data;
     }
@@ -76,7 +64,7 @@ public class StorageObject {
     }
 
     public Boolean getDeleted() {
-        return (deleted==null)?false:deleted;
+        return (deleted == null) ? false : deleted;
     }
 
     public void setDeleted(Boolean deleted) {

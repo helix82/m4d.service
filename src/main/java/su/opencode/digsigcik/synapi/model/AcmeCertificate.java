@@ -5,26 +5,15 @@ import lombok.Getter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.Type;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Getter
 @Entity
-@Table(name="acmecertificate")
-@Transactional
+@Table(name = "acmecertificate")
 // AcmeCertificate settings for acme
 public class AcmeCertificate {
     @Id
@@ -101,7 +90,7 @@ public class AcmeCertificate {
     }
 
     public Boolean getDeleted() {
-        return (deleted==null)?false:deleted;
+        return (deleted == null) ? false : deleted;
     }
 
     public void setDeleted(Boolean deleted) {
@@ -109,7 +98,7 @@ public class AcmeCertificate {
     }
 
     public Boolean getRevoked() {
-        return (revoked==null)?false:revoked;
+        return (revoked == null) ? false : revoked;
     }
 
     public void setRevoked(Boolean revoked) {

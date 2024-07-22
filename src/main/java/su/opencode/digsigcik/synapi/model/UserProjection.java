@@ -7,15 +7,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.checkerframework.common.aliasing.qual.Unique;
-import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.model.audit.DateAudit;
 
 import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name="user_projection")
-@Transactional
+@Table(name = "user_projection")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

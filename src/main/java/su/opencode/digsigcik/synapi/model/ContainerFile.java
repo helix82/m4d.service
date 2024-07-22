@@ -1,7 +1,9 @@
 package su.opencode.digsigcik.synapi.model;
 
-import lombok.*;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
@@ -9,7 +11,6 @@ import javax.persistence.*;
 @Builder
 @Entity
 @Table(name = "containerfile")
-@Transactional
 @AllArgsConstructor
 @NoArgsConstructor
 public class ContainerFile {

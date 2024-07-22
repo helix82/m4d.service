@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -11,8 +10,7 @@ import java.util.Set;
 
 @Data
 @Entity
-@Table(name="principal")
-@Transactional
+@Table(name = "principal")
 // Единоличный исполнительный орган
 public class Principal {
     @Id
@@ -22,21 +20,21 @@ public class Principal {
     private Long id;
 
     @Column(name = "name", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("name")
     private String name;
 
     @Column(name = "surname", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("surname")
     private String surname;
 
     @Column(name = "patronymic", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("patronymic")
     private String patronymic;
 
-    @Schema(example = "1234567890", required = false)
+    @Schema(example = "1234567890")
     @JsonProperty("inn")
     private String inn;
 
@@ -45,7 +43,7 @@ public class Principal {
     private String snils;
 
     @Column(name = "job_title", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("jobTitle")
     private String jobTitle;
 

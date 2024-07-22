@@ -3,14 +3,12 @@ package su.opencode.digsigcik.synapi.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 
 @Data
 @Entity
 @Table(name = "mrpa_registry_credential")
-@Transactional
 public class MrpaRegistryCredential {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

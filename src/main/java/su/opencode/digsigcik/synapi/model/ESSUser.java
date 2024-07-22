@@ -4,24 +4,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.checkerframework.common.aliasing.qual.Unique;
-import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.PositionEnum;
 import su.opencode.digsigcik.synapi.enums.RoleEnum;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 //TODO: @vitalik.sahnov Временное решение. Удалить поля, которые относятся к авторизации, после интеграции авторизации
 @Data
 @Entity
-@Table(name="ess_user")
-@Transactional
+@Table(name = "ess_user")
 // Electronic signature service user
 public class ESSUser {
     @Id

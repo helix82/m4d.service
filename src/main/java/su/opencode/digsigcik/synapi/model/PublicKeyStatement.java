@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.StatusStatementEnum;
 import su.opencode.digsigcik.synapi.enums.TypeStatementEnum;
 
@@ -11,8 +10,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name="statement")
-@Transactional
+@Table(name = "statement")
 // Заявления
 public class PublicKeyStatement {
     @Id
@@ -22,27 +20,27 @@ public class PublicKeyStatement {
     private Long id;
 
     @Column(name = "login", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("login")
     private String login;
 
     @Column(name = "dt_create", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("dtCreate")
     private String dtCreate;
 
     @Column(name = "verification_center_id", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("verificationCenterId")
     private String verificationCenterId;
 
     @Column(name = "type", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("type")
     private TypeStatementEnum type;
 
     @Column(name = "status", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("status")
     private StatusStatementEnum status;
 }

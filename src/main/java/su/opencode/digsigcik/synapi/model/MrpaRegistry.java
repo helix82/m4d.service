@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 
 import javax.persistence.*;
@@ -13,8 +12,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name="mrpa_registry")
-@Transactional
+@Table(name = "mrpa_registry")
 // Реестр МЧД
 public class MrpaRegistry {
     @Id
@@ -24,63 +22,63 @@ public class MrpaRegistry {
     private Long id;
 
     @Column(name = "guid", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "6F9619FF-8B86-D011-B42D-00CF4FC964FF", required = false)
+    @Schema(example = "6F9619FF-8B86-D011-B42D-00CF4FC964FF")
     @JsonProperty("guid")
     private String guid;
 
     @Column(name = "internal_number", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "1", required = false)
+    @Schema(example = "1")
     @JsonProperty("internalNumber")
     private String internalNumber;
 
     @Column(name = "organisation_id")
-    @Schema(example = "1", required = false)
+    @Schema(example = "1")
     @JsonProperty("organisationId")
     private Long organisationId;
 
     @Column(name = "principal_id")
-    @Schema(example = "1", required = false)
+    @Schema(example = "1")
     @JsonProperty("principalId")
     private Long principalId;
 
     @Column(name = "representative_id")
-    @Schema(example = "1", required = false)
+    @Schema(example = "1")
     @JsonProperty("representativeId")
     private Long representativeId;
 
     @Column(name = "start_date")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("startDate")
     private String startDate;
 
     @Column(name = "end_date")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("endDate")
     private String endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "EXPIRED", required = false)
+    @Schema(example = "EXPIRED")
     @JsonProperty("status")
     private StatusTypeEnum status;
 
     @Column(name = "sig_path", columnDefinition = "TEXT")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("sigPath")
     private String sigPath;
 
     @Column(name = "mrpa_xml", columnDefinition = "TEXT")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("mrpaXml")
     private String mrpaXml;
 
     @Column(name = "mrpa_xml_filename")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("mrpaXmlFilename")
     private String mrpaXmlFilename;
 
     @Column(name = "recalled_xml_path", columnDefinition = "TEXT")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("recalledXmlPath")
     private String recalledXmlPath;
 
@@ -89,6 +87,7 @@ public class MrpaRegistry {
     private Set<MrpaRegistryCredential> mrpaRegistryCredentials = new HashSet<>();
 
     public void setGuid() {
-        this.guid = UUID.randomUUID().toString();
+        this.guid = UUID.randomUUID()
+                .toString();
     }
 }

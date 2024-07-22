@@ -20,7 +20,7 @@ public class CAXml {
     @Data
     @XmlRootElement
     @XmlAccessorType(XmlAccessType.FIELD)
-    public static class CA{
+    public static class CA {
         @XmlElement(name = XML_ELEMENT_SHC)
         public SHSystems shSystems;
         @XmlElement(name = XML_ELEMENT_ACCREDITATION_STATUS)
@@ -29,28 +29,28 @@ public class CAXml {
         @Data
         @XmlRootElement
         @XmlAccessorType(XmlAccessType.FIELD)
-        public static class SHSystems{
+        public static class SHSystems {
             @XmlElement(name = XML_ELEMENT_SH_SYSTEM)
             public List<SHSystem> shSystem;
 
             @Data
             @XmlRootElement
             @XmlAccessorType(XmlAccessType.FIELD)
-            public static class SHSystem{
+            public static class SHSystem {
                 @XmlElement(name = XML_ELEMENT_KEYS_AUTH_PERSONS)
                 private KeysAuthPersons keysAuthPersons;
 
                 @Data
                 @XmlRootElement
                 @XmlAccessorType(XmlAccessType.FIELD)
-                public static class KeysAuthPersons{
+                public static class KeysAuthPersons {
                     @XmlElement(name = XML_ELEMENT_KEY)
                     private List<KeyAuthPerson> keyAuthPerson;
 
                     @Data
                     @XmlRootElement
                     @XmlAccessorType(XmlAccessType.FIELD)
-                    public static class KeyAuthPerson{
+                    public static class KeyAuthPerson {
                         @XmlElement(name = XML_ELEMENT_KEY_ID)
                         private String keyId;
                         @XmlElement(name = XML_ELEMENT_REVIEW_LIST_ADDRESS)
@@ -61,7 +61,7 @@ public class CAXml {
                         @Data
                         @XmlRootElement
                         @XmlAccessorType(XmlAccessType.FIELD)
-                        public static class Addresses{
+                        public static class Addresses {
                             @XmlElement(name = XML_ELEMENT_ADDRESS)
                             private List<String> address;
                         }
@@ -69,7 +69,7 @@ public class CAXml {
                         @Data
                         @XmlRootElement
                         @XmlAccessorType(XmlAccessType.FIELD)
-                        public static class Certificates{
+                        public static class Certificates {
                             @XmlElement(name = XML_ELEMENT_CERTIFICATE_DATA)
                             private List<CertificateData> certificateData;
 
@@ -82,13 +82,13 @@ public class CAXml {
         @Data
         @XmlRootElement
         @XmlAccessorType(XmlAccessType.FIELD)
-        public static class AccreditationStatus{
+        public static class AccreditationStatus {
             @XmlElement(name = XML_ELEMENT_STATUS)
             private String status;
         }
 
         public String getAccreditationStatusCode(String status) {
-            switch (status){
+            switch (status) {
                 case "Действует":
                     return "VALID";
                 case "Прекращена":
@@ -101,7 +101,6 @@ public class CAXml {
                     return null;
             }
         }
-
 
 
     }

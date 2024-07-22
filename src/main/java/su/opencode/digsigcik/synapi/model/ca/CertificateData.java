@@ -16,50 +16,50 @@ import static su.opencode.digsigcik.synapi.util.Constants.*;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 @Entity
-@Table(name="Certificate_data")
+@Table(name = "Certificate_data")
 public class CertificateData {
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        @Schema(example = "1", required = true)
-        private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(example = "1", required = true)
+    private Long id;
 
-        @XmlElement(name = XML_ELEMENT_IMPRINT)
-        @Schema(example = "", required = false)
-        private String imprint;
+    @XmlElement(name = XML_ELEMENT_IMPRINT)
+    @Schema(example = "")
+    private String imprint;
 
-        @XmlElement(name = XML_ELEMENT_SERIAL_NUMBER)
-        @Schema(example = "", required = false)
-        private String serialNumber;
+    @XmlElement(name = XML_ELEMENT_SERIAL_NUMBER)
+    @Schema(example = "")
+    private String serialNumber;
 
-        @XmlElement(name = XML_ELEMENT_KEY_ID)
-        @Schema(example = "", required = false)
-        private String keyId;
+    @XmlElement(name = XML_ELEMENT_KEY_ID)
+    @Schema(example = "")
+    private String keyId;
 
-        @XmlElement(name = XML_ELEMENT_ISSUED_TO)
-        @Schema(example = "", required = false)
-        @Column(columnDefinition = "Text")
-        private String issuedTo;
+    @XmlElement(name = XML_ELEMENT_ISSUED_TO)
+    @Schema(example = "")
+    @Column(columnDefinition = "Text")
+    private String issuedTo;
 
-        @XmlElement(name = XML_ELEMENT_DATE_START)
-        @Schema(example = "", required = false)
-        private String dateStart;
+    @XmlElement(name = XML_ELEMENT_DATE_START)
+    @Schema(example = "")
+    private String dateStart;
 
-        @XmlElement(name = XML_ELEMENT_DATE_END)
-        @Schema(example = "", required = false)
-        private String dateEnd;
+    @XmlElement(name = XML_ELEMENT_DATE_END)
+    @Schema(example = "")
+    private String dateEnd;
 
-        @XmlElement(name = XML_ELEMENT_CERT)
-        @Schema(example = "", required = false)
-        @Column(columnDefinition = "Text")
-        private String certificate;
+    @XmlElement(name = XML_ELEMENT_CERT)
+    @Schema(example = "")
+    @Column(columnDefinition = "Text")
+    private String certificate;
 
-        @SuppressWarnings("JpaDataSourceORMInspection")
-        @Schema(example = SCHEMA_CA_TYPE_INPUT_EXAMPLE, required = false)
-        @Column(name = "type_input")
-        private String typeInput;
+    @SuppressWarnings("JpaDataSourceORMInspection")
+    @Schema(example = SCHEMA_CA_TYPE_INPUT_EXAMPLE)
+    @Column(name = "type_input")
+    private String typeInput;
 
-        @SuppressWarnings("JpaDataSourceORMInspection")
-        @Schema(example = SCHEMA_CA_ACCREDITATION_STATUS_EXAMPLE, required = false)
-        @Column(name = "accreditation_status")
-        private String accreditationStatus;
+    @SuppressWarnings("JpaDataSourceORMInspection")
+    @Schema(example = SCHEMA_CA_ACCREDITATION_STATUS_EXAMPLE)
+    @Column(name = "accreditation_status")
+    private String accreditationStatus;
 }

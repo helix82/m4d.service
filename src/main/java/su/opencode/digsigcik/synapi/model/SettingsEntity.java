@@ -4,14 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 
 @Entity
 @Data
-@Table(name="settings")
-@Transactional
+@Table(name = "settings")
 @AllArgsConstructor
 @NoArgsConstructor
 public class SettingsEntity {

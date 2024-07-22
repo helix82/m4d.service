@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -11,8 +10,7 @@ import java.util.Set;
 
 @Data
 @Entity
-@Table(name="representative")
-@Transactional
+@Table(name = "representative")
 // Представитель
 public class Representative {
     @Id
@@ -22,17 +20,17 @@ public class Representative {
     private Long id;
 
     @Column(name = "name", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("name")
     private String name;
 
     @Column(name = "surname", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("surname")
     private String surname;
 
     @Column(name = "patronymic", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("patronymic")
     private String patronymic;
 
@@ -40,12 +38,12 @@ public class Representative {
     @JsonProperty("inn")
     private String inn;
 
-    @Schema(example = "123-456-789 11", required = false)
+    @Schema(example = "123-456-789 11")
     @JsonProperty("snils")
     private String snils;
 
     @Column(name = "birth_date")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("birthDate")
     private String birthDate;
 

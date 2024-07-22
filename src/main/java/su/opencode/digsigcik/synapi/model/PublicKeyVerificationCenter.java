@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -11,8 +10,7 @@ import java.util.Set;
 
 @Data
 @Entity
-@Table(name="verification_center")
-@Transactional
+@Table(name = "verification_center")
 // Удостоверяющие центры и шаблоны заявлений
 public class PublicKeyVerificationCenter {
     @Id
@@ -22,39 +20,39 @@ public class PublicKeyVerificationCenter {
     private Long id;
 
     @Column(name = "name", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("name")
     private String name;
 
     @Lob
     @Column(name = "template_release", columnDefinition = "bytea")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("templateRelease")
     private byte[] templateRelease;
 
     @Column(name = "content_type_release")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("contentTypeRelease")
     private String contentTypeRelease;
 
     @Column(name = "original_name_release")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("originalNameRelease")
     private String originalNameRelease;
 
     @Lob
     @Column(name = "template_recall", columnDefinition = "bytea")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("templateRecall")
     private byte[] templateRecall;
 
     @Column(name = "content_type_recall")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("contentTypeRecall")
     private String contentTypeRecall;
 
     @Column(name = "original_name_recall")
-    @Schema(example = "", required = false)
+    @Schema(example = "")
     @JsonProperty("originalNameRecall")
     private String originalNameRecall;
 

@@ -4,23 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Getter
 @Entity
-@Table(name="acmedomain")
-@Transactional
+@Table(name = "acmedomain")
 // AcmDomain settings for acme
 public class AcmeDomain {
     @Id
@@ -80,7 +69,7 @@ public class AcmeDomain {
     }
 
     public Boolean getDeleted() {
-        return (deleted==null)?false:deleted;
+        return (deleted == null) ? false : deleted;
     }
 
     public void setDeleted(Boolean deleted) {
