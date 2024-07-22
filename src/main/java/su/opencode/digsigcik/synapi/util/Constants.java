@@ -299,7 +299,8 @@ public interface Constants {
     String REVOKED_CERTIFICATE_IS_NULL = String.format("Revoked certificate is %s!", NULL);
     String TRUSTED_CERTIFICATE_IS_NULL = String.format("Trusted certificate is %s!", NULL);
     String TRUSTED_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый доверенный сертификат уже существует в базе!";
-    String TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .cer!";
+    String TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .cer или .crt!";
+    String TRUSTED_CERTIFICATE_UPLOAD_ERROR_FORMAT = "Ошибка парсинга сертификата";
     String CA_IS_NULL = String.format("CA is %s!", NULL);
     String PUBLIC_KEY_VERIFICATION_CENTER_IS_NULL = String.format("Verification center is %s!", NULL);
     String PUBLIC_KEY_VERIFICATION_CENTER_NAME_IS_NULL = "Наименование УЦ не может быть пустым";
