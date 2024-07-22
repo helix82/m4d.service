@@ -10,7 +10,7 @@ public interface SettingsService {
     List<SettingsEntity> getAllSettings();
 
     Optional<SettingsEntity> getSettingsById(Long id);
-
+    Optional<SettingsEntity> getSettingsByKey(String settingKey);
     SettingsEntity saveSettings(SettingsEntity settingsEntity);
 
     void deleteSettings(Long id);

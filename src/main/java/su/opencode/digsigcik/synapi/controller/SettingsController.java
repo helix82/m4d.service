@@ -29,7 +29,11 @@ public class SettingsController {
         Optional<SettingsEntity> settings = settingsService.getSettingsById(id);
         return settings.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
-
+    @GetMapping("/key/{settingKey}")
+    public ResponseEntity<SettingsEntity> getSettingsByKey(@PathVariable("settingKey") String settingKey) {
+        Optional<SettingsEntity> settings = settingsService.getSettingsByKey(settingKey);
+        return settings.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
     @PostMapping
     public ResponseEntity<SettingsEntity> createOrUpdateSettings(@Valid @RequestBody SettingsEntity settingsEntity) {
         SettingsEntity savedEntity = settingsService.saveSettings(settingsEntity);

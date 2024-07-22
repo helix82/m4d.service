@@ -26,6 +26,10 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     @Override
+    public Optional<SettingsEntity> getSettingsByKey(String settingKey) {
+        return repository.findBySettingKey(settingKey);
+    }
+    @Override
     public SettingsEntity saveSettings(SettingsEntity settingsEntity) {
         if (!StringUtils.hasText(settingsEntity.getKey()) || !StringUtils.hasText(settingsEntity.getValue())) {
             throw new IllegalArgumentException("Setting key and value cannot be null or empty");
