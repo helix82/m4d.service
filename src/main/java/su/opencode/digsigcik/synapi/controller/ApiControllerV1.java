@@ -88,7 +88,6 @@ public class ApiControllerV1 {
             SignatureTypeEnum signatureType,
             SignatureAlgorithm signatureAlgorithm,
             HashAlgorithm hashAlgorithm) throws IOException, CertificateException, CMSException {
-      //  ReportDTO reportDTO = verificationService.verifyDetachedNoReport(sourceFile, sourceSig);
         boolean signatureDetached;
         ContainerTypeEnum containerType;
         // Проверить, пустые ли файлы
@@ -480,7 +479,3 @@ public class ApiControllerV1 {
     }
 
 }
-
-
-
-
