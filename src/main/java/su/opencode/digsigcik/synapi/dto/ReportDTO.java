@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.synapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
@@ -68,10 +69,12 @@ public class ReportDTO {
                 @JsonProperty("IssuerName")
                 private String issuerName;
                 @JsonProperty("NotBefore")
+                @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
                 private String notBefore;
                 @JsonProperty("NotBeforeUTC")
                 private long notBeforeUTC;
                 @JsonProperty("NotAfter")
+                @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
                 private String notAfter;
                 @JsonProperty("NotAfterUTC")
                 private long notAfterUTC;
