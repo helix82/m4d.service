@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.checkerframework.common.aliasing.qual.Unique;
 import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
@@ -13,11 +14,9 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SettingsEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     @NotNull
+    @Unique
+    @Id
     @Column(name = "setting_key")
     private String key;
     @NotNull
