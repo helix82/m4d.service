@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.cryptacular.StreamException;
 import org.cryptacular.util.CertUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static su.opencode.digsigcik.synapi.util.Constants.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @RestController
@@ -159,57 +159,73 @@ public class TrustedCertificateController {
     @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, CertificateEncodingException {
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
-        if(!Objects.equals(extension, "cer")){
+        if(!Objects.equals(extension, "cer") && !Objects.equals(extension, "crt")){
             throw new BadRequestException(TRUSTED_CERTIFICATE_UPLOAD_WRONG_FORMAT);
         }
+        X509Certificate certificate = null;
         String content = new String(sourceFile.getBytes(), StandardCharsets.UTF_8);
-        X509Certificate certificate;
         if(!content.startsWith("-----BEGIN CERTIFICATE-----")){
-            String certHeader = "-----BEGIN CERTIFICATE-----\r\n";
-            String certFooter = "\r\n-----END CERTIFICATE-----";
-            String LINE_SEPARATOR = System.lineSeparator();
-            byte[] certBytes = sourceFile.getBytes();
-            String cert = certHeader + LINE_SEPARATOR + new String(certBytes) + LINE_SEPARATOR + certFooter;
-            InputStream stream = IOUtils.toInputStream(cert);
-            certificate = CertUtil.decodeCertificate(stream.readAllBytes());
+            try {
+                String certHeader = "-----BEGIN CERTIFICATE-----\r\n";
+                String certFooter = "\r\n-----END CERTIFICATE-----";
+                String LINE_SEPARATOR = System.lineSeparator();
+                byte[] certBytes = sourceFile.getBytes();
+                String cert = certHeader + LINE_SEPARATOR + new String(certBytes) + LINE_SEPARATOR + certFooter;
+                InputStream stream = IOUtils.toInputStream(cert);
+                certificate = CertUtil.decodeCertificate(stream.readAllBytes());
+            } catch (StreamException ignored) {
+                    String encodedString = Base64.getEncoder().encodeToString(sourceFile.getBytes());
+                    String certHeader = "-----BEGIN CERTIFICATE-----\r\n";
+                    String certFooter = "\r\n-----END CERTIFICATE-----";
+                    byte[] certBytes = encodedString.getBytes();
+                    String cert = certHeader + new String(certBytes) + certFooter;
+                    InputStream stream = IOUtils.toInputStream(cert);
+                    certificate = CertUtil.decodeCertificate(stream.readAllBytes());
+            }
         } else {
             certificate = CertUtil.decodeCertificate(sourceFile.getInputStream().readAllBytes());
         }
-        TrustedCertificate trustedCertificate = new TrustedCertificate();
-        trustedCertificate.setSerialNumber(certificate.getSerialNumber().toString());
-        trustedCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
-        trustedCertificate.setDateEnd(convertRFC1123ToIsoInstant(certificate.getNotAfter().toString()));
-        trustedCertificate.setTypeInput(CONTROLLER_CA_TYPE_INPUT_AUTO);
-        trustedCertificate.setAccreditationStatus(AccreditationStatusEnum.VALID.name());
-        trustedCertificate.setCertificate(new String(sourceFile.getBytes()));
-        trustedCertificate.setOriginalFilename(sourceFile.getOriginalFilename());
-        trustedCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
-        trustedCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
-        var substr = certificate.getSubjectDN().getName().split(", ");
-        for(String s : substr) {
-            if(s.length()>2){
-                var st = s.substring(0,3);
-                if (st.equals("CN="))
-                {
-                    trustedCertificate.setIssuedTo(s.substring(3));
-                    break;
+        Map<String, String> body = new HashMap<>();
+        if(certificate != null) {
+            TrustedCertificate trustedCertificate = new TrustedCertificate();
+            trustedCertificate.setSerialNumber(certificate.getSerialNumber().toString());
+            trustedCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
+            trustedCertificate.setDateEnd(convertRFC1123ToIsoInstant(certificate.getNotAfter().toString()));
+            trustedCertificate.setTypeInput(CONTROLLER_CA_TYPE_INPUT_AUTO);
+            trustedCertificate.setAccreditationStatus(AccreditationStatusEnum.VALID.name());
+            trustedCertificate.setCertificate(new String(sourceFile.getBytes()));
+            trustedCertificate.setOriginalFilename(sourceFile.getOriginalFilename());
+            trustedCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
+            try {
+                trustedCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
+            } catch (NullPointerException e) {
+                throw new BadRequestException(TRUSTED_CERTIFICATE_UPLOAD_ERROR_FORMAT + ": Not found key identity subject ");
+            }
+            var substr = certificate.getSubjectDN().getName().split(", ");
+            for(String s : substr) {
+                if(s.length()>2){
+                    var st = s.substring(0,3);
+                    if (st.equals("CN="))
+                    {
+                        trustedCertificate.setIssuedTo(s.substring(3));
+                        break;
+                    }
                 }
             }
+            var existsCert = service.countTrustedCertificateByImprint(trustedCertificate.getImprint());
+            if(existsCert > 0){
+                throw new BadRequestException(TRUSTED_CERTIFICATE_UPLOAD_EXISTS);
+            }
+            try {
+                service.saveTrustedCertificate(trustedCertificate);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(TRUSTED_CERTIFICATE_IS_NULL);
+            }
+            body.put("imported", "1");
+            return new ResponseEntity<>(body, HttpStatus.OK);
+        } else {
+            throw new BadRequestException(TRUSTED_CERTIFICATE_UPLOAD_ERROR_FORMAT);
         }
-        var existsCert = service.countTrustedCertificateByImprint(trustedCertificate.getImprint());
-        if(existsCert > 0){
-            throw new BadRequestException(TRUSTED_CERTIFICATE_UPLOAD_EXISTS);
-        }
-        try {
-            service.saveTrustedCertificate(trustedCertificate);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(TRUSTED_CERTIFICATE_IS_NULL);
-        }
-
-        Map<String, String> body = new HashMap<>();
-        body.put("imported", "1");
-
-        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
     private TrustedCertificateDTO convertToDto(TrustedCertificate trustedCertificate){
