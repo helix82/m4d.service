@@ -24,11 +24,6 @@ public class SettingsController {
         return ResponseEntity.ok(settings);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SettingsEntity> getSettingsById(@PathVariable("id") Long id) {
-        Optional<SettingsEntity> settings = settingsService.getSettingsById(id);
-        return settings.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
     @GetMapping("/key/{settingKey}")
     public ResponseEntity<SettingsEntity> getSettingsByKey(@PathVariable("settingKey") String settingKey) {
         Optional<SettingsEntity> settings = settingsService.getSettingsByKey(settingKey);
@@ -40,9 +35,9 @@ public class SettingsController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedEntity);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSettings(@PathVariable("id") Long id) {
-        settingsService.deleteSettings(id);
+    @DeleteMapping("/{key}")
+    public ResponseEntity<Void> deleteSettingsByKey(@PathVariable("key") String key) {
+        settingsService.deleteSettingsByKey(key);
         return ResponseEntity.noContent().build();
     }
 }

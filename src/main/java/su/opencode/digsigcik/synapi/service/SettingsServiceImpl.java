@@ -6,6 +6,7 @@ import org.springframework.util.StringUtils;
 import su.opencode.digsigcik.synapi.model.SettingsEntity;
 import su.opencode.digsigcik.synapi.repository.SettingsRepository;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,11 +22,6 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     @Override
-    public Optional<SettingsEntity> getSettingsById(Long id) {
-        return repository.findById(id);
-    }
-
-    @Override
     public Optional<SettingsEntity> getSettingsByKey(String settingKey) {
         return repository.findByKey(settingKey);
     }
@@ -36,9 +32,9 @@ public class SettingsServiceImpl implements SettingsService {
         }
         return repository.save(settingsEntity);
     }
-
     @Override
-    public void deleteSettings(Long id) {
-        repository.deleteById(id);
+    @Transactional
+    public void deleteSettingsByKey(String settingKey) {
+        repository.deleteByKey(settingKey);
     }
 }

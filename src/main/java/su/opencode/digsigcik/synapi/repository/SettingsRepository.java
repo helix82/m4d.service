@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface SettingsRepository extends JpaRepository<SettingsEntity, Long> {
     Optional<SettingsEntity> findByKey(String settingKey);
+    void deleteByKey(String settingKey);
 }
