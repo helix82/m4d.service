@@ -71,7 +71,7 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
         for(MrpaRegistryWithFioListDto m: mrpaRegistryFindAll){
-            m.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(m.getId());
+            m.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(m.getId());
         }
         return new ResponseEntity<>(mrpaRegistryFindAll, HttpStatus.OK);
     }
@@ -113,7 +113,7 @@ public class MrpaRegistryController {
         }
 //--- Generate and save XML M4D ---
         MrpaRegistryFullDTO mrpaRegistryFullDTO = mrpaRegistryService.findMrpaRegistryFullById(mrpaRegistrySaved.getId());
-        mrpaRegistryFullDTO.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistrySaved.getId());
+        mrpaRegistryFullDTO.credentials = mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistrySaved.getId());
         MrpaRegistryFullXML mrpaRegistryFullXML = mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
         String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
         try {
@@ -125,7 +125,7 @@ public class MrpaRegistryController {
 
 
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
-        mrpaRegistryWithFioDTOS.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryWithFioDTOS.getId());
+        mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryWithFioDTOS.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -144,7 +144,7 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        mrpaRegistryFind.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistryFind.getId());
+        mrpaRegistryFind.credentials = mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistryFind.getId());
         return new ResponseEntity<>(mrpaRegistryFind, HttpStatus.OK);
     }
 
@@ -162,7 +162,7 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistryUpdated.getId());
-        mrpaRegistryWithFioDTOS.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryUpdated.getId());
+        mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryUpdated.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -201,7 +201,7 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        mrpaRegistryFindByInn.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryFindByInn.getId());
+        mrpaRegistryFindByInn.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryFindByInn.getId());
         return new ResponseEntity<>(mrpaRegistryFindByInn, HttpStatus.OK);
     }
 
@@ -251,7 +251,7 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
-        mrpaRegistryWithFioDTOS.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistrySaved.getId());
+        mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -270,7 +270,7 @@ public class MrpaRegistryController {
             throw new BadRequestException(ID_IS_NULL);
         }
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(id);
-        mrpaRegistryWithFioDTOS.credential = mrpaRegistryService.getCredentialByMrpaRegistryId(id);
+        mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(id);
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 }
