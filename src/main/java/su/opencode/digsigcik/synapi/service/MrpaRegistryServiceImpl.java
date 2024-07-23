@@ -256,7 +256,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         credentials.setImplCredential("1");
         credentials.setLossCredential("1");
         ArrayList<MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential> credentialList = new ArrayList<>();
-        for(MrpaRegistryFullDTO.CredentialDTO credentialDTO: mrpaRegistryFullDTO.credential){
+        for(MrpaRegistryFullDTO.CredentialDTO credentialDTO: mrpaRegistryFullDTO.credentials){
             MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential credential = new MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential();
             credential.setCode(credentialDTO.getCode());
             credential.setName(credentialDTO.getName());
