@@ -117,7 +117,7 @@ public class MrpaRegistryController {
         MrpaRegistryFullXML mrpaRegistryFullXML = mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
         String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
         try {
-            mrpaRegistryService.saveMrpaXml(mrpaRegistrySaved.getId(), Arrays.toString(xmlString.getBytes()), mrpaRegistryFullXML.getIdFile());
+            mrpaRegistryService.saveMrpaXml(mrpaRegistrySaved.getId(), xmlString, mrpaRegistryFullXML.getIdFile());
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_XML_IS_NULL);
         }
