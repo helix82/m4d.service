@@ -99,7 +99,7 @@ public class AboutMeController {
                     List<MrpaRegistryFullDTO> mrpaRegistryFullDTO = mrpaRegistryRepository.findMrpaRegistriesFullByPrincipalInn(s.getInn());
                     if(mrpaRegistryFullDTO != null) {
                         for(MrpaRegistryFullDTO m : mrpaRegistryFullDTO){
-                            m.credential = mrpaRegistryService.getCredentialByMrpaRegistryFullId(m.getId());
+                            m.credentials = mrpaRegistryService.getCredentialByMrpaRegistryFullId(m.getId());
                         }
                     }
                     certificates.setM4d(mrpaRegistryFullDTO);
