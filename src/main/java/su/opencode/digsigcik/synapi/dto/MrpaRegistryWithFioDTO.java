@@ -54,7 +54,7 @@ public class MrpaRegistryWithFioDTO {
     @JsonProperty("representativeFio")
     private String representativeFio;
 
-    public List<CredentialDTO> credential;
+    public List<CredentialDTO> credentials;
 
     @Data
     public static class CredentialDTO {
