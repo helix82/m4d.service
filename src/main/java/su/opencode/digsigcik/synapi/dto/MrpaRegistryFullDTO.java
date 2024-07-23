@@ -89,7 +89,7 @@ public class MrpaRegistryFullDTO {
     @JsonProperty("recalledXmlPath")
     private String recalledXmlPath;
 
-    public List<CredentialDTO> credential;
+    public List<CredentialDTO> credentials;
 
     @Data
     public static class CredentialDTO {
