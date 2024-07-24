@@ -32,10 +32,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constants.*;
@@ -173,7 +170,7 @@ public class RevokedCertificateController {
         }
 
         revokedCertificate.setImprint(DigestUtils.sha1Hex(crl.getEncoded()));
-        revokedCertificate.setCertificate(new String(sourceFile.getBytes()));
+        revokedCertificate.setCertificate(Base64.getEncoder().encodeToString(sourceFile.getBytes()));
 
         if (service.countRevokedCertificateByImprint(revokedCertificate.getImprint()) > 0) {
             throw new BadRequestException(REVOKED_CERTIFICATE_UPLOAD_EXISTS);
