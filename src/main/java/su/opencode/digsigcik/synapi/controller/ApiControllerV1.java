@@ -318,7 +318,7 @@ public class ApiControllerV1 {
 
 
     @PostMapping(value = "/get-container-part")
-    public ResponseEntity<?> getContainerPart(
+    public ResponseEntity<Resource> getContainerPart(
             @RequestPart("container") MultipartFile container,
             ContainerSelectorCode selector) {
         // Проверить, пустой ли файл
@@ -333,7 +333,7 @@ public class ApiControllerV1 {
         var res = containerService.getContainerPart(container, containerSelector, false);
 
         if (res == null) {
-            return ResponseEntity.internalServerError()
+            return ResponseEntity.noContent()
                     .build();
         }
 
