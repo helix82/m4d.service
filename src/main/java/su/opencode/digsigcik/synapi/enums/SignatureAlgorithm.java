@@ -18,17 +18,10 @@ public enum SignatureAlgorithm {
     SHA1withECDSA("SHA1withECDSA"),
     SHA256withECDSA("SHA256withECDSA"), //Key size must be at most 571 bits\r\n\tat
     SHA384withECDSA("SHA384withECDSA"), //Key size must be at most 571 bits\r\n\tat
-    SHA512withECDSA("SHA512withECDSA"); // Key size must be at most 571 bits\r\n\tat
-    //TODO: FIX ISSUES WITH GOST
-//    GOST3411withGOST3410EL("GOST3411withGOST3410EL"),
-//    GOST3411withGOST3410DHEL("GOST3411withGOST3410DHEL"),
-//    GOST3411_2012_256withGOST3410_2012_256("GOST3411_2012_256withGOST3410_2012_256"),
-//    GOST3411_2012_512withGOST3410_2012_512("GOST3411_2012_512withGOST3410_2012_512"),
-//    GOST3411_2012_256withGOST3410DH_2012_256("GOST3411_2012_256withGOST3410DH_2012_256"),
-//    GOST3411_2012_512withGOST3410DH_2012_512("GOST3411_2012_512withGOST3410DH_2012_512"),
-//    CryptoProSignature("CryptoProSignature"),
-//    CryptoProSignature_2012_256("CryptoProSignature_2012_256"),
-//    CryptoProSignature_2012_512("CryptoProSignature_2012_512");
+    SHA512withECDSA("SHA512withECDSA"),
+    GOST3411WITHECGOST3410_2012_256("GOST3411WITHECGOST3410-2012-256"),
+    GOST3411WITHECGOST3410_2012_512("GOST3411WITHECGOST3410-2012-512");
+
     private final String algorithmName;
 
     SignatureAlgorithm(String algorithmName) {
@@ -38,6 +31,14 @@ public enum SignatureAlgorithm {
     public static SignatureAlgorithm fromString(String name) {
         for (SignatureAlgorithm algorithm : values()) {
             if (algorithm.name().equalsIgnoreCase(name)) {
+                return algorithm;
+            }
+        }
+        throw new IllegalArgumentException("Invalid signature algorithm: " + name);
+    }
+    public static SignatureAlgorithm fromAlgorithmName(String name) {
+        for (SignatureAlgorithm algorithm : values()) {
+            if (algorithm.algorithmName.equalsIgnoreCase(name)) {
                 return algorithm;
             }
         }

@@ -75,7 +75,7 @@ public class RestTemplateClient {
             Security.addProvider(new CryptoProvider());
             Security.addProvider(new RevCheck());
             Security.addProvider(new Provider());
-            SSLContext sslContext = SSLContext.getInstance("GostTLS");
+            SSLContext sslContext = SSLContext.getInstance("GostTLS","JTLS");
             String javaHome = System.getProperty("java.home");
             String cacertsPath = Paths.get(javaHome, "lib", "security", "cacerts").toString();
 

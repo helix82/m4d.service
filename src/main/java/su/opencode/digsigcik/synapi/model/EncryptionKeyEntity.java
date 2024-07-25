@@ -27,5 +27,7 @@ public class EncryptionKeyEntity {
     @Lob
     @Column(name = "public_key", columnDefinition = "bytea")
     private byte[] publicKey;
-
+    @Lob
+    @Column(name = "cert", columnDefinition = "bytea")
+    private byte[] cert;
 }

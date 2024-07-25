@@ -9,6 +9,7 @@ import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.util.Store;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Qualifier("bouncy-castle")
@@ -54,24 +56,24 @@ public class SignatureVerificationServiceBCImpl implements SignatureVerification
     }
 
     @Override
-    public ReportContainerDTO verifyDetached(MultipartFile sourceFile, MultipartFile detachedSign) {
+    public ReportContainerDTO verifyDetached(@NotNull MultipartFile sourceFile, @NotNull MultipartFile detachedSign) {
         try {
             ReportDTO reportDTO = verifyDetached(sourceFile.getBytes(), detachedSign.getBytes(), sourceFile.getOriginalFilename());
             return buildReportContainerDTO(reportDTO);
         } catch (Exception e) {
             // Handle exception
-            return new ReportContainerDTO(new byte[0], new byte[0]); // Placeholder for error handling
+            return new ReportContainerDTO(new byte[0], new byte[0],false); // Placeholder for error handling
         }
     }
 
     @Override
-    public ReportContainerDTO verifyAttached(MultipartFile attachedSign) {
+    public ReportContainerDTO verifyAttached(@NotNull MultipartFile attachedSign) {
         try {
             ReportDTO reportDTO = verifyAttached(attachedSign.getBytes(), attachedSign.getOriginalFilename());
             return buildReportContainerDTO(reportDTO);
         } catch (Exception e) {
             // Handle exception
-            return new ReportContainerDTO(new byte[0], new byte[0]); // Placeholder for error handling
+            return new ReportContainerDTO(new byte[0], new byte[0],false); // Placeholder for error handling
         }
     }
 
@@ -229,13 +231,21 @@ public class SignatureVerificationServiceBCImpl implements SignatureVerification
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             String jsonString = objectMapper.writeValueAsString(reportDTO);
+            AtomicBoolean valid = new AtomicBoolean(false);
+            reportDTO.getResults().stream()
+                    .flatMap(result -> result.getVerificationResults().stream())
+                    .findFirst()
+                    .ifPresent(verificationResult -> {
+                        valid.set(verificationResult.isResult());
+                    });
             return ReportContainerDTO.builder()
                     .signCheck(jsonString.getBytes())
                     .signReport(new byte[0])
+                    .valid(valid.get())
                     .build();
         } catch (IOException e) {
             // Handle exception
-            return new ReportContainerDTO(new byte[0], new byte[0]); // Placeholder for error handling
+            return new ReportContainerDTO(new byte[0], new byte[0],false); // Placeholder for error handling
         }
     }
 

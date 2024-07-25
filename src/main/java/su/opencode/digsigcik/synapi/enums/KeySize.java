@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum KeySize {
+    BIT_256(256),
     BIT_512(512),
     BIT_1024(1024),
     BIT_2048(2048),

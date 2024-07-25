@@ -30,13 +30,11 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
 
     @Value("${cryptopro.svs.uri}")
     private String svc_uri;
-    @Value("${cryptopro.svs.gost}")
-    private boolean svc_gost;
 
     private final RestTemplateClient restTemplateClient;
 
     public SignatureVerificationServiceCPImpl() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, NoSuchProviderException, KeyManagementException {
-        this.restTemplateClient = new RestTemplateClient(svc_gost);
+        this.restTemplateClient = new RestTemplateClient(true);
     }
 
     public ReportContainerDTO verifyDetached(@NotNull MultipartFile sourceFile,

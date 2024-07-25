@@ -2,19 +2,10 @@ package su.opencode.digsigcik.synapi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lowagie.text.BadElementException;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
+import com.lowagie.text.*;
 import com.lowagie.text.Image;
 import com.lowagie.text.Rectangle;
-import com.lowagie.text.pdf.PdfAnnotation;
-import com.lowagie.text.pdf.PdfAppearance;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfImportedPage;
-import com.lowagie.text.pdf.PdfName;
-import com.lowagie.text.pdf.PdfReader;
-import com.lowagie.text.pdf.PdfStamper;
-import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.*;
 import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
 import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +17,12 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
+import su.opencode.digsigcik.synapi.dto.ReportDTO;
 import su.opencode.digsigcik.synapi.dto.StampData;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,6 +32,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Deque;
+
+import static java.awt.Color.*;
 
 @Service
 @RequiredArgsConstructor
@@ -630,4 +625,103 @@ public class StampServiceImpl implements StampService {
                 "]";
     }
 
+    public byte[] createPdf(ReportDTO reportDTO) throws DocumentException, IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        Document document = new Document();
+        PdfWriter.getInstance(document, byteArrayOutputStream);
+        document.open();
+
+        // Add fonts
+        BaseFont baseFont = BaseFont.createFont("/fonts/DejaVuSans.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        com.lowagie.text.Font fontHeader = new com.lowagie.text.Font(baseFont, 16, com.lowagie.text.Font.BOLD);
+        com.lowagie.text.Font fontSection = new com.lowagie.text.Font(baseFont, 14, com.lowagie.text.Font.BOLD);
+        com.lowagie.text.Font fontContent = new com.lowagie.text.Font(baseFont, 10);
+
+        // Add title
+        Paragraph title = new Paragraph("ПРОТОКОЛ ПРОВЕРКИ ЭЛЕКТРОННОЙ ПОДПИСИ", fontHeader);
+        title.setAlignment(Element.ALIGN_CENTER);
+        title.setSpacingAfter(20f);
+        document.add(title);
+
+        // Create unified table
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100.0f);
+        table.setWidths(new float[]{3.0f, 7.0f});
+        table.setSpacingBefore(10);
+
+        // Adding sections and data
+        boolean valid = reportDTO.getResults().get(0).getVerificationResults().get(0).isResult();
+        addSection(table, "Результат проверки", fontSection, fontContent);
+        addRow(table,  valid ? "Подпись действительна" : "Подпись недействительна",
+                valid, fontContent);
+
+        addSection(table, "Сведения о файле", fontSection, fontContent);
+        addRow(table, "Имя файла:", reportDTO.getResults().get(0).getOriginalDocumentName(), fontContent);
+        addRow(table, "Исходное имя файла:", reportDTO.getResults().get(0).getSignedDocumentName(), fontContent);
+        addRow(table, "Хэш файла подписи:", reportDTO.getResults().get(0).getSignatureDocumentHash(), fontContent);
+
+        addSection(table, "Сведения о подписи", fontSection, fontContent);
+        addRow(table, "Тип подписи:", reportDTO.getResults().get(0).getSignatureType(), fontContent);
+        addRow(table, "Время проверки:", reportDTO.getResults().get(0).getVerificationTime(), fontContent);
+        addRow(table, "Ошибки:", "N/A", fontContent);
+
+        addSection(table, "Сведения о сертификате подписи", fontSection, fontContent);
+        ReportDTO.Result.VerificationResult.SignerCertificateInfo certInfo = reportDTO.getResults().get(0).getVerificationResults().get(0).getSignerCertificateInfo();
+        addRow(table, "Субъект:", certInfo.getSubjectName(), fontContent);
+        addRow(table, "Издатель:", certInfo.getIssuerName(), fontContent);
+        addRow(table, "Действителен до:", certInfo.getNotAfter(), fontContent);
+        addRow(table, "Закрытый ключ действителен до:", String.valueOf(certInfo.getPkNotAfterUTC()), fontContent);
+        addRow(table, "Серийный номер:", certInfo.getSerialNumber(), fontContent);
+        addRow(table, "Отпечаток:", certInfo.getThumbprint(), fontContent);
+
+        addSection(table, "Доп. данные", fontSection, fontContent);
+        addRow(table, "Время подписи:", reportDTO.getResults().get(0).getVerificationTime(), fontContent);
+        addRow(table, "Формат подписи CAdES:", reportDTO.getResults().get(0).getSignatureType(), fontContent);
+
+        // Add the table to the document
+        document.add(table);
+
+        document.close();
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private static void addSection(PdfPTable table, String sectionTitle, com.lowagie.text.Font fontSection, com.lowagie.text.Font fontContent) {
+        PdfPCell sectionCell = new PdfPCell(new Phrase(sectionTitle, fontSection));
+        sectionCell.setColspan(2);
+        sectionCell.setBorder(Rectangle.NO_BORDER);
+        sectionCell.setPadding(10f);
+        sectionCell.setBackgroundColor(LIGHT_GRAY);
+        sectionCell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        table.addCell(sectionCell);
+    }
+
+    private static void addRow(PdfPTable table, String label, String value, com.lowagie.text.Font fontContent) {
+        PdfPCell cell;
+
+        cell = new PdfPCell(new Phrase(label, fontContent));
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setPadding(10f);
+        table.addCell(cell);
+
+        cell = new PdfPCell(new Phrase(value, fontContent));
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setPadding(10f);
+        table.addCell(cell);
+    }
+    private static void addRow(PdfPTable table, String label, boolean valid, com.lowagie.text.Font fontContent) {
+        PdfPCell cell;
+        cell = new PdfPCell(new Phrase(label, fontContent));
+        if (valid) {
+            cell.setBackgroundColor(GREEN);
+        } else {
+            cell.setBackgroundColor(RED);
+        }
+        cell.setColspan(2);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setPadding(10f);
+        table.addCell(cell);
+    }
 }

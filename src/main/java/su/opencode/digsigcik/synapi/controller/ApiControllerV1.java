@@ -10,7 +10,6 @@ import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.asn1.cms.ContentInfo;
 import org.bouncycastle.asn1.cms.SignedData;
-import org.bouncycastle.cms.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.InputStreamResource;
@@ -47,7 +46,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.security.cert.CertificateException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +54,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum.*;
+import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.QUALIFIED;
 import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.UNQUALIFIED;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.filename;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.mediaType;
@@ -73,7 +72,10 @@ public class ApiControllerV1 {
     private final SignatureVerificationService signatureVerificationService;
     private final JwtTokenUtils jwtTokenUtils;
 
-    public ApiControllerV1(ContainerService containerService, ContainerVerificationService containerVerificationService, @Qualifier("cryptopro-keylab") SignatureVerificationService signatureVerificationService, JwtTokenUtils jwtTokenUtils) {
+    public ApiControllerV1(ContainerService containerService,
+                           ContainerVerificationService containerVerificationService,
+                           @Qualifier("cryptopro-keylab") SignatureVerificationService signatureVerificationService,
+                           JwtTokenUtils jwtTokenUtils) {
         this.containerService = containerService;
         this.containerVerificationService = containerVerificationService;
         this.signatureVerificationService = signatureVerificationService;
@@ -87,7 +89,7 @@ public class ApiControllerV1 {
             @RequestPart("sigFile") MultipartFile sourceSig,
             SignatureTypeEnum signatureType,
             SignatureAlgorithm signatureAlgorithm,
-            HashAlgorithm hashAlgorithm) throws IOException, CertificateException, CMSException {
+            HashAlgorithm hashAlgorithm) {
         boolean signatureDetached;
         ContainerTypeEnum containerType;
         // Проверить, пустые ли файлы
@@ -134,13 +136,13 @@ public class ApiControllerV1 {
                 reportContainerDTO = signatureVerificationService.verifyAttached(sourceSig);
             }
         } catch (ResourceAccessException | IOException | URISyntaxException e) {
-            log.warn("Не удалось подключиться к сервису верификации");
+            log.warn("Не удалось подключиться к сервису верификации: {}",e.getMessage());
             reportContainerDTO = ReportContainerDTO.builder()
                     .signReport(null)
                     .signCheck(null)
                     .build();
         } catch (Exception e) {
-            log.warn("Не удалось подключиться к сервису верификации");
+            log.warn("Не удалось подключиться к сервису верификации: {}",e.getMessage());
             reportContainerDTO = ReportContainerDTO.builder()
                     .signReport(null)
                     .signCheck(null)
@@ -160,9 +162,9 @@ public class ApiControllerV1 {
                 .signatureAlgorithm(signatureAlgorithm != null ? signatureAlgorithm.getAlgorithmName() : "NOT " +
                         "IMPLEMENTED")
                 .hashAlgorithm(hashAlgorithm != null ? hashAlgorithm.getAlgorithmName() :
-                        HashAlgorithm.SHA256.getAlgorithmName())
+                        HashAlgorithm.GOST3411_2012_256.getAlgorithmName())
                 .containerType(containerType)
-                .signatureType(signatureType != null ? signatureType : UNQUALIFIED)
+                .signatureType(reportContainerDTO.isValid() ? QUALIFIED : UNQUALIFIED)
                 .signCheck(reportContainerDTO.getSignCheck())
                 .signReport(reportContainerDTO.getSignReport())
                 .signatureDetached(signatureDetached)

@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class ReportContainerDTO {
     private byte[] signCheck;
     private byte[] signReport;
-
+    boolean valid;
 }

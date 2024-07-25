@@ -1,9 +1,11 @@
 package su.opencode.digsigcik.synapi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.lowagie.text.DocumentException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
+import su.opencode.digsigcik.synapi.dto.ReportDTO;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -89,5 +91,7 @@ public interface StampService {
                                      @NotNull ContainerInputInfoDto containerInputInfo) throws IOException;
     byte[] createPngPreviewWithStamp(MultipartFile sourceFile,
                                      @NotNull ContainerInputInfoDto containerInputInfo) throws IOException;
+
+    byte[] createPdf(ReportDTO reportDTO) throws DocumentException, IOException;
 
 }
