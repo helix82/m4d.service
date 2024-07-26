@@ -180,7 +180,7 @@ INSERT INTO SYSTEM_LOB_STREAM VALUES(1, 12, NULL, X'000000000000983d0000776f7264
 INSERT INTO verification_center (content_type_recall, content_type_release, name, original_name_recall, original_name_release, template_recall, template_release)
 VALUES
        ('application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', U&'\0424\0435\0434\0435\0440\0430\043b\044c\043d\0430\044f \043d\0430\043b\043e\0433\043e\0432\0430\044f \0441\043b\0443\0436\0431\0430', U&'\043e\0442\0437\044b\0432.docx', U&'\0432\044b\043f\0443\0441\043a.docx', SYSTEM_COMBINE_BLOB(0), SYSTEM_COMBINE_BLOB(1)),
-       (NULL, NULL, U&'\0424\0435\0434\0435\0440\0430\043b\044c\043d\044b\0439 \0446\0435\043d\0442\0440 \0438\043d\0444\043e\0440\043c\0430\0442\0438\0437\0430\0446\0438\0438', NULL, NULL, NULL, NULL);
+       (NULL, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', U&'\0424\0435\0434\0435\0440\0430\043b\044c\043d\044b\0439 \0446\0435\043d\0442\0440 \0438\043d\0444\043e\0440\043c\0430\0442\0438\0437\0430\0446\0438\0438', NULL, U&'\0432\044b\043f\0443\0441\043a.docx', NULL, SYSTEM_COMBINE_BLOB(1));
 
 INSERT INTO "PUBLIC"."STATEMENT" (dt_create, login, status, type, verification_center_id) VALUES
     ('2024-07-13T21:00:00Z', 'ivanov', '1', '0', '1');
