@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lowagie.text.DocumentException;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -28,6 +29,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static su.opencode.digsigcik.synapi.util.ReportUtils.createPdf;
 
 @Service
 @Qualifier("bouncy-castle")
@@ -227,7 +230,7 @@ public class SignatureVerificationServiceBCImpl implements SignatureVerification
                 .build();
     }
 
-    private ReportContainerDTO buildReportContainerDTO(ReportDTO reportDTO) {
+    private ReportContainerDTO buildReportContainerDTO(ReportDTO reportDTO) throws DocumentException {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             String jsonString = objectMapper.writeValueAsString(reportDTO);
@@ -240,7 +243,7 @@ public class SignatureVerificationServiceBCImpl implements SignatureVerification
                     });
             return ReportContainerDTO.builder()
                     .signCheck(jsonString.getBytes())
-                    .signReport(new byte[0])
+                    .signReport(createPdf(reportDTO))
                     .valid(valid.get())
                     .build();
         } catch (IOException e) {

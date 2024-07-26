@@ -50,6 +50,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
+import static su.opencode.digsigcik.synapi.util.ReportUtils.createPdf;
+
 
 @Service
 
@@ -58,15 +60,13 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
     private final ContainerService containerService;
     private final EncryptionKeyRepository encryptionKeyRepository;
     private final SignatureVerificationService signatureVerificationService;
-    private final StampService stampService;
 
     public SimpleSignatureServiceImpl(ContainerService containerService,
                                       EncryptionKeyRepository encryptionKeyRepository,
-                                      @Qualifier("bouncy-castle") SignatureVerificationService signatureVerificationService, StampService stampService) {
+                                      @Qualifier("bouncy-castle") SignatureVerificationService signatureVerificationService) {
         this.containerService = containerService;
         this.encryptionKeyRepository = encryptionKeyRepository;
         this.signatureVerificationService = signatureVerificationService;
-        this.stampService = stampService;
     }
 
     @Override
@@ -139,7 +139,7 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
         byte[] signCheck = signCheckJsonString.getBytes(StandardCharsets.UTF_8);
         containerInputInfo.setSignCheck(signCheck);
         try {
-            containerInputInfo.setSignReport(stampService.createPdf(reportDTO));
+            containerInputInfo.setSignReport(createPdf(reportDTO));
         } catch (DocumentException e) {
             throw new RuntimeException(e);
         }

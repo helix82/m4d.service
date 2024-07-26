@@ -59,6 +59,7 @@ import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.UNQUALIFIED;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.filename;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.mediaType;
 import static su.opencode.digsigcik.synapi.util.Constants.API_RESPONSE_CODE_400_MESSAGE;
+import static su.opencode.digsigcik.synapi.util.Constants.MRPA_REGISTRY_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.FileUtils.resourceOctetStreamOrInternal;
 
 @RestController
@@ -439,14 +440,17 @@ public class ApiControllerV1 {
             ContentInfo contentInfo = ContentInfo.getInstance(bytes);
             if (!contentInfo.getContentType()
                     .equals(CMSObjectIdentifiers.signedData)) {
-                throw new RuntimeException("Плохой файл подписи");
+                throw new BadRequestException("Плохой файл подписи");
             }
             SignedData signedData = SignedData.getInstance(contentInfo.getContent());
             return signedData.getEncapContentInfo()
                     .getContent() == null;
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } catch (java.lang.IllegalArgumentException e) {
+            throw new BadRequestException("Плохой файл подписи");
         }
+
     }
 
     public static boolean isValidPdf(MultipartFile multipartFile) {

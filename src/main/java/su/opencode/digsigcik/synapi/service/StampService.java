@@ -91,7 +91,4 @@ public interface StampService {
                                      @NotNull ContainerInputInfoDto containerInputInfo) throws IOException;
     byte[] createPngPreviewWithStamp(MultipartFile sourceFile,
                                      @NotNull ContainerInputInfoDto containerInputInfo) throws IOException;
-
-    byte[] createPdf(ReportDTO reportDTO) throws DocumentException, IOException;
-
 }
