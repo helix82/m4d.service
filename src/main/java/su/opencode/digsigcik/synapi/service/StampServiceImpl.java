@@ -2,19 +2,10 @@ package su.opencode.digsigcik.synapi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lowagie.text.BadElementException;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
+import com.lowagie.text.*;
 import com.lowagie.text.Image;
 import com.lowagie.text.Rectangle;
-import com.lowagie.text.pdf.PdfAnnotation;
-import com.lowagie.text.pdf.PdfAppearance;
-import com.lowagie.text.pdf.PdfContentByte;
-import com.lowagie.text.pdf.PdfImportedPage;
-import com.lowagie.text.pdf.PdfName;
-import com.lowagie.text.pdf.PdfReader;
-import com.lowagie.text.pdf.PdfStamper;
-import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.*;
 import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
 import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +17,12 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
+import su.opencode.digsigcik.synapi.dto.ReportDTO;
 import su.opencode.digsigcik.synapi.dto.StampData;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.Font;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,6 +32,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Deque;
+
+import static java.awt.Color.*;
 
 @Service
 @RequiredArgsConstructor
@@ -629,5 +624,4 @@ public class StampServiceImpl implements StampService {
                 "    }\n" +
                 "]";
     }
-
 }

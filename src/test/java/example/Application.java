@@ -1,54 +1,61 @@
 package example;
 
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.springframework.http.HttpMethod;
-import ru.CryptoPro.JCP.JCP;
-import ru.CryptoPro.reprov.RevCheck;
-import ru.CryptoPro.ssl.Provider;
-import su.opencode.digsigcik.synapi.client.RestTemplateClient;
 
-import java.net.URI;
-import java.security.Security;
-import java.util.HashMap;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+
+import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 @Slf4j
 public class Application {
-    public static void main(String[] args) throws Exception {
-        try {
-            Security.addProvider(new BouncyCastleProvider());
-            //   Security.addProvider(new JCSP()); // провайдер JCSP
-            Security.addProvider(new JCP()); // провайдер JCP
-            //  Security.addProvider(new JS()); // провайдер JCP
-            Security.addProvider(new RevCheck());
-            Security.addProvider(new Provider());
-        } catch (Exception e) {
-            System.err.println("Exception in initializing crypto pro : " + e);
-        } catch (Error er) {
-            System.err.println("Error in initializing crypto pro : " + er);
-        }
+    public static void main(String[] args) throws UnsupportedEncodingException {
+        KeyPair keyPair = readKeyPairFromPkcs12("oper.pfx","1234");
 
-        RestTemplateClient restTemplateClient = new RestTemplateClient();
-//            HashMap<String, String> headers = new HashMap<>();
-//            headers.put("Accept", "application/json");
-//            RestRequest restRequest = RestRequest.builder()
-//                    .httpMethod(RestMethod.GET)
-//                    .requestUri(new URI("https://keylab/verify/"))
-//                    .requestContent("")
-//                    .httpHeader(headers)
-//                    .build();
-//            restClient.requestString(restRequest);
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("Accept", "application/json");
-        RestTemplateClient.RestTemplateClientRequest restTemplateClientRequest = RestTemplateClient.RestTemplateClientRequest.builder()
-                .httpMethod(HttpMethod.POST)
-                .requestUri(new URI("https://keylab/vs/api/documents/reset/all"))
-                .requestContent("")
-                .httpHeader(headers)
-                .build();
-        restTemplateClient.requestString(restTemplateClientRequest);
-        log.info("Connection was successfully");
-
+        System.out.println("Decoded string: " );
     }
 
+    public static KeyPair readKeyPairFromPkcs12(String filePath, String password) {
+        BouncyCastleProvider bcProvider = new BouncyCastleProvider();
+        String name = bcProvider.getName();
+        Security.removeProvider(name); // remove old instance
+        Security.addProvider(bcProvider);
+        try (FileInputStream fis = new FileInputStream(filePath)) {
+            // Загружаем PKCS#12 хранилище
+            KeyStore keyStore = null;
+            try {
+                keyStore = KeyStore.getInstance("PKCS12", "BC");
+            } catch (NoSuchProviderException e) {
+                throw new RuntimeException(e);
+            }
+            keyStore.load(fis, password.toCharArray());
+
+            // Находим первый доступный сертификат и извлекаем соответствующие ключи
+            String alias = keyStore.aliases()
+                    .nextElement();
+            Key key = keyStore.getKey(alias, password.toCharArray());
+            if (key instanceof PrivateKey) {
+                // Get certificate of public key
+                Certificate cert = keyStore.getCertificate(alias);
+
+                // Get public key
+                PublicKey publicKey = cert.getPublicKey();
+
+                // Return a key pair
+                return new KeyPair(publicKey, (PrivateKey) key);
+            }
+        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException |
+                 UnrecoverableEntryException e) {
+            throw new RuntimeException("Ошибка при чтении ключей из PKCS#12 файла", e);
+        }
+        return null;
+    }
 }

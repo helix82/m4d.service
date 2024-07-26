@@ -8,7 +8,7 @@ public enum ContainerFileEnum {
 	PREVIEW_PDF("preview/preview.pdf", false, true, null),
 	PREVIEW_PNG("preview/preview.png", false, true, null),
 	MAIN_FILE("main/mainFile", true, true, null),
-	DETACHED_BES("detached/sha256", false, true, EnhanceTypeEnum.ADES_BES),
+	DETACHED_BES("detached/sign.p7s", false, true, EnhanceTypeEnum.ADES_BES),
 	DETACHED_T("detached/pkcs7t", false, true, EnhanceTypeEnum.ADES_T),
 	DETACHED_C("detached/pkcs7c", false, true, EnhanceTypeEnum.ADES_C),
 	DETACHED_A("detached/pkcs7a", false, true, EnhanceTypeEnum.ADES_A),

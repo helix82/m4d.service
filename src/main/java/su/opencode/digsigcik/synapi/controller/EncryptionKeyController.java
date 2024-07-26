@@ -37,12 +37,10 @@ import su.opencode.digsigcik.synapi.repository.UserProjectionRepository;
 
 import javax.transaction.Transactional;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.*;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -96,26 +94,17 @@ public class EncryptionKeyController {
         // Генерация ключевой пары
         try {
             KeyPair keyPair = generateKeyPair(algorithm, keySize);
-            //saveKeyPairToPkcs12(keyPair,"certificate.p12","301214");
-            //KeyPair keyPair1 = readKeyPairFromPkcs12("certificate.p12","301214");
             PrivateKey privateKey = keyPair.getPrivate();
             PublicKey publicKey = keyPair.getPublic();
-            //saveGostPrivateKeyToFile(privateKey, "gost_private_key.pem");
             EncryptionKeyEntity keyEntity = new EncryptionKeyEntity();
             keyEntity.setAlgorithm(algorithm);
             keyEntity.setPrivateKey(privateKey.getEncoded());
             keyEntity.setPublicKey(publicKey.getEncoded());
             keyEntity.setUserProjection(userProjection);
-            // Сохраняем закрытый ключ в файл
-
-            //writeCertificateToFile(x509Certificate,"certificate.cer");
             return encryptionKeyRepository.save(keyEntity);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
+        } catch (NoSuchProviderException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        return null;
     }
 
     @Operation(summary = CONTROLLER_ENCRYPTION_KEY_DELETE,
@@ -182,7 +171,7 @@ public class EncryptionKeyController {
             long serialNumber = Math.abs(new BigInteger(serialBytes).longValue());
 
             // Устанавливаем данные владельца и издателя сертификата
-            X500Name issuerAndSubject = new X500Name("CN=Example Self-Signed Certificate");
+            X500Name issuerAndSubject = new X500Name("CN=SEP Self-Signed Certificate");
 
             // Устанавливаем срок действия сертификата
             Calendar calendar = Calendar.getInstance();
@@ -246,32 +235,7 @@ public class EncryptionKeyController {
         }
     }
 
-    public static KeyPair readKeyPairFromPkcs12(String filePath, String password) {
-        try (FileInputStream fis = new FileInputStream(filePath)) {
-            // Загружаем PKCS#12 хранилище
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(fis, password.toCharArray());
 
-            // Находим первый доступный сертификат и извлекаем соответствующие ключи
-            String alias = keyStore.aliases()
-                    .nextElement();
-            Key key = keyStore.getKey(alias, password.toCharArray());
-            if (key instanceof PrivateKey) {
-                // Get certificate of public key
-                Certificate cert = keyStore.getCertificate(alias);
-
-                // Get public key
-                PublicKey publicKey = cert.getPublicKey();
-
-                // Return a key pair
-                return new KeyPair(publicKey, (PrivateKey) key);
-            }
-        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException |
-                 UnrecoverableEntryException e) {
-            throw new RuntimeException("Ошибка при чтении ключей из PKCS#12 файла", e);
-        }
-        return null;
-    }
 
 
     public static void saveGostPrivateKeyToFile(PrivateKey privateKey, String filePath) {

@@ -5,7 +5,6 @@ package su.opencode.digsigcik.synapi.util;
  */
 
 public interface Constants {
-    String SIGNATURE_PUBLIC_KEY_SEPARATOR = "---";
     String API_V_1_SES_FILES = "/api/v1/sesFiles";
     String GET_CONTAINER= "/getContainer";
     // namespaces
@@ -326,13 +325,7 @@ public interface Constants {
     String CONTROLLER_PIN_CODE_UPDATE_WITH_CUSTOM_HASH = "Обновляет пинкод для пользователя c указанием типа хэша";
     String CONTROLLER_PIN_CODE_DELETE = "Удаляет пинкод для пользователя";
 
-    String CONTROLLER_SIMPLE_SIGNATURE_CONTAINER_CREATE = "Создает контейнер с файлами подписанными простой электронной подписью c алгоритмами хэширования SHA256";
-    String CONTROLLER_SIMPLE_SIGNATURE_CONTAINER_CREATE_CUSTOM_HASH = "Создает контейнер с файлами подписанными простой электронной подписью c выбором алгоритма хэширования";
-    String CONTROLLER_SIMPLE_SIGNATURE_CREATE = "Создает контейнер с файлами подписанными простой электронной подписью c алгоритма хэширования SHA256 и возвращает на него ссылку";
-    String CONTROLLER_SIMPLE_SIGNATURE_CREATE_CUSTOM_HASH = "Создает контейнер с файлами подписанными простой электронной подписью c выбором алгоритма хэширования  и возвращает на него ссылку";
-    String CONTROLLER_SIMPLE_SIGNATURE_VERIFY = "Проверяет простую электронную подпись";
-    String CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE = "Создает неквалифицированную электронную подпись";
-    String CONTROLLER_UNQUALIFIED_SIGNATURE_CREATE_WITH_CUSTOM_HASH = "Создает неквалифицированную электронную подпись c указанием типа хэша";
+    String CONTROLLER_SIMPLE_SIGNATURE_CONTAINER_CREATE = "Создает контейнер с файлами подписанными простой электронной подписью";
     String CONTROLLER_ENCRYPTION_KEY_CREATE = "Создает пару закрытого и открытого ключа для пользователя";
     String CONTROLLER_ENCRYPTION_KEY_DELETE = "Удаляет пару закрытого и открытого ключа для пользователя";
     String CONTROLLER_ENCRYPTION_KEY_CREATE_WITH_CUSTOM_ALG  = "Создает пару закрытого и открытого ключа для пользователя c указанием алгоритма";

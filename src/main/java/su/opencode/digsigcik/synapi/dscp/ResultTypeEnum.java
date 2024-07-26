@@ -20,7 +20,7 @@ public enum ResultTypeEnum implements HasCode<ResultTypeEnum> {
 	SOURCE_FILE_SIZE  ("sourceFileSize",MetaAttribute.MAIN_FILE_SIZE),
 	PREVIEW_PDF("previewPdf", MediaType.APPLICATION_PDF, ContainerFileEnum.PREVIEW_PDF, "_preview", "pdf"),
 	PREVIEW_PNG("previewPng", MediaType.IMAGE_PNG, ContainerFileEnum.PREVIEW_PNG, "_preview", "png"),
-	DETACHED_SIGN("detachedSign", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.DETACHED_BES, null, "sig"),
+	DETACHED_SIGN("detachedSign", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.DETACHED_BES, null, "p7s"),
 	ATTACHED_SIGN("attachedSign", MediaType.APPLICATION_OCTET_STREAM, ContainerFileEnum.ATTACHED_BES, null, null),
 	HASH_TYPE("hashType", MetaAttribute.MAIN_FILE_HASH_TYPE),
 	HASH("hash", MetaAttribute.MAIN_FILE_HASH),
