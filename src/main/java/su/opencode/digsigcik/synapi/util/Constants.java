@@ -307,7 +307,7 @@ public interface Constants {
     String PUBLIC_KEY_STATEMENT_IS_NULL = String.format("Statement is %s!", NULL);
     String PUBLIC_KEY_USER_CERTIFICATE_IS_NULL = String.format("User certificate is %s!", NULL);
     String PUBLIC_KEY_USER_CERTIFICATE_IS_NOT = "Не найден ИД ключа УЦ, не могу определить тип сертификата";
-    String PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT = "Не известный формат добавляемого сертификата";
+    String PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT = "Неизвестный формат добавляемого сертификата";
     String PUBLIC_KEY_USER_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый сертификат пользователя уже существует в базе!";
     String PUBLIC_KEY_USER_CERTIFICATE_STATEMENT_ID_AND_LOGIN_NOT_FOUND = "Не переданы ИД заявления или логин пользователя";
     String STATEMENT_RELEASE_FILE = "Заявление_выпуск_СКП_ЭП";

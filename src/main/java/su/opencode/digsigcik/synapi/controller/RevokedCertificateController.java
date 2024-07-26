@@ -25,17 +25,17 @@ import su.opencode.digsigcik.synapi.service.RevokedCertificateService;
 
 import javax.validation.ConstraintViolationException;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.CRLException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constants.*;
@@ -145,12 +145,20 @@ public class RevokedCertificateController {
         if (!"crl".equals(extension)) {
             throw new BadRequestException(REVOKED_CERTIFICATE_UPLOAD_WRONG_FORMAT);
         }
-
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
         X509CRL crl;
         try (BufferedInputStream bis = new BufferedInputStream(sourceFile.getInputStream())) {
             crl = (X509CRL) cf.generateCRL(bis);
-        }
+        } catch (CRLException ignore) {
+            String certHeader = "-----BEGIN X509 CRL-----\r\n";
+            String certFooter = "\r\n-----END X509 CRL-----";
+            byte[] certBytes = sourceFile.getBytes();
+            String cert = certHeader + new String(certBytes) + certFooter;
+            InputStream stream = new ByteArrayInputStream(cert.getBytes(StandardCharsets.UTF_8));
+            try (BufferedInputStream bis = new BufferedInputStream(stream)) {
+                crl = (X509CRL) cf.generateCRL(bis);
+            }
+        };
 
         RevokedCertificate revokedCertificate = new RevokedCertificate();
         String[] issuer = crl.getIssuerDN().getName().split(", ");
@@ -173,7 +181,7 @@ public class RevokedCertificateController {
         }
 
         revokedCertificate.setImprint(DigestUtils.sha1Hex(crl.getEncoded()));
-        revokedCertificate.setCertificate(new String(sourceFile.getBytes()));
+        revokedCertificate.setCertificate(Base64.getEncoder().encodeToString(sourceFile.getBytes()));
 
         if (service.countRevokedCertificateByImprint(revokedCertificate.getImprint()) > 0) {
             throw new BadRequestException(REVOKED_CERTIFICATE_UPLOAD_EXISTS);
