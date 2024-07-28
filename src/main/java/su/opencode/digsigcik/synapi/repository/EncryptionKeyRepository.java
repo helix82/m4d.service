@@ -10,5 +10,5 @@ import su.opencode.digsigcik.synapi.model.UserProjection;
 public interface EncryptionKeyRepository extends JpaRepository<EncryptionKeyEntity, Long> {
 
     EncryptionKeyEntity getEncryptionKeyEntitiesByUserProjection(UserProjection userProjection);
-    void deleteEncryptionKeyEntitiesByUserProjection(UserProjection userProjection);
+    void deleteEncryptionKeyEntityByUserProjection(UserProjection userProjection);
 }

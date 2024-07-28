@@ -6,15 +6,10 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import lombok.experimental.UtilityClass;
-import org.bouncycastle.util.encoders.Hex;
 import su.opencode.digsigcik.synapi.dto.ReportDTO;
-import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 
 import static java.awt.Color.*;
 
@@ -43,40 +38,72 @@ public class ReportUtils {
         table.setWidthPercentage(100.0f);
         table.setWidths(new float[]{3.0f, 7.0f});
         table.setSpacingBefore(10);
-
-        // Adding sections and data
-        boolean valid = reportDTO.getResults().get(0).getVerificationResults().get(0).isResult();
-        addSection(table, "Результат проверки", fontSection, fontContent);
-        addRow(table,  valid ? "Подпись действительна" : "Подпись недействительна",
-                valid, fontContent);
-        if (!valid) {
-            addRow(table,  reportDTO.getResults().get(0).getVerificationResults().get(0).getMessage(),
+        addSection(table, "Результат проверки", fontSection);
+        if (reportDTO.getError() != null) {
+            addRow(table, reportDTO.getError(), false, fontContent);
+            addRow(table, reportDTO.getErrorDescription(), false, fontContent);
+        } else {
+            // Adding sections and data
+            boolean valid = reportDTO.getResults()
+                    .get(0)
+                    .getVerificationResults()
+                    .get(0)
+                    .isResult();
+            addRow(table, valid ? "Подпись действительна" : "Подпись недействительна",
                     valid, fontContent);
+            if (!valid) {
+                addRow(table, reportDTO.getResults()
+                                .get(0)
+                                .getVerificationResults()
+                                .get(0)
+                                .getMessage(),
+                        false, fontContent);
+            }
+
+            addSection(table, "Сведения о файле", fontSection);
+            addRow(table, "Имя файла:", reportDTO.getResults()
+                    .get(0)
+                    .getOriginalDocumentName(), fontContent);
+            addRow(table, "Исходное имя файла:", reportDTO.getResults()
+                    .get(0)
+                    .getSignedDocumentName(), fontContent);
+            addRow(table, "Хэш файла подписи:", reportDTO.getResults()
+                    .get(0)
+                    .getSignatureDocumentHash(), fontContent);
+
+            addSection(table, "Сведения о подписи", fontSection);
+            addRow(table, "Тип подписи:", reportDTO.getResults()
+                    .get(0)
+                    .getSignatureType(), fontContent);
+            addRow(table, "Время проверки:", reportDTO.getResults()
+                    .get(0)
+                    .getVerificationTime(), fontContent);
+            addRow(table, "Ошибки:", "N/A", fontContent);
+
+            addSection(table, "Сведения о сертификате подписи", fontSection);
+            ReportDTO.Result.VerificationResult.SignerCertificateInfo certInfo = reportDTO.getResults()
+                    .get(0)
+                    .getVerificationResults()
+                    .get(0)
+                    .getSignerCertificateInfo();
+            addRow(table, "Субъект:", certInfo.getSubjectName(), fontContent);
+            addRow(table, "Издатель:", certInfo.getIssuerName(), fontContent);
+            addRow(table, "Действителен до:", certInfo.getNotAfter(), fontContent);
+            addRow(table, "Закрытый ключ действителен до:", String.valueOf(certInfo.getPkNotAfterUTC()), fontContent);
+            addRow(table, "Серийный номер:", certInfo.getSerialNumber(), fontContent);
+            addRow(table, "Отпечаток:", certInfo.getThumbprint(), fontContent);
+
+            addSection(table, "Доп. данные", fontSection);
+            addRow(table, "Время подписи:", reportDTO.getResults()
+                    .get(0)
+                    .getVerificationTime(), fontContent);
+            addRow(table, "Формат подписи CAdES:", reportDTO.getResults()
+                    .get(0)
+                    .getVerificationResults()
+                    .get(0)
+                    .getSignatureInfo()
+                    .getCAdESType(), fontContent);
         }
-
-        addSection(table, "Сведения о файле", fontSection, fontContent);
-        addRow(table, "Имя файла:", reportDTO.getResults().get(0).getOriginalDocumentName(), fontContent);
-        addRow(table, "Исходное имя файла:", reportDTO.getResults().get(0).getSignedDocumentName(), fontContent);
-        addRow(table, "Хэш файла подписи:", reportDTO.getResults().get(0).getSignatureDocumentHash(), fontContent);
-
-        addSection(table, "Сведения о подписи", fontSection, fontContent);
-        addRow(table, "Тип подписи:", reportDTO.getResults().get(0).getSignatureType(), fontContent);
-        addRow(table, "Время проверки:", reportDTO.getResults().get(0).getVerificationTime(), fontContent);
-        addRow(table, "Ошибки:", "N/A", fontContent);
-
-        addSection(table, "Сведения о сертификате подписи", fontSection, fontContent);
-        ReportDTO.Result.VerificationResult.SignerCertificateInfo certInfo = reportDTO.getResults().get(0).getVerificationResults().get(0).getSignerCertificateInfo();
-        addRow(table, "Субъект:", certInfo.getSubjectName(), fontContent);
-        addRow(table, "Издатель:", certInfo.getIssuerName(), fontContent);
-        addRow(table, "Действителен до:", certInfo.getNotAfter(), fontContent);
-        addRow(table, "Закрытый ключ действителен до:", String.valueOf(certInfo.getPkNotAfterUTC()), fontContent);
-        addRow(table, "Серийный номер:", certInfo.getSerialNumber(), fontContent);
-        addRow(table, "Отпечаток:", certInfo.getThumbprint(), fontContent);
-
-        addSection(table, "Доп. данные", fontSection, fontContent);
-        addRow(table, "Время подписи:", reportDTO.getResults().get(0).getVerificationTime(), fontContent);
-        addRow(table, "Формат подписи CAdES:", reportDTO.getResults().get(0).getVerificationResults().get(0).getSignatureInfo().getCAdESType(), fontContent);
-
         // Add the table to the document
         document.add(table);
 
@@ -84,7 +111,7 @@ public class ReportUtils {
         return byteArrayOutputStream.toByteArray();
     }
 
-    private static void addSection(PdfPTable table, String sectionTitle, com.lowagie.text.Font fontSection, com.lowagie.text.Font fontContent) {
+    private static void addSection(PdfPTable table, String sectionTitle, com.lowagie.text.Font fontSection) {
         PdfPCell sectionCell = new PdfPCell(new Phrase(sectionTitle, fontSection));
         sectionCell.setColspan(2);
         sectionCell.setBorder(Rectangle.NO_BORDER);
@@ -109,6 +136,7 @@ public class ReportUtils {
         cell.setPadding(10f);
         table.addCell(cell);
     }
+
     private static void addRow(PdfPTable table, String label, boolean valid, com.lowagie.text.Font fontContent) {
         PdfPCell cell;
         cell = new PdfPCell(new Phrase(label, fontContent));

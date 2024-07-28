@@ -28,13 +28,4 @@ public class HashUtils {
         return sb.toString();
     }
 
-    public static String calculateSignatureDocumentHash(byte[] documentBytes) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256", "BC");
-            byte[] hash = md.digest(documentBytes);
-            return Hex.toHexString(hash);
-        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-            throw new RuntimeException("Error calculating signature document hash", e);
-        }
-    }
 }

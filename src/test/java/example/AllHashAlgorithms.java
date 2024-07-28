@@ -1,5 +1,6 @@
 package example;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import ru.CryptoPro.JCP.JCP;
 
 import java.security.MessageDigest;
@@ -17,6 +18,7 @@ import static java.security.Security.getProviders;
 public class AllHashAlgorithms {
 
     public static void main(String[] args) throws Exception {
+     //   Security.addProvider(new BouncyCastleProvider());
         Security.addProvider(new JCP());
         //List<String> algorithms = getAvailableHashAlgorithms();
         List<String> algorithms =getAvailableSignatureAlgorithms();

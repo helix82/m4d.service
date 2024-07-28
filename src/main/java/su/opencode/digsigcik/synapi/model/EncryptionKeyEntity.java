@@ -2,7 +2,7 @@ package su.opencode.digsigcik.synapi.model;
 
 import lombok.Data;
 import org.checkerframework.common.aliasing.qual.Unique;
-import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
+import su.opencode.digsigcik.synapi.enums.SimpleSignatureAlgorithm;
 
 import javax.persistence.*;
 
@@ -16,11 +16,10 @@ public class EncryptionKeyEntity {
 
     @OneToOne
     @JoinColumn(name = "user_projection_id")
-    @Unique
     private UserProjection userProjection;
 
     @Column(name = "algorithm")
-    private SignatureAlgorithm algorithm;
+    private SimpleSignatureAlgorithm algorithm;
     @Lob
     @Column(name = "private_key", columnDefinition = "bytea")
     private byte[] privateKey;
