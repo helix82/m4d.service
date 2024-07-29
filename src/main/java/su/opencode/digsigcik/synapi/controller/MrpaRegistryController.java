@@ -29,11 +29,6 @@ import su.opencode.digsigcik.synapi.util.XMLUtil;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.cert.CertificateException;
 import java.text.ParseException;
 import java.util.*;
 
@@ -223,7 +218,7 @@ public class MrpaRegistryController {
     })
     @PostMapping(value = "/{id}/upload_dscp", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSig(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("container") MultipartFile container) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, KeyManagementException {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("container") MultipartFile container) throws IOException {
         String extension = FilenameUtils.getExtension(container.getOriginalFilename());
         if(!Objects.equals(extension, "dscp")) {
             throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT);
@@ -307,14 +302,14 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
         }
 
-        Long orgId = null;
-        Long principId = null;
-        Long represId = null;
+        Long orgId;
+        Long principId;
+        Long represId;
         if(m4dXml == null) {
             throw new BadRequestException(MRPA_IS_NULL);
         }
 
-        int guid = 0;
+        int guid;
         guid = mrpaRegistryService.findMrpaRegistryByGuid(m4dXml.document.powerAttorneys.getMrpa().getGuid());
         if(guid>0){
             throw new BadRequestException(MRPA_REGISTRY_IS_EXISTS);
@@ -336,7 +331,7 @@ public class MrpaRegistryController {
         organisation.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getName());
         organisation.setRegionCode(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getRegionCode());
         organisation.setLegalAddress(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getLegalAddress());
-        if(organisation.getInn() == null || organisation.getInn() == ""){
+        if(organisation.getInn() == null || organisation.getInn().isEmpty()){
             throw new BadRequestException(ORGANISATION_IS_NULL);
         }
         Principal principal = new Principal();
@@ -346,7 +341,7 @@ public class MrpaRegistryController {
         principal.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
         principal.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
         principal.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
-        if(principal.getInn() == null || principal.getInn() == ""){
+        if(principal.getInn() == null || principal.getInn().isEmpty()){
             throw new BadRequestException(PRINCIPAL_IS_NULL);
         }
         Representative representative = new Representative();
@@ -356,7 +351,7 @@ public class MrpaRegistryController {
         representative.setName(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
         representative.setSurname(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
         representative.setPatronymic(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
-        if(representative.getInn() == null || representative.getInn() == ""){
+        if(representative.getInn() == null || representative.getInn().isEmpty()){
             throw new BadRequestException(REPRESENTATIVE_IS_NULL);
         }
         RepresentativePassport represPassport = new RepresentativePassport();
