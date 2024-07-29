@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,9 @@ import su.opencode.digsigcik.synapi.util.XMLUtil;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.*;
 
@@ -291,8 +295,32 @@ public class MrpaRegistryController {
         if(!Objects.equals(extension, "xml")) {
             throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
         }
-        String content = new String(sourceFile.getBytes());
-        //String content = new String(sourceFile.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+        String content;
+
+        byte[] bom = new byte[3];
+        try (InputStream is = sourceFile.getInputStream()) {
+            // read 3 bytes of a file.
+            is.read(bom);
+            // BOM encoded as ef bb bf
+            String cont = new String(Hex.encodeHex(bom));
+            if ("efbbbf".equalsIgnoreCase(cont)) {
+                byte[] bytes = sourceFile.getBytes();
+                ByteBuffer bb = ByteBuffer.wrap(bytes);
+                System.out.println("Found BOM!");
+                // get the first 3 bytes
+                bb.get(bom, 0, bom.length);
+                // remaining
+                byte[] contentAfterFirst3Bytes = new byte[bytes.length - 3];
+                bb.get(contentAfterFirst3Bytes, 0, contentAfterFirst3Bytes.length);
+                System.out.println("Remove the first 3 bytes, and overwrite the file!");
+                // override the same path
+                System.out.println(new String(contentAfterFirst3Bytes, StandardCharsets.UTF_8));
+                content = new String(contentAfterFirst3Bytes, StandardCharsets.UTF_8);
+            } else {
+                content = new String(sourceFile.getBytes());
+            }
+        }
+
         M4dXml m4dXml;
         try{
             Document document = convertStringToDocument(content);
