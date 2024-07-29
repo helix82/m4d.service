@@ -55,6 +55,11 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
+    public Integer findMrpaRegistryByGuid(@NotNull String guid) {
+        return this.mrpaRegistryRepository.findMrpaRegistryByGuid(guid);
+    }
+
+    @Override
     public MrpaRegistryFullDTO findMrpaRegistryFullById(@NotNull Long id) {
         MrpaRegistryFullDTO mrpaRegistryFullDTO = this.mrpaRegistryRepository.findMrpaRegistryFullById(id);
         if (mrpaRegistryFullDTO == null) {

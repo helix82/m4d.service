@@ -7,4 +7,5 @@ import su.opencode.digsigcik.synapi.model.Principal;
 @Repository
 public interface PrincipalRepository extends JpaRepository<Principal, Long> {
     Principal findPrincipalById(Long id);
+    Principal findPrincipalByInn(String inn);
 }

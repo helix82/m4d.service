@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.api.model.ContainerPart;
 import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
@@ -18,12 +19,11 @@ import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
-import su.opencode.digsigcik.synapi.model.MrpaRegistry;
-import su.opencode.digsigcik.synapi.model.MrpaRegistryCredential;
-import su.opencode.digsigcik.synapi.service.ContainerService;
-import su.opencode.digsigcik.synapi.service.ContainerVerificationService;
-import su.opencode.digsigcik.synapi.service.MrpaRegistryCredentialService;
-import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
+import su.opencode.digsigcik.synapi.exception.MchdException;
+import su.opencode.digsigcik.synapi.model.*;
+import su.opencode.digsigcik.synapi.model.m4d.M4dXml;
+import su.opencode.digsigcik.synapi.service.*;
+import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
@@ -39,6 +39,7 @@ import java.util.*;
 
 import static su.opencode.digsigcik.synapi.controller.ApiControllerV1.createContainerSelector;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
+import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
 @RestController
 @MchdExceptionHandler
@@ -48,12 +49,22 @@ public class MrpaRegistryController {
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
     private final ContainerVerificationService containerVerificationService;
     private final ContainerService containerService;
+    private final OrganisationService organisationService;
+    private final PrincipalService principalService;
+    private final RepresentativeService representativeService;
+    private final RepresentativePassportService representativePassportService;
+    private final CredentialService credentialService;
 
-    public MrpaRegistryController(MrpaRegistryService mrpaRegistryService, MrpaRegistryCredentialService mrpaRegistryCredentialService, ContainerVerificationService containerVerificationService, ContainerService containerService) {
+    public MrpaRegistryController(MrpaRegistryService mrpaRegistryService, MrpaRegistryCredentialService mrpaRegistryCredentialService, ContainerVerificationService containerVerificationService, ContainerService containerService, OrganisationService organisationService, PrincipalService principalService, RepresentativeService representativeService, RepresentativePassportService representativePassportService, CredentialService credentialService) {
         this.mrpaRegistryService = mrpaRegistryService;
         this.mrpaRegistryCredentialService = mrpaRegistryCredentialService;
         this.containerVerificationService = containerVerificationService;
         this.containerService = containerService;
+        this.organisationService = organisationService;
+        this.principalService = principalService;
+        this.representativeService = representativeService;
+        this.representativePassportService = representativePassportService;
+        this.credentialService = credentialService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
@@ -211,7 +222,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "/{id}/upload_dscp", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> upload(@PathVariable @Parameter(name = "id",
+    public ResponseEntity<?> uploadSig(@PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("container") MultipartFile container) throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException, NoSuchProviderException, KeyManagementException {
         String extension = FilenameUtils.getExtension(container.getOriginalFilename());
         if(!Objects.equals(extension, "dscp")) {
@@ -271,6 +282,192 @@ public class MrpaRegistryController {
         }
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(id);
         mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(id);
+        return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_UPLOAD_XML_SUMMARY, description = CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, JAXBException, ParseException {
+        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
+        if(!Objects.equals(extension, "xml")) {
+            throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
+        }
+        String content = new String(sourceFile.getBytes());
+        //String content = new String(sourceFile.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+        M4dXml m4dXml;
+        try{
+            Document document = convertStringToDocument(content);
+            assert document != null;
+            m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
+        } catch (Exception e) {
+            throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
+        }
+
+        Long orgId = null;
+        Long principId = null;
+        Long represId = null;
+        if(m4dXml == null) {
+            throw new BadRequestException(MRPA_IS_NULL);
+        }
+
+        int guid = 0;
+        guid = mrpaRegistryService.findMrpaRegistryByGuid(m4dXml.document.powerAttorneys.getMrpa().getGuid());
+        if(guid>0){
+            throw new BadRequestException(MRPA_REGISTRY_IS_EXISTS);
+        }
+
+        MrpaRegistry mrpaRegistry = new MrpaRegistry();
+        mrpaRegistry.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
+        mrpaRegistry.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
+        mrpaRegistry.setStartDate(DateUtils.parse(m4dXml.document.powerAttorneys.mrpa.getStartDate()).toInstant().toString());
+        mrpaRegistry.setEndDate(DateUtils.parse(m4dXml.document.powerAttorneys.mrpa.getEndDate()).toInstant().toString());
+        mrpaRegistry.setMrpaXml(content);
+        mrpaRegistry.setMrpaXmlFilename(sourceFile.getOriginalFilename());
+        mrpaRegistry.setStatus(StatusTypeEnum.NOT_SIGNED);
+
+        Organisation organisation = new Organisation();
+        organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
+        organisation.setKpp(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getKpp());
+        organisation.setOgrn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getOgrn());
+        organisation.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getName());
+        organisation.setRegionCode(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getRegionCode());
+        organisation.setLegalAddress(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getLegalAddress());
+        if(organisation.getInn() == null || organisation.getInn() == ""){
+            throw new BadRequestException(ORGANISATION_IS_NULL);
+        }
+        Principal principal = new Principal();
+        principal.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getInn());
+        principal.setSnils(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getSnils());
+        principal.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
+        principal.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
+        principal.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
+        principal.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
+        if(principal.getInn() == null || principal.getInn() == ""){
+            throw new BadRequestException(PRINCIPAL_IS_NULL);
+        }
+        Representative representative = new Representative();
+        representative.setInn(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.getInn());
+        representative.setSnils(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.getSnils());
+        representative.setBirthDate(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString());
+        representative.setName(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
+        representative.setSurname(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
+        representative.setPatronymic(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
+        if(representative.getInn() == null || representative.getInn() == ""){
+            throw new BadRequestException(REPRESENTATIVE_IS_NULL);
+        }
+        RepresentativePassport represPassport = new RepresentativePassport();
+        represPassport.setSeriesNumber(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
+        represPassport.setDateIssue(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString());
+        represPassport.setWhoIssue(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
+        represPassport.setDepartmentCode(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
+
+        List<Long> credentials = new ArrayList<>();
+        if(m4dXml.document.powerAttorneys.credential.credentials != null){
+            for(M4dXml.Document.PowerAttorneys.Credentials.Credential  c : m4dXml.document.powerAttorneys.credential.credentials) {
+                List<Credential> credentialList = credentialService.findCredentialByCodeOrName(c.getCode());
+                if (credentialList == null) {
+                    Credential newCredential = null;
+                    newCredential.setCode(c.getCode());
+                    newCredential.setName(c.getName());
+                    Credential credentialSave;
+                    try {
+                        credentialSave = credentialService.saveCredential(newCredential);
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(CREDENTIAL_IS_NULL);
+                    }
+                    credentials.add(credentialSave.getId());
+                } else {
+                    for (Credential crd : credentialList) {
+                        credentials.add(crd.getId());
+                    }
+                }
+            }
+        }
+
+        //------------------- save organisation ----------------
+        Organisation existsOrganisation = organisationService.findByOrganisationInn(organisation.getInn());
+        if (existsOrganisation == null) {
+            Organisation respOrganisation;
+            try {
+                respOrganisation = organisationService.saveOrganisation(organisation);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(ORGANISATION_IS_NULL);
+            }
+            orgId = respOrganisation.getId();
+        } else {
+            orgId = existsOrganisation.getId();
+        }
+        //------------------- end save organisation ----------------
+
+        //------------------- save principal ----------------
+        Principal existsPrincipal;
+        try{
+            existsPrincipal = principalService.findPrincipalByInn(principal.getInn());
+            principId = existsPrincipal.getId();
+        } catch (MchdException ignore) {
+            Principal respPrincipal;
+            try {
+                respPrincipal = principalService.savePrincipal(principal);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(PRINCIPAL_IS_NULL);
+            }
+            principId = respPrincipal.getId();
+        }
+        //------------------- end save principal ----------------
+
+        //------------------- save representative and passport ----------------
+        Representative existsRepresentative;
+        try {
+            existsRepresentative = representativeService.findRepresentativeByInn(representative.getInn());
+            represId = existsRepresentative.getId();
+        } catch (MchdException ignore) {
+            Representative respRepresentative;
+            try {
+                respRepresentative = representativeService.saveRepresentative(representative);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(REPRESENTATIVE_IS_NULL);
+            }
+            try {
+                represPassport.setRepresentativeId(respRepresentative.getId());
+                representativePassportService.saveRepresentativePassport(represPassport);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
+            }
+            represId = respRepresentative.getId();
+        }
+        //------------------- end save representative and passport ----------------
+
+        if (orgId == null || principId == null || represId == null){
+            throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
+        }
+        mrpaRegistry.setOrganisationId(orgId);
+        mrpaRegistry.setPrincipalId(principId);
+        mrpaRegistry.setRepresentativeId(represId);
+
+        MrpaRegistry mrpaRegistrySaved;
+        try {
+            mrpaRegistrySaved = mrpaRegistryService.saveMrpaRegistry(mrpaRegistry);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+
+        for(Long x : credentials){
+            MrpaRegistryCredential mrpaRegistryCredential = null;
+            mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
+            mrpaRegistryCredential.setCredentialId(x);
+            try{
+                mrpaRegistryCredentialService.saveMrpaRegistryCredential(mrpaRegistryCredential);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+            }
+        }
+
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
+        mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 }
