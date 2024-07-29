@@ -43,6 +43,7 @@ public class ReportDTO {
         @AllArgsConstructor
         @Builder
         @NoArgsConstructor
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         public static class VerificationResult {
             @JsonProperty("Message")
             private String message;

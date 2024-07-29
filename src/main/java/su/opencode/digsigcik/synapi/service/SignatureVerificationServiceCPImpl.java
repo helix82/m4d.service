@@ -1,8 +1,10 @@
 package su.opencode.digsigcik.synapi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.lowagie.text.DocumentException;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.synapi.client.RestTemplateClient;
 import su.opencode.digsigcik.synapi.dto.ReportContainerDTO;
 import su.opencode.digsigcik.synapi.dto.ReportDTO;
+import su.opencode.digsigcik.synapi.util.CertUtils;
 
 import java.io.IOException;
 import java.net.URI;
@@ -29,14 +32,17 @@ import static su.opencode.digsigcik.synapi.util.ReportUtils.createPdf;
 
 @Service
 @Qualifier("cryptopro-keylab")
+@Slf4j
 public class SignatureVerificationServiceCPImpl implements SignatureVerificationService {
 
     @Value("${cryptopro.svs.uri}")
     private String svc_uri;
 
     private final RestTemplateClient restTemplateClient;
+    private final CRLVerificationService crlVerificationService;
 
-    public SignatureVerificationServiceCPImpl() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, NoSuchProviderException, KeyManagementException {
+    public SignatureVerificationServiceCPImpl(CRLVerificationService crlVerificationService) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, NoSuchProviderException, KeyManagementException {
+        this.crlVerificationService = crlVerificationService;
         this.restTemplateClient = new RestTemplateClient(true);
     }
 
@@ -50,10 +56,17 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
                 .getAsString();
         String metaJsonStr = verifyDetachedSignature(svc_uri, id1, id2);
         resetAll(svc_uri);
+
         ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
-        JSONObject json = new JSONObject(metaJsonStr);
-        byte[] metaJsonContent = json.toString(4)
+
+        var additionalVerificationAgainstCRLsResultsReport = crlVerificationService.verifyAgainstCRLs(
+                CertUtils.getX509CertificatesFromDigitalSign( sourceFile.getBytes(), detachedSign.getBytes() )
+        );
+
+        byte[] metaJsonContent = appendAdditionalVerificationResults(metaJsonStr, additionalVerificationAgainstCRLsResultsReport)
+                .toString(4)
                 .getBytes(StandardCharsets.UTF_8);
+
         return ReportContainerDTO.builder()
                 .signCheck(metaJsonContent)
                 .signReport(createPdf(reportDTO))
@@ -68,14 +81,38 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
         String metaJsonStr = verifyAttachedSignature(svc_uri, id);
         resetAll(svc_uri);
         ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
-        JSONObject json = new JSONObject(metaJsonStr);
-        byte[] metaJsonContent = json.toString(4)
+
+        var additionalVerificationAgainstCRLsResultsReport = crlVerificationService.verifyAgainstCRLs(
+                CertUtils.getX509CertificatesFromDigitalSign(attachedSign.getBytes())
+        );
+
+        byte[] metaJsonContent = appendAdditionalVerificationResults(metaJsonStr, additionalVerificationAgainstCRLsResultsReport)
+                .toString(4)
                 .getBytes(StandardCharsets.UTF_8);
+
         return ReportContainerDTO.builder()
                 .signCheck(metaJsonContent)
                 .signReport(createPdf(reportDTO))
                 .build();
     }
+
+    private JSONObject appendAdditionalVerificationResults(String json, ReportDTO.Result.VerificationResult verificationResult) throws JsonProcessingException {
+
+        JSONObject root = new JSONObject(json);
+        JSONObject verificationResultNode = new JSONObject(new ObjectMapper().writeValueAsString(verificationResult));
+
+        // FIXME: hardcoded af
+        root.getJSONArray("Results").getJSONObject(0)
+                .getJSONArray("VerificationResults")
+                .put(verificationResultNode);
+
+//                    ReportDTO r = new ObjectMapper().readValue(json, ReportDTO.class)
+//            r.getResults().get(0).getVerificationResults().add(verificationResult);
+//            return new JSONObject(new ObjectMapper().writeValueAsString(r));
+
+        return root;
+    }
+
 
     public ReportDTO verifyAttached(byte[] srcFile, String sourceFileFullName) throws Exception {
         resetAll(svc_uri);
