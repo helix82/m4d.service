@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
-import com.lowagie.text.DocumentException;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
@@ -28,8 +27,6 @@ import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.util.HashMap;
 
-import static su.opencode.digsigcik.synapi.util.ReportUtils.createPdf;
-
 @Service
 @Qualifier("cryptopro-keylab")
 @Slf4j
@@ -41,49 +38,60 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
     private final RestTemplateClient restTemplateClient;
     private final CRLVerificationService crlVerificationService;
 
+
     public SignatureVerificationServiceCPImpl(CRLVerificationService crlVerificationService) throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, NoSuchProviderException, KeyManagementException {
         this.crlVerificationService = crlVerificationService;
         this.restTemplateClient = new RestTemplateClient(true);
     }
 
-    public ReportContainerDTO verifyDetached(@NotNull MultipartFile sourceFile,
-                                             @NotNull MultipartFile detachedSign) throws IOException,
-            URISyntaxException, DocumentException {
+    @Override
+    public ReportContainerDTO verifyDetachedGetPdfReport(byte @NotNull [] sourceFile,
+                                                         byte @NotNull [] detachedSignFile, String sourceFileName,
+                                                         String detachedSignFileName) throws IOException,
+            URISyntaxException {
         resetAll(svc_uri);
-        String id1 = uploadDocument(svc_uri, sourceFile.getBytes(), sourceFile.getOriginalFilename()).get("id")
+        String id1 = uploadDocument(svc_uri, sourceFile, sourceFileName).get("id")
                 .getAsString();
-        String id2 = uploadDocument(svc_uri, detachedSign.getBytes(), detachedSign.getOriginalFilename()).get("id")
+        String id2 = uploadDocument(svc_uri, detachedSignFile, detachedSignFileName).get("id")
                 .getAsString();
         String metaJsonStr = verifyDetachedSignature(svc_uri, id1, id2);
+        byte[] report = getReportFile(svc_uri);
         resetAll(svc_uri);
-
-        ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
+       // ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
 
         var additionalVerificationAgainstCRLsResultsReport = crlVerificationService.verifyAgainstCRLs(
-                CertUtils.getX509CertificatesFromDigitalSign( sourceFile.getBytes(), detachedSign.getBytes() )
+                CertUtils.getX509CertificatesFromDigitalSign( sourceFile, detachedSignFile )
         );
 
         byte[] metaJsonContent = appendAdditionalVerificationResults(metaJsonStr, additionalVerificationAgainstCRLsResultsReport)
                 .toString(4)
                 .getBytes(StandardCharsets.UTF_8);
-
         return ReportContainerDTO.builder()
                 .signCheck(metaJsonContent)
-                .signReport(createPdf(reportDTO))
+                //   .signReport(createPdf(reportDTO))
+                .signReport(report)
                 .build();
     }
-
-    public ReportContainerDTO verifyAttached(@NotNull MultipartFile attachedSign) throws IOException,
-            URISyntaxException, DocumentException {
+    @Override
+    public ReportContainerDTO verifyDetachedGetPdfReport(@NotNull MultipartFile sourceFile,
+                                                         @NotNull MultipartFile detachedSignFile) throws IOException,
+            URISyntaxException {
+        return verifyDetachedGetPdfReport(sourceFile.getBytes(),
+                detachedSignFile.getBytes(), sourceFile.getOriginalFilename(), detachedSignFile.getOriginalFilename());
+    }
+    @Override
+    public ReportContainerDTO verifyAttachedGetPdfReport(byte @NotNull [] attachedSign, String attachedSignFileName) throws IOException,
+            URISyntaxException {
         resetAll(svc_uri);
-        String id = uploadDocument(svc_uri, attachedSign.getBytes(), attachedSign.getOriginalFilename()).get("id")
+        String id = uploadDocument(svc_uri, attachedSign, attachedSignFileName).get("id")
                 .getAsString();
         String metaJsonStr = verifyAttachedSignature(svc_uri, id);
+        byte[] report = getReportFile(svc_uri);
         resetAll(svc_uri);
-        ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
+     //   ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
 
         var additionalVerificationAgainstCRLsResultsReport = crlVerificationService.verifyAgainstCRLs(
-                CertUtils.getX509CertificatesFromDigitalSign(attachedSign.getBytes())
+                CertUtils.getX509CertificatesFromDigitalSign(attachedSign)
         );
 
         byte[] metaJsonContent = appendAdditionalVerificationResults(metaJsonStr, additionalVerificationAgainstCRLsResultsReport)
@@ -92,8 +100,24 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
 
         return ReportContainerDTO.builder()
                 .signCheck(metaJsonContent)
-                .signReport(createPdf(reportDTO))
+                //   .signReport(createPdf(reportDTO))
+                .signReport(report)
                 .build();
+    }
+    @Override
+    public ReportContainerDTO verifyAttachedGetPdfReport(@NotNull MultipartFile attachedSignFile) throws IOException,
+            URISyntaxException {
+        return verifyAttachedGetPdfReport(attachedSignFile.getBytes(), attachedSignFile.getOriginalFilename());
+    }
+    @Override
+    public ReportDTO verifyAttached(byte[] attachedSign, String attachedSignFileName) throws Exception {
+        resetAll(svc_uri);
+        String id1 = uploadDocument(svc_uri, attachedSign, attachedSignFileName).get("id")
+                .getAsString();
+        String result = verifyAttachedSignature(svc_uri, id1);
+        resetAll(svc_uri);
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(result, ReportDTO.class);
     }
 
     private JSONObject appendAdditionalVerificationResults(String json, ReportDTO.Result.VerificationResult verificationResult) throws JsonProcessingException {
@@ -113,22 +137,13 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
         return root;
     }
 
-
-    public ReportDTO verifyAttached(byte[] srcFile, String sourceFileFullName) throws Exception {
+    @Override
+    public ReportDTO verifyDetached(byte[] sourceFile, byte[] detachedSign, String sourceFileFullName,
+                                    String detachedSignFileName) throws Exception {
         resetAll(svc_uri);
-        String id1 = uploadDocument(svc_uri, srcFile, sourceFileFullName + ".sig").get("id")
+        String id1 = uploadDocument(svc_uri, sourceFile, sourceFileFullName).get("id")
                 .getAsString();
-        String result = verifyAttachedSignature(svc_uri, id1);
-        resetAll(svc_uri);
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(result, ReportDTO.class);
-    }
-
-    public ReportDTO verifyDetached(byte[] srcFile, byte[] detachedSign, String sourceFileFullName) throws Exception {
-        resetAll(svc_uri);
-        String id1 = uploadDocument(svc_uri, srcFile, sourceFileFullName).get("id")
-                .getAsString();
-        String id2 = uploadDocument(svc_uri, detachedSign, sourceFileFullName + ".sig").get("id")
+        String id2 = uploadDocument(svc_uri, detachedSign, detachedSignFileName).get("id")
                 .getAsString();
         String result = verifyDetachedSignature(svc_uri, id1, id2);
         resetAll(svc_uri);

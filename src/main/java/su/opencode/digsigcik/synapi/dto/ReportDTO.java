@@ -54,12 +54,51 @@ public class ReportDTO {
             @JsonProperty("SignerCertificateInfo")
             public VerificationResult.SignerCertificateInfo signerCertificateInfo;
             @JsonProperty("AdditionalCertificatesInfo")
-            private List<Object> additionalCertificatesInfo;
+            private List<AdditionalCertificatesInfo> additionalCertificatesInfo;
             @JsonProperty("SignatureInfo")
             private VerificationResult.SignatureInfo signatureInfo;
             @JsonProperty("AdditionalCertificateResult")
             private Object additionalCertificateResult;
 
+            @Data
+            @AllArgsConstructor
+            @Builder
+            @NoArgsConstructor
+            public static class AdditionalCertificatesInfo {
+                @JsonProperty("SubjectName")
+                private String subjectName;
+                @JsonProperty("IssuerName")
+                private String issuerName;
+                @JsonProperty("NotBefore")
+                @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+                private String notBefore;
+                @JsonProperty("NotBeforeUTC")
+                private long notBeforeUTC;
+                @JsonProperty("NotAfter")
+                @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+                private String notAfter;
+                @JsonProperty("NotAfterUTC")
+                private long notAfterUTC;
+                @JsonProperty("SerialNumber")
+                private String serialNumber;
+                @JsonProperty("Thumbprint")
+                private String thumbprint;
+                @JsonProperty("PkNotBeforeUTC")
+                private long pkNotBeforeUTC;
+                @JsonProperty("PkNotAfterUTC")
+                private long pkNotAfterUTC;
+                @JsonProperty("KeyIdentifier")
+                private String keyIdentifier;
+
+                @JsonProperty("CertDisplayName")
+                private String certDisplayName;
+                @JsonProperty("CertContent")
+                private String certContent;
+                @JsonProperty("CertificateId")
+                private String certificateId;
+                @JsonProperty("CertificateType")
+                private String certificateType;
+            }
             @Data
             @AllArgsConstructor
             @Builder
@@ -90,7 +129,6 @@ public class ReportDTO {
                 @JsonProperty("KeyIdentifier")
                 private String keyIdentifier;
             }
-
             @Data
             @AllArgsConstructor
             @Builder
@@ -102,6 +140,16 @@ public class ReportDTO {
                 private String localSigningTime;
                 @JsonProperty("LocalSigningTimeUTC")
                 private long localSigningTimeUTC;
+                @JsonProperty("SigningTime")
+                @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+                private String signingTime;
+                @JsonProperty("SigningTimeUTC")
+                private long signingTimeUTC;
+                @JsonProperty("ArchiveSigningTime")
+                @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+                private String archiveSigningTime;
+                @JsonProperty("ArchiveSigningTimeUtc")
+                private long archiveSigningTimeUtc;
             }
         }
     }

@@ -28,4 +28,5 @@ public class UserProjection extends DateAudit {
     @Column(name = "login", columnDefinition = "VARCHAR(25)")
     @Schema(name = "Логин проекции пользователя", example = "ivanov")
     private String login;
+
 }
