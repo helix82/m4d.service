@@ -116,11 +116,6 @@ String pass = "301214";
         // Создаем CAdES подпись.
         CAdESUtility.initJCPAlgorithms();
         CAdESSignature cadesSignature = new CAdESSignature(true);
-// Добавляем CAdES-BES подпись №1. Также можно передать CRL для проверки цепочки подписанта
-// вместо использования enableCRLDP
-//        cadesSignature.addSigner(JCSP.PROVIDER_NAME, JCP.GOST_DIGEST_OID,
-//                JCP.GOST_EL_KEY_OID, keyPair.getPrivate(), certificates, CAdESType.CAdES_BES, null, false);
-// Добавляем CAdES-X Long Type 1 подпись №2.
         cadesSignature.addSigner(JCSP.PROVIDER_NAME, JCP.GOST_DIGEST_OID,
                 JCP.GOST_EL_KEY_OID, keyPair.getPrivate(), new ArrayList<>(Arrays.asList(certificate)), CAdESType.CAdES_A,
                 "http://keylab/tsp/tsp.srf", false);

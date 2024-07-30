@@ -30,7 +30,7 @@ import java.util.List;
 @Slf4j
 public class TestCAdESBESSign {
     public static void main(String[] args) throws IOException, DocumentException, CertificateEncodingException, OperatorCreationException, CMSException, CAdESException {
-     //   Security.addProvider(new JCP());
+        Security.addProvider(new JCP());
         Security.addProvider(new JCSP());
         Security.addProvider(new RevCheck());
         System.setProperty("com.sun.security.enableCRLDP", "true");
@@ -90,33 +90,6 @@ String pass = "301214";
             throw new RuntimeException("Ошибка при чтении ключей из PKCS#12 файла", e);
         }
 
-//        String filePath = "koren.crt"; // Путь к файлу PEM
-//        X509Certificate rootCertificate = null;
-//        try (FileInputStream inputStream = new FileInputStream(filePath)) {
-//            // Создаем CertificateFactory для X.509 сертификатов
-//            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-//
-//            // Генерируем сертификат из входного потока
-//            rootCertificate = (X509Certificate) certificateFactory.generateCertificate(inputStream);
-//
-//            System.out.println("Сертификат успешно загружен:");
-//            System.out.println(rootCertificate);
-//        } catch (IOException | CertificateException e) {
-//            e.printStackTrace();
-//        }
-//        certificates.add(rootCertificate);
-        //     CAdESUtility.initJCPAlgorithms();
-//        CMSProcessableByteArray msg = new CMSProcessableByteArray(data);
-//        JcaCertStore certs = new JcaCertStore(certificates);
-//        CMSSignedDataGenerator gen = new CMSSignedDataGenerator();
-//
-//        gen.addSignerInfoGenerator(new JcaSignerInfoGeneratorBuilder(
-//                new GostDigestCalculatorProvider(keyPair.getPrivate(), JCSP.PROVIDER_NAME)).build(new GostContentSignerProvider(
-//                keyPair.getPrivate(), JCSP.PROVIDER_NAME), certificate));
-//        // Добавление дополнительных атрибутов для CA (если необходимо)
-//        gen.addCertificates(certs);
-//        CMSSignedData sigData = gen.generate(msg, false);
-//        return sigData.getEncoded();
         JcaCertStore certs = new JcaCertStore(certificates);
         // Создаем CAdES подпись.
         CAdESUtility.initJCPAlgorithms();
@@ -125,10 +98,7 @@ String pass = "301214";
 // вместо использования enableCRLDP
         cadesSignature.addSigner(JCSP.PROVIDER_NAME, JCP.GOST_DIGEST_OID,
                 JCP.GOST_EL_KEY_OID, keyPair.getPrivate(), certificates, CAdESType.CAdES_BES, null, false);
-// Добавляем CAdES-X Long Type 1 подпись №2.
-//        cadesSignature.addSigner(JCSP.PROVIDER_NAME, JCP.GOST_DIGEST_OID,
-//                JCP.GOST_EL_KEY_OID, keyPair.getPrivate(), new ArrayList<>(Arrays.asList(certificate)), CAdESType.CAdES_X_Long_Type_1,
-//                "http://keylab/tsp/tsp.srf", false);
+
         ByteArrayOutputStream signatureStream = new ByteArrayOutputStream();
         cadesSignature.open(signatureStream); // подготовка контекста
         cadesSignature.update(data); // вычисление хэш-кода

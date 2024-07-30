@@ -23,6 +23,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +67,12 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
     private final SignatureVerificationService signatureVerificationService;
     private final PublicKeyUserCertificateService publicKeyUserCertificateService;
     private final ObjectMapper objectMapper;
+    @Value("${features.show-ses-certificates}")
+    private boolean showSesCertificates;
+    @Value("${features.ses-certificates-age}")
+    private int sesCertificatesAge;
+    @Value("${features.ses-certificates-issuer}")
+    private String sesCertificatesIssuer;
 
     public SimpleSignatureServiceImpl(ContainerService containerService,
                                       EncryptionKeyRepository encryptionKeyRepository,
@@ -161,23 +168,27 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
         } catch (CertificateEncodingException e) {
             log.error("Ошибка при записи сертификата: ", e);
         }
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        formatter.setTimeZone(TimeZone.getTimeZone("UTC")); // Устанавливаем UTC
-        publicKeyUserCertificateService.savePublicKeyUserCertificate(PublicKeyUserCertificate.builder()
-                .fio(fullUserName)
-                .certificate(convertCertificateToPem(certificate))
-                .login(containerInputInfo.getLogin())
-                .originalFilename("certificate.crt")
-                .serialNumber(certificate.getSerialNumber().toString())
-                .dateStart(formatter.format(certificate.getNotBefore()))
-                .dateEnd(formatter.format(certificate.getNotAfter()))
-                .dateStartPrivateKey(formatter.format(certificate.getNotBefore()))
-                .dateEndPrivateKey(formatter.format(certificate.getNotAfter()))
-                .inn("")
-                .type(TypeUserCertificateEnum.SIMPLE)
-                .issuerWho(certificate.getIssuerDN().getName())
-                        .imprint(getThumbprint(certificate))
-                .build());
+        if (showSesCertificates) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            formatter.setTimeZone(TimeZone.getTimeZone("UTC")); // Устанавливаем UTC
+            publicKeyUserCertificateService.savePublicKeyUserCertificate(PublicKeyUserCertificate.builder()
+                    .fio(fullUserName)
+                    .certificate(convertCertificateToPem(certificate))
+                    .login(containerInputInfo.getLogin())
+                    .originalFilename("certificate.crt")
+                    .serialNumber(certificate.getSerialNumber()
+                            .toString())
+                    .dateStart(formatter.format(certificate.getNotBefore()))
+                    .dateEnd(formatter.format(certificate.getNotAfter()))
+                    .dateStartPrivateKey(formatter.format(certificate.getNotBefore()))
+                    .dateEndPrivateKey(formatter.format(certificate.getNotAfter()))
+                    .inn("")
+                    .type(TypeUserCertificateEnum.SIMPLE)
+                    .issuerWho(certificate.getIssuerDN()
+                            .getName())
+                    .imprint(getThumbprint(certificate))
+                    .build());
+        }
         return encryptionKeyRepository.save(keyEntity);
     }
     public static String getThumbprint(X509Certificate certificate){
@@ -311,10 +322,10 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
             random.nextBytes(serialBytes);
             long serialNumber = Math.abs(new BigInteger(serialBytes).longValue());
 
-            X500Name issuerAndSubject = new X500Name("CN=SEP Self-Signed Certificate");
+            X500Name issuerAndSubject = new X500Name(sesCertificatesIssuer);
             Calendar calendar = Calendar.getInstance();
             Date notBefore = calendar.getTime();
-            calendar.add(Calendar.YEAR, 1);
+            calendar.add(Calendar.YEAR, sesCertificatesAge);
             Date notAfter = calendar.getTime();
             X500Name subject = new X500Name("CN=" + fullUserName);
             X509v3CertificateBuilder builder = new X509v3CertificateBuilder(
