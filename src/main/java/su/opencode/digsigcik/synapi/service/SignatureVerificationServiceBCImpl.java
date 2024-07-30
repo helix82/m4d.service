@@ -2,6 +2,12 @@ package su.opencode.digsigcik.synapi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lowagie.text.DocumentException;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -43,7 +49,11 @@ import static su.opencode.digsigcik.synapi.util.ReportUtils.createPdf;
 
 @Service
 @Qualifier("bouncy-castle")
+@AllArgsConstructor
+@Slf4j
 public class SignatureVerificationServiceBCImpl implements SignatureVerificationService {
+
+    private final CRLVerificationService crlVerificationService;
 
 
     @Override
@@ -129,7 +139,7 @@ public class SignatureVerificationServiceBCImpl implements SignatureVerification
 
         boolean isSignatureValid = signer.verify(new JcaSimpleSignerInfoVerifierBuilder().build(certificate));
 
-        ReportDTO.Result.VerificationResult verificationResult = ReportDTO.Result.VerificationResult.builder()
+        ReportDTO.Result.VerificationResult verificationResult1 = ReportDTO.Result.VerificationResult.builder()
                 .result(isSignatureValid)
                 .signerCertificateInfo(getSignerCertificateInfo(certCollection.iterator()
                         .next(), certificate))
@@ -138,11 +148,16 @@ public class SignatureVerificationServiceBCImpl implements SignatureVerification
                 .signatureInfo(signatureInfo)
                 .build();
 
+        ReportDTO.Result.VerificationResult verificationResult2 = crlVerificationService.verifyAgainstCRLs(
+                List.of(certificate)
+        );
+
         ReportDTO.Result result = ReportDTO.Result.builder()
                 .originalDocumentName(sourceFileFullName)
                 .verificationTime(LocalDateTime.now()
                         .toString())
-                .verificationResults(Collections.singletonList(verificationResult))
+                .verificationTime(LocalDateTime.now().toString())
+                .verificationResults( List.of(verificationResult1, verificationResult2) )
                 .signatureType(detectSignatureType(signedData))
                 .signatureDocumentHash(generateAndEncodeHash(signedData.getSignedContent()
                         .getContentType()
