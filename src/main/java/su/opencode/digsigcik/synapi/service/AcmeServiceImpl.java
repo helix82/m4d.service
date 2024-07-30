@@ -2,6 +2,7 @@ package su.opencode.digsigcik.synapi.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.shredzone.acme4j.*;
 import org.shredzone.acme4j.challenge.Challenge;
 import org.shredzone.acme4j.challenge.Http01Challenge;
@@ -27,6 +28,7 @@ import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
 import su.opencode.digsigcik.synapi.repository.OrderRepository;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
+import su.opencode.digsigcik.synapi.util.CertUtils;
 import su.opencode.digsigcik.synapi.util.DateUtils;
 
 import javax.servlet.http.HttpServletResponse;
@@ -43,6 +45,7 @@ import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Supplier;
@@ -535,8 +538,7 @@ public class AcmeServiceImpl implements AcmeService {
 
                     acmeCertificate.setRevoked(true);
                     certificateRepository.save(acmeCertificate);
-                    ret.put("result", "done");
-                    return new ResponseEntity<>(ret, HttpStatus.OK);
+                    return new ResponseEntity<>(CertificateController.certInfo(acmeCertificate), HttpStatus.OK);
                 } catch (AcmeException e) {
                     ret.put("error", "acme exception");
                     ret.put("exception", e.getMessage());
@@ -554,6 +556,63 @@ public class AcmeServiceImpl implements AcmeService {
         }
     }
 
+    public ResponseEntity<Map> renew(HttpSession httpSession, Long id
+    ) {
+        HashMap<String, String> ret = new HashMap<>();
+        AcmeCertificate acmeCertificate= certificateRepository.findCertificateById(id);
+
+        AcmeProvider acmeProviderProxy = acmeCertificate.getProvider();
+        if(acmeProviderProxy==null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't renew certificate without provider");
+        }
+        AcmeProvider acmeProvider = Hibernate.unproxy(acmeProviderProxy, AcmeProvider.class);
+
+        AcmeOrder acmeOrderProxy = acmeCertificate.getOrder();
+        if(acmeOrderProxy==null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't renew certificate without order");
+        }
+        AcmeOrder acmeOrder = Hibernate.unproxy(acmeOrderProxy, AcmeOrder.class);
+
+        AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
+        if(acmeAccount==null) {
+            acmeAccount = new AcmeAccount(ACME_ACCOUNT_NAME, ACME_ACCOUNT_KEY);
+            acmeAccount.setEmail(ACME_ACCOUNT_EMAIL);
+            accountRepository.save(acmeAccount);
+        }
+
+        if(loginDefaultAccount(httpSession)){
+            Login login = (Login)httpSession.getAttribute("login");
+            Account account = login.getAccount();
+            if(account.getStatus() != Status.VALID){
+                ret.put("error", "invalid status");
+                return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+            } else {
+                Map<String, Object> certInfo = null;
+                try {
+                    certInfo = CertUtils.certInfo(new String(acmeCertificate.getContent()));
+                } catch (CertificateException e) {
+                    ret.put("error", "can't get certificate info");
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                }
+                if(certInfo!= null && certInfo.containsKey("notBefore") && certInfo.containsKey("notAfter")) {
+                    long diff = ((Date)certInfo.get("notAfter")).getTime()-((Date)certInfo.get("notBefore")).getTime();
+                    Date newNotAfter = new Date(new Date().getTime() + diff);
+                    if(acmeProvider.getAutomatedRelease()!=null && acmeProvider.getAutomatedRelease()==true){
+                        return certificate(httpSession, acmeCertificate.getDomain().getDomainUrl(), new SimpleDateFormat("yyyy-MM-dd").format(newNotAfter), acmeProvider.getId(), acmeOrder.getData());
+                    } else {
+                        return certificateOrder(httpSession, acmeCertificate.getDomain().getDomainUrl(), new SimpleDateFormat("yyyy-MM-dd").format(newNotAfter), acmeProvider.getId(), acmeOrder.getData());
+                    }
+                } else {
+                    ret.put("error", "not implemented");
+                    return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
+                }
+            }
+        } else {
+            ret.put("error", "no login");
+            return new ResponseEntity<>(ret, HttpStatus.UNAUTHORIZED);
+
+        }
+    }
 
     private KeyPair makeKeyPair(MultipartFile userFile) throws IOException {
         return KeyPairUtils.readKeyPair(new BufferedReader(new InputStreamReader(userFile.getInputStream())));
