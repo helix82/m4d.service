@@ -227,6 +227,19 @@ public class CertificateController {
         return acmeService.revoke(httpSession,id);
     }
 
+    @Operation(summary = "Создать заявку на перевыпуск сертификата",
+            description = "Создаёт заявку на перевыпуск сертификата" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Завяка на перевыпуск успешно создана" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping("/certificates/{id}/renew")
+    public ResponseEntity<Map> renew(HttpSession httpSession,
+                                      @PathVariable(value = "id") Long id
+    ) {
+        return acmeService.renew(httpSession,id);
+    }
+
 
     @Operation(summary = "Получить файл сертификата",
             description = "Возвращает файл сертификата" )

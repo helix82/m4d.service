@@ -22,6 +22,8 @@ public interface AcmeService {
     );
     ResponseEntity<Map> revoke(HttpSession httpSession, Long id
     );
+    ResponseEntity<Map> renew(HttpSession httpSession, Long id
+    );
     AcmeAccount defaultAccount();
     Map orderInfo(AcmeOrder order);
 }
