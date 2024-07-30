@@ -295,6 +295,7 @@ public interface Constants {
     String MRPA_REGISTRY_XML_IS_NULL = "XML МЧД не найден";
     String MRPA_REGISTRY_WRONG_FORMAT = "Не верный формат ЭП";
     String MRPA_REGISTRY_WRONG_FORMAT_XML = "Не верный формат XML";
+    String MRPA_REGISTRY_XML_NOT_VERIFY = "XML не прошел проверку";
     String MRPA_REGISTRY_NOT_VERIFY = "Контейнер не прошел проверку";
     String CREDENTIAL_IS_NULL = String.format("Credential is %s!", NULL);
     String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
