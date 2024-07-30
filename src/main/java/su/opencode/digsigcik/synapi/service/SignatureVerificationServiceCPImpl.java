@@ -3,7 +3,6 @@ package su.opencode.digsigcik.synapi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
-import com.lowagie.text.DocumentException;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
@@ -58,10 +57,10 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
         String metaJsonStr = verifyDetachedSignature(svc_uri, id1, id2);
         byte[] report = getReportFile(svc_uri);
         resetAll(svc_uri);
-        ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
+       // ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
 
         var additionalVerificationAgainstCRLsResultsReport = crlVerificationService.verifyAgainstCRLs(
-                CertUtils.getX509CertificatesFromDigitalSign( sourceFile.getBytes(), detachedSign.getBytes() )
+                CertUtils.getX509CertificatesFromDigitalSign( sourceFile, detachedSignFile )
         );
 
         byte[] metaJsonContent = appendAdditionalVerificationResults(metaJsonStr, additionalVerificationAgainstCRLsResultsReport)
@@ -89,10 +88,10 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
         String metaJsonStr = verifyAttachedSignature(svc_uri, id);
         byte[] report = getReportFile(svc_uri);
         resetAll(svc_uri);
-        ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
+     //   ReportDTO reportDTO = new ObjectMapper().readValue(metaJsonStr, ReportDTO.class);
 
         var additionalVerificationAgainstCRLsResultsReport = crlVerificationService.verifyAgainstCRLs(
-                CertUtils.getX509CertificatesFromDigitalSign(attachedSign.getBytes())
+                CertUtils.getX509CertificatesFromDigitalSign(attachedSign)
         );
 
         byte[] metaJsonContent = appendAdditionalVerificationResults(metaJsonStr, additionalVerificationAgainstCRLsResultsReport)

@@ -31,7 +31,9 @@ import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 import su.opencode.digsigcik.synapi.dto.ReportDTO;
 import su.opencode.digsigcik.synapi.enums.KeySize;
 import su.opencode.digsigcik.synapi.enums.SimpleSignatureAlgorithm;
+import su.opencode.digsigcik.synapi.enums.TypeUserCertificateEnum;
 import su.opencode.digsigcik.synapi.model.EncryptionKeyEntity;
+import su.opencode.digsigcik.synapi.model.PublicKeyUserCertificate;
 import su.opencode.digsigcik.synapi.model.UserProjection;
 import su.opencode.digsigcik.synapi.repository.EncryptionKeyRepository;
 import su.opencode.digsigcik.synapi.util.Constants;
@@ -50,10 +52,8 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static su.opencode.digsigcik.synapi.util.ReportUtils.createPdf;
 
@@ -64,15 +64,17 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
     private final ContainerService containerService;
     private final EncryptionKeyRepository encryptionKeyRepository;
     private final SignatureVerificationService signatureVerificationService;
+    private final PublicKeyUserCertificateService publicKeyUserCertificateService;
     private final ObjectMapper objectMapper;
 
     public SimpleSignatureServiceImpl(ContainerService containerService,
                                       EncryptionKeyRepository encryptionKeyRepository,
-                                      @Qualifier("bouncy-castle") SignatureVerificationService signatureVerificationService,
+                                      @Qualifier("bouncy-castle") SignatureVerificationService signatureVerificationService, PublicKeyUserCertificateService publicKeyUserCertificateService,
                                       ObjectMapper objectMapper) {
         this.containerService = containerService;
         this.encryptionKeyRepository = encryptionKeyRepository;
         this.signatureVerificationService = signatureVerificationService;
+        this.publicKeyUserCertificateService = publicKeyUserCertificateService;
         this.objectMapper = objectMapper;
     }
 
@@ -159,9 +161,77 @@ public class SimpleSignatureServiceImpl implements SimpleSignatureService {
         } catch (CertificateEncodingException e) {
             log.error("Ошибка при записи сертификата: ", e);
         }
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC")); // Устанавливаем UTC
+        publicKeyUserCertificateService.savePublicKeyUserCertificate(PublicKeyUserCertificate.builder()
+                .fio(fullUserName)
+                .certificate(convertCertificateToPem(certificate))
+                .login(containerInputInfo.getLogin())
+                .originalFilename("certificate.crt")
+                .serialNumber(certificate.getSerialNumber().toString())
+                .dateStart(formatter.format(certificate.getNotBefore()))
+                .dateEnd(formatter.format(certificate.getNotAfter()))
+                .dateStartPrivateKey(formatter.format(certificate.getNotBefore()))
+                .dateEndPrivateKey(formatter.format(certificate.getNotAfter()))
+                .inn("")
+                .type(TypeUserCertificateEnum.SIMPLE)
+                .issuerWho(certificate.getIssuerDN().getName())
+                        .imprint(getThumbprint(certificate))
+                .build());
         return encryptionKeyRepository.save(keyEntity);
     }
+    public static String getThumbprint(X509Certificate certificate){
+        // Получаем закодированное представление сертификата
+        byte[] encoded = null;
+        try {
+            encoded = certificate.getEncoded();
+        } catch (CertificateEncodingException e) {
+            throw new RuntimeException(e);
+        }
 
+        // Создаём объект MessageDigest для SHA-1
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Вычисляем хэш сертификата
+        byte[] hash = digest.digest(encoded);
+
+        // Форматируем хэш в шестнадцатичную строку
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) {
+                hexString.append('0');
+            }
+            hexString.append(hex);
+        }
+
+        return hexString.toString().toUpperCase(); // Возвращаем отпечаток в верхнем регистре
+    }
+    public static String convertCertificateToPem(X509Certificate certificate) {
+        // Получаем закодированное представление сертификата
+        byte[] encoded;
+        try {
+            encoded = certificate.getEncoded();
+        } catch (CertificateEncodingException e) {
+            throw new RuntimeException("Ошибка при получении закодированного сертификата", e);
+        }
+
+        // Кодируем в Base64
+        String base64Encoded = Base64.getEncoder().encodeToString(encoded);
+
+        // Форматируем в PEM
+        StringBuilder pem = new StringBuilder();
+        pem.append("-----BEGIN CERTIFICATE-----\n");
+        pem.append(base64Encoded.replaceAll("(.{64})", "$1\n")); // Добавляем переносы строк каждые 64 символа
+        pem.append("-----END CERTIFICATE-----\n");
+
+        return pem.toString();
+    }
     private static byte[] createSignature(byte[] data, PrivateKey privateKey, X509Certificate certificate,
                                           String signatureAlgorithm, boolean attached)
             throws IOException, OperatorCreationException, CMSException, CertificateEncodingException {

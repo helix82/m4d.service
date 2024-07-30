@@ -8,6 +8,7 @@ import lombok.Getter;
 public enum TypeUserCertificateEnum {
     QUALIFIED("Квалифицированный"),
     NOT_QUALIFIED("Неквалифицированный"),
+    SIMPLE("Простой"),
     UNKNOWN("Неизвестный тип");
 
     private final String title;
