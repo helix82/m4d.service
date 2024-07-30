@@ -16,12 +16,12 @@ public class SynapiApplication {
         try {
             System.setProperty("com.sun.security.enableCRLDP", "true");
             System.setProperty("com.ibm.security.enableCRLDP", "true");
-            Security.addProvider(new BouncyCastleProvider());
-            Security.addProvider(new JCSP()); // провайдер JCSP
-            Security.addProvider(new JCP()); // провайдер JCP
-            //  Security.addProvider(new JS()); // провайдер JCP
+            Security.addProvider(new JCSP());
+            Security.addProvider(new JCP());
             Security.addProvider(new RevCheck());
             Security.addProvider(new Provider());
+            Security.addProvider(new BouncyCastleProvider());
+
         } catch (Exception e) {
             System.err.println("Exception in initializing crypto pro : "+ e);
         } catch (Error er) {

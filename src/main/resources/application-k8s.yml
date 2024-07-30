@@ -82,6 +82,6 @@ cryptopro:
 #    uri: https://dss.cryptopro.ru/verify/rest/api
 
 features:
-  show-ses-certificates: true
+  show-ses-certificates: false
   ses-certificates-age: 100
   ses-certificates-issuer: "CN=SEP Self-Signed Certificate"
