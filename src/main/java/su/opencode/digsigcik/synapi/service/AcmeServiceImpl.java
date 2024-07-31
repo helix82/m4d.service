@@ -224,7 +224,7 @@ public class AcmeServiceImpl implements AcmeService {
         }
     }
 
-    public ResponseEntity<Map> certificate(HttpSession httpSession,String domain, String notAfter, Long providerId, Map data) {
+    public ResponseEntity<Map> certificate(HttpSession httpSession,String domain, String notAfter, Long providerId, Map<String, Object> data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -288,8 +288,8 @@ public class AcmeServiceImpl implements AcmeService {
                 }
                 KeyPair domainKeyPair = makeKeyPair(new String(acmeDomain.getDomainPrivateKey()));
 
+                Map<String,Object> orderData = acmeOrder.getData();
                 order.execute(domainKeyPair, csrBuilder -> {
-                    Map<String,Object> orderData = acmeOrder.getData();
                     if(orderData.containsKey("state")) csrBuilder.setState(String.valueOf(orderData.get("state")));
                     if(orderData.containsKey("country")) csrBuilder.setCountry(String.valueOf(orderData.get("country")));
                     if(orderData.containsKey("locality")) csrBuilder.setLocality(String.valueOf(orderData.get("locality")));
@@ -321,11 +321,22 @@ public class AcmeServiceImpl implements AcmeService {
                 StringWriter writer = new StringWriter();
                 certificate.writeCertificate(writer);
 
-                AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString().getBytes());
+                AcmeCertificate acmeCertificate = null;
+                if(data != null && data.containsKey("certificate")) {
+                    // renew mode
+                    Long certificateId = (Long)(data.get("certificate"));
+                    acmeCertificate = certificateRepository.findById(certificateId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + certificateId));
+                    acmeCertificate.setContent(writer.toString().getBytes());
+                } else {
+                    // new mode
+                    acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString().getBytes());
+                }
                 acmeCertificate.setOrder(acmeOrder);
                 acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
                 acmeCertificate.setProvider(acmeOrder.getProvider());
                 acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
+                acmeCertificate.setData(data);
                 certificateRepository.save(acmeCertificate);
 
                 return new ResponseEntity<>(CertificateController.certInfo(acmeCertificate), HttpStatus.OK);
@@ -344,7 +355,7 @@ public class AcmeServiceImpl implements AcmeService {
         }
     }
 
-    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domain, String notAfter, Long providerId, Map data) {
+    public ResponseEntity<Map> certificateOrder(HttpSession httpSession,String domain, String notAfter, Long providerId, Map<String, Object> data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
@@ -450,6 +461,7 @@ public class AcmeServiceImpl implements AcmeService {
 
                             order.execute(domainKeyPair, csrBuilder -> {
                                 Map<String,Object> orderData = acmeOrder.getData();
+                                if(orderData==null) orderData = new HashMap<>();
                                 if(orderData.containsKey("state")) csrBuilder.setState(String.valueOf(orderData.get("state")));
                                 if(orderData.containsKey("country")) csrBuilder.setCountry(String.valueOf(orderData.get("country")));
                                 if(orderData.containsKey("locality")) csrBuilder.setLocality(String.valueOf(orderData.get("locality")));
@@ -478,12 +490,23 @@ public class AcmeServiceImpl implements AcmeService {
                             StringWriter writer = new StringWriter();
                             certificate.writeCertificate(writer);
 
-                            AcmeCertificate acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString().getBytes());
+                            AcmeCertificate acmeCertificate = null;
+                            Map<String,Object> data = acmeOrder.getData();
+                            if(data != null && data.containsKey("certificate")) {
+                                // renew mode
+                                Long certificateId = (Long)(data.get("certificate"));
+                                acmeCertificate = certificateRepository.findById(certificateId)
+                                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeCertificate with id = " + certificateId));
+                                acmeCertificate.setContent(writer.toString().getBytes());
+                            } else {
+                                acmeCertificate = new AcmeCertificate(acmeDomain, writer.toString().getBytes());
+                            }
                             acmeCertificate.setOrder(acmeOrder);
                             acmeCertificate.setNotAfter(acmeOrder.getNotAfter());
                             acmeCertificate.setProvider(acmeOrder.getProvider());
                             acmeCertificate.setCertificateUrl(certificate.getLocation().toString());
                             acmeCertificate.setData(acmeOrder.getData());
+                            acmeCertificate.setData(data);
                             certificateRepository.save(acmeCertificate);
                             return new ResponseEntity<>(CertificateController.certInfo(acmeCertificate), HttpStatus.OK);
                         } catch (AcmeException e) {
@@ -556,8 +579,7 @@ public class AcmeServiceImpl implements AcmeService {
         }
     }
 
-    public ResponseEntity<Map> renew(HttpSession httpSession, Long id
-    ) {
+    public ResponseEntity<Map> renew(HttpSession httpSession, Long id) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeCertificate acmeCertificate= certificateRepository.findCertificateById(id);
 
@@ -597,13 +619,16 @@ public class AcmeServiceImpl implements AcmeService {
                 if(certInfo!= null && certInfo.containsKey("notBefore") && certInfo.containsKey("notAfter")) {
                     long diff = ((Date)certInfo.get("notAfter")).getTime()-((Date)certInfo.get("notBefore")).getTime();
                     Date newNotAfter = new Date(new Date().getTime() + diff);
+                    Map<String, Object> data = acmeOrder.getData();
+                    if(data==null) data = new HashMap<>();
+                    data.put("certificate", acmeCertificate.getId());
                     if(acmeProvider.getAutomatedRelease()!=null && acmeProvider.getAutomatedRelease()==true){
-                        return certificate(httpSession, acmeCertificate.getDomain().getDomainUrl(), new SimpleDateFormat("yyyy-MM-dd").format(newNotAfter), acmeProvider.getId(), acmeOrder.getData());
+                        return certificate(httpSession, acmeCertificate.getDomain().getDomainUrl(), new SimpleDateFormat("yyyy-MM-dd").format(newNotAfter), acmeProvider.getId(), data);
                     } else {
-                        return certificateOrder(httpSession, acmeCertificate.getDomain().getDomainUrl(), new SimpleDateFormat("yyyy-MM-dd").format(newNotAfter), acmeProvider.getId(), acmeOrder.getData());
+                        return certificateOrder(httpSession, acmeCertificate.getDomain().getDomainUrl(), new SimpleDateFormat("yyyy-MM-dd").format(newNotAfter), acmeProvider.getId(), data);
                     }
                 } else {
-                    ret.put("error", "not implemented");
+                    ret.put("error", "invalid certificate info");
                     return new ResponseEntity<>(ret, HttpStatus.NOT_FOUND);
                 }
             }
