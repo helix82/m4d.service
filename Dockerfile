@@ -19,6 +19,7 @@ RUN apt-get update && \
     && wget --no-check-certificate --user $USERNAME --password $PASSWORD https://nexus.essocode.ru/repository/ocode-raw/csp/linux-amd64_deb.tgz -O /tmp/linux-amd64_deb.tgz \
     && ls -lh /tmp/linux-amd64_deb.tgz \
     && mkdir -p /tmp/csp \
+    && mkdir -p /app/xml/validation \
     && tar -xvzf /tmp/linux-amd64_deb.tgz -C /tmp \
     && /tmp/linux-amd64_deb/install.sh \
     && rm -rf /tmp/linux-amd64_deb.tgz /tmp/linux-amd64_deb \
@@ -30,6 +31,7 @@ COPY --from=maven /app/target/${JAR_FILE}  $PROJECT_HOME/${JAR_FILE}
 # ACME TLS ROOT AND INTERMEDIATE CERTIFICATES, CRYPTO PRO KEYLAB VM ROOT CERTIFICATE
 COPY ["root_ca.crt", "intermediate_ca.crt", "koren.crt", "$JAVA_HOME/lib/security"]
 COPY security.zip /app
+COPY ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation
 RUN \
     cd $JAVA_HOME/lib/security \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias rootca -file root_ca.crt \
