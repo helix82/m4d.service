@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
+import com.lowagie.text.DocumentException;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
@@ -15,6 +16,7 @@ import su.opencode.digsigcik.synapi.client.RestTemplateClient;
 import su.opencode.digsigcik.synapi.dto.ReportContainerDTO;
 import su.opencode.digsigcik.synapi.dto.ReportDTO;
 import su.opencode.digsigcik.synapi.util.CertUtils;
+import su.opencode.digsigcik.synapi.util.ReportUtils;
 
 import java.io.IOException;
 import java.net.URI;
@@ -66,9 +68,15 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
         byte[] metaJsonContent = appendAdditionalVerificationResults(metaJsonStr, additionalVerificationAgainstCRLsResultsReport)
                 .toString(4)
                 .getBytes(StandardCharsets.UTF_8);
+
+        try {
+            report = ReportUtils.createPdf(metaJsonContent);
+        } catch (DocumentException e) {
+            log.warn("Couldn't build native document: {}", e.getMessage());
+        }
+
         return ReportContainerDTO.builder()
                 .signCheck(metaJsonContent)
-                //   .signReport(createPdf(reportDTO))
                 .signReport(report)
                 .build();
     }
@@ -98,9 +106,14 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
                 .toString(4)
                 .getBytes(StandardCharsets.UTF_8);
 
+        try {
+            report = ReportUtils.createPdf(metaJsonContent);
+        } catch (DocumentException e) {
+            log.warn("Couldn't build native document: {}", e.getMessage());
+        }
+
         return ReportContainerDTO.builder()
                 .signCheck(metaJsonContent)
-                //   .signReport(createPdf(reportDTO))
                 .signReport(report)
                 .build();
     }
@@ -125,7 +138,7 @@ public class SignatureVerificationServiceCPImpl implements SignatureVerification
         JSONObject root = new JSONObject(json);
         JSONObject verificationResultNode = new JSONObject(new ObjectMapper().writeValueAsString(verificationResult));
 
-        // FIXME: hardcoded af
+        // hardcoded af
         root.getJSONArray("Results").getJSONObject(0)
                 .getJSONArray("VerificationResults")
                 .put(verificationResultNode);
