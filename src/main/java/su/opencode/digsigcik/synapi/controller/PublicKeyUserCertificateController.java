@@ -13,12 +13,14 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.PrivateKeyUsagePeriod;
+import org.cryptacular.StreamException;
 import org.cryptacular.util.CertUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import ru.CryptoPro.ssl.util.HexUtil;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateDto;
 import su.opencode.digsigcik.synapi.enums.StatusStatementEnum;
@@ -82,17 +84,11 @@ public class PublicKeyUserCertificateController {
         System.out.println(sourceFile.getContentType());
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         PublicKeyUserCertificate publicKeyUserCertificate;
-        if(Objects.equals(extension, "cer")){ //crt
-            publicKeyUserCertificate = parseCertificateCER(sourceFile);
-        } else if(Objects.equals(extension, "crt")) {
-            //TODO @helix82 парсинг CRT-сертификатов publicKeyUserCertificate = parseCertificateCRT(sourceFile);
-            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
-        } else if(Objects.equals(extension, "pem")) {
-            //TODO @helix82 парсинг PEM-сертификатов publicKeyUserCertificate = parseCertificatePEM(sourceFile);
-            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
-        } else {
+        if(!Objects.equals(extension, "cer") && !Objects.equals(extension, "crt")){
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_WRONG_FORMAT);
         }
+        publicKeyUserCertificate = parseCertificateCER(sourceFile);
+
         if(publicKeyUserCertificate == null){
             throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NULL);
         }
@@ -239,13 +235,23 @@ public class PublicKeyUserCertificateController {
         String content = new String(sourceFile.getBytes(), StandardCharsets.UTF_8);
         X509Certificate certificate;
         if(!content.startsWith("-----BEGIN CERTIFICATE-----")){
-            String certHeader = "-----BEGIN CERTIFICATE-----\r\n";
-            String certFooter = "\r\n-----END CERTIFICATE-----";
-            String LINE_SEPARATOR = System.lineSeparator();
-            byte[] certBytes = sourceFile.getBytes();
-            String cert = certHeader + LINE_SEPARATOR + new String(certBytes) + LINE_SEPARATOR + certFooter;
-            InputStream stream = IOUtils.toInputStream(cert);
-            certificate = CertUtil.decodeCertificate(stream.readAllBytes());
+            try {
+                String certHeader = "-----BEGIN CERTIFICATE-----\r\n";
+                String certFooter = "\r\n-----END CERTIFICATE-----";
+                String LINE_SEPARATOR = System.lineSeparator();
+                byte[] certBytes = sourceFile.getBytes();
+                String cert = certHeader + LINE_SEPARATOR + new String(certBytes) + LINE_SEPARATOR + certFooter;
+                InputStream stream = IOUtils.toInputStream(cert);
+                certificate = CertUtil.decodeCertificate(stream.readAllBytes());
+            } catch (StreamException ignored) {
+                String encodedString = Base64.getEncoder().encodeToString(sourceFile.getBytes());
+                String certHeader = "-----BEGIN CERTIFICATE-----\r\n";
+                String certFooter = "\r\n-----END CERTIFICATE-----";
+                byte[] certBytes = encodedString.getBytes();
+                String cert = certHeader + new String(certBytes) + certFooter;
+                InputStream stream = IOUtils.toInputStream(cert);
+                certificate = CertUtil.decodeCertificate(stream.readAllBytes());
+            }
         } else {
             certificate = CertUtil.decodeCertificate(sourceFile.getInputStream().readAllBytes());
         }
@@ -306,16 +312,20 @@ public class PublicKeyUserCertificateController {
         ASN1OctetString akiOc1 = ASN1OctetString.getInstance(extValue1);
         AuthorityKeyIdentifier aki1 = AuthorityKeyIdentifier.getInstance(akiOc1.getOctets());
         String keyIdIssuer = new DEROctetString(aki1.getKeyIdentifier()).toString().substring(1);
-
+        String serialNumberIssuer = HexUtil.toString(aki1.getAuthorityCertSerialNumber().toByteArray()).replace(":","");
         TypeUserCertificateEnum typeCert = TypeUserCertificateEnum.NOT_QUALIFIED;
-        CertificateData certificateData;
+        List<CertificateData> certificateDataList;
         try {
-            certificateData = certificateDataService.findCertificateDataByKeyId(keyIdIssuer);
-            if(certificateData != null){
-                var certIssuer = certificateData.getIssuedTo().replace("\\","").replace("\"", "").toLowerCase();
-                var cnIssuerLC = cnIssuer.replace("\\","").replace("\"", "").toLowerCase();
-                if(certIssuer.equals(cnIssuerLC)){
-                    typeCert = TypeUserCertificateEnum.QUALIFIED;
+            certificateDataList = certificateDataService.findCertificateDataByKeyId(keyIdIssuer);
+            if(certificateDataList != null){
+                for(CertificateData certificateData: certificateDataList) {
+                    if(certificateData.getSerialNumber().equalsIgnoreCase(serialNumberIssuer)) {
+                        var certIssuer = certificateData.getIssuedTo().replace("\\", "").replace("\"", "").toLowerCase();
+                        var cnIssuerLC = cnIssuer.replace("\\", "").replace("\"", "").toLowerCase();
+                        if (certIssuer.equals(cnIssuerLC)) {
+                            typeCert = TypeUserCertificateEnum.QUALIFIED;
+                        }
+                    }
                 }
             }
         } catch (ConstraintViolationException e) {
@@ -384,18 +394,6 @@ public class PublicKeyUserCertificateController {
         publicKeyUserCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
         publicKeyUserCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
 
-        return publicKeyUserCertificate;
-    }
-
-    public PublicKeyUserCertificate parseCertificateCRT(MultipartFile sourceFile) {
-        PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
-        //Бинарный формат, который содержит сертификат в двоичном виде
-        return publicKeyUserCertificate;
-    }
-
-    public PublicKeyUserCertificate parseCertificatePEM(MultipartFile sourceFile) {
-        PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
-        //Текстовый формат, который включает сертификат в виде закодированной в Base64 строки
         return publicKeyUserCertificate;
     }
 }
