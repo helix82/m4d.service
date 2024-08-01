@@ -37,7 +37,7 @@ RUN apt-get update && \
     && mkdir -p /app \
     && mkdir -p /app/files/source \
     && mkdir -p /app/files/dscp
-COPY ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation/
+COPY ./build/ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation/
 
 ARG JAR_FILE=synapi-0.0.1-SNAPSHOT.jar
 ENV PROJECT_HOME /app
