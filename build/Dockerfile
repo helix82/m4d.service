@@ -8,7 +8,6 @@ RUN --mount=type=cache,target=/root/.m2 mvn clean install -Dmaven.test.skip=true
 FROM nexus.essocode.ru/bellsoft/liberica-openjdk-debian:11
 COPY ./build/cert/* $JAVA_HOME/lib/security
 COPY ./build/security.zip /app/
-COPY ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation/
 ARG NEXUS_RAW_USERNAME
 ARG NEXUS_RAW_PASSWORD
 RUN apt-get update && \
@@ -38,6 +37,7 @@ RUN apt-get update && \
     && mkdir -p /app \
     && mkdir -p /app/files/source \
     && mkdir -p /app/files/dscp
+COPY ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation/
 
 ARG JAR_FILE=synapi-0.0.1-SNAPSHOT.jar
 ENV PROJECT_HOME /app
