@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.apache.commons.io.FilenameUtils;
+import org.modelmapper.ModelMapper;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,6 @@ import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
-import su.opencode.digsigcik.synapi.exception.MchdException;
 import su.opencode.digsigcik.synapi.model.*;
 import su.opencode.digsigcik.synapi.model.m4d.M4dXml;
 import su.opencode.digsigcik.synapi.service.*;
@@ -31,7 +31,10 @@ import su.opencode.digsigcik.synapi.util.XmlValidator;
 
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.*;
@@ -44,26 +47,28 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 @MchdExceptionHandler
 @RequestMapping("/api/v1/mrpa_registry" )
 public class MrpaRegistryController {
+    private final ModelMapper modelMapper;
     private final MrpaRegistryService mrpaRegistryService;
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
     private final ContainerVerificationService containerVerificationService;
     private final ContainerService containerService;
-    private final OrganisationService organisationService;
-    private final PrincipalService principalService;
-    private final RepresentativeService representativeService;
-    private final RepresentativePassportService representativePassportService;
-    private final CredentialService credentialService;
+//    private final OrganisationService organisationService;
+//    private final PrincipalService principalService;
+//    private final RepresentativeService representativeService;
+//    private final RepresentativePassportService representativePassportService;
+//    private final CredentialService credentialService;
 
-    public MrpaRegistryController(MrpaRegistryService mrpaRegistryService, MrpaRegistryCredentialService mrpaRegistryCredentialService, ContainerVerificationService containerVerificationService, ContainerService containerService, OrganisationService organisationService, PrincipalService principalService, RepresentativeService representativeService, RepresentativePassportService representativePassportService, CredentialService credentialService) {
+    public MrpaRegistryController(ModelMapper modelMapper, MrpaRegistryService mrpaRegistryService, MrpaRegistryCredentialService mrpaRegistryCredentialService, ContainerVerificationService containerVerificationService, ContainerService containerService) {
+        this.modelMapper = modelMapper;//, OrganisationService organisationService, PrincipalService principalService, RepresentativeService representativeService, RepresentativePassportService representativePassportService, CredentialService credentialService) {
         this.mrpaRegistryService = mrpaRegistryService;
         this.mrpaRegistryCredentialService = mrpaRegistryCredentialService;
         this.containerVerificationService = containerVerificationService;
         this.containerService = containerService;
-        this.organisationService = organisationService;
-        this.principalService = principalService;
-        this.representativeService = representativeService;
-        this.representativePassportService = representativePassportService;
-        this.credentialService = credentialService;
+//        this.organisationService = organisationService;
+//        this.principalService = principalService;
+//        this.representativeService = representativeService;
+//        this.representativePassportService = representativePassportService;
+//        this.credentialService = credentialService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
@@ -136,6 +141,44 @@ public class MrpaRegistryController {
 
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryWithFioDTOS.getId());
+        return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
+    }
+
+
+    @Operation(summary = CONTROLLER_MRPA_SAVE_SUMMARY, description = CONTROLLER_MRPA_SAVE_DESCRIPTION )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @PostMapping(value = "save_all",produces = "application/json; charset=UTF-8" )
+    public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody MrpaRegistrySaveFullDto mrpaRegistrySaveFullDto) throws ParseException, JAXBException {
+        System.out.println(mrpaRegistrySaveFullDto);
+        MrpaRegistry mrpaRegistry = convertMrpaRegistryToEntity(mrpaRegistrySaveFullDto.mrpaRegistry);
+        Organisation organisation = convertOrganisationToEntity(mrpaRegistrySaveFullDto.organisation);
+        Principal principal = convertPrincipalToEntity(mrpaRegistrySaveFullDto.principal);
+        Representative representative = convertRepresentativeToEntity(mrpaRegistrySaveFullDto.representative);
+        RepresentativePassport representativePassport = convertRepresentativePassportToEntity(mrpaRegistrySaveFullDto.representative.representativePassport);
+        MrpaRegistry mrpaRegistrySaved;
+        try {
+            mrpaRegistrySaved = mrpaRegistryService.saveAllDataMrpaRegistry(mrpaRegistry, organisation, principal, representative, representativePassport, null, List.of(mrpaRegistrySaveFullDto.getCredentials()));
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+
+        //--- Generate and save XML M4D ---
+        MrpaRegistryFullDTO mrpaRegistryFullDTO = mrpaRegistryService.findMrpaRegistryFullById(mrpaRegistrySaved.getId());
+        mrpaRegistryFullDTO.credentials = mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistrySaved.getId());
+        MrpaRegistryFullXML mrpaRegistryFullXML = mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
+        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
+        try {
+            mrpaRegistryService.saveMrpaXml(mrpaRegistrySaved.getId(), xmlString, mrpaRegistryFullXML.getIdFile());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_XML_IS_NULL);
+        }
+        //--------------------
+
+        MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
+        mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
     }
 
@@ -296,7 +339,6 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
         }
 
-
         List<SAXParseException> res = new XmlValidator("xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
         System.out.println(res.size());
         String content;
@@ -328,9 +370,6 @@ public class MrpaRegistryController {
                 throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
             }
 
-            Long orgId;
-            Long principId;
-            Long represId;
             if (m4dXml == null) {
                 throw new BadRequestException(MRPA_IS_NULL);
             }
@@ -386,105 +425,21 @@ public class MrpaRegistryController {
             represPassport.setWhoIssue(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
             represPassport.setDepartmentCode(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
 
-            List<Long> credentials = new ArrayList<>();
+            List<Credential> credentialList = new ArrayList<>();
             if (m4dXml.document.powerAttorneys.credential.credentials != null) {
                 for (M4dXml.Document.PowerAttorneys.Credentials.Credential c : m4dXml.document.powerAttorneys.credential.credentials) {
-                    List<Credential> credentialList = credentialService.findCredentialByCodeOrName(c.getCode());
-                    if (credentialList == null) {
-                        Credential newCredential = new Credential();
-                        newCredential.setCode(c.getCode());
-                        newCredential.setName(c.getName());
-                        Credential credentialSave;
-                        try {
-                            credentialSave = credentialService.saveCredential(newCredential);
-                        } catch (ConstraintViolationException e) {
-                            throw new BadRequestException(CREDENTIAL_IS_NULL);
-                        }
-                        credentials.add(credentialSave.getId());
-                    } else {
-                        for (Credential crd : credentialList) {
-                            credentials.add(crd.getId());
-                        }
-                    }
+                    Credential newCredential = new Credential();
+                    newCredential.setCode(c.getCode());
+                    newCredential.setName(c.getName());
+                    credentialList.add(newCredential);
                 }
             }
-
-            //------------------- save organisation ----------------
-            Organisation existsOrganisation = organisationService.findByOrganisationInn(organisation.getInn());
-            if (existsOrganisation == null) {
-                Organisation respOrganisation;
-                try {
-                    respOrganisation = organisationService.saveOrganisation(organisation);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(ORGANISATION_IS_NULL);
-                }
-                orgId = respOrganisation.getId();
-            } else {
-                orgId = existsOrganisation.getId();
-            }
-            //------------------- end save organisation ----------------
-
-            //------------------- save principal ----------------
-            Principal existsPrincipal;
-            try {
-                existsPrincipal = principalService.findPrincipalByInn(principal.getInn());
-                principId = existsPrincipal.getId();
-            } catch (MchdException ignore) {
-                Principal respPrincipal;
-                try {
-                    respPrincipal = principalService.savePrincipal(principal);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(PRINCIPAL_IS_NULL);
-                }
-                principId = respPrincipal.getId();
-            }
-            //------------------- end save principal ----------------
-
-            //------------------- save representative and passport ----------------
-            Representative existsRepresentative;
-            try {
-                existsRepresentative = representativeService.findRepresentativeByInn(representative.getInn());
-                represId = existsRepresentative.getId();
-            } catch (MchdException ignore) {
-                Representative respRepresentative;
-                try {
-                    respRepresentative = representativeService.saveRepresentative(representative);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(REPRESENTATIVE_IS_NULL);
-                }
-                try {
-                    represPassport.setRepresentativeId(respRepresentative.getId());
-                    representativePassportService.saveRepresentativePassport(represPassport);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
-                }
-                represId = respRepresentative.getId();
-            }
-            //------------------- end save representative and passport ----------------
-
-            if (orgId == null || principId == null || represId == null) {
-                throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
-            }
-            mrpaRegistry.setOrganisationId(orgId);
-            mrpaRegistry.setPrincipalId(principId);
-            mrpaRegistry.setRepresentativeId(represId);
 
             MrpaRegistry mrpaRegistrySaved;
             try {
-                mrpaRegistrySaved = mrpaRegistryService.saveMrpaRegistry(mrpaRegistry);
+                mrpaRegistrySaved = mrpaRegistryService.saveAllDataMrpaRegistry(mrpaRegistry, organisation, principal, representative, represPassport, credentialList, null);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
-            }
-
-            for (Long x : credentials) {
-                MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
-                mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
-                mrpaRegistryCredential.setCredentialId(x);
-                try {
-                    mrpaRegistryCredentialService.saveMrpaRegistryCredential(mrpaRegistryCredential);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
-                }
             }
 
             MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
@@ -497,5 +452,30 @@ public class MrpaRegistryController {
         res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
         body.put("details", String.join(System.lineSeparator(),errs));
         return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    private MrpaRegistry convertMrpaRegistryToEntity(MrpaRegistrySaveFullDto.MrpaRegistry mrpaRegistryDto){
+        MrpaRegistry mrpaRegistry = modelMapper.map(mrpaRegistryDto, MrpaRegistry.class);
+        return mrpaRegistry;
+    }
+
+    private Organisation convertOrganisationToEntity(MrpaRegistrySaveFullDto.Organisation organisationDto){
+        Organisation organisation = modelMapper.map(organisationDto, Organisation.class);
+        return organisation;
+    }
+
+    private Principal convertPrincipalToEntity(MrpaRegistrySaveFullDto.Principal principalDto){
+        Principal principal = modelMapper.map(principalDto, Principal.class);
+        return principal;
+    }
+
+    private Representative convertRepresentativeToEntity(MrpaRegistrySaveFullDto.Representative representativeDto){
+        Representative representative = modelMapper.map(representativeDto, Representative.class);
+        return representative;
+    }
+
+    private RepresentativePassport convertRepresentativePassportToEntity(MrpaRegistrySaveFullDto.RepresentativePassport representativePassportDto){
+        RepresentativePassport representativePassport = modelMapper.map(representativePassportDto, RepresentativePassport.class);
+        return representativePassport;
     }
 }
