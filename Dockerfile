@@ -19,7 +19,7 @@ RUN apt-get update && \
     && wget --no-check-certificate --user $USERNAME --password $PASSWORD https://nexus.essocode.ru/repository/ocode-raw/csp/linux-amd64_deb.tgz -O /tmp/linux-amd64_deb.tgz \
     && ls -lh /tmp/linux-amd64_deb.tgz \
     && mkdir -p /tmp/csp \
-    && mkdir -p /app/xml/validation \
+    && mkdir -p /xml/validation \
     && tar -xvzf /tmp/linux-amd64_deb.tgz -C /tmp \
     && /tmp/linux-amd64_deb/install.sh \
     && rm -rf /tmp/linux-amd64_deb.tgz /tmp/linux-amd64_deb \
