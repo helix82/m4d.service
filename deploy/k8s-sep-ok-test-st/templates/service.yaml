@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: synapi-service
+  namespace: {{ .Values.namespace.name }}
+spec:
+  selector:
+    app: synapi
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+    - name: "debug"
+      port: {{ .Values.service.portDebug }}
+      targetPort: {{ .Values.service.targetPortDebug }}
