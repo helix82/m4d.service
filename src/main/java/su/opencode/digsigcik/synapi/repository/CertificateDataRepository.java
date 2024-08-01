@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import su.opencode.digsigcik.synapi.model.ca.CertificateData;
 
+import java.util.List;
+
 @Repository
 public interface CertificateDataRepository extends JpaRepository<CertificateData, Long> {
     CertificateData findCertificateDataById(Long id);
@@ -13,5 +15,5 @@ public interface CertificateDataRepository extends JpaRepository<CertificateData
     Integer countCertificateDataByImprint(String imprint);
 
     @Query("SELECT cd from CertificateData cd where UPPER(cd.keyId)=UPPER(?1)")
-    CertificateData findCertificateDataByKeyId(String keyId);
+    List<CertificateData> findCertificateDataByKeyId(String keyId);
 }
