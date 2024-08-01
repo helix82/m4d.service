@@ -31,7 +31,7 @@ COPY --from=maven /app/target/${JAR_FILE}  $PROJECT_HOME/${JAR_FILE}
 # ACME TLS ROOT AND INTERMEDIATE CERTIFICATES, CRYPTO PRO KEYLAB VM ROOT CERTIFICATE
 COPY ["root_ca.crt", "intermediate_ca.crt", "koren.crt", "$JAVA_HOME/lib/security"]
 COPY security.zip /app
-COPY ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation
+COPY ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation/
 RUN \
     cd $JAVA_HOME/lib/security \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias rootca -file root_ca.crt \
