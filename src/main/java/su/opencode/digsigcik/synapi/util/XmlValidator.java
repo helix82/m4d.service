@@ -51,7 +51,7 @@ public class XmlValidator {
 
     private Validator initValidator(String xsdPath) throws SAXException {
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        Source schemaFile = new StreamSource(getFile(xsdPath));
+        Source schemaFile = new StreamSource(xsdPath);
         Schema schema = factory.newSchema(schemaFile);
         return schema.newValidator();
     }
