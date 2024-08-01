@@ -350,4 +350,7 @@ public interface Constants {
 
     String CONTROLLER_ABOUT_ME_SUMMARY  = "Вывести информацию о текущем пользователе";
     String CONTROLLER_ABOUT_ME_DESCRIPTION  = "Возвращает информацию о текущем пользователе";
+
+    String CRL_SIGN_VERIFICATION_POSITIVE = "Сертификат подписи действителен: не был найден в СОС";
+    String CRL_SIGN_VERIFICATION_NEGATIVE = "Сертификат подписи недействителен: найден в СОС";
 }

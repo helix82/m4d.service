@@ -67,8 +67,12 @@ public class ContainerServiceImpl implements ContainerService {
         byte[] lastname = containerInputInfo.getLastname().getBytes(StandardCharsets.UTF_8);
         byte[] patronymic = containerInputInfo.getPatronymic().getBytes(StandardCharsets.UTF_8);
         byte[] timestamp = containerInputInfo.getTimestamp().toString().getBytes(StandardCharsets.UTF_8);
-        byte[] signatureAlgorithm = containerInputInfo.getSignatureAlgorithm().getBytes(StandardCharsets.UTF_8);
-        byte[] signatureType = containerInputInfo.getSignatureType().getCode().getBytes(StandardCharsets.UTF_8);
+        byte[] signatureAlgorithm = new byte[0];
+        if (containerInputInfo.getSignatureAlgorithm()!=null) {
+            signatureAlgorithm = containerInputInfo.getSignatureAlgorithm()
+                    .getBytes(StandardCharsets.UTF_8);
+        }
+        byte[] signatureType = containerInputInfo.getSignatureTypeEnum().getCode().getBytes(StandardCharsets.UTF_8);
         byte[] previewPdf = new byte[0];
         try {
             previewPdf = createPdfPreview(srcFile, containerInputInfo);
@@ -95,7 +99,9 @@ public class ContainerServiceImpl implements ContainerService {
         params.put(ResultTypeEnum.LASTNAME, lastname);
         params.put(ResultTypeEnum.PATRONYMIC, patronymic);
         params.put(ResultTypeEnum.TIMESTAMP, timestamp);
-        params.put(ResultTypeEnum.SIGNATURE_ALGORITHM, signatureAlgorithm);
+        if (signatureAlgorithm.length>0) {
+            params.put(ResultTypeEnum.SIGNATURE_ALGORITHM, signatureAlgorithm);
+        }
         params.put(ResultTypeEnum.SIGNATURE_TYPE, signatureType);
         if (previewPdf!=null) {
             params.put(ResultTypeEnum.PREVIEW_PDF, previewPdf);

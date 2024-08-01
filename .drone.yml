@@ -36,6 +36,8 @@ steps:
         from_secret: docker_pass
       config:
         from_secret: dockerconfig
+      build_args:
+        from_secret: build_arg_nexus
     volumes:
       - name: dockersock
         path: /var/run/docker.sock

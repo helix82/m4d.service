@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum;
 import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
 import su.opencode.digsigcik.synapi.enums.KeySize;
+import su.opencode.digsigcik.synapi.enums.SignatureType;
 import su.opencode.digsigcik.synapi.model.UserProjection;
 import java.time.LocalDateTime;
 
@@ -23,7 +24,8 @@ public class ContainerInputInfoDto {
     private String signatureAlgorithm;
     private KeySize keySize;
     private ContainerTypeEnum containerType;
-    private SignatureTypeEnum signatureType;
+    private SignatureTypeEnum signatureTypeEnum;
+    private SignatureType signatureType;
     private String hashAlgorithm;
     private String pinCode;
     private String pinCodeHashAlgorithm;

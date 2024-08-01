@@ -100,7 +100,7 @@ public class ContainerVerificationServiceImpl implements ContainerVerificationSe
         String sourceFileFullName = getStringData(containerData, "sourceFileFullName");
 
         if (detachedSign.length > 0) {
-            return signatureVerificationService.verifyDetached(srcFile, detachedSign, sourceFileFullName);
+            return signatureVerificationService.verifyDetached(srcFile, detachedSign, sourceFileFullName,sourceFileFullName+".p7s");
         } else if (attachedSign.length > 0) {
             return signatureVerificationService.verifyAttached(attachedSign, sourceFileFullName);
         } else {

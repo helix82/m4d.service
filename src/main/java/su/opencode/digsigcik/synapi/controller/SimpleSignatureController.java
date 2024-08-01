@@ -17,8 +17,9 @@ import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.dto.UserDto;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.enums.KeySize;
-import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
+import su.opencode.digsigcik.synapi.enums.SimpleSignatureAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
+import su.opencode.digsigcik.synapi.model.EncryptionKeyEntity;
 import su.opencode.digsigcik.synapi.model.PinCode;
 import su.opencode.digsigcik.synapi.model.UserProjection;
 import su.opencode.digsigcik.synapi.repository.PinCodeRepository;
@@ -28,8 +29,10 @@ import su.opencode.digsigcik.synapi.service.SimpleSignatureService;
 import su.opencode.digsigcik.synapi.util.Constants;
 import su.opencode.digsigcik.synapi.util.JwtTokenUtils;
 
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.*;
 import java.time.LocalDateTime;
 
 import static su.opencode.digsigcik.synapi.controller.ApiControllerV1.DEFAULT_FILENAME;
@@ -63,7 +66,7 @@ public class SimpleSignatureController {
     public ResponseEntity<Resource> createSimpleSignature(@RequestHeader(HttpHeaders.AUTHORIZATION) String authToken,
                                                           @RequestParam String pinCode,
                                                           HashAlgorithm hashAlgorithm,
-                                                          SignatureAlgorithm signatureAlgorithm,
+                                                          SimpleSignatureAlgorithm simpleSignatureAlgorithm,
                                                           KeySize keySize,
                                                           @RequestParam(defaultValue = "true") boolean signatureDetached,
                                                           @RequestPart("file") MultipartFile file) throws IOException {
@@ -92,15 +95,16 @@ public class SimpleSignatureController {
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(timestamp)
-                .signatureAlgorithm(signatureAlgorithm != null ? signatureAlgorithm.getAlgorithmName() :
-                        SignatureAlgorithm.GOST3411WITHECGOST3410_2012_256.getAlgorithmName())
-                .keySize(keySize != null ? keySize : KeySize.BIT_256)
+                .signatureAlgorithm(simpleSignatureAlgorithm != null ? simpleSignatureAlgorithm.getAlgorithmName() :
+                        SimpleSignatureAlgorithm.SHA256withRSA.getAlgorithmName())
+                .keySize(keySize != null ? keySize : KeySize.BIT_512)
                 .containerType(signatureDetached ? SIMPLE_DETACHED : SIMPLE_ATTACHED)
-                .signatureType(SIMPLE)
+                .signatureTypeEnum(SIMPLE)
                 .pinCode(pinCode)
+                .userProjection(userProjection)
                 .signatureDetached(signatureDetached)
                 .hashAlgorithm(hashAlgorithm != null ? hashAlgorithm.getAlgorithmName() :
-                        HashAlgorithm.GOST3411_2012_256.getAlgorithmName())
+                        HashAlgorithm.SHA256.getAlgorithmName())
                 .build();
 
         var res = simpleSignatureService.createSimpleSignatureResource(file, containerInputInfo);
@@ -109,6 +113,25 @@ public class SimpleSignatureController {
                     .body(null);
         }
         return resourceOctetStreamOrInternal(res, filename(res, DEFAULT_FILENAME));
+    }
+
+    @Operation(summary = CONTROLLER_ENCRYPTION_KEY_DELETE,
+            description = CONTROLLER_ENCRYPTION_KEY_DELETE)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @DeleteMapping(value = "/", produces = "application/json; charset=UTF-8")
+    @Transactional
+    public void deleteEncryptionKey(@RequestParam String login) {
+        if (login == null || login.trim()
+                .isEmpty()) {
+            throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
+        }
+        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(login);
+        if (userProjection != null) {
+             simpleSignatureService.deleteKeyEntity(userProjection);
+        }
     }
 
 

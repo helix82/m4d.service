@@ -25,13 +25,11 @@ import su.opencode.digsigcik.synapi.api.model.ContainerSelector;
 import su.opencode.digsigcik.synapi.api.model.RegistrationData;
 import su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode;
 import su.opencode.digsigcik.synapi.dscp.ContainerTypeEnum;
-import su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum;
 import su.opencode.digsigcik.synapi.dto.ContainerInputInfoDto;
 import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
 import su.opencode.digsigcik.synapi.dto.ReportContainerDTO;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
-import su.opencode.digsigcik.synapi.enums.SignatureAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.service.ContainerService;
 import su.opencode.digsigcik.synapi.service.ContainerVerificationService;
@@ -59,7 +57,6 @@ import static su.opencode.digsigcik.synapi.dscp.SignatureTypeEnum.UNQUALIFIED;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.filename;
 import static su.opencode.digsigcik.synapi.util.CommonUtils.mediaType;
 import static su.opencode.digsigcik.synapi.util.Constants.API_RESPONSE_CODE_400_MESSAGE;
-import static su.opencode.digsigcik.synapi.util.Constants.MRPA_REGISTRY_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.FileUtils.resourceOctetStreamOrInternal;
 
 @RestController
@@ -88,8 +85,6 @@ public class ApiControllerV1 {
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token,
             @RequestPart("srcFile") MultipartFile sourceFile,
             @RequestPart("sigFile") MultipartFile sourceSig,
-            SignatureTypeEnum signatureType,
-            SignatureAlgorithm signatureAlgorithm,
             HashAlgorithm hashAlgorithm) {
         boolean signatureDetached;
         ContainerTypeEnum containerType;
@@ -132,9 +127,9 @@ public class ApiControllerV1 {
         ReportContainerDTO reportContainerDTO;
         try {
             if (signatureDetached) {
-                reportContainerDTO = signatureVerificationService.verifyDetached(sourceFile, sourceSig);
+                reportContainerDTO = signatureVerificationService.verifyDetachedGetPdfReport(sourceFile, sourceSig);
             } else {
-                reportContainerDTO = signatureVerificationService.verifyAttached(sourceSig);
+                reportContainerDTO = signatureVerificationService.verifyAttachedGetPdfReport(sourceSig);
             }
         } catch (ResourceAccessException | IOException | URISyntaxException e) {
             log.warn("Не удалось подключиться к сервису верификации: {}",e.getMessage());
@@ -160,12 +155,10 @@ public class ApiControllerV1 {
                 .lastname(jwtPayloadDto.getLastName())
                 .patronymic(jwtPayloadDto.getPatronymic())
                 .timestamp(LocalDateTime.now())
-                .signatureAlgorithm(signatureAlgorithm != null ? signatureAlgorithm.getAlgorithmName() : "NOT " +
-                        "IMPLEMENTED")
                 .hashAlgorithm(hashAlgorithm != null ? hashAlgorithm.getAlgorithmName() :
                         HashAlgorithm.GOST3411_2012_256.getAlgorithmName())
                 .containerType(containerType)
-                .signatureType(reportContainerDTO.isValid() ? QUALIFIED : UNQUALIFIED)
+                .signatureTypeEnum(reportContainerDTO.isValid() ? QUALIFIED : UNQUALIFIED)
                 .signCheck(reportContainerDTO.getSignCheck())
                 .signReport(reportContainerDTO.getSignReport())
                 .signatureDetached(signatureDetached)

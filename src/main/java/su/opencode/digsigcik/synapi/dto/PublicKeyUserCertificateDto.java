@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.synapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Data;
 import su.opencode.digsigcik.synapi.enums.TypeUserCertificateEnum;
 
