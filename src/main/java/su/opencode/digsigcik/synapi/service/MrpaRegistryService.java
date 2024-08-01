@@ -4,7 +4,7 @@ import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioListDto;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
-import su.opencode.digsigcik.synapi.model.MrpaRegistry;
+import su.opencode.digsigcik.synapi.model.*;
 
 import javax.validation.constraints.NotNull;
 import java.text.ParseException;
@@ -15,7 +15,11 @@ public interface MrpaRegistryService {
 
     MrpaRegistry saveMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry);
 
+    MrpaRegistry saveAllDataMrpaRegistry(MrpaRegistry mrpaRegistry, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<Credential> credentialList, List<Long> credentials);
+
     MrpaRegistryWithFioDTO findByMrpaRegistryId(@NotNull Long id);
+
+    Integer findMrpaRegistryByGuid(@NotNull String guid);
 
     MrpaRegistryFullDTO findMrpaRegistryFullById(Long id);
 

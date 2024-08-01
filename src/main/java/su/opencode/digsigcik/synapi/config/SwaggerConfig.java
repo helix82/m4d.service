@@ -31,10 +31,11 @@ public class SwaggerConfig {
                 .description("Tasks: https://docs.google" +
                         ".com/spreadsheets/d/1Ar7tm0XzfUVps_dgAeHr3h2oxnoTOY88QKNwPBGYxxg/edit#gid=864053792")
                 .contact(new Contact("Dev-Team", "https://www.o-code.ru/", "vereschagina@o-code.ru"))
-                .version("SEP0002, SEP0003, SEP0009, SEP0011, SEP0013, SEP0017, SEP0018, SEP0019, SEP0020, SEP0021, " +
-                        "SEP0022, " +
-                        "SEP0023, SEP0024, SEP0040, SEP0045, SEP0046, SEP0049, SEP0077, SEP0078, SEP0079, SEP0080, " +
-                        "SEP0081, SEP0082, SEP0083, SEP0084, SEP0085, SEP0086")
+                .version("SEP0000, SEP0001, SEP0002, SEP0003, SEP0004, SEP0005, SEP0007, SEP0008, SEP0009, SEP0010, SEP0011, " +
+                        "SEP0012, SEP0013, SEP0014, SEP0017, SEP0018, SEP0019, SEP0020, SEP0021, SEP0022, \r\n" +
+                        "SEP0023, SEP0024, SEP0025, SEP0026, SEP0027, SEP0029, SEP0030, SEP0031, SEP0033, SEP0034, SEP0035, " +
+                        "SEP0036, SEP0037, SEP0038, SEP0040, SEP0041, SEP0042, SEP0045, SEP0046, SEP0064, \r\n SEP0077, SEP0078, " +
+                        "SEP0079, SEP0080, SEP0081, SEP0082, SEP0083, SEP0084, SEP0085, SEP0086, SEP0088, SEP0089, SEP0096, SEP0098")
                 .build();
     }
 }

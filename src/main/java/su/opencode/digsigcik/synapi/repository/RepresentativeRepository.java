@@ -7,4 +7,5 @@ import su.opencode.digsigcik.synapi.model.Representative;
 @Repository
 public interface RepresentativeRepository extends JpaRepository<Representative, Long> {
     Representative findRepresentativeById(Long id);
+    Representative findRepresentativeByInn(String inn);
 }

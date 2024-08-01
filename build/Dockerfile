@@ -8,6 +8,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn clean install -Dmaven.test.skip=true
 FROM nexus.essocode.ru/bellsoft/liberica-openjdk-debian:11
 COPY ./build/cert/* $JAVA_HOME/lib/security
 COPY ./build/security.zip /app/
+COPY ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation/
 ARG NEXUS_RAW_USERNAME
 ARG NEXUS_RAW_PASSWORD
 RUN apt-get update && \
@@ -20,6 +21,7 @@ RUN apt-get update && \
     && wget --no-check-certificate --user $NEXUS_RAW_USERNAME --password $NEXUS_RAW_PASSWORD https://nexus.essocode.ru/repository/ocode-raw/csp/linux-amd64_deb.tgz -O /tmp/linux-amd64_deb.tgz \
     && ls -lh /tmp/linux-amd64_deb.tgz \
     && mkdir -p /tmp/csp \
+    && mkdir -p /xml/validation \
     && tar -xvzf /tmp/linux-amd64_deb.tgz -C /tmp \
     && /tmp/linux-amd64_deb/install.sh \
     && rm -rf /tmp/linux-amd64_deb.tgz /tmp/linux-amd64_deb \

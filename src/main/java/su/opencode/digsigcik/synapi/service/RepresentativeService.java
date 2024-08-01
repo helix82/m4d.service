@@ -12,6 +12,8 @@ public interface RepresentativeService {
 
     Representative findByRepresentativeId(@NotNull Long id);
 
+    Representative findRepresentativeByInn(@NotNull String inn);
+
     Representative updateRepresentative(@NotNull Representative representative);
 
     void deleteRepresentative(@NotNull Long id);

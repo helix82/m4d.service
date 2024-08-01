@@ -47,6 +47,15 @@ public class PrincipalServiceImpl implements PrincipalService {
     }
 
     @Override
+    public Principal findPrincipalByInn(@NotNull String inn) {
+        Principal principal = this.repository.findPrincipalByInn(inn);
+        if (principal == null) {
+            throw new MchdException(String.format("Principal %s", NOT_FOUND));
+        }
+        return principal;
+    }
+
+    @Override
     public Principal updatePrincipal(@NotNull Principal principal) {
         Long principalId = principal.getId();
         if (principalId == null) {

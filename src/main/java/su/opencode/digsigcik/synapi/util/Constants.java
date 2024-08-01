@@ -125,6 +125,8 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_BY_PRINCIPAL_INN_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_UPLOAD_SUMMARY = "Загрузить ЭП";
     String CONTROLLER_MRPA_UPLOAD_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_UPLOAD_XML_SUMMARY = "Импорт МЧД";
+    String CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_RECALL_SUMMARY = "Отозвать МЧД";
     String CONTROLLER_MRPA_RECALL_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_DOWNLOAD_SUMMARY = "Выгрузить МЧД в XML-файл";
@@ -283,12 +285,17 @@ public interface Constants {
 
     String NULL = "null";
     String ID_IS_NULL = String.format("ID is %s", NULL);
+    String MRPA_IS_NULL = String.format("MRPA is %s", NULL);
     String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);
     String TOKEN_ERROR_MESSAGE = String.format("Token %s", NULL_OR_EMPTY_ERROR_MESSAGE);
     String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
+    String MRPA_REGISTRY_IS_EXISTS = "Добавляемая МЧД уже существует в базе";
+    String MRPA_REGISTRY_NOT_FULL = "Недостаточно данных для сохранения МЧД";
     String MRPA_REGISTRY_CREDENTIAL_IS_NULL = String.format("Assign Credential to Mrpa registry is %s!", NULL);
     String MRPA_REGISTRY_XML_IS_NULL = "XML МЧД не найден";
     String MRPA_REGISTRY_WRONG_FORMAT = "Не верный формат ЭП";
+    String MRPA_REGISTRY_WRONG_FORMAT_XML = "Не верный формат XML";
+    String MRPA_REGISTRY_XML_NOT_VERIFY = "XML не прошел проверку";
     String MRPA_REGISTRY_NOT_VERIFY = "Контейнер не прошел проверку";
     String CREDENTIAL_IS_NULL = String.format("Credential is %s!", NULL);
     String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);

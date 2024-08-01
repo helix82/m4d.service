@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface CertificateDataService {
     List<CertificateData> findAllCertificateData();
-    CertificateData findCertificateDataByKeyId(String keyId);
+    List<CertificateData> findCertificateDataByKeyId(String keyId);
     CertificateData saveCertificateData(CertificateData certificateData);
     CertificateData findByCertificateDataId(Long id);
     Integer countCertificateDataByImprint(String imprint);
