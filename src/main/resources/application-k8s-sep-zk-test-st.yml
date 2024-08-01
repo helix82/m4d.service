@@ -6,14 +6,15 @@ web:
     allow-origin: "*"
     allow-methods: OPTIONS, HEAD, POST, PUT, GET, DELETE
   server:
-    uri: https://sp.essocode.ru
+    uri: https://synapi.sep.zk.test.st
+
 logging:
   level:
     su.opencode.digsigcik.synapi: DEBUG
 ---
 
 spring:
-  config.activate.on-profile: k8s
+  config.activate.on-profile: k8s-sep-zk-test-st
   datasource:
     #    url: jdbc:postgresql://localhost:5432/localsepdb
     #    username: root
@@ -67,8 +68,8 @@ jwt:
 
 tls:
   ca:
-    uri: https://step-certificates.step-certificates.svc.cluster.local/acme/acme/directory
-#    uri: https://192.168.0.53:4433/acme/acme/directory
+    uri: https://step-certificates.master.svc.cluster.local/acme/acme/directory
+
   account:
     name: acme.account.name
     mail: acme@account.mail
@@ -79,7 +80,6 @@ tls:
 cryptopro:
   svs:
     uri: https://keylab/vs/api
-#    uri: https://dss.cryptopro.ru/verify/rest/api
 
 features:
   show-ses-certificates: false

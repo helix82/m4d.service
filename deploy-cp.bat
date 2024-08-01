@@ -17,9 +17,6 @@ call mvn deploy:deploy-file -Dfile=./libs/cpSSL.jar -DgroupId=ru.cryptopro.jcp -
 call mvn deploy:deploy-file -Dfile=./libs/XAdES.jar -DgroupId=ru.cryptopro.jcp -DartifactId=XAdES -Dversion=5.0.45549-A -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
 call mvn deploy:deploy-file -Dfile=./libs/sspiSSL.jar -DgroupId=ru.cryptopro.jcp -DartifactId=sspiSSL -Dversion=5.0.45549-A -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
 call mvn deploy:deploy-file -Dfile=./libs/samples-sources.jar -DgroupId=ru.cryptopro.jcp -DartifactId=samples-sources -Dversion=5.0.45549-A -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
-
 call mvn deploy:deploy-file -Dfile=./libs/dependencies/bcpkix-jdk15on-1.60.jar -DgroupId=org.bouncycastle -DartifactId=bcpkix-jdk15on -Dversion=1.60 -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
 call mvn deploy:deploy-file -Dfile=./libs/dependencies/bcprov-jdk15on-1.60.jar -DgroupId=org.bouncycastle -DartifactId=bcprov-jdk15on -Dversion=1.60 -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus
-
-
 call mvn deploy:deploy-file -Dfile=./libs/dependencies/xmlsec-2.1.2.jar -DgroupId=org.apache.santuario -DartifactId=xmlsec -Dversion=2.1.2 -Dpackaging=jar -Durl=https://nexus.essocode.ru/repository/mvn-ocode/ -DrepositoryId=nexus

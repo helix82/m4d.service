@@ -29,7 +29,7 @@ steps:
       cache_from:
         - nexus.essocode.ru:5001/ess/synapi:develop
         - nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
-      dockerfile: Dockerfile
+      dockerfile: ./build/Dockerfile
       username:
         from_secret: docker_login
       password:
@@ -37,7 +37,7 @@ steps:
       config:
         from_secret: dockerconfig
       build_args:
-        from_secret: build_arg_nexus
+        from_secret: build_args_nexus
     volumes:
       - name: dockersock
         path: /var/run/docker.sock
@@ -69,7 +69,7 @@ steps:
     detach: true
     commands:
       - cd /app
-      - java -Dspring.profiles.active=k8s -jar synapi-0.0.1-SNAPSHOT.jar
+      - java -Dspring.profiles.active=k3s-ocode -jar synapi-0.0.1-SNAPSHOT.jar
     depends_on:
       - build
 
@@ -86,7 +86,7 @@ steps:
   - name: deploy
     image: ghcr.io/bh90210/dron8s:latest
     settings:
-      yaml: ./k8s-synapi-ocode-dev.yaml
+      yaml: ./deploy/k3s-ocode.yaml
       tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       kubeconfig:
         from_secret: kubeconfig
@@ -95,6 +95,53 @@ steps:
     when:
       branch:
         - develop
+
+  - name: save-image-archive
+    image: docker
+    commands:
+      - docker save nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-} | gzip > synapi-${DRONE_SOURCE_BRANCH/\//-}.tar.gz
+    volumes:
+      - name: out
+        path: /out
+    depends_on:
+      - check
+    when:
+      branch:
+        - release-*
+
+  - name: push-archive-to-gitlab
+    image: alpine:3.12
+    environment:
+      GITLAB_USERNAME:
+        from_secret: gitlab_username
+      GITLAB_PASSWORD:
+        from_secret: gitlab_password
+    commands:
+      - apk add --no-cache git
+      - git config --global user.name "SEP CI"
+      - git config --global user.email "sep_user@cifro.tech"
+      - git clone https://${GITLAB_USERNAME}:${GITLAB_PASSWORD}@git.cifro.tech/sep/helm-charts.git
+      - cd helm-charts
+      - git checkout -b sep || git checkout sep
+      - mkdir -p image
+      - mv /drone/src/synapi-${DRONE_SOURCE_BRANCH/\//-}.tar.gz image/
+      - git add image/synapi-${DRONE_SOURCE_BRANCH/\//-}.tar.gz
+      - git commit -m "Add Docker image archive for synapi-${DRONE_SOURCE_BRANCH/\//-} in image folder"
+      - mkdir -p Helms/k8s-sep-ok-test-st/synapi
+      - cp -rv /drone/deploy/k8s-sep-ok-test-st/* Helms/k8s-sep-ok-test-st/synapi/
+      - git add Helms/k8s-sep-ok-test-st/synapi/
+      - git commit -m "Add Helms charts for k8s-sep-ok-test-st synapi-${DRONE_SOURCE_BRANCH/\//-} in Helms folder"
+      - mkdir -p Helms/k8s-sep-zk-test-st/synapi
+      - cp -rv /drone/deploy/k8s-sep-zk-test-st/* Helms/k8s-sep-zk-test-st/synapi/
+      - git add Helms/k8s-sep-zk-test-st/synapi/
+      - git commit -m "Add Helms charts for k8s-sep-zk-test-st synapi-${DRONE_SOURCE_BRANCH/\//-} in Helms folder"
+      - git push origin sep
+      - rm -f /drone/src/synapi-${DRONE_SOURCE_BRANCH/\//-}.tar.gz
+    depends_on:
+      - save-image-archive
+    when:
+      branch:
+        - release-*
 
   - name: notify
     image: appleboy/drone-discord

@@ -13,7 +13,7 @@ logging:
 ---
 
 spring:
-  config.activate.on-profile: k8s
+  config.activate.on-profile: k3s-ocode
   datasource:
     #    url: jdbc:postgresql://localhost:5432/localsepdb
     #    username: root
@@ -79,7 +79,6 @@ tls:
 cryptopro:
   svs:
     uri: https://keylab/vs/api
-    gost: true
 #    uri: https://dss.cryptopro.ru/verify/rest/api
 
 features:

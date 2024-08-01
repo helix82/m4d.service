@@ -1,28 +1,26 @@
 package example;
 
-import com.lowagie.text.DocumentException;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.operator.OperatorCreationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-import ru.CryptoPro.CAdES.exception.CAdESException;
 import ru.CryptoPro.JCP.JCP;
+import ru.CryptoPro.JCP.tools.Platform;
 import ru.CryptoPro.JCPxml.xmldsig.JCPXMLDSigInit;
 import ru.CryptoPro.JCSP.JCSP;
 import ru.CryptoPro.XAdES.DataObjects;
 import ru.CryptoPro.XAdES.XAdESSignature;
 import ru.CryptoPro.XAdES.XAdESType;
-import ru.CryptoPro.XAdES.exception.XAdESException;
 import ru.CryptoPro.XAdES.transform.EnvelopedTransform;
 import ru.CryptoPro.reprov.RevCheck;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,16 +28,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class TestXAdESBESSign {
     public static void main(String[] args) throws Exception {
-           Security.addProvider(new JCP());
+        Security.addProvider(new JCP());
         //Security.addProvider(new JCSP());
         Security.addProvider(new RevCheck());
         System.setProperty("com.sun.security.enableCRLDP", "true");
@@ -50,7 +46,8 @@ public class TestXAdESBESSign {
         String s = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?> <Доверенность " +
                 "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3" +
                 ".org/2001/XMLSchema\" xmlns=\"urn://x-artefacts/EMCHD_1\" ВерсФорм=\"EMCHD_1\" ПрЭлФорм=\"00000000\"" +
-                " ИдФайл=\"ON_EMCHD_20240718_270220da-575b-44a0-8490-8b91b9f0b8fe\" Id=\"acct\">     <Документ>         <Довер>  " +
+                " ИдФайл=\"ON_EMCHD_20240718_270220da-575b-44a0-8490-8b91b9f0b8fe\" Id=\"acct\">     <Документ>      " +
+                "   <Довер>  " +
                 "           <СвДов ВидДовер=\"1\" ПрПередов=\"3\" ВнНомДовер=\"б/н\" " +
                 "НомДовер=\"270220da-575b-44a0-8490-8b91b9f0b8fe\" ДатаВыдДовер=\"2024-06-19\" " +
                 "СрокДейст=\"2025-06-18\">                 <СведСист>sep.cik</СведСист>             </СвДов>         " +
@@ -130,10 +127,15 @@ public class TestXAdESBESSign {
             throw new RuntimeException("Ошибка при чтении ключей из PKCS#12 файла", e);
         }
 
-     //   JCPXMLDSigInit.init();
+        JCPXMLDSigInit.init();
         String ref_acct = "acct"; // ссылка на подписываемый узел
 // декодирование документа
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        if (!Platform.isAndroid) {
+            dbFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            dbFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            dbFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        }
         dbFactory.setNamespaceAware(true);
         Document document = dbFactory.newDocumentBuilder()
                 .parse(
@@ -157,10 +159,18 @@ public class TestXAdESBESSign {
 //                JCP.GOST_EL_KEY_OID,
 //                null, keyPair.getPrivate(), certificates, true,
 //                XAdESType.XAdES_BES, tsaUrl, cRLs);
-        xAdESSignature.addSigner(JCSP.PROVIDER_NAME,keyAlgToDigestOid(keyPair.getPrivate().getAlgorithm()),
-                keyAlgToKeyAlgorithmOid(keyPair.getPrivate().getAlgorithm()),
+        xAdESSignature.addSigner(JCSP.PROVIDER_NAME, keyAlgToDigestOid(keyPair.getPrivate()
+                        .getAlgorithm()),
+                keyAlgToKeyAlgorithmOid(keyPair.getPrivate()
+                        .getAlgorithm()),
                 null, keyPair.getPrivate(), certificates, true,
                 XAdESType.XAdES_BES, null, null);
+        xAdESSignature.addSigner(JCSP.PROVIDER_NAME, keyAlgToDigestOid(keyPair.getPrivate()
+                        .getAlgorithm()),
+                keyAlgToKeyAlgorithmOid(keyPair.getPrivate()
+                        .getAlgorithm()),
+                null, keyPair.getPrivate(), certificates, true,
+                XAdESType.XAdES_T, "http://keylab/tsp/tsp.srf", null);
         FileOutputStream fileOutputStream = new FileOutputStream("signed1.xml");
         xAdESSignature.open(fileOutputStream);
 // Подписание.
@@ -169,6 +179,7 @@ public class TestXAdESBESSign {
         xAdESSignature.close();
 
     }
+
     public static void saveByteArrayToFile(byte[] data, String filePath) {
         FileOutputStream fos = null;
         try {
