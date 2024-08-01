@@ -12,6 +12,8 @@ public interface PrincipalService {
 
     Principal findByPrincipalId(@NotNull Long id);
 
+    Principal findPrincipalByInn(@NotNull String inn);
+
     Principal updatePrincipal(@NotNull Principal principal);
 
     void deletePrincipal(@NotNull Long id);

@@ -76,4 +76,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " left join RepresentativePassport rp on rp.representativeId=r.id"
             + " where mr.id=?1 ")
     MrpaRegistryFullDTO findMrpaRegistryFullById(Long id);
+
+    @Query(value = "SELECT count(mr) from MrpaRegistry mr where mr.guid=?1 ")
+    Integer findMrpaRegistryByGuid(String guid);
 }

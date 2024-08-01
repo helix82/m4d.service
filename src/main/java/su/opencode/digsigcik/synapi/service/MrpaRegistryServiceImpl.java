@@ -3,16 +3,19 @@ package su.opencode.digsigcik.synapi.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO;
+import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioListDto;
 import su.opencode.digsigcik.synapi.dto.m4d.MrpaRegistryFullXML;
-import su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
-import su.opencode.digsigcik.synapi.model.Credential;
-import su.opencode.digsigcik.synapi.model.MrpaRegistry;
+import su.opencode.digsigcik.synapi.model.*;
 import su.opencode.digsigcik.synapi.repository.*;
 
+import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -22,17 +25,20 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import static su.opencode.digsigcik.synapi.util.Constants.NOT_FOUND;
+import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @Service
 @Primary
 @RequiredArgsConstructor
+@EnableTransactionManagement
 public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     private final MrpaRegistryRepository mrpaRegistryRepository;
     private final OrganisationRepository organisationRepository;
     private final PrincipalRepository principalRepository;
     private final RepresentativeRepository representativeRepository;
+    private final RepresentativePassportRepository representativePassportRepository;
     private final CredentialRepository credentialRepository;
+    private final MrpaRegistryCredentialRepository mrpaRegistryCredentialRepository;
 
     @Override
     public List<MrpaRegistryWithFioListDto> findAllMrpaRegistry() {
@@ -45,6 +51,115 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         return this.mrpaRegistryRepository.save(mrpaRegistry);
     }
 
+    @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
+    public MrpaRegistry saveAllDataMrpaRegistry(MrpaRegistry mrpaRegistry, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<Credential> credentialList, List<Long> credentials) {
+        Long orgId;
+        Long principId;
+        Long represId;
+        //------------------- save organisation ----------------
+        Organisation existsOrganisation = organisationRepository.findOrganisationByInn(organisation.getInn());
+        if (existsOrganisation == null) {
+            Organisation respOrganisation;
+            try {
+                respOrganisation = organisationRepository.save(organisation);
+                System.out.println("------------> Save Organisation with ID=" + respOrganisation.getId());
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(ORGANISATION_IS_NULL);
+            }
+            orgId = respOrganisation.getId();
+        } else {
+            orgId = existsOrganisation.getId();
+        }
+        //------------------- end save organisation ----------------
+
+        //------------------- save principal ----------------
+        Principal existsPrincipal = principalRepository.findPrincipalByInn(principal.getInn());
+        if (existsPrincipal == null) {
+            Principal respPrincipal;
+            try {
+                respPrincipal = principalRepository.save(principal);
+                System.out.println("------------> Save Principal with ID=" + respPrincipal.getId());
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(PRINCIPAL_IS_NULL);
+            }
+            principId = respPrincipal.getId();
+        } else {
+            principId = existsPrincipal.getId();
+        }
+        //------------------- end save principal ----------------
+
+        //------------------- save representative and passport ----------------
+        Representative existsRepresentative = representativeRepository.findRepresentativeByInn(representative.getInn());
+        if(existsRepresentative == null) {
+            Representative respRepresentative;
+            try {
+                //representative.setPatronymic("11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
+                respRepresentative = representativeRepository.save(representative);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(REPRESENTATIVE_IS_NULL);
+            }
+            try {
+                representativePassport.setRepresentativeId(respRepresentative.getId());
+                representativePassportRepository.save(representativePassport);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
+            }
+            represId = respRepresentative.getId();
+        } else {
+            represId = existsRepresentative.getId();
+        }
+        //------------------- end save representative and passport ----------------
+
+        if (orgId == null || principId == null || represId == null) {
+            throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
+        }
+        mrpaRegistry.setOrganisationId(orgId);
+        mrpaRegistry.setPrincipalId(principId);
+        mrpaRegistry.setRepresentativeId(represId);
+
+        MrpaRegistry mrpaRegistrySaved;
+        try {
+            mrpaRegistrySaved = mrpaRegistryRepository.save(mrpaRegistry);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+
+        // если передан список полномочий то ищем каждое, если такого нет то добавляем Полномочие, получаем список всех ИД полномочий и делаем привязку
+        if (credentialList != null) {
+            for (Credential c : credentialList) {
+                List<Credential> existsCredentials = credentialRepository.findCredentialByCodeIgnoreCase(c.getCode());
+                if (existsCredentials == null) {
+                    Credential newCredential = new Credential();
+                    newCredential.setCode(c.getCode());
+                    newCredential.setName(c.getName());
+                    Credential credentialSave;
+                    try {
+                        credentialSave = credentialRepository.save(newCredential);
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(CREDENTIAL_IS_NULL);
+                    }
+                    credentials.add(credentialSave.getId());
+                } else {
+                    for (Credential crd : existsCredentials) {
+                        credentials.add(crd.getId());
+                    }
+                }
+            }
+        }
+
+        for (Long x : credentials) {
+            MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
+            mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
+            mrpaRegistryCredential.setCredentialId(x);
+            try {
+                mrpaRegistryCredentialRepository.save(mrpaRegistryCredential);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+            }
+        }
+        return mrpaRegistrySaved;
+    }
+
     @Override
     public MrpaRegistryWithFioDTO findByMrpaRegistryId(@NotNull Long id) {
         MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
@@ -52,6 +167,11 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
             throw new MchdException(String.format("Mrpa registry %s", NOT_FOUND));
         }
         return mrpaRegistry;
+    }
+
+    @Override
+    public Integer findMrpaRegistryByGuid(@NotNull String guid) {
+        return this.mrpaRegistryRepository.findMrpaRegistryByGuid(guid);
     }
 
     @Override

@@ -46,6 +46,15 @@ public class RepresentativeServiceImpl implements RepresentativeService {
     }
 
     @Override
+    public Representative findRepresentativeByInn(@NotNull String inn) {
+        Representative representative = this.repository.findRepresentativeByInn(inn);
+        if (representative == null) {
+            throw new MchdException(String.format("Representative %s", NOT_FOUND));
+        }
+        return representative;
+    }
+
+    @Override
     public Representative updateRepresentative(@NotNull Representative representative) {
         Long representativeId = representative.getId();
         if (representativeId == null) {
