@@ -21,6 +21,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.*;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -118,5 +119,14 @@ public class CertUtils {
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toUnmodifiableList());
+    }
+
+    public static boolean isNotObsolete(X509CRL crl) {
+
+        Date now = Date.from(Instant.now());
+        Date dateStart = crl.getThisUpdate();
+        Date dateEnd = crl.getNextUpdate();
+
+        return now.after(dateStart) && now.before(dateEnd);
     }
 }

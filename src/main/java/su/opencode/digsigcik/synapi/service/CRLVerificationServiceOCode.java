@@ -10,9 +10,8 @@ import su.opencode.digsigcik.synapi.util.Constants;
 
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
 import java.util.Collection;
-import java.util.Date;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,19 +55,9 @@ public class CRLVerificationServiceOCode implements CRLVerificationService {
                         .collect(Collectors.joining(System.lineSeparator(), "[", "]"))
         );
 
-//        log.debug("CRL file size: " + x509CRL.getRevokedCertificates().size());
-
-        return crls.stream()
-                .filter(this::isNotObsolete)
-                .anyMatch(x509CRL -> certificates.stream().anyMatch(x509CRL::isRevoked));
-    }
-
-    private boolean isNotObsolete(X509CRL crl) {
-
-        Date now = Date.from(Instant.now());
-        Date dateStart = crl.getThisUpdate();
-        Date dateEnd = crl.getNextUpdate();
-
-        return now.after(dateStart) && now.before(dateEnd);
+        return crls.stream().anyMatch(crl -> {
+            log.debug("CRL size: " + (Objects.isNull(crl.getRevokedCertificates()) ? 0 : crl.getRevokedCertificates().size()));
+            return certificates.stream().anyMatch(crl::isRevoked);
+        });
     }
 }

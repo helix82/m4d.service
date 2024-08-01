@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.synapi.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfPCell;
@@ -10,11 +11,17 @@ import su.opencode.digsigcik.synapi.dto.ReportDTO;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Optional;
 
 import static java.awt.Color.*;
 
 @UtilityClass
 public class ReportUtils {
+
+    public static byte[] createPdf(byte[] reportDTOJson) throws DocumentException, IOException {
+        return createPdf(new ObjectMapper().readValue(reportDTOJson, ReportDTO.class));
+    }
+
     public static byte[] createPdf(ReportDTO reportDTO) throws DocumentException, IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         Document document = new Document();
@@ -44,19 +51,12 @@ public class ReportUtils {
             addRow(table, reportDTO.getErrorDescription(), false, fontContent);
         } else {
             // Adding sections and data
-            boolean valid = reportDTO.getResults()
-                    .get(0)
-                    .getVerificationResults()
-                    .get(0)
-                    .isResult();
+            var failedVerificationReport = traverseAndFindFailedVerificationResult(reportDTO.getResults().get(0));
+            boolean valid = failedVerificationReport.isEmpty();
             addRow(table, valid ? "Подпись действительна" : "Подпись недействительна",
                     valid, fontContent);
             if (!valid) {
-                addRow(table, reportDTO.getResults()
-                                .get(0)
-                                .getVerificationResults()
-                                .get(0)
-                                .getMessage(),
+                addRow(table,  failedVerificationReport.get().getMessage(),
                         false, fontContent);
             }
 
@@ -150,5 +150,13 @@ public class ReportUtils {
         cell.setBorder(Rectangle.NO_BORDER);
         cell.setPadding(10f);
         table.addCell(cell);
+    }
+
+    public static Optional<ReportDTO.Result.VerificationResult> traverseAndFindFailedVerificationResult(ReportDTO.Result reportResult) {
+
+        return reportResult.getVerificationResults()
+                .stream()
+                .dropWhile(ReportDTO.Result.VerificationResult::isResult)
+                .findFirst();
     }
 }
