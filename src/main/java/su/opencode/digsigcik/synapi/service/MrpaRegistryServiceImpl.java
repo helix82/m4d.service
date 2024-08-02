@@ -128,7 +128,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         if (credentialList != null) {
             for (Credential c : credentialList) {
                 List<Credential> existsCredentials = credentialRepository.findCredentialByCodeIgnoreCase(c.getCode());
-                if (existsCredentials == null) {
+                if (existsCredentials.isEmpty()) {
                     Credential newCredential = new Credential();
                     newCredential.setCode(c.getCode());
                     newCredential.setName(c.getName());

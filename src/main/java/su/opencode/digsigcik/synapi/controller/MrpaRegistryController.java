@@ -339,7 +339,7 @@ public class MrpaRegistryController {
             throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
         }
 
-        List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
+        List<SAXParseException> res = new XmlValidator("xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
         System.out.println(res.size());
         String content;
         if(res.isEmpty()) {
