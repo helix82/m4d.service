@@ -438,12 +438,12 @@ public class MrpaRegistryController {
             mrpaRegistryWithFioDTOS.credentials = mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistrySaved.getId());
             return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
         }
-        Map<String, String> body = new HashMap<>();
-        body.put("error", MRPA_REGISTRY_XML_NOT_VERIFY);
-        List<String> errs = new ArrayList<>();
-        res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
-        body.put("details", String.join(System.lineSeparator(),errs));
-        return new ResponseEntity<>(body, HttpStatus.OK);
+        //Map<String, String> body = new HashMap<>();
+        //body.put("error", MRPA_REGISTRY_XML_NOT_VERIFY);
+        //List<String> errs = new ArrayList<>();
+        //res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
+        //body.put("details", String.join(System.lineSeparator(),errs));
+        return new ResponseEntity<>(MRPA_REGISTRY_WRONG_FORMAT_XML, HttpStatus.BAD_REQUEST);
     }
 
     private MrpaRegistry convertMrpaRegistryToEntity(MrpaRegistrySaveFullDto.MrpaRegistry mrpaRegistryDto){
