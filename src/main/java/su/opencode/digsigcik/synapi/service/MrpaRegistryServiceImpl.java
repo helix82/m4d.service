@@ -123,8 +123,6 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-
-        // если передан список полномочий то ищем каждое, если такого нет то добавляем Полномочие, получаем список всех ИД полномочий и делаем привязку
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
             for (Credential c : credentialList) {

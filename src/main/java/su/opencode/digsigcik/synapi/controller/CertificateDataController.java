@@ -14,10 +14,10 @@ import org.w3c.dom.Document;
 import su.opencode.digsigcik.synapi.annotation.MchdExceptionHandler;
 import su.opencode.digsigcik.synapi.dto.CertificateDataListDTO;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
-import su.opencode.digsigcik.synapi.model.TrustedCertificate;
 import su.opencode.digsigcik.synapi.model.ca.CAXml;
 import su.opencode.digsigcik.synapi.model.ca.CertificateData;
 import su.opencode.digsigcik.synapi.service.CertificateDataService;
+import su.opencode.digsigcik.synapi.service.PublicKeyUserCertificateService;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
 
 import javax.servlet.http.HttpServletResponse;
@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static su.opencode.digsigcik.synapi.util.Constants.ID_IS_NULL;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
@@ -42,6 +41,7 @@ import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 @AllArgsConstructor
 public class CertificateDataController {
     private final CertificateDataService certificateDataService;
+    private final PublicKeyUserCertificateService publicKeyUserCertificateService;
     private final ModelMapper modelMapper;
 
     @Operation(summary = CONTROLLER_CA_UPLOAD_SUMMARY, description = CONTROLLER_CA_UPLOAD_DESCRIPTION)
@@ -107,6 +107,8 @@ public class CertificateDataController {
             }
 
         }
+
+        publicKeyUserCertificateService.checkQualifications();
 
         Map<String, String> body = new HashMap<>();
         body.put("imported", Integer.toString(ca_import));
