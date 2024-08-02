@@ -52,23 +52,13 @@ public class MrpaRegistryController {
     private final MrpaRegistryCredentialService mrpaRegistryCredentialService;
     private final ContainerVerificationService containerVerificationService;
     private final ContainerService containerService;
-//    private final OrganisationService organisationService;
-//    private final PrincipalService principalService;
-//    private final RepresentativeService representativeService;
-//    private final RepresentativePassportService representativePassportService;
-//    private final CredentialService credentialService;
 
     public MrpaRegistryController(ModelMapper modelMapper, MrpaRegistryService mrpaRegistryService, MrpaRegistryCredentialService mrpaRegistryCredentialService, ContainerVerificationService containerVerificationService, ContainerService containerService) {
-        this.modelMapper = modelMapper;//, OrganisationService organisationService, PrincipalService principalService, RepresentativeService representativeService, RepresentativePassportService representativePassportService, CredentialService credentialService) {
+        this.modelMapper = modelMapper;
         this.mrpaRegistryService = mrpaRegistryService;
         this.mrpaRegistryCredentialService = mrpaRegistryCredentialService;
         this.containerVerificationService = containerVerificationService;
         this.containerService = containerService;
-//        this.organisationService = organisationService;
-//        this.principalService = principalService;
-//        this.representativeService = representativeService;
-//        this.representativePassportService = representativePassportService;
-//        this.credentialService = credentialService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
@@ -154,6 +144,8 @@ public class MrpaRegistryController {
     public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody MrpaRegistrySaveFullDto mrpaRegistrySaveFullDto) throws ParseException, JAXBException {
         System.out.println(mrpaRegistrySaveFullDto);
         MrpaRegistry mrpaRegistry = convertMrpaRegistryToEntity(mrpaRegistrySaveFullDto.mrpaRegistry);
+        mrpaRegistry.setStatus(StatusTypeEnum.NOT_SIGNED);
+        mrpaRegistry.setGuid();
         Organisation organisation = convertOrganisationToEntity(mrpaRegistrySaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(mrpaRegistrySaveFullDto.principal);
         Representative representative = convertRepresentativeToEntity(mrpaRegistrySaveFullDto.representative);

@@ -125,6 +125,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         }
 
         // если передан список полномочий то ищем каждое, если такого нет то добавляем Полномочие, получаем список всех ИД полномочий и делаем привязку
+        List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
             for (Credential c : credentialList) {
                 List<Credential> existsCredentials = credentialRepository.findCredentialByCodeIgnoreCase(c.getCode());
@@ -138,25 +139,30 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
                     } catch (ConstraintViolationException e) {
                         throw new BadRequestException(CREDENTIAL_IS_NULL);
                     }
-                    credentials.add(credentialSave.getId());
+                    credList.add(credentialSave.getId());
                 } else {
                     for (Credential crd : existsCredentials) {
-                        credentials.add(crd.getId());
+                        credList.add(crd.getId());
                     }
+                }
+            }
+        } else if(credentials != null) {
+            credList = credentials;
+        }
+
+        if(!credList.isEmpty()){
+            for (Long x : credList) {
+                MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
+                mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
+                mrpaRegistryCredential.setCredentialId(x);
+                try {
+                    mrpaRegistryCredentialRepository.save(mrpaRegistryCredential);
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
                 }
             }
         }
 
-        for (Long x : credentials) {
-            MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
-            mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
-            mrpaRegistryCredential.setCredentialId(x);
-            try {
-                mrpaRegistryCredentialRepository.save(mrpaRegistryCredential);
-            } catch (ConstraintViolationException e) {
-                throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
-            }
-        }
         return mrpaRegistrySaved;
     }
 
