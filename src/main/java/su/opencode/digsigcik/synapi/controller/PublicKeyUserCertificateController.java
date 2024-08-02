@@ -312,12 +312,12 @@ public class PublicKeyUserCertificateController {
         ASN1OctetString akiOc1 = ASN1OctetString.getInstance(extValue1);
         AuthorityKeyIdentifier aki1 = AuthorityKeyIdentifier.getInstance(akiOc1.getOctets());
         String keyIdIssuer = new DEROctetString(aki1.getKeyIdentifier()).toString().substring(1);
-        String serialNumberIssuer = HexUtil.toString(aki1.getAuthorityCertSerialNumber().toByteArray()).replace(":","");
         TypeUserCertificateEnum typeCert = TypeUserCertificateEnum.NOT_QUALIFIED;
         List<CertificateData> certificateDataList;
         try {
             certificateDataList = certificateDataService.findCertificateDataByKeyId(keyIdIssuer);
-            if(certificateDataList != null){
+            if(certificateDataList.size()>1 && aki1.getAuthorityCertSerialNumber() != null){
+                String serialNumberIssuer = HexUtil.toString(aki1.getAuthorityCertSerialNumber().toByteArray()).replace(":","");
                 for(CertificateData certificateData: certificateDataList) {
                     if(certificateData.getSerialNumber().equalsIgnoreCase(serialNumberIssuer)) {
                         var certIssuer = certificateData.getIssuedTo().replace("\\", "").replace("\"", "").toLowerCase();
@@ -325,6 +325,14 @@ public class PublicKeyUserCertificateController {
                         if (certIssuer.equals(cnIssuerLC)) {
                             typeCert = TypeUserCertificateEnum.QUALIFIED;
                         }
+                    }
+                }
+            } else if (certificateDataList.size() == 1){
+                for(CertificateData certificateData: certificateDataList) {
+                    var certIssuer = certificateData.getIssuedTo().replace("\\", "").replace("\"", "").toLowerCase();
+                    var cnIssuerLC = cnIssuer.replace("\\", "").replace("\"", "").toLowerCase();
+                    if (certIssuer.equals(cnIssuerLC)) {
+                        typeCert = TypeUserCertificateEnum.QUALIFIED;
                     }
                 }
             }
