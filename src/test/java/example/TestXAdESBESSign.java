@@ -165,12 +165,12 @@ public class TestXAdESBESSign {
                         .getAlgorithm()),
                 null, keyPair.getPrivate(), certificates, true,
                 XAdESType.XAdES_BES, null, null);
-        xAdESSignature.addSigner(JCSP.PROVIDER_NAME, keyAlgToDigestOid(keyPair.getPrivate()
-                        .getAlgorithm()),
-                keyAlgToKeyAlgorithmOid(keyPair.getPrivate()
-                        .getAlgorithm()),
-                null, keyPair.getPrivate(), certificates, true,
-                XAdESType.XAdES_T, "http://keylab/tsp/tsp.srf", null);
+//        xAdESSignature.addSigner(JCSP.PROVIDER_NAME, keyAlgToDigestOid(keyPair.getPrivate()
+//                        .getAlgorithm()),
+//                keyAlgToKeyAlgorithmOid(keyPair.getPrivate()
+//                        .getAlgorithm()),
+//                null, keyPair.getPrivate(), certificates, true,
+//                XAdESType.XAdES_T, "http://keylab/tsp/tsp.srf", null);
         FileOutputStream fileOutputStream = new FileOutputStream("signed1.xml");
         xAdESSignature.open(fileOutputStream);
 // Подписание.

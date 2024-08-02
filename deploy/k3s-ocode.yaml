@@ -58,7 +58,7 @@ spec:
           command:
             - java
             - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-            - -Dspring.profiles.active=k8s
+            - -Dspring.profiles.active=k3s-ocode
             - -Xms2G
             - -Xmx64G
             - -XX:+UseG1GC
