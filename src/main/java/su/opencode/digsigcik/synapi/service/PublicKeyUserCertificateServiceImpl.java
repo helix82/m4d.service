@@ -129,16 +129,11 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
             ASN1OctetString akiOc1 = ASN1OctetString.getInstance(extValue1);
             AuthorityKeyIdentifier aki1 = AuthorityKeyIdentifier.getInstance(akiOc1.getOctets());
             String keyIdIssuer = new DEROctetString(aki1.getKeyIdentifier()).toString().substring(1);
-            String serialNumberIssuer = null;
-            if(aki1.getAuthorityCertSerialNumber().toByteArray() != null) {
-                serialNumberIssuer = HexUtil.toString(aki1.getAuthorityCertSerialNumber().toByteArray()).replace(":", "");
-            }
-
             List<CertificateData> certificateDataList;
             try {
                 certificateDataList = certificateDataService.findCertificateDataByKeyId(keyIdIssuer);
-                long i = certificateDataList.size();//если больше одной записи, то, если сериалНумбер не пустой, перебираем и ищем ту что с нужным сериалНумбер
-                if(certificateDataList != null){
+                if(certificateDataList.size()>1 && aki1.getAuthorityCertSerialNumber() != null){
+                    String serialNumberIssuer = HexUtil.toString(aki1.getAuthorityCertSerialNumber().toByteArray()).replace(":","");
                     for(CertificateData certificateData: certificateDataList) {
                         if(certificateData.getSerialNumber().equalsIgnoreCase(serialNumberIssuer)) {
                             var certIssuer = certificateData.getIssuedTo().replace("\\", "").replace("\"", "").toLowerCase();
@@ -146,6 +141,14 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
                             if (certIssuer.equals(cnIssuerLC)) {
                                 typeCert = TypeUserCertificateEnum.QUALIFIED;
                             }
+                        }
+                    }
+                } else if (certificateDataList.size() == 1){
+                    for(CertificateData certificateData: certificateDataList) {
+                        var certIssuer = certificateData.getIssuedTo().replace("\\", "").replace("\"", "").toLowerCase();
+                        var cnIssuerLC = cnIssuer.replace("\\", "").replace("\"", "").toLowerCase();
+                        if (certIssuer.equals(cnIssuerLC)) {
+                            typeCert = TypeUserCertificateEnum.QUALIFIED;
                         }
                     }
                 }
