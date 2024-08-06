@@ -17,6 +17,8 @@ public interface MrpaRegistryService {
 
     MrpaRegistry saveAllDataMrpaRegistry(MrpaRegistry mrpaRegistry, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<Credential> credentialList, List<Long> credentials);
 
+    MrpaRegistry updateAllDataMrpaRegistry(MrpaRegistry mrpaRegistry, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<Credential> credentialList, List<Long> credentials);
+
     MrpaRegistryWithFioDTO findByMrpaRegistryId(@NotNull Long id);
 
     Integer findMrpaRegistryByGuid(@NotNull String guid);

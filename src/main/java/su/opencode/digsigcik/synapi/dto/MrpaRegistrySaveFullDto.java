@@ -9,6 +9,8 @@ public class MrpaRegistrySaveFullDto {
 
     @Data
     public static class MrpaRegistry{
+        private Long id;
+
         @JsonProperty("guid")
         private String guid;
 

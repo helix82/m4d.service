@@ -48,6 +48,6 @@ public class Principal {
     private String jobTitle;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "principal_id")
+    @JoinColumn(name = "principal_id", updatable = false)
     private Set<MrpaRegistry> mrpaRegistryes = new HashSet<>();
 }

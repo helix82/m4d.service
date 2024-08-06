@@ -53,7 +53,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " where mr.status<>'NOT_SIGNED' and p.inn=?1 ")
     List<MrpaRegistryFullDTO> findMrpaRegistriesFullByPrincipalInn(String inn);
 
-    @Query(value = "SELECT mr.* from mrpa_registry mr where mr.id=?1 ", nativeQuery = true)
+    @Query("SELECT mr from MrpaRegistry mr where mr.id=?1 ")
     MrpaRegistry findMrpaById(Long id);
 
     @Modifying

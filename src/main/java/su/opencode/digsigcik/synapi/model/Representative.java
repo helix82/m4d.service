@@ -48,11 +48,11 @@ public class Representative {
     private String birthDate;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "representative_id")
+    @JoinColumn(name = "representative_id", updatable = false)
     private Set<MrpaRegistry> mrpaRegistryes = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "representative_id")
+    @JoinColumn(name = "representative_id", updatable = false)
     private Set<RepresentativePassport> representativePassports = new HashSet<>();
 
 }

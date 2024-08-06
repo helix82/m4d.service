@@ -5,4 +5,5 @@ import su.opencode.digsigcik.synapi.model.RepresentativePassport;
 
 public interface RepresentativePassportRepository extends JpaRepository<RepresentativePassport, Long> {
     RepresentativePassport findRepresentativePassportById(Long id);
+    RepresentativePassport findRepresentativePassportBySeriesNumber(String seriesNumber);
 }

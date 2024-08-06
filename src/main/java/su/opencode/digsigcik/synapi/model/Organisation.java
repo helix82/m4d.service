@@ -46,6 +46,6 @@ public class Organisation {
     private String regionCode;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "organisation_id")
+    @JoinColumn(name = "organisation_id", updatable = false)
     private Set<MrpaRegistry> mrpaRegistryes = new HashSet<>();
 }
