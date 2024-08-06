@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import su.opencode.digsigcik.synapi.dto.PinCodeDto;
 import su.opencode.digsigcik.synapi.enums.HashAlgorithm;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.PinCode;
@@ -51,10 +52,9 @@ public class PinCodeController {
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
 
     })
-    @PostMapping(value = "/", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<PinCode> createPinCode(@RequestParam @Parameter(name = "login") final String login,
-                                                 @RequestParam @Parameter(name = "pinCode") final String pinCode) {
-        return createPinCodeWithCustomHash(HashAlgorithm.SHA256, login, pinCode);
+    @PostMapping(value = "save", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<PinCode> createPinCode(@RequestBody PinCodeDto pinCodeDto) {
+        return createPinCodeWithCustomHash(HashAlgorithm.SHA256, pinCodeDto.getLogin(), pinCodeDto.getPinCode());
     }
 
     @Operation(summary = CONTROLLER_PIN_CODE_CREATE_WITH_CUSTOM_HASH,
@@ -97,10 +97,9 @@ public class PinCodeController {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "/", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<PinCode> updatePinCode(@RequestParam @Parameter(name = "id") final Long id,
-                                                 @RequestParam @Parameter(name = "pinCode") String pinCode) {
-        return updatePinCodeWithCustomHash(HashAlgorithm.SHA256, id, pinCode);
+    @PutMapping(value = "update", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<PinCode> updatePinCode(@RequestBody PinCodeDto pinCodeDto) {
+        return updatePinCodeWithCustomHash(HashAlgorithm.SHA256, pinCodeDto.getId(), pinCodeDto.getPinCode());
 
     }
 
@@ -138,9 +137,9 @@ public class PinCodeController {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @DeleteMapping(value = "/", produces = "application/json; charset=UTF-8")
+    @DeleteMapping(value = "delete/{id}", produces = "application/json; charset=UTF-8")
     @Transactional
-    public ResponseEntity<?> deletePinCode(@RequestParam @Parameter(name = "id") Long id) {
+    public ResponseEntity<?> deletePinCode(@PathVariable @Parameter(name = "id") Long id) {
         if (id == null) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
