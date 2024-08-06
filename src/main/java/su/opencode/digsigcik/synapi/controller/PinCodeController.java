@@ -3,6 +3,7 @@ package su.opencode.digsigcik.synapi.controller;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,9 @@ import su.opencode.digsigcik.synapi.util.HashUtils;
 
 import javax.transaction.Transactional;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
@@ -49,7 +52,8 @@ public class PinCodeController {
 
     })
     @PostMapping(value = "/", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<PinCode> createPinCode(final String login, final String pinCode) {
+    public ResponseEntity<PinCode> createPinCode(@RequestParam @Parameter(name = "login") final String login,
+                                                 @RequestParam @Parameter(name = "pinCode") final String pinCode) {
         return createPinCodeWithCustomHash(HashAlgorithm.SHA256, login, pinCode);
     }
 
@@ -61,8 +65,9 @@ public class PinCodeController {
 
     })
     @PostMapping(value = "/customize", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<PinCode> createPinCodeWithCustomHash(HashAlgorithm hashAlgorithm, final String login,
-                                                               final String pinCode) {
+    public ResponseEntity<PinCode> createPinCodeWithCustomHash(@RequestParam @Parameter(name = "hashAlgorithm") HashAlgorithm hashAlgorithm,
+                                                               @RequestParam @Parameter(name = "login") final String login,
+                                                               @RequestParam @Parameter(name = "pinCode") final String pinCode) {
         if (login == null || pinCode == null || login.trim()
                 .isEmpty() || pinCode.trim()
                 .isEmpty()) {
@@ -93,8 +98,9 @@ public class PinCodeController {
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping(value = "/", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<PinCode> updatePinCode(final String login, String pinCode) {
-        return updatePinCodeWithCustomHash(HashAlgorithm.SHA256, login, pinCode);
+    public ResponseEntity<PinCode> updatePinCode(@RequestParam @Parameter(name = "id") final Long id,
+                                                 @RequestParam @Parameter(name = "pinCode") String pinCode) {
+        return updatePinCodeWithCustomHash(HashAlgorithm.SHA256, id, pinCode);
 
     }
 
@@ -105,14 +111,13 @@ public class PinCodeController {
             @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping(value = "/customize", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<PinCode> updatePinCodeWithCustomHash(HashAlgorithm hashAlgorithm, final String login,
-                                                               String pinCode) {
-        if (login == null || pinCode == null || login.trim()
-                .isEmpty() || pinCode.trim()
-                .isEmpty()) {
+    public ResponseEntity<PinCode> updatePinCodeWithCustomHash(@RequestParam @Parameter(name = "hashAlgorithm") HashAlgorithm hashAlgorithm,
+                                                               @RequestParam @Parameter(name = "id") final Long id,
+                                                               @RequestParam @Parameter(name = "pinCode") String pinCode) {
+        if (id == null || pinCode == null || pinCode.trim().isEmpty()) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
-        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(login);
+        UserProjection userProjection = userProjectionRepository.getUserProjectionById(id);
         if (userProjection != null) {
             PinCode pinCode1 = pinCodeRepository.getPinCodeByUserProjection(userProjection);
             if (pinCode1 != null) {
@@ -135,17 +140,19 @@ public class PinCodeController {
     })
     @DeleteMapping(value = "/", produces = "application/json; charset=UTF-8")
     @Transactional
-    public ResponseEntity<?> deletePinCode(String login) {
-        if (login == null || login.trim()
-                .isEmpty()) {
+    public ResponseEntity<?> deletePinCode(@RequestParam @Parameter(name = "id") Long id) {
+        if (id == null) {
             throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
         }
-        UserProjection userProjection = userProjectionRepository.getUserProjectionByLogin(login);
+
+        UserProjection userProjection = userProjectionRepository.getUserProjectionById(id);
         if (userProjection != null) {
             PinCode pinCode1 = pinCodeRepository.getPinCodeByUserProjection(userProjection);
             if (pinCode1 != null) {
                 pinCodeRepository.deletePinCodeByUserProjection(userProjection);
-                return new ResponseEntity<>("", HttpStatus.OK);
+                Map<String, String> body = new HashMap<>();
+                body.put("result", "true");
+                return new ResponseEntity<>(body, HttpStatus.OK);
             }
         }
         throw new BadRequestException(API_RESPONSE_CODE_400_MESSAGE);
