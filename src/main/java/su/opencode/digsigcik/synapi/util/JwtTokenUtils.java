@@ -5,23 +5,16 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import su.opencode.digsigcik.synapi.dto.JwtPayloadDto;
-import su.opencode.digsigcik.synapi.dto.PdDto;
-import su.opencode.digsigcik.synapi.dto.ResourceAccessDto;
-import su.opencode.digsigcik.synapi.dto.RolesDto;
-import su.opencode.digsigcik.synapi.dto.UserDto;
+import su.opencode.digsigcik.synapi.dto.*;
 import su.opencode.digsigcik.synapi.exception.UserAuthException;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constants.TOKEN_ERROR_MESSAGE;
@@ -76,11 +69,19 @@ public class JwtTokenUtils {
     }
 
     public String getUsername(String token) {
-        return getAllClaimsFromToken(token).getSubject();
+        return getAllClaimsFromToken(token).get("preferred_username", String.class);
     }
 
     public List<String> getRoles(String token) {
-        return CastUtils.castList(String.class, getAllClaimsFromToken(token).get("roles", List.class));
+        Claims claims = getAllClaimsFromToken(token);
+        Map<String, Map<String, List<String>>> resourceAccess = (Map<String, Map<String, List<String>>>) claims.get("resource_access");
+        if (resourceAccess != null && resourceAccess.containsKey("pd")) {
+            Map<String, List<String>> pd = resourceAccess.get("pd");
+            if (pd != null && pd.containsKey("roles")) {
+                return pd.get("roles");
+            }
+        }
+        return null;
     }
 
     private Claims getAllClaimsFromToken(String token) {
@@ -88,5 +89,9 @@ public class JwtTokenUtils {
                 .setSigningKey(secret)
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public static String getAuthenticationEmail(Authentication authentication) {
+        return (String) authentication.getPrincipal();
     }
 }

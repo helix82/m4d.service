@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
@@ -39,6 +40,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     private final RepresentativePassportRepository representativePassportRepository;
     private final CredentialRepository credentialRepository;
     private final MrpaRegistryCredentialRepository mrpaRegistryCredentialRepository;
+    private final PublicKeyUserCertificateService publicKeyUserCertificateService;
 
     @Override
     public List<MrpaRegistryWithFioListDto> findAllMrpaRegistry() {
@@ -88,7 +90,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
 
         //------------------- save representative and passport ----------------
         Representative existsRepresentative = this.representativeRepository.findRepresentativeByInn(representative.getInn());
-        if(existsRepresentative == null) {
+        if (existsRepresentative == null) {
             Representative respRepresentative;
             try {
                 respRepresentative = this.representativeRepository.save(representative);
@@ -145,7 +147,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
             credList = credentials;
         }
 
-        if(!credList.isEmpty()){
+        if (!credList.isEmpty()) {
             for (Long x : credList) {
                 MrpaRegistryCredential mrpaRegistryCredential = new MrpaRegistryCredential();
                 mrpaRegistryCredential.setMrpaRegistryId(mrpaRegistrySaved.getId());
@@ -270,7 +272,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
                     }
                 }
             }
-        } else if(credentials != null) {
+        } else if (credentials != null) {
             credList = credentials;
         }
 
@@ -318,6 +320,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         return this.mrpaRegistryRepository.findMrpaById(id);
     }
 
+    @Transactional
     @Override
     public MrpaRegistry updateMrpaRegistry(@NotNull MrpaRegistry mrpaRegistry) {
         throwExceptionIfRecordWithIdNotExist(mrpaRegistry, "update");
@@ -381,7 +384,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         List<Credential> credential = this.credentialRepository.findCredentialByMrpaId(mrpaId);
         List<MrpaRegistryWithFioDTO.CredentialDTO> credentialDTOList = new ArrayList<>();
 
-        for(Credential c : credential) {
+        for (Credential c : credential) {
             MrpaRegistryWithFioDTO.CredentialDTO credentialDTO = new MrpaRegistryWithFioDTO.CredentialDTO();
             credentialDTO.setId(c.getId());
             credentialDTO.setName(c.getName());
@@ -397,7 +400,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         List<Credential> credential = this.credentialRepository.findCredentialByMrpaId(mrpaId);
         List<MrpaRegistryFullDTO.CredentialDTO> credentialDTOList = new ArrayList<>();
 
-        for(Credential c : credential) {
+        for (Credential c : credential) {
             MrpaRegistryFullDTO.CredentialDTO credentialDTO = new MrpaRegistryFullDTO.CredentialDTO();
             credentialDTO.setId(c.getId());
             credentialDTO.setName(c.getName());
@@ -408,10 +411,10 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
-    public MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO){
+    public MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO) {
         DateFormat dateFormatShort = new SimpleDateFormat("yyyyMMdd");
         Date date = new Date();
-        String idFile = "ON_EMCHD_"+ dateFormatShort.format(date)+"_"+mrpaRegistryFullDTO.getGuid();
+        String idFile = "ON_EMCHD_" + dateFormatShort.format(date) + "_" + mrpaRegistryFullDTO.getGuid();
 
         MrpaRegistryFullXML mrpaRegistryFullXML = new MrpaRegistryFullXML();
         mrpaRegistryFullXML.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
@@ -426,9 +429,9 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         mrpas.setTypePowerAttorney("1");
         mrpas.setRetrust("3");
 
-        if(Objects.isNull(mrpaRegistryFullDTO.getInternalNumber())){
-            mrpas.setInternalNumber("б/н"); }
-        else mrpas.setInternalNumber(mrpaRegistryFullDTO.getInternalNumber());
+        if (Objects.isNull(mrpaRegistryFullDTO.getInternalNumber())) {
+            mrpas.setInternalNumber("б/н");
+        } else mrpas.setInternalNumber(mrpaRegistryFullDTO.getInternalNumber());
 
         mrpas.setGuid(mrpaRegistryFullDTO.getGuid());
 
@@ -506,7 +509,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         credentials.setImplCredential("1");
         credentials.setLossCredential("1");
         ArrayList<MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential> credentialList = new ArrayList<>();
-        for(MrpaRegistryFullDTO.CredentialDTO credentialDTO: mrpaRegistryFullDTO.credentials){
+        for (MrpaRegistryFullDTO.CredentialDTO credentialDTO : mrpaRegistryFullDTO.credentials) {
             MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential credential = new MrpaRegistryFullXML.Document.PowerAttorneys.Credentials.Credential();
             credential.setCode(credentialDTO.getCode());
             credential.setName(credentialDTO.getName());
@@ -518,7 +521,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         return mrpaRegistryFullXML;
     }
 
-    private static String convertDateIsoInstantToMchdXml(String date){
+    private static String convertDateIsoInstantToMchdXml(String date) {
         Date myDate = Date.from(Instant.parse(date));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         String formattedDate = formatter.format(myDate);
@@ -534,5 +537,23 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
         this.mrpaRegistryRepository.saveMrpaXml(id, xmlData, xmlFilename);
     }
 
+    /*
+     * Берет ИННы сертификатов пользователя, потом по ИНН через ID представителей
+     * и заявителей находит все МЧД пользователя (т.е. по всем ИНН (как в Представителях, так и в Заявителях) принадлежащим пользователю находит все МЧД)
+     *
+     * @param login Логин пользователя. Берется из JWT.
+     * @return Возвращает все МЧД пользователя
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public List<MrpaRegistryWithFioDTO> findAllMrpaRegistryByLogin(String login) {
+        return publicKeyUserCertificateService.findAllPublicKeyUserCertificateByLogin(login)
+                .stream()
+                .map(PublicKeyUserCertificate::getInn)
+                .distinct()
+                .flatMap(inn -> mrpaRegistryRepository.findMrpaRegistriesByPrincipalInnLikePrincipalAndRepresentative(inn).stream())
+                .distinct()
+                .collect(Collectors.toList());
+    }
 }
 

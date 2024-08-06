@@ -1,5 +1,7 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +11,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
@@ -24,7 +27,10 @@ import su.opencode.digsigcik.synapi.enums.StatusTypeEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.model.*;
 import su.opencode.digsigcik.synapi.model.m4d.M4dXml;
-import su.opencode.digsigcik.synapi.service.*;
+import su.opencode.digsigcik.synapi.service.ContainerService;
+import su.opencode.digsigcik.synapi.service.ContainerVerificationService;
+import su.opencode.digsigcik.synapi.service.MrpaRegistryCredentialService;
+import su.opencode.digsigcik.synapi.service.MrpaRegistryService;
 import su.opencode.digsigcik.synapi.util.DateUtils;
 import su.opencode.digsigcik.synapi.util.XMLUtil;
 import su.opencode.digsigcik.synapi.util.XmlValidator;
@@ -39,8 +45,10 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.*;
 
+import static org.springframework.http.ResponseEntity.noContent;
 import static su.opencode.digsigcik.synapi.controller.ApiControllerV1.createContainerSelector;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
+import static su.opencode.digsigcik.synapi.util.JwtTokenUtils.getAuthenticationEmail;
 import static su.opencode.digsigcik.synapi.util.XMLUtil.convertStringToDocument;
 
 @RestController
@@ -471,6 +479,24 @@ public class MrpaRegistryController {
         body.put("details", String.join(System.lineSeparator(),errs));
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY,
+            description = CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = API_RESPONSE_CODE_204_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "Authorization", value = "Bearer token for authorization", required = true, dataType = "string", paramType = "header")
+    })
+    @GetMapping(value = "/me",produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> findAllMrpaRegistryForUser(Authentication authentication){
+        List<MrpaRegistryWithFioDTO> listMrpaRegistry = mrpaRegistryService.findAllMrpaRegistryByLogin(getAuthenticationEmail(authentication));
+
+        return listMrpaRegistry.isEmpty() ?
+                noContent().build() :
+                new ResponseEntity<>(listMrpaRegistry, HttpStatus.OK);
     }
 
     private MrpaRegistry convertMrpaRegistryToEntity(MrpaRegistrySaveFullDto.MrpaRegistry mrpaRegistryDto){
