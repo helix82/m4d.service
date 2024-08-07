@@ -25,11 +25,14 @@ import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.model.RootCertificate;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 import su.opencode.digsigcik.synapi.repository.RootCertificateRepository;
+import su.opencode.digsigcik.synapi.service.CertificateService;
 import su.opencode.digsigcik.synapi.util.CertUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +48,8 @@ public class RootCertificateController {
     @Autowired
     private ProviderRepository providerRepository;
 
+    @Autowired
+    private CertificateService certificateService;
 
     public static Map certInfo(RootCertificate certificate) {
         HashMap<String, Object> ret = new HashMap<>();
@@ -114,19 +119,45 @@ public class RootCertificateController {
         return new ResponseEntity<>(certInfo(certificate), HttpStatus.OK);
     }
 
-    @Operation(summary = "Создать корневой сертификат",
+
+     @Operation(summary = "Создать корневой сертификат",
             description = "Создаёт корневой сертификат" )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Успешно создано" ),
+            @ApiResponse(code = 200, message = "Успешно создан" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
     @PostMapping("/root/certificates")
-    public ResponseEntity<Map> saveRootCertificate(@RequestBody RootCertificate certificate) {
-        RootCertificate _certificate  = new RootCertificate(certificate.getProvider(), certificate.getContent());
-        if(certificate.getDeleted()!=null)_certificate.setDeleted(certificate.getDeleted());
-        if(certificate.getRevoked()!=null)_certificate.setRevoked(certificate.getRevoked());
-        return new ResponseEntity<>(certInfo(rootCertificateRepository.save(_certificate)), HttpStatus.CREATED);
+    public ResponseEntity<Map> createRootCertificate(HttpServletRequest httpRequest,
+                                                     @RequestParam(value = "provider") @Parameter(name = "provider", description="Поставщик сертификата", example = "1", required = true) Long providerId,
+                                                     @RequestParam(value = "notAfter") @Parameter(name = "notAfter", description="Срок действия сертификата", example = "2024-09-01", required = true) String notAfter
+            ) {
+        try {
+            AcmeProvider _provider = providerRepository.findById(providerId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
+
+            Map data = httpRequest.getParameterMap();
+            data.remove("provider");
+            data.remove("notAfter");
+            HashMap<String, Object> out = new HashMap<>();
+            data.forEach((key, value) -> {
+                out.put((String)key, Arrays.stream((String[])value).findFirst().get());
+            });
+
+            byte[] certificateContent = certificateService.createRootCertificate(notAfter, out);
+
+            Map certInfo = CertUtils.certInfo(new String(certificateContent));
+
+            RootCertificate _certificate = new RootCertificate(_provider, certificateContent);
+            HashMap<String,Object> data1 = new HashMap<>();
+            data1.put("fileName", _provider.getName()+".crt");
+            _certificate.setData(data1);
+            return new ResponseEntity<>(certInfo(rootCertificateRepository.save(_certificate)), HttpStatus.CREATED);
+
+        } catch (CertificateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid certificate");
+        }
     }
+
 
     @Operation(summary = "Загрузить и создать корневой сертификат",
             description = "Загружает и создайт корневой сертификат" )

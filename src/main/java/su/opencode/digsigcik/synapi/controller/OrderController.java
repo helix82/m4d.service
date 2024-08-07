@@ -20,17 +20,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import su.opencode.digsigcik.synapi.dto.OrderDto;
+import su.opencode.digsigcik.synapi.model.AcmeDomain;
 import su.opencode.digsigcik.synapi.model.AcmeOrder;
+import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.repository.CertificateRepository;
 import su.opencode.digsigcik.synapi.repository.DomainRepository;
 import su.opencode.digsigcik.synapi.repository.OrderRepository;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
 import su.opencode.digsigcik.synapi.service.AcmeService;
+import su.opencode.digsigcik.synapi.service.CertificateService;
+import su.opencode.digsigcik.synapi.util.DateUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,10 +57,14 @@ public class OrderController {
     @Autowired
     private AcmeService acmeService;
 
+    @Autowired
+    private CertificateService certificateService;
+
     @Operation(summary = "Получить список заявок указанного домена",
             description = "Возвращает список заявок указанного домена" )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Успешно получено" ),
+
             @ApiResponse(code = 404, message = "Not found" )
     })
     @GetMapping("/domains/{domainId}/orders")
@@ -137,7 +147,35 @@ public class OrderController {
         data.forEach((key, value) -> {
             out.put((String)key, Arrays.stream((String[])value).findFirst().get());
         });
-        return acmeService.certificateOrder(httpSession, domain, notAfter, providerId, out);
+        AcmeProvider acmeProvider = providerRepository.findById(providerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
+
+        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domain);
+        if(acmeDomain==null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with name = " + domain);
+        }
+
+        if(acmeProvider.getAutomatedRelease()!=null && acmeProvider.getAutomatedRelease()) {
+            return acmeService.certificateOrder(httpSession, domain, notAfter, providerId, out);
+        } else {
+            Date notAfterDate = null;
+            try {
+                notAfterDate = DateUtils.parse(notAfter);
+            } catch (ParseException e) {
+                notAfterDate = new Date();
+            }
+
+            AcmeOrder acmeOrder = new AcmeOrder(acmeDomain);
+            acmeOrder.setProvider(acmeProvider);
+            acmeOrder.setDomain(acmeDomain);
+            acmeOrder.setNotAfter(notAfterDate);
+            acmeOrder.setChallengeToken(acmeDomain.getDomainUrl() + ".csr");
+            acmeOrder.setChallengeContent(new String(certificateService.certificateOrderCSR(domain, out)));
+            acmeOrder.setData(out);
+            orderRepository.save(acmeOrder);
+            return new ResponseEntity<>(acmeService.orderInfo(acmeOrder), HttpStatus.OK);
+        }
+
     }
 
     @Operation(summary = "Сформировать заявку на выпуск нового сертификата (json)",
@@ -154,7 +192,35 @@ public class OrderController {
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order format");
         }
-        return acmeService.certificateOrder(httpSession, order.getDomain(), order.getNotAfter(), order.getProvider(), order.getData());
+        Long providerId = order.getProvider();
+        String domain = order.getDomain();
+        AcmeProvider acmeProvider = providerRepository.findById(providerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
+
+        AcmeDomain acmeDomain= domainRepository.findDomainByDomainUrl(domain);
+        if(acmeDomain==null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeDomain with name = " + domain);
+        }
+        if(acmeProvider.getAutomatedRelease()!=null && acmeProvider.getAutomatedRelease()) {
+            return acmeService.certificateOrder(httpSession, order.getDomain(), order.getNotAfter(), order.getProvider(), order.getData());
+        } else {
+            Date notAfterDate = null;
+            try {
+                notAfterDate = DateUtils.parse(order.getNotAfter());
+            } catch (ParseException e) {
+                notAfterDate = new Date();
+            }
+
+            AcmeOrder acmeOrder = new AcmeOrder(acmeDomain);
+            acmeOrder.setProvider(acmeProvider);
+            acmeOrder.setDomain(acmeDomain);
+            acmeOrder.setNotAfter(notAfterDate);
+            acmeOrder.setChallengeToken(acmeDomain.getDomainUrl() + ".csr");
+            acmeOrder.setChallengeContent(new String(certificateService.certificateOrderCSR(domain, order.getData())));
+            acmeOrder.setData(order.getData());
+            orderRepository.save(acmeOrder);
+            return new ResponseEntity<>(acmeService.orderInfo(acmeOrder), HttpStatus.OK);
+        }
     }
 
 
