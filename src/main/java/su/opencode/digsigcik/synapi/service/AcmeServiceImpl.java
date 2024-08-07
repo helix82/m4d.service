@@ -224,7 +224,7 @@ public class AcmeServiceImpl implements AcmeService {
         }
     }
 
-    public ResponseEntity<Map> certificate(HttpSession httpSession,String domain, String notAfter, Long providerId, Map<String, Object> data) {
+    public ResponseEntity<Map> certificate(HttpSession httpSession, String domain, String notAfter, Long providerId, Map<String, Object> data) {
         HashMap<String, String> ret = new HashMap<>();
         AcmeAccount acmeAccount = accountRepository.findAccountByExternalKey(ACME_ACCOUNT_KEY);
         if(acmeAccount==null) {
