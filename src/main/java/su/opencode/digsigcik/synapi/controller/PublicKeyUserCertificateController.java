@@ -366,7 +366,8 @@ public class PublicKeyUserCertificateController {
                 if (s.startsWith("GIVENNAME=")) {
                     givenname = s.substring(10);
                 }
-                if (s.startsWith("OID.1.2.643.3.131.1.1=")) {
+                //TODO: @helix82 Временным решением читаем инн субъекта из email, если там нет нужных данных тогда читаем как положено из OID с инн
+                if(s.startsWith("OID.1.2.643.3.131.1.1=")){
                     String hexStr = s.substring(27);
                     StringBuilder output = new StringBuilder();
                     for (int i = 0; i < hexStr.length(); i += 2) {
@@ -374,6 +375,13 @@ public class PublicKeyUserCertificateController {
                         output.append((char) Integer.parseInt(str1, 16));
                     }
                     inn = output.toString();
+                }
+                if(s.startsWith("EMAILADDRESS=")){
+                    var innEmail = s.substring(13,25);
+                    try {
+                        Long.parseLong(innEmail);
+                        inn = innEmail;
+                    } catch (NumberFormatException ignored) {}
                 }
             }
         }
