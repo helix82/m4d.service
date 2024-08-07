@@ -6,7 +6,7 @@ package su.opencode.digsigcik.synapi.util;
 
 public interface Constants {
     String API_V_1_SES_FILES = "/api/v1/sesFiles";
-    String GET_CONTAINER= "/getContainer";
+    String GET_CONTAINER = "/getContainer";
     // namespaces
     String XML_ELEMENT_CA = "УдостоверяющийЦентр";
     String XML_ELEMENT_ACC = "АккредитованныеУдостоверяющиеЦентры";
@@ -131,6 +131,8 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_DOWNLOAD_SUMMARY = "Выгрузить МЧД в XML-файл";
     String CONTROLLER_MRPA_DOWNLOAD_DESCRIPTION = "Возвращает XML-структуру";
+    String CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY = "Получить список МЧД пользователя";
+    String CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список МЧД пользователя";
 
     String CONTROLLER_CA_TYPE_INPUT_AUTO = "Автоматически";
     String CONTROLLER_CA_TYPE_INPUT_MANUALLY = "Вручную";
@@ -265,6 +267,12 @@ public interface Constants {
     String CONTROLLER_PUBLIC_KEY_STATEMENT_CHECK_PROCESSED_DESCRIPTION = "Возвращает измененное заявление";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_DOWNLOAD_TEMPLATE_SUMMARY = "Скачать шаблон заявления по ИД";
     String CONTROLLER_PUBLIC_KEY_STATEMENT_DOWNLOAD_TEMPLATE_DESCRIPTION = "Выгружает на локальный компьютер шаблон заявления";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_FOR_USER_SUMMARY = "Получить список заявлений пользователя";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список заявлений пользователя";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_SAVE_FOR_USER_SUMMARY = "Пользователь сохраняет заявление";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_UPDATE_FOR_USER_SUMMARY = "Пользователь изменяет заявление";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_DELETE_FOR_USER_SUMMARY = "Пользователь удаляет свое заявление по ИД";
+    String CONTROLLER_PUBLIC_KEY_STATEMENT_FIND_BY_ID_FOR_USER_SUMMARY = "Пользователь получает свое заявление по ИД";
 
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_SUMMARY = "Получить список сертификатов пользователей";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_DESCRIPTION = "Возвращает список сертификатов пользователей";
@@ -278,8 +286,19 @@ public interface Constants {
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_UPDATE_DESCRIPTION = "Возвращает измененный сертификат пользователя";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_DELETE_SUMMARY = "Пометить как удаленный сертификат пользователя по ИД";
     String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_ALL_FOR_USER_SUMMARY = "Получить список сертификатов для пользователя";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_FOR_USER_ALL_DESCRIPTION = "Возвращает список сертификатов для пользователя";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_SAVE_FOR_USER_SUMMARY = "Сохранить сертификат пользователя самим пользователем";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_UPDATE_FOR_USER_SUMMARY = "Изменить сертификат пользователя самим пользователем";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_DELETE_FOR_USER_SUMMARY = "Пользователь помечает сертификат как удаленный по ИД";
+    String DELETE_FOR_USER_DESCRIPTION = "Возвращает 204 статус при удачном удалении";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_BY_FOR_USER_ID_SUMMARY = "Пользователь получает свой сертификат по ИД";
+    String CONTROLLER_PUBLIC_KEY_USER_CERTIFICATE_FIND_BY_FOR_USER_ID_DESCRIPTION = "Возвращает сертификат пользователя по ИД";
+
 
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
+    String API_RESPONSE_CODE_201_MESSAGE = "Создано";
+    String API_RESPONSE_CODE_204_MESSAGE = "Нет контента";
     String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
 
@@ -324,6 +343,9 @@ public interface Constants {
     String TEMPLATE_IS_NULL = "Не достаточно данных для выгрузки шаблона заявления";
     String REVOKED_CERTIFICATE_UPLOAD_EXISTS = "Загружаемый список отозванных сертификатов уже существует в базе!";
     String REVOKED_CERTIFICATE_UPLOAD_WRONG_FORMAT = "Формат выбранного файла НЕ .crl!";
+    String CERTIFICATE_FAILED_TO_SAVE = "Ошибка при сохранении сертификата";
+    String SETTINGS_ENTITY_FAILED_TO_SAVE = "Ошибка при сохранении в хранилище. Скорее всего такой ключ уже существует.";
+    String SETTINGS_ENTITY_FAILED_TO_FOUND = "Такого значения по ключу для данного пользователя не существует";
 
     String CONTROLLER_PIN_CODE_GET_ALL = "Возвращает хэши пинкодов всех пользователей";
     String CONTROLLER_PIN_CODE_CREATE = "Создает пинкод для пользователя";
@@ -335,7 +357,18 @@ public interface Constants {
     String CONTROLLER_SIMPLE_SIGNATURE_CONTAINER_CREATE = "Создает контейнер с файлами подписанными простой электронной подписью";
     String CONTROLLER_ENCRYPTION_KEY_CREATE = "Создает пару закрытого и открытого ключа для пользователя";
     String CONTROLLER_ENCRYPTION_KEY_DELETE = "Удаляет пару закрытого и открытого ключа для пользователя";
-    String CONTROLLER_ENCRYPTION_KEY_CREATE_WITH_CUSTOM_ALG  = "Создает пару закрытого и открытого ключа для пользователя c указанием алгоритма";
+    String CONTROLLER_ENCRYPTION_KEY_CREATE_WITH_CUSTOM_ALG = "Создает пару закрытого и открытого ключа для пользователя c указанием алгоритма";
+
+    String CONTROLLER_MY_STORAGE_FIND_ALL_SUMMARY = "Получить все данные пользователя";
+    String CONTROLLER_MY_STORAGEE_FIND_ALL_DESCRIPTION = "Возвращает ключи и их данные";
+    String CONTROLLER_MY_STORAGE_FIND_BY_ID_SUMMARY = "Получить данные из хранилища для пользователя по ключу";
+    String CONTROLLER_MY_STORAGEE_FIND_BY_ID_DESCRIPTION = "Возвращает ключ и данные";
+    String CONTROLLER_MY_STORAGEE_SAVE_FOR_USER_SUMMARY = "Пользователь сохраняет данные и ключ";
+    String CONTROLLER_MY_STORAGEE_SAVE_FOR_USER_DESCRIPTION = "Возвращает созданные данные и ключ пользователя";
+    String CONTROLLER_MY_STORAGEE_UPDATE_FOR_USER_SUMMARY = "Пользователь обновляет данные по ключу";
+    String CONTROLLER_MY_STORAGEE_UPDATE_FOR_USER_DESCRIPTION = "Возвращает обновленные данные пользователя";
+    String CONTROLLER_MY_STORAGEE_DELETE_SUMMARY = "Удалить данные по ключу";
+    String CONTROLLER_MY_STORAGEE_DELETE_DESCRIPTION = "Возвращает 204 статус при удачном удалении";
 
     String CONTROLLER_SIGNATURE_VERIFY = "Проверяет электронную подпись";
     String PIN_CODE_ERROR_MESSAGE = "PIN code incorrect!";
@@ -348,8 +381,8 @@ public interface Constants {
     String DSCP_DIRECTORY_PATH = "/files/dscp/";
     String SOURCE_DIRECTORY_PATH = "/files/source/";
 
-    String CONTROLLER_ABOUT_ME_SUMMARY  = "Вывести информацию о текущем пользователе";
-    String CONTROLLER_ABOUT_ME_DESCRIPTION  = "Возвращает информацию о текущем пользователе";
+    String CONTROLLER_ABOUT_ME_SUMMARY = "Вывести информацию о текущем пользователе";
+    String CONTROLLER_ABOUT_ME_DESCRIPTION = "Возвращает информацию о текущем пользователе";
 
     String CRL_SIGN_VERIFICATION_POSITIVE = "Сертификат подписи действителен: не был найден в СОС";
     String CRL_SIGN_VERIFICATION_NEGATIVE = "Сертификат подписи недействителен: найден в СОС";

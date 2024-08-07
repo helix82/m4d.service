@@ -23,4 +23,6 @@ public class SettingsEntity {
     @Column(name = "setting_value")
     private String value;
 
+    @Column(name = "login", columnDefinition = "VARCHAR(255)")
+    private String login;
 }

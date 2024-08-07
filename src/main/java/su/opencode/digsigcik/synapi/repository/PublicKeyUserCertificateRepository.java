@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import su.opencode.digsigcik.synapi.model.PublicKeyUserCertificate;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PublicKeyUserCertificateRepository extends JpaRepository<PublicKeyUserCertificate, Long> {
@@ -24,4 +25,5 @@ public interface PublicKeyUserCertificateRepository extends JpaRepository<Public
 
     @Query("SELECT uc from PublicKeyUserCertificate uc where uc.deleted=false and uc.login=?1")
     List<PublicKeyUserCertificate> findPublicKeyUserCertificateByLogin(String login);
+    Optional<PublicKeyUserCertificate> findPublicKeyUserCertificateByIdAndLoginAndDeleted(Long id,String login,Boolean deleted);
 }

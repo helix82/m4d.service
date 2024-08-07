@@ -1,5 +1,9 @@
 package su.opencode.digsigcik.synapi.service;
 
+import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateAllResponseDto;
+import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateRequestDto;
+import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateResponseDto;
+import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateUpdateRequestDto;
 import su.opencode.digsigcik.synapi.model.PublicKeyUserCertificate;
 
 import javax.validation.constraints.NotNull;
@@ -14,4 +18,9 @@ public interface PublicKeyUserCertificateService {
     PublicKeyUserCertificate updatePublicKeyUserCertificate(@NotNull PublicKeyUserCertificate publicKeyUserCertificate);
     Integer countPublicKeyUserCertificateByImprint(String imprint);
     void checkQualifications() throws IOException;
+    PublicKeyUserCertificateResponseDto createForUser(PublicKeyUserCertificateRequestDto dto, String login);
+    PublicKeyUserCertificateResponseDto updatePublicKeyUserCertificateForUserById(@NotNull PublicKeyUserCertificateUpdateRequestDto dto, Long id, String login);
+    boolean deletePublicKeyUserCertificateForUserById (Long id, String login);
+    PublicKeyUserCertificateResponseDto findPublicKeyUserCertificateForUserById(Long id, String login);
+    List<PublicKeyUserCertificateAllResponseDto> findAllPublicKeyUserCertificateAllDtoByLogin(String login);
 }

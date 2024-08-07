@@ -2,6 +2,7 @@ package su.opencode.digsigcik.synapi.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -63,5 +64,11 @@ public class DateUtils {
     public static String formatDate(LocalDateTime operationDate) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss.SSSSSSSSS");
         return operationDate.format(formatter);
+    }
+
+    public static String getCreatedDate(){
+        Instant instant = Instant.now();
+        int nano = instant.getNano();
+        return instant.minusNanos(nano).toString();
     }
 }

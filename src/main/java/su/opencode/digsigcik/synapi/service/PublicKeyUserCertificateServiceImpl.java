@@ -10,15 +10,25 @@ import org.bouncycastle.asn1.x509.Extension;
 import org.cryptacular.StreamException;
 import org.cryptacular.util.CertUtil;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.CryptoPro.ssl.util.HexUtil;
+import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateAllResponseDto;
+import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateRequestDto;
+import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateResponseDto;
+import su.opencode.digsigcik.synapi.dto.PublicKeyUserCertificateUpdateRequestDto;
+import su.opencode.digsigcik.synapi.enums.StatusStatementEnum;
 import su.opencode.digsigcik.synapi.enums.TypeUserCertificateEnum;
 import su.opencode.digsigcik.synapi.exception.BadRequestException;
 import su.opencode.digsigcik.synapi.exception.MchdException;
+import su.opencode.digsigcik.synapi.mapper.PublicKeyUserCertificateMapper;
+import su.opencode.digsigcik.synapi.model.PublicKeyStatement;
 import su.opencode.digsigcik.synapi.model.PublicKeyUserCertificate;
 import su.opencode.digsigcik.synapi.model.ca.CertificateData;
 import su.opencode.digsigcik.synapi.repository.PublicKeyUserCertificateRepository;
 
+import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -27,16 +37,22 @@ import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @Service
+@Transactional
 @Slf4j
 @Primary
 @RequiredArgsConstructor
-public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertificateService{
+public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertificateService {
     private final PublicKeyUserCertificateRepository repository;
     private final CertificateDataService certificateDataService;
+    private final PublicKeyUserCertificateMapper publicKeyUserCertificateMapper;
+    private final PublicKeyStatementService statementService;
+    private final static String UPDATE_FAIL = "Can`t update. User certificate with id=%d %s";
 
     @Override
     public List<PublicKeyUserCertificate> findAllPublicKeyUserCertificate() {
@@ -71,24 +87,24 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
 
         PublicKeyUserCertificate existPublicKeyUserCertificate = this.repository.findPublicKeyUserCertificateById(publicKeyUserCertificateId);
         if (existPublicKeyUserCertificate == null) {
-            throw new MchdException(String.format("Can`t update. User certificate with id=%d %s", publicKeyUserCertificateId, NOT_FOUND));
+            throw new MchdException(String.format(UPDATE_FAIL, publicKeyUserCertificateId, NOT_FOUND));
         }
         return this.repository.save(publicKeyUserCertificate);
     }
 
     @Override
-    public Integer countPublicKeyUserCertificateByImprint(String imprint){
+    public Integer countPublicKeyUserCertificateByImprint(String imprint) {
         return this.repository.countPublicKeyUserCertificateByImprint(imprint);
     }
 
     public void checkQualifications() throws IOException {
         List<PublicKeyUserCertificate> publicKeyUserCertificateList = repository.findAll();
-        for(PublicKeyUserCertificate c: publicKeyUserCertificateList){
+        for (PublicKeyUserCertificate c : publicKeyUserCertificateList) {
             TypeUserCertificateEnum typeCert = TypeUserCertificateEnum.NOT_QUALIFIED;
             var substr = c.getIssuerWho().split(", ");
             String cnIssuer = "";
-            for(String s : substr) {
-                if(s.length()>2) {
+            for (String s : substr) {
+                if (s.length() > 2) {
                     if (s.startsWith("CN=")) {
                         cnIssuer = s.substring(3);
                     }
@@ -97,7 +113,7 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
 
             String content = new String(c.getCertificate().getBytes(), StandardCharsets.UTF_8);
             X509Certificate certificate;
-            if(!content.startsWith("-----BEGIN CERTIFICATE-----")){
+            if (!content.startsWith("-----BEGIN CERTIFICATE-----")) {
                 try {
                     String certHeader = "-----BEGIN CERTIFICATE-----\r\n";
                     String certFooter = "\r\n-----END CERTIFICATE-----";
@@ -132,10 +148,10 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
             List<CertificateData> certificateDataList;
             try {
                 certificateDataList = certificateDataService.findCertificateDataByKeyId(keyIdIssuer);
-                if(certificateDataList.size()>1 && aki1.getAuthorityCertSerialNumber() != null){
-                    String serialNumberIssuer = HexUtil.toString(aki1.getAuthorityCertSerialNumber().toByteArray()).replace(":","");
-                    for(CertificateData certificateData: certificateDataList) {
-                        if(certificateData.getSerialNumber().equalsIgnoreCase(serialNumberIssuer)) {
+                if (certificateDataList.size() > 1 && aki1.getAuthorityCertSerialNumber() != null) {
+                    String serialNumberIssuer = HexUtil.toString(aki1.getAuthorityCertSerialNumber().toByteArray()).replace(":", "");
+                    for (CertificateData certificateData : certificateDataList) {
+                        if (certificateData.getSerialNumber().equalsIgnoreCase(serialNumberIssuer)) {
                             var certIssuer = certificateData.getIssuedTo().replace("\\", "").replace("\"", "").toLowerCase();
                             var cnIssuerLC = cnIssuer.replace("\\", "").replace("\"", "").toLowerCase();
                             if (certIssuer.equals(cnIssuerLC)) {
@@ -143,8 +159,8 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
                             }
                         }
                     }
-                } else if (certificateDataList.size() == 1){
-                    for(CertificateData certificateData: certificateDataList) {
+                } else if (certificateDataList.size() == 1) {
+                    for (CertificateData certificateData : certificateDataList) {
                         var certIssuer = certificateData.getIssuedTo().replace("\\", "").replace("\"", "").toLowerCase();
                         var cnIssuerLC = cnIssuer.replace("\\", "").replace("\"", "").toLowerCase();
                         if (certIssuer.equals(cnIssuerLC)) {
@@ -155,15 +171,90 @@ public class PublicKeyUserCertificateServiceImpl implements PublicKeyUserCertifi
             } catch (ConstraintViolationException e) {
                 typeCert = TypeUserCertificateEnum.NOT_QUALIFIED;
             }
-            if(!c.getType().equals(typeCert)){
+            if (!c.getType().equals(typeCert)) {
                 c.setType(typeCert);
                 try {
                     repository.save(c);
                 } catch (ConstraintViolationException e) {
-                    log.warn("Не удалось изменить тип квалификации сертификата пользователя с ID=" + c.getId() + ": {}",e.getMessage());
+                    log.warn("Не удалось изменить тип квалификации сертификата пользователя с ID=" + c.getId() + ": {}", e.getMessage());
                 }
             }
         }
     }
 
+    @Override
+    public PublicKeyUserCertificateResponseDto createForUser(PublicKeyUserCertificateRequestDto dto, String login) {
+        validateExistsCerts(dto.getImprint());
+        return Optional.of(dto)
+                .map(dto1 -> publicKeyUserCertificateMapper.mapToEntity(dto1, login))
+                .map(entity -> {
+                    PublicKeyUserCertificate savedEntity = repository.save(entity);
+                    updatePublicKetStatementStatus(savedEntity);
+                    return savedEntity;
+                })
+                .map(publicKeyUserCertificateMapper::mapToResponseDto)
+                .orElseThrow(() -> new DataIntegrityViolationException(CERTIFICATE_FAILED_TO_SAVE));
+    }
+
+    @Override
+    public PublicKeyUserCertificateResponseDto updatePublicKeyUserCertificateForUserById(@NotNull PublicKeyUserCertificateUpdateRequestDto dto, Long id, String login) {
+        return repository.findPublicKeyUserCertificateByIdAndLoginAndDeleted(id, login, false)
+                .map(entity -> publicKeyUserCertificateMapper.updateMap(entity, dto))
+                .map(repository::saveAndFlush)
+                .map(publicKeyUserCertificateMapper::mapToResponseDto)
+                .orElseThrow(() -> new EntityNotFoundException(String.format(UPDATE_FAIL, id, NOT_FOUND)));
+    }
+
+    @Override
+    public boolean deletePublicKeyUserCertificateForUserById(Long id, String login) {
+        return repository.findPublicKeyUserCertificateByIdAndLoginAndDeleted(id, login, false)
+                .map(entity -> {
+                    entity.setDeleted(true);
+                    repository.saveAndFlush(entity);
+                    return true;
+                }).orElse(false);
+    }
+
+    @Override
+    public PublicKeyUserCertificateResponseDto findPublicKeyUserCertificateForUserById(Long id, String login) {
+        return repository.findPublicKeyUserCertificateByIdAndLoginAndDeleted(id,login,false)
+                .map(publicKeyUserCertificateMapper::mapToResponseDto)
+                .orElseThrow(()->new EntityNotFoundException(NOT_FOUND));
+    }
+
+    @Override
+    public List<PublicKeyUserCertificateAllResponseDto> findAllPublicKeyUserCertificateAllDtoByLogin(String login) {
+        return repository.findPublicKeyUserCertificateByLogin(login)
+                .stream()
+                .map(publicKeyUserCertificateMapper::mapToAllResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    public void validateExistsCerts(String imprint) {
+        var existsCert = countPublicKeyUserCertificateByImprint(imprint);
+        if (existsCert > 0) {
+            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_UPLOAD_EXISTS);
+        }
+    }
+
+    private void updatePublicKetStatementStatus(PublicKeyUserCertificate entity) {
+        try {
+            if (entity.getStatementId() != null) {
+                PublicKeyStatement pkStatement;
+                try {
+                    pkStatement = statementService.findByPublicKeyStatementId(entity.getStatementId());
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+                }
+                pkStatement.setStatus(StatusStatementEnum.PROCESSED);
+                try {
+                    statementService.updatePublicKeyStatement(pkStatement);
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(PUBLIC_KEY_STATEMENT_IS_NULL);
+                }
+            }
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NULL);
+        }
+    }
 }
