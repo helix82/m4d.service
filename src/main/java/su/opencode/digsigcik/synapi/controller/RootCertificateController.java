@@ -1,5 +1,7 @@
 package su.opencode.digsigcik.synapi.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,6 +10,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import su.opencode.digsigcik.synapi.dto.OrderDto;
 import su.opencode.digsigcik.synapi.model.AcmeProvider;
 import su.opencode.digsigcik.synapi.model.RootCertificate;
 import su.opencode.digsigcik.synapi.repository.ProviderRepository;
@@ -126,7 +130,7 @@ public class RootCertificateController {
             @ApiResponse(code = 200, message = "Успешно создан" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @PostMapping("/root/certificates")
+    @PostMapping(value = "/root/certificates", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map> createRootCertificate(HttpServletRequest httpRequest,
                                                      @RequestParam(value = "provider") @Parameter(name = "provider", description="Поставщик сертификата", example = "1", required = true) Long providerId,
                                                      @RequestParam(value = "notAfter") @Parameter(name = "notAfter", description="Срок действия сертификата", example = "2024-09-01", required = true) String notAfter
@@ -158,6 +162,39 @@ public class RootCertificateController {
         }
     }
 
+    @Operation(summary = "Создать корневой сертификат (json)",
+            description = "Создаёт корневой сертификат (json)" )
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Успешно создан" ),
+            @ApiResponse(code = 404, message = "Not found" )
+    })
+    @PostMapping(value = "/root/certificates", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map> createRootCertificateJson(@RequestBody String json) {
+        OrderDto order = null;
+        try {
+            order = new ObjectMapper().readValue(json, OrderDto.class);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid order format");
+        }
+        Long providerId = order.getProvider();
+        try {
+            AcmeProvider _provider = providerRepository.findById(providerId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found AcmeProvider with id = " + providerId));
+
+            byte[] certificateContent = certificateService.createRootCertificate(order.getNotAfter(), order.getData());
+
+            Map certInfo = CertUtils.certInfo(new String(certificateContent));
+
+            RootCertificate _certificate = new RootCertificate(_provider, certificateContent);
+            HashMap<String,Object> data1 = new HashMap<>();
+            data1.put("fileName", _provider.getName()+".crt");
+            _certificate.setData(data1);
+            return new ResponseEntity<>(certInfo(rootCertificateRepository.save(_certificate)), HttpStatus.CREATED);
+
+        } catch (CertificateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid certificate");
+        }
+    }
 
     @Operation(summary = "Загрузить и создать корневой сертификат",
             description = "Загружает и создайт корневой сертификат" )
