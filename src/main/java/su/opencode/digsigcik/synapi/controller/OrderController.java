@@ -184,7 +184,7 @@ public class OrderController {
             @ApiResponse(code = 200, message = "Заявка успешно сформирована" ),
             @ApiResponse(code = 404, message = "Not found" )
     })
-    @PostMapping(value = "/orders",consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/orders", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map> createOrderJson(HttpSession httpSession, @RequestBody String json ) {
         OrderDto order = null;
         try {
