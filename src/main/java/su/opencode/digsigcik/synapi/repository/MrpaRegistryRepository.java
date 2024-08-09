@@ -25,8 +25,8 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
     MrpaRegistryWithFioDTO findMrpaRegistryById(Long id);
 
     @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioListDto(mr.id, mr.guid, " +
-            "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.mrpaXmlFilename, mr.organisationId, mr.principalId, mr.representativeId,"
-            + "p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
+            "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.mrpaXmlFilename, mr.organisationId,"
+            + " p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic)"
             + " from MrpaRegistry mr"
             + " left join Principal p on p.id=mr.principalId"
             + " left join Representative r on r.id=mr.representativeId ")
