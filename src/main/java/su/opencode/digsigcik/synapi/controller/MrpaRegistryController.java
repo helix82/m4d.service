@@ -7,6 +7,7 @@ import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.apache.commons.io.FilenameUtils;
+import org.joda.time.Instant;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -95,7 +96,7 @@ public class MrpaRegistryController {
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "save",produces = "application/json; charset=UTF-8" )
-    public ResponseEntity<?> saveMrpaRegistry(@RequestBody MrpaRegistrySaveWithCredentialDTO mrpaRegistrySaveWithCredentialDTO) throws ParseException, JAXBException {
+    public ResponseEntity<?> saveMrpaRegistry(@RequestBody MrpaRegistrySaveWithCredentialDTO mrpaRegistrySaveWithCredentialDTO) {
         MrpaRegistry mrpaRegistry = new MrpaRegistry();
         mrpaRegistry.setStatus(StatusTypeEnum.NOT_SIGNED);
         mrpaRegistry.setOrganisationId(mrpaRegistrySaveWithCredentialDTO.getOrganisationId());
@@ -104,6 +105,7 @@ public class MrpaRegistryController {
         mrpaRegistry.setStartDate(mrpaRegistrySaveWithCredentialDTO.getStartDate());
         mrpaRegistry.setEndDate(mrpaRegistrySaveWithCredentialDTO.getEndDate());
         mrpaRegistry.setGuid();
+        mrpaRegistry.setCreateDate(String.valueOf(Instant.now()));
         MrpaRegistry mrpaRegistrySaved;
         try {
             mrpaRegistrySaved = this.mrpaRegistryService.saveMrpaRegistry(mrpaRegistry);
@@ -124,19 +126,6 @@ public class MrpaRegistryController {
             }
             System.out.println(mrpaRegistryCredentialSaved);
         }
-//--- Generate and save XML M4D ---
-        MrpaRegistryFullDTO mrpaRegistryFullDTO = this.mrpaRegistryService.findMrpaRegistryFullById(mrpaRegistrySaved.getId());
-        mrpaRegistryFullDTO.credentials = this.mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistrySaved.getId());
-        MrpaRegistryFullXML mrpaRegistryFullXML = this.mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
-        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
-        try {
-            this.mrpaRegistryService.saveMrpaXml(mrpaRegistrySaved.getId(), xmlString, mrpaRegistryFullXML.getIdFile());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(MRPA_REGISTRY_XML_IS_NULL);
-        }
-//--------------------
-
-
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = this.mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         mrpaRegistryWithFioDTOS.credentials = this.mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistryWithFioDTOS.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
@@ -154,6 +143,7 @@ public class MrpaRegistryController {
         MrpaRegistry mrpaRegistry = convertMrpaRegistryToEntity(mrpaRegistrySaveFullDto.mrpaRegistry);
         mrpaRegistry.setStatus(StatusTypeEnum.NOT_SIGNED);
         mrpaRegistry.setGuid();
+        mrpaRegistry.setCreateDate(String.valueOf(Instant.now()));
         Organisation organisation = convertOrganisationToEntity(mrpaRegistrySaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(mrpaRegistrySaveFullDto.principal);
         Representative representative = convertRepresentativeToEntity(mrpaRegistrySaveFullDto.representative);
@@ -164,19 +154,6 @@ public class MrpaRegistryController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-
-        //--- Generate and save XML M4D ---
-        MrpaRegistryFullDTO mrpaRegistryFullDTO = this.mrpaRegistryService.findMrpaRegistryFullById(mrpaRegistrySaved.getId());
-        mrpaRegistryFullDTO.credentials = this.mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistrySaved.getId());
-        MrpaRegistryFullXML mrpaRegistryFullXML = this.mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
-        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
-        try {
-            this.mrpaRegistryService.saveMrpaXml(mrpaRegistrySaved.getId(), xmlString, mrpaRegistryFullXML.getIdFile());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(MRPA_REGISTRY_XML_IS_NULL);
-        }
-        //--------------------
-
         MrpaRegistryWithFioDTO mrpaRegistryWithFioDTOS = this.mrpaRegistryService.findByMrpaRegistryId(mrpaRegistrySaved.getId());
         mrpaRegistryWithFioDTOS.credentials = this.mrpaRegistryService.getCredentialByMrpaRegistryId(mrpaRegistrySaved.getId());
         return new ResponseEntity<>(mrpaRegistryWithFioDTOS, HttpStatus.OK);
@@ -190,14 +167,22 @@ public class MrpaRegistryController {
     })
     @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id) {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id) throws ParseException, JAXBException {
         MrpaRegistryFullDTO mrpaRegistryFind;
         try {
             mrpaRegistryFind = this.mrpaRegistryService.findMrpaRegistryFullById(id);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
+
+        MrpaRegistryFullDTO mrpaRegistryFullDTO = this.mrpaRegistryService.findMrpaRegistryFullById(mrpaRegistryFind.getId());
+        mrpaRegistryFullDTO.credentials = this.mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistryFind.getId());
+        MrpaRegistryFullXML mrpaRegistryFullXML = this.mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
+        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
+
+        mrpaRegistryFind.setMrpaXml(xmlString);
         mrpaRegistryFind.credentials = this.mrpaRegistryService.getCredentialByMrpaRegistryFullId(mrpaRegistryFind.getId());
+
         return new ResponseEntity<>(mrpaRegistryFind, HttpStatus.OK);
     }
 
@@ -229,6 +214,9 @@ public class MrpaRegistryController {
         MrpaRegistry mrpaRegistry = this.mrpaRegistryService.findById(mrpaRegistrySaveFullDto.mrpaRegistry.getId());
         mrpaRegistry.setStartDate(mrpaRegistrySaveFullDto.mrpaRegistry.getStartDate());
         mrpaRegistry.setEndDate(mrpaRegistrySaveFullDto.mrpaRegistry.getEndDate());
+        if(mrpaRegistrySaveFullDto.mrpaRegistry.getInternalNumber() != null){
+            mrpaRegistry.setInternalNumber(mrpaRegistrySaveFullDto.mrpaRegistry.getInternalNumber());
+        }
 
         Organisation organisation = convertOrganisationToEntity(mrpaRegistrySaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(mrpaRegistrySaveFullDto.principal);
@@ -292,7 +280,7 @@ public class MrpaRegistryController {
     })
     @PostMapping(value = "/{id}/upload_dscp", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSig(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("container") MultipartFile container) throws IOException {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1" ) Long id, @RequestPart("container") MultipartFile container) throws IOException, ParseException, JAXBException {
         String extension = FilenameUtils.getExtension(container.getOriginalFilename());
         if(!Objects.equals(extension, "dscp")) {
             throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT);
@@ -318,7 +306,13 @@ public class MrpaRegistryController {
         if (mrpaRegistry == null) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        if(!Arrays.equals(resource.getByteArray(), mrpaRegistry.getMrpaXml().getBytes())){
+        //----------------- XML M4D ----------------------
+        MrpaRegistryFullDTO mrpaRegistryFullDTO = this.mrpaRegistryService.findMrpaRegistryFullById(id);
+        mrpaRegistryFullDTO.credentials = this.mrpaRegistryService.getCredentialByMrpaRegistryFullId(id);
+        MrpaRegistryFullXML mrpaRegistryFullXML = this.mrpaRegistryService.ConvertMrpaRegistryFullDtoToFullXml(mrpaRegistryFullDTO);
+        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, MrpaRegistryFullXML.class);
+        //-------------------------------------------------
+        if(!Arrays.equals(resource.getByteArray(), xmlString.getBytes())){
             throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
         }
 
@@ -412,7 +406,6 @@ public class MrpaRegistryController {
             mrpaRegistry.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
             mrpaRegistry.setStartDate(DateUtils.parse(m4dXml.document.powerAttorneys.mrpa.getStartDate()).toInstant().toString());
             mrpaRegistry.setEndDate(DateUtils.parse(m4dXml.document.powerAttorneys.mrpa.getEndDate()).toInstant().toString());
-            mrpaRegistry.setMrpaXml(content);
             mrpaRegistry.setMrpaXmlFilename(sourceFile.getOriginalFilename());
             mrpaRegistry.setStatus(StatusTypeEnum.NOT_SIGNED);
 

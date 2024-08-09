@@ -67,10 +67,10 @@ public class MrpaRegistry {
     @JsonProperty("sigPath")
     private String sigPath;
 
-    @Column(name = "mrpa_xml", columnDefinition = "TEXT")
+    @Column(name = "create_date")
     @Schema(example = "")
-    @JsonProperty("mrpaXml")
-    private String mrpaXml;
+    @JsonProperty("createDate")
+    private String createDate;
 
     @Column(name = "mrpa_xml_filename")
     @Schema(example = "")

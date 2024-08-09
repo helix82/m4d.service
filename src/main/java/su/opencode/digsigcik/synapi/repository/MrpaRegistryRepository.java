@@ -15,7 +15,7 @@ import java.util.List;
 @Repository
 public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long> {
     @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.guid, " +
-            "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXml, mr.mrpaXmlFilename, mr.recalledXmlPath, " +
+            "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.createDate, mr.mrpaXmlFilename, mr.recalledXmlPath, " +
             "mr.organisationId, mr.principalId, mr.representativeId,"
             + " p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
             + " from MrpaRegistry mr"
@@ -33,7 +33,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
     List<MrpaRegistryWithFioListDto> findAllMrpaRegistries();
 
     @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryWithFioDTO(mr.id, mr.guid, " +
-            "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXml, mr.mrpaXmlFilename, mr.recalledXmlPath, " +
+            "mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.createDate, mr.mrpaXmlFilename, mr.recalledXmlPath, " +
             "mr.organisationId, mr.principalId, mr.representativeId,"
             + "p.surname, p.name, p.patronymic, r.surname, r.name, r.patronymic)"
             + " from MrpaRegistry mr"
@@ -42,7 +42,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
             + " where p.inn=?1 ")
     MrpaRegistryWithFioDTO findMrpaRegistriesByPrincipalInn(String inn);
 
-    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXml, mr.mrpaXmlFilename, mr.recalledXmlPath, " +
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.createDate, mr.mrpaXmlFilename, mr.recalledXmlPath, " +
             "p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic," +
             "rp.id, rp.dateIssue, rp.whoIssue, rp.seriesNumber, rp.departmentCode, o.id, o.inn, o.kpp, o.ogrn, o.name, o.regionCode, o.legalAddress) "
             + " from MrpaRegistry mr"
@@ -70,12 +70,7 @@ public interface MrpaRegistryRepository extends JpaRepository<MrpaRegistry, Long
     @Query("update MrpaRegistry mr set mr.status = 'WITHDRAWN' where mr.id=?1")
     void recallMrpaRegistryById(Long id);
 
-    @Modifying
-    @Transactional
-    @Query("update MrpaRegistry mr set mr.mrpaXml = :xmlData, mr.mrpaXmlFilename = :xmlFilename where mr.id=:id")
-    void saveMrpaXml(Long id, String xmlData, String xmlFilename);
-
-    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.mrpaXml, mr.mrpaXmlFilename, mr.recalledXmlPath, " +
+    @Query(value = "SELECT new su.opencode.digsigcik.synapi.dto.MrpaRegistryFullDTO(mr.id, mr.guid, mr.internalNumber, mr.startDate, mr.endDate, mr.status, mr.sigPath, mr.createDate, mr.mrpaXmlFilename, mr.recalledXmlPath, " +
             "p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic," +
             "rp.id, rp.dateIssue, rp.whoIssue, rp.seriesNumber, rp.departmentCode, o.id, o.inn, o.kpp, o.ogrn, o.name, o.regionCode, o.legalAddress) "
             + " from MrpaRegistry mr"
