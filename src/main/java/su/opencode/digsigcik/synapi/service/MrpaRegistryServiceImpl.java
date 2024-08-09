@@ -17,15 +17,12 @@ import su.opencode.digsigcik.synapi.repository.*;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
-import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.time.Instant.parse;
 import static su.opencode.digsigcik.synapi.util.Constants.*;
 
 @Service
@@ -411,11 +408,8 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     @Override
-    public MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO) {
-        DateFormat dateFormatShort = new SimpleDateFormat("yyyyMMdd");
-        Date date = new Date();
-        String idFile = "ON_EMCHD_" + dateFormatShort.format(date) + "_" + mrpaRegistryFullDTO.getGuid();
-
+    public MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO) throws ParseException {
+        String idFile = "ON_EMCHD_" + convertDateIsoInstantToMchdXmlNotDash(mrpaRegistryFullDTO.getCreateDate()) + "_" + mrpaRegistryFullDTO.getGuid();
         MrpaRegistryFullXML mrpaRegistryFullXML = new MrpaRegistryFullXML();
         mrpaRegistryFullXML.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
         mrpaRegistryFullXML.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
@@ -522,19 +516,18 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
     }
 
     private static String convertDateIsoInstantToMchdXml(String date) {
-        Date myDate = Date.from(Instant.parse(date));
+        Date myDate = Date.from(parse(date));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         String formattedDate = formatter.format(myDate);
         return formattedDate;
     }
 
-    @Override
-    public void saveMrpaXml(Long id, String xmlData, String xmlFilename) {
-        MrpaRegistryWithFioDTO mrpaRegistry = this.mrpaRegistryRepository.findMrpaRegistryById(id);
-        if (mrpaRegistry == null) {
-            throw new MchdException(String.format("Can`t save xml mrpa registry because mrpa registry %s", NOT_FOUND));
-        }
-        this.mrpaRegistryRepository.saveMrpaXml(id, xmlData, xmlFilename);
+    private static String convertDateIsoInstantToMchdXmlNotDash(String date) {
+        Date myDate = Date.from(parse(date));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC")); //GMT
+        String formattedDate = formatter.format(myDate);
+        return formattedDate;
     }
 
     /*

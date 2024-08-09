@@ -120,7 +120,7 @@ CREATE MEMORY TABLE "PUBLIC"."MRPA_REGISTRY"(
                                                 "END_DATE" CHARACTER VARYING(255),
                                                 "GUID" CHARACTER VARYING(255),
                                                 "INTERNAL_NUMBER" CHARACTER VARYING(255),
-                                                "MRPA_XML" CHARACTER VARYING,
+                                                "CREATE_DATE" CHARACTER VARYING(255),
                                                 "MRPA_XML_FILENAME" CHARACTER VARYING(255),
                                                 "ORGANISATION_ID" BIGINT,
                                                 "PRINCIPAL_ID" BIGINT,
