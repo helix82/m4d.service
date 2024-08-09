@@ -546,7 +546,7 @@ public class MrpaRegistryServiceImpl implements MrpaRegistryService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<MrpaRegistryWithFioDTO> findAllMrpaRegistryByLogin(String login) {
+    public List<MrpaRegistryWithFioListDto> findAllMrpaRegistryByLogin(String login) {
         return publicKeyUserCertificateService.findAllPublicKeyUserCertificateByLogin(login)
                 .stream()
                 .map(PublicKeyUserCertificate::getInn)

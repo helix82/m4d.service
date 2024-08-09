@@ -42,5 +42,5 @@ public interface MrpaRegistryService {
     MrpaRegistryFullXML ConvertMrpaRegistryFullDtoToFullXml(MrpaRegistryFullDTO mrpaRegistryFullDTO) throws ParseException;
 
     void saveMrpaXml(Long id, String xmlData, String xmlFilename);
-    List<MrpaRegistryWithFioDTO> findAllMrpaRegistryByLogin(String login);
+    List<MrpaRegistryWithFioListDto> findAllMrpaRegistryByLogin(String login);
 }
