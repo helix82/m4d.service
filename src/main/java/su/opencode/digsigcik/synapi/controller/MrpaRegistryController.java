@@ -492,7 +492,7 @@ public class MrpaRegistryController {
     })
     @GetMapping(value = "/me",produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistryForUser(Authentication authentication){
-        List<MrpaRegistryWithFioDTO> listMrpaRegistry = mrpaRegistryService.findAllMrpaRegistryByLogin(getAuthenticationEmail(authentication));
+        List<MrpaRegistryWithFioListDto> listMrpaRegistry = mrpaRegistryService.findAllMrpaRegistryByLogin(getAuthenticationEmail(authentication));
 
         return listMrpaRegistry.isEmpty() ?
                 noContent().build() :
