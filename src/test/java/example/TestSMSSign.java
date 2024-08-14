@@ -1,24 +1,15 @@
 package example;
 
-import com.lowagie.text.DocumentException;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.bouncycastle.cms.*;
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder;
-import org.bouncycastle.operator.OperatorCreationException;
-import ru.CryptoPro.CAdES.CAdESSignature;
-import ru.CryptoPro.CAdES.CAdESType;
-import ru.CryptoPro.CAdES.exception.CAdESException;
-import ru.CryptoPro.CAdES.tools.CAdESUtility;
 import ru.CryptoPro.CAdES.tools.verifier.GostContentSignerProvider;
 import ru.CryptoPro.CAdES.tools.verifier.GostDigestCalculatorProvider;
-import ru.CryptoPro.JCP.JCP;
 import ru.CryptoPro.JCSP.JCSP;
 import ru.CryptoPro.reprov.RevCheck;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,10 +18,8 @@ import java.security.*;
 import java.security.cert.*;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class TestSMSSign {

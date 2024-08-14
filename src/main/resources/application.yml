@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: m4d-service
   profiles:
     default: local
     active: "@spring.profiles.active@"
@@ -24,7 +26,9 @@ spring:
       hibernate:
         format_sql: true
 server:
-  port: 8080
+  port: 8050
+  servlet:
+    context-path: /m4d-service
 web:
   cors:
     allow-origin: "*"

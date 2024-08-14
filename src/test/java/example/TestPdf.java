@@ -3,8 +3,7 @@ package example;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
-import org.apache.poi.xddf.usermodel.text.TextAlignment;
-import su.opencode.digsigcik.synapi.dto.ReportDTO;
+import su.opencode.digsigcik.m4d.dto.ReportDto;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
@@ -55,7 +54,7 @@ public class TestPdf {
                 "}";
 
 
-        ReportDTO reportDTO = new ObjectMapper().readValue(strReportDTO, ReportDTO.class);
+        ReportDto reportDTO = new ObjectMapper().readValue(strReportDTO, ReportDto.class);
         String fileName = "protocol.pdf";
 
 
@@ -72,7 +71,7 @@ public class TestPdf {
     }
 
 
-    public static byte[] createPdf(ReportDTO reportDTO) throws DocumentException, IOException {
+    public static byte[] createPdf(ReportDto reportDTO) throws DocumentException, IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         Document document = new Document();
         PdfWriter.getInstance(document, byteArrayOutputStream);
@@ -113,7 +112,7 @@ public class TestPdf {
         addRow(table, "Ошибки:", "N/A", fontContent);
 
         addSection(table, "Сведения о сертификате подписи", fontSection, fontContent);
-        ReportDTO.Result.VerificationResult.SignerCertificateInfo certInfo = reportDTO.getResults().get(0).getVerificationResults().get(0).getSignerCertificateInfo();
+        ReportDto.Result.VerificationResult.SignerCertificateInfo certInfo = reportDTO.getResults().get(0).getVerificationResults().get(0).getSignerCertificateInfo();
         addRow(table, "Субъект:", certInfo.getSubjectName(), fontContent);
         addRow(table, "Издатель:", certInfo.getIssuerName(), fontContent);
         addRow(table, "Действителен до:", certInfo.getNotAfter(), fontContent);

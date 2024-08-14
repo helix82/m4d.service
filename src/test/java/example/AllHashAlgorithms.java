@@ -1,6 +1,5 @@
 package example;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import ru.CryptoPro.JCP.JCP;
 
 import java.security.MessageDigest;

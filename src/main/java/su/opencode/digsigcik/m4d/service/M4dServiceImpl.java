@@ -1,0 +1,584 @@
+package su.opencode.digsigcik.m4d.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.exception.BadRequestException;
+import su.opencode.digsigcik.m4d.exception.M4dException;
+import su.opencode.digsigcik.m4d.model.*;
+import su.opencode.digsigcik.m4d.repository.*;
+import su.opencode.digsigcik.m4d.dto.response.*;
+
+import javax.validation.ConstraintViolationException;
+import javax.validation.constraints.NotNull;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.time.Instant.parse;
+import static su.opencode.digsigcik.m4d.util.Constants.*;
+
+@Service
+@Primary
+@RequiredArgsConstructor
+@EnableTransactionManagement
+public class M4dServiceImpl implements M4dService {
+    private final M4dRepository m4dRepository;
+    private final M4dCredentialRepository m4dCredentialRepository;
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Override
+    public List<M4dResponseDto> findAllMrpaRegistry() {
+        List<Map<String, Object>> results = this.m4dRepository.findAllMrpaRegistries();
+
+        if (results == null) {
+            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
+        }
+        List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
+
+        for (Map<String, Object> result : results) {
+            M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) result.get("id"), (String) result.get("guid"), (String) result.get("internal_number"), (String) result.get("start_date"), (String) result.get("end_date"), (String) result.get("status"),
+                    (String) result.get("create_date"), (String) result.get("p_id"), (String) result.get("p_inn"), (String) result.get("p_snils"), (String) result.get("p_job_title"), (String) result.get("p_name"), (String) result.get("p_surname"), (String) result.get("p_patronymic"),
+                    (String) result.get("r_id"), (String) result.get("r_inn"), (String) result.get("r_snils"), (String) result.get("r_birth_date"), (String) result.get("r_name"), (String) result.get("r_surname"), (String) result.get("r_patronymic")
+            );
+            m4dResponseDtoList.add(m4dResponseDto);
+        }
+        return m4dResponseDtoList;
+    }
+
+    @Override
+    public M4d saveMrpaRegistry(@NotNull M4d m4d) {
+        throwExceptionIfRecordWithIdNotExist(m4d, "create");
+        return this.m4dRepository.save(m4d);
+    }
+
+    @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
+    public M4d saveAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
+        Long orgId;
+        Long principId;
+        Long represId;
+        //------------------- save organisation ----------------
+        OrganisationResponse existsOrganisation = (restTemplate.getForEntity("http://localhost:8080/api/v1/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
+        if (existsOrganisation == null) {
+            OrganisationResponse respOrganisation;
+            try {
+                respOrganisation = restTemplate.postForObject("http://localhost:8080/api/v1/organisation/save", organisation, OrganisationResponse.class);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(ORGANISATION_IS_NULL);
+            }
+            assert respOrganisation != null;
+            orgId = respOrganisation.getId();
+        } else {
+            orgId = existsOrganisation.getId();
+        }
+        //------------------- end save organisation ----------------
+
+        //------------------- save principal ----------------
+        PrincipalResponse existsPrincipal = (restTemplate.getForEntity("http://localhost:8080/api/v1/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
+        if (existsPrincipal == null) {
+            PrincipalResponse respPrincipal;
+            try {
+                respPrincipal = restTemplate.postForObject("http://localhost:8080/api/v1/principal/save", principal, PrincipalResponse.class);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(PRINCIPAL_IS_NULL);
+            }
+            assert respPrincipal != null;
+            principId = respPrincipal.getId();
+        } else {
+            principId = existsPrincipal.getId();
+        }
+        //------------------- end save principal ----------------
+
+        //------------------- save representative and passport ----------------
+        RepresentativeResponse existsRepresentative = (restTemplate.getForEntity("http://localhost:8080/api/v1/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
+        if (existsRepresentative == null) {
+            RepresentativeResponse respRepresentative;
+            try {
+                respRepresentative = restTemplate.postForObject("http://localhost:8080/api/v1/representative/save", representative, RepresentativeResponse.class);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(REPRESENTATIVE_IS_NULL);
+            }
+            try {
+                assert respRepresentative != null;
+                representativePassport.setReprsentativeId(respRepresentative.getId());
+                restTemplate.postForObject("http://localhost:8080/api/v1/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
+            }
+            represId = respRepresentative.getId();
+        } else {
+            represId = existsRepresentative.getId();
+        }
+        //------------------- end save representative and passport ----------------
+
+        if (orgId == null || principId == null || represId == null) {
+            throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
+        }
+        m4d.setOrganisationId(orgId);
+        m4d.setPrincipalId(principId);
+        m4d.setRepresentativeId(represId);
+
+        M4d m4dSaved;
+        try {
+            m4dSaved = this.m4dRepository.save(m4d);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        List<Long> credList = new ArrayList<>();
+        if (credentialList != null) {
+            for (CredentialResponse c : credentialList) {
+                CredentialResponse[] existsCredentials = (restTemplate.getForEntity("http://localhost:8080/api/v1/credential/find_by_code_or_name/"+c.getCode(), CredentialResponse[].class)).getBody();
+                assert existsCredentials != null;
+                if (existsCredentials.length == 0) {
+                    CredentialResponse newCredential = new CredentialResponse();
+                    newCredential.setCode(c.getCode());
+                    newCredential.setName(c.getName());
+                    CredentialResponse credentialSave;
+                    try {
+                        credentialSave = restTemplate.postForObject("http://localhost:8080/api/v1/credential/save", newCredential, CredentialResponse.class);
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(CREDENTIAL_IS_NULL);
+                    }
+                    assert credentialSave != null;
+                    credList.add(credentialSave.getId());
+                } else {
+                    for (CredentialResponse crd : existsCredentials) {
+                        credList.add(crd.getId());
+                    }
+                }
+            }
+        } else if(credentials != null) {
+            credList = credentials;
+        }
+
+        if (!credList.isEmpty()) {
+            for (Long x : credList) {
+                M4dCredential m4dCredential = new M4dCredential();
+                m4dCredential.setMrpaRegistryId(m4dSaved.getId());
+                m4dCredential.setCredentialId(x);
+                try {
+                    this.m4dCredentialRepository.save(m4dCredential);
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+                }
+            }
+        }
+
+        return m4dSaved;
+    }
+
+    @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
+    public M4d updateAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
+        Long orgId;
+        Long principId;
+        Long represId;
+        if (m4d.getId() == null) {
+            throw new BadRequestException("Can`t update mrpa registry because id null!");
+        }
+        M4d existMrpaRegistry = this.findById(m4d.getId());
+        if (existMrpaRegistry == null) {
+            throw new M4dException(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND));
+        }
+        //------------------- save organisation ----------------
+        OrganisationResponse existsOrganisation = (restTemplate.getForEntity("http://localhost:8080/api/v1/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
+        if (existsOrganisation != null) {
+            organisation.setId(existsOrganisation.getId());
+        }
+        assert existsOrganisation != null;
+        if(!existsOrganisation.equals(organisation)){
+            OrganisationResponse respOrganisation;
+            try {
+                respOrganisation = restTemplate.postForObject("http://localhost:8080/api/v1/organisation/save", organisation, OrganisationResponse.class);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(ORGANISATION_IS_NULL);
+            }
+            assert respOrganisation != null;
+            orgId = respOrganisation.getId();
+        } else {
+            orgId = existsOrganisation.getId();
+        }
+
+
+        //------------------- end save organisation ----------------
+
+        //------------------- save principal ----------------
+        PrincipalResponse existsPrincipal = (restTemplate.getForEntity("http://localhost:8080/api/v1/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
+        if (existsPrincipal != null) {
+            principal.setId(existsPrincipal.getId());
+        }
+        PrincipalResponse respPrincipal;
+        try {
+            respPrincipal = restTemplate.postForObject("http://localhost:8080/api/v1/principal/save", principal, PrincipalResponse.class);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(PRINCIPAL_IS_NULL);
+        }
+        assert respPrincipal != null;
+        principId = respPrincipal.getId();
+        //------------------- end save principal ----------------
+
+        //------------------- save representative and passport ----------------
+
+        RepresentativeResponse existsRepresentative = (restTemplate.getForEntity("http://localhost:8080/api/v1/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
+        if (existsRepresentative != null) {
+            representative.setId(existsRepresentative.getId());
+        }
+        RepresentativeResponse respRepresentative;
+        try {
+
+            respRepresentative = restTemplate.postForObject("http://localhost:8080/api/v1/representative/save", representative, RepresentativeResponse.class);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(REPRESENTATIVE_IS_NULL);
+        }
+
+        RepresentativePassportResponse existsRepresentativePassport = (restTemplate.getForEntity("http://localhost:8080/api/v1/representative_passport/seriesNumber/"+representativePassport.getSeriesNumber(), RepresentativePassportResponse.class)).getBody();
+        if (existsRepresentativePassport != null) {
+            representativePassport.setId(existsRepresentativePassport.getId());
+        }
+        try {
+            assert respRepresentative != null;
+            representativePassport.setReprsentativeId(respRepresentative.getId());
+            restTemplate.postForObject("http://localhost:8080/api/v1/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
+        }
+        represId = respRepresentative.getId();
+        //------------------- end save representative and passport ----------------
+
+        if (orgId == null || principId == null || represId == null) {
+            throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
+        }
+        if(!m4d.getOrganisationId().equals(orgId)){
+            m4d.setOrganisationId(orgId);
+        }
+        if(!m4d.getPrincipalId().equals(principId)) {
+            m4d.setPrincipalId(principId);
+        }
+        if(!m4d.getRepresentativeId().equals(represId)) {
+            m4d.setRepresentativeId(represId);
+        }
+        M4d m4dUpdated;
+        try {
+            m4dUpdated = this.m4dRepository.save(m4d);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        List<Long> credList = new ArrayList<>();
+        if (credentialList != null) {
+            for (CredentialResponse c : credentialList) {
+                CredentialResponse[] existsCredentials = (restTemplate.getForEntity("http://localhost:8080/api/v1/credential/find_by_code_or_name/"+c.getCode(), CredentialResponse[].class)).getBody();
+                assert existsCredentials != null;
+                if (existsCredentials.length == 0) {
+                    CredentialResponse newCredential = new CredentialResponse();
+                    newCredential.setCode(c.getCode());
+                    newCredential.setName(c.getName());
+                    CredentialResponse credentialSave;
+                    try {
+                        credentialSave = restTemplate.postForObject("http://localhost:8080/api/v1/credential/save", newCredential, CredentialResponse.class);
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(CREDENTIAL_IS_NULL);
+                    }
+                    assert credentialSave != null;
+                    credList.add(credentialSave.getId());
+                } else {
+                    for (CredentialResponse crd : existsCredentials) {
+                        credList.add(crd.getId());
+                    }
+                }
+            }
+        } else if (credentials != null) {
+            credList = credentials;
+        }
+
+        if(!credList.isEmpty()){
+            this.m4dCredentialRepository.deleteAllByMrpaRegistryId(m4dUpdated.getId());
+            for (Long x : credList) {
+                M4dCredential m4dCredential = new M4dCredential();
+                m4dCredential.setMrpaRegistryId(m4dUpdated.getId());
+                m4dCredential.setCredentialId(x);
+                try {
+                    this.m4dCredentialRepository.save(m4dCredential);
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+                }
+            }
+        }
+        return m4dUpdated;
+    }
+
+//    @Override
+//    public M4dWithFioDto findByMrpaRegistryId(@NotNull Long id) {
+////        M4dWithFioDto mrpaRegistry = this.m4dRepository.findMrpaRegistryById(id);
+////        if (mrpaRegistry == null) {
+////            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
+////        }
+////        return mrpaRegistry;
+//
+//        Object[] results = this.m4dRepository.findMrpaRegistryById(id);
+//        if (results == null) {
+//            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
+//        }
+//        return new M4dWithFioDto(
+//                (Long) ((BigInteger)results[0]).longValue(),
+//                (String) results[1],
+//                (String) results[2],
+//                (String) results[3],
+//                (String) results[4],
+//                (String) results[5],
+//                (String) results[6],
+//                (String) results[7],
+//                (String) results[8],
+//                (Long) ((BigInteger)results[9]).longValue(),
+//                (Long) ((BigInteger)results[10]).longValue(),
+//                (Long) ((BigInteger)results[11]).longValue(),
+//                (String) results[12],
+//                (String) results[13],
+//                (String) results[14],
+//                (String) results[15],
+//                (String) results[16],
+//                (String) results[17]
+//        );
+//
+//
+//    }
+
+    @Override
+    public Integer findMrpaRegistryByGuid(@NotNull String guid) {
+        return this.m4dRepository.findMrpaRegistryByGuid(guid);
+    }
+
+    @Override
+    public M4dResponseDto findMrpaRegistryFullById(@NotNull Long id) {
+        Map<String, Object> results = this.m4dRepository.findMrpaRegistryFullById(id);
+        if (results == null) {
+            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
+        }
+        M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("status"), (String) results.get("sig_path"),
+                (String) results.get("create_date"), (String) results.get("recalled_xml_path"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
+                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic"),
+                (String) results.get("rp_id"), (String) results.get("rp_date_issue"), (String) results.get("rp_who_issue"), (String) results.get("rp_series_number"), (String) results.get("rp_department_code"),
+                (String) results.get("org_id"), (String) results.get("org_inn"), (String) results.get("org_kpp"), (String) results.get("org_ogrn"), (String) results.get("org_name"), (String) results.get("org_region_code"), (String) results.get("org_legal_address")
+                );
+
+        return m4dResponseDto;
+    }
+
+    @Override
+    public M4d findById(@NotNull Long id) {
+        return this.m4dRepository.findMrpaById(id);
+    }
+
+    @Override
+    public void deleteMrpaRegistry(@NotNull Long id) {
+        this.m4dRepository.deleteById(id);
+    }
+
+    @Override
+    public M4dResponseDto findByMrpaRegistryPrincipalInn(String inn) {
+        //return this.m4dRepository.findMrpaRegistriesByPrincipalInn(inn);
+        Map<String, Object> results = this.m4dRepository.findMrpaRegistriesByPrincipalInn(inn);
+        if (results == null) {
+            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
+        }
+        M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("status"),
+                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
+                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
+        );
+
+        return m4dResponseDto;
+    }
+
+    private void throwExceptionIfRecordWithIdNotExist(M4d m4d, String operationType) {
+        Long organisationId = m4d.getOrganisationId();
+        Long principalId = m4d.getPrincipalId();
+        Long representativeId = m4d.getRepresentativeId();
+
+        String errorMessage = "Can`t %s mrpa registry because %s id null!";
+        if ((restTemplate.getForEntity("http://localhost:8080/api/v1/organisation/"+organisationId, OrganisationResponse[].class)).getBody() == null) {
+            throw new BadRequestException(String.format(errorMessage, operationType, "organisation", organisationId));
+        }
+        if ((restTemplate.getForEntity("http://localhost:8080/api/v1/principal/"+principalId, PrincipalResponse[].class)).getBody() == null) {
+            throw new BadRequestException(String.format(errorMessage, operationType, "principal", principalId));
+        }
+        if ((restTemplate.getForEntity("http://localhost:8080/api/v1/representative/"+representativeId, RepresentativeResponse[].class)).getBody() == null) {
+            throw new BadRequestException(String.format(errorMessage, operationType, "representative", representativeId));
+        }
+    }
+
+    @Override
+    public void recallMrpaRegistryById(Long id) {
+        M4d mrpaRegistry = this.findById(id);
+        if (mrpaRegistry == null) {
+            throw new M4dException(String.format("Can`t recall mrpa registry because mrpa registry %s", NOT_FOUND));
+        }
+        this.m4dRepository.recallMrpaRegistryById(id);
+    }
+
+    @Override
+    public List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId) {
+        CredentialResponse[] credentials = (restTemplate.getForEntity("http://localhost:8080/api/v1/credential/mrpaId/"+mrpaId, CredentialResponse[].class)).getBody();
+        List<M4dResponseDto.CredentialDTO> credentialDTOList = new ArrayList<>();
+        assert credentials != null;
+        for (CredentialResponse c : credentials) {
+            M4dResponseDto.CredentialDTO credentialDTO = new M4dResponseDto.CredentialDTO();
+            credentialDTO.setId(c.getId());
+            credentialDTO.setName(c.getName());
+            credentialDTO.setCode(c.getCode());
+            credentialDTOList.add(credentialDTO);
+        }
+        return credentialDTOList;
+    }
+
+    @Override
+    public M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) {
+        String idFile = "ON_EMCHD_" + convertDateIsoInstantToMchdXmlNotDash(m4dFullDTO.getCreateDate()) + "_" + m4dFullDTO.getGuid();
+        M4dFullXML m4dFullXML = new M4dFullXML();
+        m4dFullXML.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
+        m4dFullXML.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
+        m4dFullXML.setXmlns("urn://x-artefacts/EMCHD_1");
+        m4dFullXML.setVersionFormat("EMCHD_1");
+        m4dFullXML.setElementsFormat("00000000");
+        m4dFullXML.setIdFile(idFile); //ON_EMCHD_20240516_75655b80-cc58-4a2b-b244-8334eb895a2f
+
+
+        M4dFullXML.Document.PowerAttorneys.Mrpa mrpas = new M4dFullXML.Document.PowerAttorneys.Mrpa();
+        mrpas.setTypePowerAttorney("1");
+        mrpas.setRetrust("3");
+
+        if (Objects.isNull(m4dFullDTO.getInternalNumber())) {
+            mrpas.setInternalNumber("б/н");
+        } else mrpas.setInternalNumber(m4dFullDTO.getInternalNumber());
+
+        mrpas.setGuid(m4dFullDTO.getGuid());
+
+        mrpas.setStartDate(convertDateIsoInstantToMchdXml(m4dFullDTO.getStartDate()));
+        mrpas.setEndDate(convertDateIsoInstantToMchdXml(m4dFullDTO.getEndDate()));
+        mrpas.setInfoSystem("sep.cik");
+
+        M4dFullXML.Document document = new M4dFullXML.Document();
+        m4dFullXML.setDocument(document);
+
+        M4dFullXML.Document.PowerAttorneys powerAttorneys = new M4dFullXML.Document.PowerAttorneys();
+        document.setPowerAttorneys(powerAttorneys);
+        powerAttorneys.setMrpa(mrpas);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals infoPrincipal = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals();
+        infoPrincipal.setTypePrincipal("1");
+        powerAttorneys.setPrincipals(infoPrincipal);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal infoPrincipal1 = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal();
+        infoPrincipal.setPrincipal(infoPrincipal1);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity legalEntity = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity();
+        legalEntity.setManagementCompany("0");
+        legalEntity.setIndividual("1");
+        legalEntity.setIndividualEntrepreneur("0");
+        infoPrincipal1.setLegalEntity(legalEntity);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.Organisation organisation = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.Organisation();
+        organisation.setName(m4dFullDTO.organization.getName());
+        organisation.setInn(m4dFullDTO.organization.getInn());
+        organisation.setKpp(m4dFullDTO.organization.getKpp());
+        organisation.setOgrn(m4dFullDTO.organization.getOgrn());
+        legalEntity.setOrganisation(organisation);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.Organisation.AddressRegion addressRegion = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.Organisation.AddressRegion();
+        addressRegion.setRegionCode(m4dFullDTO.organization.getRegionCode());
+        addressRegion.setLegalAddress(m4dFullDTO.organization.getLegalAddress());
+        organisation.setAddressRegion(addressRegion);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal personPrincipal = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal();
+        personPrincipal.setTypePrincipal("1");
+        legalEntity.setPrincipal(personPrincipal);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal principal = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal();
+        principal.setInn(m4dFullDTO.principal.getInn());
+        principal.setSnils(m4dFullDTO.principal.getSnils());
+        principal.setJobTitle(m4dFullDTO.principal.getJobTitle());
+        personPrincipal.setPrincipal(principal);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal.FioPrincipal fioPrincipal = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal.FioPrincipal();
+        principal.setFioPrincipal(fioPrincipal);
+        M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal.FioPrincipal.Fio fio = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal.FioPrincipal.Fio();
+        fio.setName(m4dFullDTO.principal.getName());
+        fio.setPatronymic(m4dFullDTO.principal.getPatronymic());
+        fio.setSurname(m4dFullDTO.principal.getSurname());
+        fioPrincipal.setFio(fio);
+        M4dFullXML.Document.PowerAttorneys.InfoRepresentative infoRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative();
+        infoRepresentative.setTypeRepresentative("3");
+        powerAttorneys.setInfoRepresentative(infoRepresentative);
+        M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative representative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative();
+        infoRepresentative.setRepresentative(representative);
+        M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative detailRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative();
+        representative.setDetailRepresentative(detailRepresentative);
+        detailRepresentative.setInn(m4dFullDTO.representative.getInn());
+        detailRepresentative.setSnils(m4dFullDTO.representative.getSnils());
+        M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual infoIndividual = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual();
+        detailRepresentative.setInfoIndividual(infoIndividual);
+        infoIndividual.setBirthDate(convertDateIsoInstantToMchdXml(m4dFullDTO.representative.getBirthDate()));
+        M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative fioRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative();
+        infoIndividual.setFioRepresentative(fioRepresentative);
+        fioRepresentative.setName(m4dFullDTO.representative.getName());
+        fioRepresentative.setSurname(m4dFullDTO.representative.getSurname());
+        fioRepresentative.setPatronymic(m4dFullDTO.representative.getPatronymic());
+        M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.RepresentativePassport representativePassport = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.RepresentativePassport();
+        infoIndividual.setRepresentativePassport(representativePassport);
+        representativePassport.setTypeDocument("21");
+        representativePassport.setSeriesNumber(m4dFullDTO.representative.representativePassport.getSeriesNumber());
+        representativePassport.setDateIssue(convertDateIsoInstantToMchdXml(m4dFullDTO.representative.representativePassport.getDateIssue()));
+        representativePassport.setWhoIssue(m4dFullDTO.representative.representativePassport.getWhoIssue());
+        representativePassport.setDepartmentCode(m4dFullDTO.representative.representativePassport.getDepartmentCode());
+        M4dFullXML.Document.PowerAttorneys.Credentials credentials = new M4dFullXML.Document.PowerAttorneys.Credentials();
+        credentials.setTypeCredential("1");
+        credentials.setImplCredential("1");
+        credentials.setLossCredential("1");
+        ArrayList<M4dFullXML.Document.PowerAttorneys.Credentials.Credential> credentialList = new ArrayList<>();
+        for (M4dResponseDto.CredentialDTO credentialDTO : m4dFullDTO.credentials) {
+            M4dFullXML.Document.PowerAttorneys.Credentials.Credential credential = new M4dFullXML.Document.PowerAttorneys.Credentials.Credential();
+            credential.setCode(credentialDTO.getCode());
+            credential.setName(credentialDTO.getName());
+            credentialList.add(credential);
+        }
+        credentials.setCredentials(credentialList);
+        powerAttorneys.setCredential(credentials);
+
+        return m4dFullXML;
+    }
+
+    private static String convertDateIsoInstantToMchdXml(String date) {
+        Date myDate = Date.from(parse(date));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        String formattedDate = formatter.format(myDate);
+        return formattedDate;
+    }
+
+    private static String convertDateIsoInstantToMchdXmlNotDash(String date) {
+        Date myDate = Date.from(parse(date));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC")); //GMT
+        String formattedDate = formatter.format(myDate);
+        return formattedDate;
+    }
+
+    /*
+     * Берет ИННы сертификатов пользователя, потом по ИНН через ID представителей
+     * и заявителей находит все МЧД пользователя (т.е. по всем ИНН (как в Представителях, так и в Заявителях) принадлежащим пользователю находит все МЧД)
+     *
+     * @param login Логин пользователя. Берется из JWT.
+     * @return Возвращает все МЧД пользователя
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) {
+        return Stream.of(Objects.requireNonNull((restTemplate.getForEntity("http://localhost:8080/api/v1/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
+                .map(PublicKeyUserCertificateResponse::getInn)
+                .flatMap(inn -> m4dRepository.findMrpaRegistriesByPrincipalInnLikePrincipalAndRepresentative(inn).stream().map(
+                        results -> M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("status"),
+                        (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
+                        (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
+                )
+                ))
+                .distinct()
+                .collect(Collectors.toList());
+    }
+}
+

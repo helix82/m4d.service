@@ -1,0 +1,67 @@
+package su.opencode.digsigcik.m4d.config;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.*;
+
+//TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
+@EnableWebSecurity
+@Configuration
+@RequiredArgsConstructor
+public class SecurityConfig {
+    public static final String CORS_CFG_SOURCE_BEAN = "corsConfigurationSource";
+    private final WebConfigProperties webConfigProperties;
+
+    @Order(1)
+    @Bean
+    public SecurityFilterChain h2FilterChain(HttpSecurity http) throws Exception {
+        http
+                .antMatcher("/h2-console/**")
+                .csrf(csrf -> csrf.ignoringRequestMatchers(PathRequest.toH2Console()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .headers(headers -> headers.frameOptions().sameOrigin());
+
+        return http.build();
+    }
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public CorsProcessor corsProcessor() {
+        return new DefaultCorsProcessor();
+    }
+
+    @Bean(CORS_CFG_SOURCE_BEAN)
+    public CorsConfigurationSource corsConfigurationSource() {
+        var cors = webConfigProperties.getCors();
+        var configuration = new CorsConfiguration();
+        configuration.setAllowedMethods(cors.getAllowMethods());
+        configuration.setAllowedHeaders(cors.getAllowHeaders());
+        configuration.setExposedHeaders(cors.getExposeHeaders());
+        configuration.setAllowCredentials(true);
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+}

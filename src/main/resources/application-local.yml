@@ -1,5 +1,7 @@
 server:
-  port: 8080
+  port: 8050
+  servlet:
+    context-path: /m4d-service
 web:
   cors:
     allow-origin: "*"
@@ -12,28 +14,30 @@ logging:
 ---
 
 spring:
+  application:
+    name: m4d-service
   config.activate.on-profile: local
   datasource:
-#    url: jdbc:postgresql://localhost:5432/localsepdb
-#    username: root
-#    password: root
-#    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5434/localsepdb
+    username: root
+    password: root
+    driver-class-name: org.postgresql.Driver
 
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+#    url: jdbc:h2:mem:testdb
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password:
 
-    jpa:
-      hibernate:
-        ddl-auto: update
-      database: postgresql
-      database-platform: org.hibernate.dialect.PostgreSQLDialect
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 #      database-platform: org.hibernate.dialect.H2Dialect
-      show-sql: true
-      properties:
-        hibernate:
-          format_sql: true
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
 #  hotfix for running swagger in spring boot 2
   mvc:
     pathmatch:

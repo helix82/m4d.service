@@ -462,9 +462,9 @@
                             <inputSpec>${pom.basedir}/schema/synapi-api.yml</inputSpec>
                             <generatorName>java</generatorName>
                             <output>${pom.basedir}/</output>
-                            <modelPackage>su.opencode.digsigcik.synapi.api.model</modelPackage>
-                            <packageName>su.opencode.digsigcik.synapi.api</packageName>
-                            <groupId>su.opencode.digsigcik.synapi</groupId>
+                            <modelPackage>su.opencode.digsigcik.m4d.api.model</modelPackage>
+                            <packageName>su.opencode.digsigcik.m4d.api</packageName>
+                            <groupId>su.opencode.digsigcik.m4d</groupId>
                             <artifactId>api</artifactId>
                             <artifactVersion>${project.version}</artifactVersion>
                             <generateApis>false</generateApis>
@@ -479,7 +479,7 @@
                                 <modelNameSuffix>Vo</modelNameSuffix>
                             </configOptions>
                             <importMappings>
-                                ContainerSelectorCode=su.opencode.digsigcik.synapi.dscp.ContainerSelectorCode
+                                ContainerSelectorCode=su.opencode.digsigcik.m4d.dscp.ContainerSelectorCode
                             </importMappings>
                             <typeMappings>
                                 ContainerSelectorCode=ContainerSelectorCode
