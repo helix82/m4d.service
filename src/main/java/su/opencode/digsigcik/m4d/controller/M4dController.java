@@ -1,9 +1,7 @@
 package su.opencode.digsigcik.m4d.controller;
 
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.val;
@@ -63,8 +61,8 @@ public class M4dController {
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistry(){
@@ -73,8 +71,8 @@ public class M4dController {
 
     @Operation(summary = CONTROLLER_MRPA_SAVE_SUMMARY, description = CONTROLLER_MRPA_SAVE_DESCRIPTION )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "save_all",produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody M4dRequestSaveFullDto m4dSaveFullDto) throws JAXBException, ParseException {
@@ -99,8 +97,8 @@ public class M4dController {
     @Operation(summary = CONTROLLER_MRPA_FIND_BY_ID_SUMMARY,
             description = CONTROLLER_MRPA_FIND_BY_ID_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
@@ -110,8 +108,8 @@ public class M4dController {
 
     @Operation(summary = CONTROLLER_MRPA_UPDATE_SUMMARY, description = CONTROLLER_MRPA_UPDATE_DESCRIPTION )
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "update_all",produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> updateAllDataMrpaRegistry(@RequestBody M4dRequestSaveFullDto m4dSaveFullDto) throws JAXBException, ParseException {
@@ -138,8 +136,8 @@ public class M4dController {
     //TODO: @helix82 При удалении физически не удаляем а ставим пометку об удалении
     @Operation(summary = CONTROLLER_MRPA_DELETE_SUMMARY, description = CONTROLLER_MRPA_DELETE_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @DeleteMapping(value = "delete/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> deleteMrpaRegistry(@PathVariable @Parameter(name = "id",
@@ -162,8 +160,8 @@ public class M4dController {
     @Operation(summary = CONTROLLER_MRPA_FIND_BY_PRINCIPAL_INN_SUMMARY,
             description = CONTROLLER_MRPA_FIND_BY_PRINCIPAL_INN_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(value = "principal_inn/{inn}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryByPrincipalInn(@PathVariable @Parameter(name = "inn",
@@ -180,8 +178,8 @@ public class M4dController {
 
     @Operation(summary = CONTROLLER_MRPA_UPLOAD_SUMMARY, description = CONTROLLER_MRPA_UPLOAD_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "/{id}/upload_dscp", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSig(@PathVariable @Parameter(name = "id",
@@ -280,8 +278,8 @@ public class M4dController {
     @Operation(summary = CONTROLLER_MRPA_RECALL_SUMMARY,
             description = CONTROLLER_MRPA_RECALL_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PutMapping(value = "recall/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> recallMrpaRegistryById(@PathVariable @Parameter(name = "id",
@@ -296,8 +294,8 @@ public class M4dController {
 
     @Operation(summary = CONTROLLER_MRPA_UPLOAD_XML_SUMMARY, description = CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, ParseException, SAXException, JAXBException {
@@ -421,11 +419,8 @@ public class M4dController {
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION)
     @ApiResponses(value = {
-            @ApiResponse(code = 204, message = API_RESPONSE_CODE_204_MESSAGE),
-            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
-    })
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "Authorization", value = "Bearer token for authorization", required = true, dataType = "string", paramType = "header")
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE)
     })
     @GetMapping(value = "/me",produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistryForUser(Authentication authentication){

@@ -5,7 +5,7 @@ spring:
     default: local
     active: "@spring.profiles.active@"
   datasource:
-#    url: jdbc:postgresql://localhost:5432/localsepdb
+#    url: jdbc:postgresql://localhost:5434/localsepdb
 #    username: root
 #    password: root
 #    driver-class-name: org.postgresql.Driver
@@ -14,6 +14,18 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  #Security properties
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:http://localhost:8080/auth/realms/USERS/protocol/openid-connect/auth}
+      resourceserver:
+        issuers:
+          internal-uri: ${OAUTH2_ISSUER_INTERNAL_URL:http://localhost:8080/auth/realms/USERS}
+          public-uri: ${OAUTH2_ISSUER_PUBLIC_URL:http://localhost:8080/auth/realms/USERS}
+
 
   jpa:
     hibernate:
@@ -26,13 +38,15 @@ spring:
       hibernate:
         format_sql: true
 server:
-  port: 8050
+  port: 8051
   servlet:
     context-path: /m4d-service
 web:
   cors:
     allow-origin: "*"
-    allow-methods: OPTIONS, HEAD, POST, PUT, GET, DELETE
+    allow-methods: "*"
+    allow-headers: "Authorization,*"
+    max-age: 5
   server:
     uri: http://localhost
 logging:
@@ -82,3 +96,12 @@ features:
   show-ses-certificates: true
   ses-certificates-age: 100
   ses-certificates-issuer: "CN=SEP Self-Signed Certificate"
+
+#Swagger
+springdoc:
+  api-docs:
+    # It should be off for PROD
+    enabled: true
+  server:
+    url: ${SWAGGER_URL:http://localhost:8050}
+    token-uri: ${KEYCLOAK_SWAGGER_TOKEN_URI:http://localhost:8080/auth/realms/USERS/protocol/openid-connect/token}

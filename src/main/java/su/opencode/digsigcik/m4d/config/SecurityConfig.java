@@ -5,63 +5,79 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.*;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
-//TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
-@EnableWebSecurity
+
 @Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-    public static final String CORS_CFG_SOURCE_BEAN = "corsConfigurationSource";
-    private final WebConfigProperties webConfigProperties;
+    private final JwtAuthConverter jwtAuthConverter;
+    private final CustomCorsConfigurationSource corsConfigurationSource;
+    private final KeyCloakProperties keyCloakProperties;
+    private static final String[] WHITE_LIST = {
+            "/v3/api-docs/**",
+            "/configuration/ui",
+            "/swagger-resources/**",
+            "/configuration/security",
+            "/swagger-ui.html",
+            "/swagger-ui/**",
+            "/webjars/**",
+            "/.well-known/acme-challenge/**"
+    };
 
     @Order(1)
     @Bean
     public SecurityFilterChain h2FilterChain(HttpSecurity http) throws Exception {
-        http
-                .antMatcher("/h2-console/**")
+        http.antMatcher("/h2-console/**")
                 .csrf(csrf -> csrf.ignoringRequestMatchers(PathRequest.toH2Console()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PathRequest.toH2Console()).permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(PathRequest.toH2Console())
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated()
                 )
                 .headers(headers -> headers.frameOptions().sameOrigin());
 
         return http.build();
     }
 
+    @Order(2)
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests()
+                .antMatchers(WHITE_LIST)
+                .permitAll()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt
+                                .jwtAuthenticationConverter(jwtAuthConverter)))
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+        http.cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource))
+                .csrf()
+                .disable();
+
+        return http.build();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public JwtDecoder jwtDecoder() {
+        return new JwtMultiIssuerDecoder(keyCloakProperties.getIssuerInternalUri(), keyCloakProperties.getIssuerPublicUri());
     }
-
-    @Bean
-    public CorsProcessor corsProcessor() {
-        return new DefaultCorsProcessor();
-    }
-
-    @Bean(CORS_CFG_SOURCE_BEAN)
-    public CorsConfigurationSource corsConfigurationSource() {
-        var cors = webConfigProperties.getCors();
-        var configuration = new CorsConfiguration();
-        configuration.setAllowedMethods(cors.getAllowMethods());
-        configuration.setAllowedHeaders(cors.getAllowHeaders());
-        configuration.setExposedHeaders(cors.getExposeHeaders());
-        configuration.setAllowCredentials(true);
-        var source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
 }
+

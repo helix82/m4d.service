@@ -1,11 +1,13 @@
 server:
-  port: 8050
+  port: 8051
   servlet:
     context-path: /m4d-service
 web:
   cors:
     allow-origin: "*"
-    allow-methods: OPTIONS, HEAD, POST, PUT, GET, DELETE
+    allow-methods: "*"
+    allow-headers: "Authorization,*"
+    max-age: 5
   server:
     uri: http://localhost
 logging:
@@ -18,15 +20,15 @@ spring:
     name: m4d-service
   config.activate.on-profile: local
   datasource:
-    url: jdbc:postgresql://localhost:5434/localsepdb
-    username: root
-    password: root
-    driver-class-name: org.postgresql.Driver
+#    url: jdbc:postgresql://localhost:5434/localsepdb
+#    username: root
+#    password: root
+#    driver-class-name: org.postgresql.Driver
 
-#    url: jdbc:h2:mem:testdb
-#    driver-class-name: org.h2.Driver
-#    username: sa
-#    password:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
 
   jpa:
     hibernate:
@@ -78,3 +80,13 @@ features:
   show-ses-certificates: false
   ses-certificates-age: 100
   ses-certificates-issuer: "CN=SEP Self-Signed Certificate"
+
+#Swagger
+springdoc:
+  api-docs:
+    # It should be off for PROD
+    enabled: true
+  server:
+    url: ${SWAGGER_URL:http://localhost:8051/m4d-service}
+    token-uri: ${KEYCLOAK_SWAGGER_TOKEN_URI:http://localhost:8080/auth/realms/USERS/protocol/openid-connect/token}
+

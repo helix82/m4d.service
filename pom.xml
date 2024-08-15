@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>su.opencode.digsigcik</groupId>
-    <artifactId>synapi</artifactId>
+    <artifactId>m4d</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>SynAPI</name>
+    <name>M4D</name>
     <description>Synchronous API for CIK digital signature system</description>
     <packaging>jar</packaging>
 
@@ -30,6 +30,7 @@
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <version.lombok>1.18.18</version.lombok>
         <version.mapstruct-lombok>0.2.0</version.mapstruct-lombok>
+        <maven.test.skip>true</maven.test.skip>
     </properties>
 
     <profiles>
@@ -224,12 +225,6 @@
             <groupId>org.ini4j</groupId>
             <artifactId>ini4j</artifactId>
             <version>0.5.4</version>
-        </dependency>
-        <!-- Swagger -->
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
-            <version>3.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -445,50 +440,31 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>webjars-locator-core</artifactId>
+            <version>0.46</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>4.8.137</version>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-core</artifactId>
+            <version>2.1.9</version>
+        </dependency>
+        <!-- Swagger -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
+            <version>1.5.9</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.openapitools</groupId>
-                <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>${openapi-generator-version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${pom.basedir}/schema/synapi-api.yml</inputSpec>
-                            <generatorName>java</generatorName>
-                            <output>${pom.basedir}/</output>
-                            <modelPackage>su.opencode.digsigcik.m4d.api.model</modelPackage>
-                            <packageName>su.opencode.digsigcik.m4d.api</packageName>
-                            <groupId>su.opencode.digsigcik.m4d</groupId>
-                            <artifactId>api</artifactId>
-                            <artifactVersion>${project.version}</artifactVersion>
-                            <generateApis>false</generateApis>
-                            <generateModelTests>false</generateModelTests>
-                            <generateApiDocumentation>false</generateApiDocumentation>
-                            <supportingFilesToGenerate>JSON.java,RFC3339DateFormat.java,AbstractOpenApiSchema.java</supportingFilesToGenerate>
-                            <library>native</library>
-                            <configOptions>
-                                <sourceFolder>target/generated-sources/src/main/java</sourceFolder>
-                                <sortModelPropertiesByRequiredFlag>false</sortModelPropertiesByRequiredFlag>
-                                <useBeanValidation>true</useBeanValidation>
-                                <modelNameSuffix>Vo</modelNameSuffix>
-                            </configOptions>
-                            <importMappings>
-                                ContainerSelectorCode=su.opencode.digsigcik.m4d.dscp.ContainerSelectorCode
-                            </importMappings>
-                            <typeMappings>
-                                ContainerSelectorCode=ContainerSelectorCode
-                            </typeMappings>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
