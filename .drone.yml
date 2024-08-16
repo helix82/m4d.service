@@ -19,7 +19,7 @@ steps:
       DOCKER_BUILDKIT: 1
     settings:
       registry: nexus.essocode.ru:5001
-      repo: nexus.essocode.ru:5001/ess/synapi
+      repo: nexus.essocode.ru:5001/ess/m4d
       insecure: true
       cache: true
       tags:
@@ -27,8 +27,8 @@ steps:
         - ${DRONE_SOURCE_BRANCH/\//-}
         - ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       cache_from:
-        - nexus.essocode.ru:5001/ess/synapi:develop
-        - nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
+        - nexus.essocode.ru:5001/ess/m4d:master
+        - nexus.essocode.ru:5001/ess/m4d:${DRONE_SOURCE_BRANCH/\//-}
       dockerfile: ./build/Dockerfile
       username:
         from_secret: docker_login
@@ -61,7 +61,7 @@ steps:
   - name: run
     settings:
       insecure: true
-    image: nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-}
+    image: nexus.essocode.ru:5001/ess/m4d:${DRONE_SOURCE_BRANCH/\//-}
     volumes:
       - name: out
         path: /out
@@ -69,79 +69,21 @@ steps:
     detach: true
     commands:
       - cd /app
-      - java -Dspring.profiles.active=k3s-ocode -jar synapi-0.0.1-SNAPSHOT.jar
+      - java -jar m4d-0.0.1-SNAPSHOT.jar
     depends_on:
       - build
 
-  - name: check
-    image: curlimages/curl
-    environment:
-      SYNAPI_URL: http://run
-    commands:
-      - timeout 60 sh -c 'while ! curl -s -f -o /dev/null $SYNAPI_URL/swagger-ui/index.html#; do sleep 5; done'
-    depends_on:
-      - run
-      - postgres
 
   - name: deploy
     image: ghcr.io/bh90210/dron8s:latest
     settings:
-      yaml: ./deploy/k3s-ocode.yaml
+      yaml: ./deploy/k8s-m4d-ocode.yaml
       tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       kubeconfig:
         from_secret: kubeconfig
-    depends_on:
-      - check
     when:
       branch:
-        - develop
-
-  - name: save-image-archive
-    image: docker
-    commands:
-      - docker save nexus.essocode.ru:5001/ess/synapi:${DRONE_SOURCE_BRANCH/\//-} | gzip > synapi-${DRONE_SOURCE_BRANCH/\//-}.tar.gz
-    volumes:
-      - name: out
-        path: /out
-    depends_on:
-      - check
-    when:
-      branch:
-        - release-*
-
-  - name: push-archive-to-gitlab
-    image: alpine:3.12
-    environment:
-      GITLAB_USERNAME:
-        from_secret: gitlab_username
-      GITLAB_PASSWORD:
-        from_secret: gitlab_password
-    commands:
-      - apk add --no-cache git
-      - git config --global user.name "SEP CI"
-      - git config --global user.email "sep_user@cifro.tech"
-      - git clone https://${GITLAB_USERNAME}:${GITLAB_PASSWORD}@git.cifro.tech/sep/helm-charts.git
-      - cd helm-charts
-      - git checkout -b sep || git checkout sep
-      - mkdir -p image
-      - mv /drone/src/synapi-${DRONE_SOURCE_BRANCH/\//-}.tar.gz image/
-      - git add image/synapi-${DRONE_SOURCE_BRANCH/\//-}.tar.gz
-      - git commit -m "Add Docker image archive for synapi-${DRONE_SOURCE_BRANCH/\//-} in image folder"
-      - mkdir -p Helms/k8s-sep-ok-test-st/synapi
-      - cp -rv /drone/deploy/k8s-sep-ok-test-st/* Helms/k8s-sep-ok-test-st/synapi/
-      - git add Helms/k8s-sep-ok-test-st/synapi/
-      - git commit -m "Add Helms charts for k8s-sep-ok-test-st synapi-${DRONE_SOURCE_BRANCH/\//-} in Helms folder"
-      - mkdir -p Helms/k8s-sep-zk-test-st/synapi
-      - cp -rv /drone/deploy/k8s-sep-zk-test-st/* Helms/k8s-sep-zk-test-st/synapi/
-      - git add Helms/k8s-sep-zk-test-st/synapi/
-      - git commit -m "Add Helms charts for k8s-sep-zk-test-st synapi-${DRONE_SOURCE_BRANCH/\//-} in Helms folder"
-      - git push origin sep
-      - rm -f /drone/src/synapi-${DRONE_SOURCE_BRANCH/\//-}.tar.gz
-    depends_on:
-      - save-image-archive
-    when:
-      branch:
-        - release-*
+        - master
 
   - name: notify
     image: appleboy/drone-discord
@@ -150,9 +92,275 @@ steps:
         from_secret: discord_webhook_id
       webhook_token:
         from_secret: discord_webhook_token
-      message: "{{#success build.status}}✅{{else}}❌{{/success}}  Repository `[{{repo.name}}/{{commit.branch}}]` triggered by event `[{{uppercase build.event}}]` for build.\n    - Commit [[{{commit.sha}}]({{commit.link}})]\n    - Author `[{{commit.author}} / {{commit.email}}]`\n    - Message: {{commit.message}}    - Drone build [[#{{build.number}}]({{build.link}})] reported `[{{uppercase build.status}}]` at `[{{datetime build.finished \"2006.01.02 15:04\" \"\"}}]`\n"
-      when:
-        status: [ success, failure, changed ]
+      message: >
+        {{#success build.status}}✅ Build Successful!{{else}}❌ Build Failed!{{/success}}
+        **Repository:** `[{{repo.name}}/{{commit.branch}}]`
+        **Event:** `[{{uppercase build.event}}]` triggered the build.
+        **Commit:** [[{{commit.sha}}]({{commit.link}})]
+        **Author:** `[{{commit.author}} / {{commit.email}}]`
+        **Message:** {{commit.message}}
+        **Build Status:** `[{{uppercase build.status}}]`
+        **Build Number:** `#{{build.number}}`
+        **Timestamp:** `[{{datetime build.finished "2006.01.02 15:04" ""}}]`
+    when:
+      status: [ success, failure, changed ]
+
+
+  - name: checkout
+    image: alpine/git
+    environment:
+      DRONE_DEBUG: true
+      GIT_REPO:
+        from_secret: git_repo
+      GIT_REPO_V2:
+        from_secret: git_repo_v2
+    commands:
+      - set -x
+      - echo "GIT_REPO=$GIT_REPO"
+      - echo "GIT_REPO_V2=$GIT_REPO_V2"
+
+      - git clone https://git.essocode.ru/o-code/$GIT_REPO
+      - cd $GIT_REPO_V2
+    depends_on:
+      - build
+    when:
+      branch:
+        - release-*
+
+  - name: update-sep-json
+    image: alpine
+    environment:
+      DRONE_DEBUG: true
+      SEP_JSON_INDEX:
+        from_secret: sep_json_index
+    commands:
+      - apk add --no-cache jq
+      - set -x
+      - |
+        echo "Updating sep.json version"
+        jq --arg new_date "$(date +%d.%m.%Y)" '.date = $new_date' sep.json > temp.json && mv temp.json sep.json
+     
+        current_version=$(jq -r '.version' sep.json)
+        
+        main_version=$(echo $current_version | awk -F. '{print $1}')
+        minor_version=$(echo $current_version | awk -F. '{print $2}')
+        patch_version=$(echo $current_version | awk -F. '{print $3}')
+
+        echo "Текущая версия: $current_version"
+        echo "Минорная версия: $minor_version"
+        echo "Патч версия: $patch_version"
+
+        new_patch_version=$(printf "%0${#patch_version}d" $((10#$patch_version + 1)))
+
+        new_version="$main_version.$minor_version.$new_patch_version"
+        echo "Новая версия: $new_version"
+
+        jq --arg new_version "$new_version" '.version = $new_version' sep.json > temp.json && mv temp.json sep.json
+
+        echo $new_version > version.txt
+
+        index_number=$((SEP_JSON_INDEX))
+        echo "JSON index: $index_number"
+        
+        current_rep_version=$(jq --argjson index "$index_number" -r '.microservices[$index].version' sep.json)
+        rep_main_version=$(echo $current_rep_version | awk -F. '{print $1}')
+        rep_minor_version=$(echo $current_rep_version | awk -F. '{print $2}')
+        rep_patch_version=$(echo $current_rep_version | awk -F. '{print $3}')
+
+        new_rep_patch_version=$(printf "%0${#rep_patch_version}d" $((10#$rep_patch_version + 1)))
+
+        new_rep_version="$rep_main_version.$rep_minor_version.$new_rep_patch_version"
+
+        jq --argjson index "$index_number" --arg new_rep_version "$new_rep_version" '.microservices[$index].version = $new_rep_version' sep.json > temp.json && mv temp.json sep.json
+
+        echo "Обновленная версия микросервиса: $new_rep_version"
+
+    depends_on:
+      - checkout
+    when:
+      branch:
+        - release-*
+
+
+  - name: update-release-notes
+    image: alpine
+    environment:
+      DRONE_DEBUG: true
+    commands:
+      - apk add --no-cache jq git
+      - set -x
+      - |
+        commit_message=$(git log -1 --pretty=%B)
+
+        filtered_message=$(echo "$commit_message" | sed '/^\(Merge\|Rebase\|.*pull request.*\|.*from.*\)$/d')
+
+        if [[ -z "$filtered_message" ]]; then
+          echo "Filtered commit message is empty, skipping."
+          exit 0
+        fi
+
+        filtered_message=$(echo "$filtered_message" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')
+
+        if [[ -f release_notes.txt ]]; then
+          last_number=$(grep -o '^[0-9]\+' release_notes.txt | sort -n | tail -n 1)
+          if [[ -z "$last_number" ]]; then
+            next_number=1
+          else
+            next_number=$((last_number + 1))
+          fi
+        else
+          next_number=1
+        fi
+
+        new_entry="$next_number. $filtered_message"
+
+        if [ -s release_notes.txt ] && [ "$(tail -c1 release_notes.txt)" != "" ]; then
+          echo "" >> release_notes.txt
+        fi
+
+        echo "$new_entry" >> release_notes.txt
+    depends_on:
+      - checkout
+    when:
+      branch:
+        - release-*
+
+  - name: commit-and-push
+    image: alpine/git
+    environment:
+      DRONE_DEBUG: true
+      PAT_TOKEN:
+        from_secret: pat_token
+      GIT_EMAIL:
+        from_secret: git_email
+      GIT_NAME:
+        from_secret: git_name
+      GIT_REPO:
+        from_secret: git_repo
+    commands:
+      - set -x
+      - git config --global user.name "$GIT_NAME"
+      - git config --global user.email "$GIT_EMAIL"
+      - git add sep.json release_notes.txt
+      - new_version=$(cat version.txt)
+      - git commit -m "Update sep.json and release_notes.txt to version $new_version [ci skip]" || { echo "No changes to commit"; exit 0; }
+      - git push https://x-access-token:$PAT_TOKEN@git.essocode.ru/o-code/$GIT_REPO
+    depends_on:
+      - update-release-notes
+      - update-sep-json
+    when:
+      branch:
+        - release-*
+
+
+
+  - name: update-other-repos
+    image: alpine/git
+    environment:
+      DRONE_DEBUG: true
+      PAT_TOKEN:
+        from_secret: pat_token
+      GIT_EMAIL:
+        from_secret: git_email
+      GIT_NAME:
+        from_secret: git_name
+      REPO_LIST_SECRET:
+        from_secret: repo_list_secret
+    commands:
+      - set -x
+      - |
+        echo "$REPO_LIST_SECRET" | while IFS= read -r repo; do
+          
+          if [ -z "$repo" ]; then
+            continue
+          fi
+          echo "Текущая репа: $repo"
+        
+          repo_url=$(echo "$repo" | sed 's#https://##')         
+          repo_url=$(echo "$repo_url" | sed 's#/$##')
+          echo "Текущая репа: $repo_url"
+          git clone https://x-access-token:$PAT_TOKEN@$repo_url temp_repo
+        
+          cd temp_repo
+          git checkout dev || git checkout -b dev
+          cp ../sep.json sep.json
+          cp ../release_notes.txt release_notes.txt
+          git add sep.json release_notes.txt
+          git config --global user.name "$GIT_NAME"
+          git config --global user.email "$GIT_EMAIL"
+          git commit -m "Update sep.json and release_notes.txt to version $new_version" || { echo "No changes to commit"; cd ..; rm -rf temp_repo; continue; }
+          git push https://x-access-token:$PAT_TOKEN@$repo_url dev
+          cd ..
+          rm -rf temp_repo
+        done
+    depends_on:
+      - commit-and-push
+    when:
+      branch:
+        - release-*
+
+
+  - name: save-image-archive
+    image: plugins/docker
+    environment:
+      DRONE_DEBUG: true
+      DOCKER_BUILDKIT: 1
+      GIT_REPO_V2:
+        from_secret: git_repo_v2
+    settings:
+      registry: nexus.essocode.ru:5001
+      repo: nexus.essocode.ru:5001/ess/$GIT_REPO_V2
+      tags:
+        - ${DRONE_SOURCE_BRANCH/\//-}
+    commands:
+      - docker save nexus.essocode.ru:5001/ess/$GIT_REPO_V2:${DRONE_SOURCE_BRANCH/\//-} > $GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: cache
+        path: /cache
+    depends_on:
+      - commit-and-push
+    when:
+      branch:
+        - release-*
+
+
+  - name: push-archive-to-gitlab
+    image: alpine:3.12
+    environment:
+      DRONE_DEBUG: true
+      GITLAB_PAT_TOKEN:
+        from_secret: gitlab_pat_token
+      GIT_REPO_V2:
+        from_secret: git_repo_v2
+    commands:
+      - set -x
+      - apk add --no-cache git
+      - git config --global user.name "SEP CI"
+      - git config --global user.email "sep_user@cifro.tech"
+      - echo "$GITLAB_PAT_TOKEN"
+      - git clone https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/helm-charts.git
+      - cd helm-charts
+      - git checkout test-2
+      - mkdir -p image
+      - mv /drone/src/$GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar image/
+      - git add image/$GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar
+
+      - cp /drone/src/sep.json .
+      - cp /drone/src/release_notes.txt .
+      - git add sep.json release_notes.txt
+
+      - git commit -m "Add Docker image archive for synapi-${DRONE_SOURCE_BRANCH/\//-} in image folder"
+      - git push https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/helm-charts.git refs/heads/test-2
+      - rm -f /drone/src/$GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar
+    depends_on:
+      - save-image-archive
+    when:
+      branch:
+        - release-*
+
+
 
 image_pull_secrets:
   - dockerconfig
@@ -167,16 +375,6 @@ trigger:
       - tag
       - pull_request
       - rollback
-
-services:
-  - name: postgres
-    image: postgres:14.8-alpine3.18
-    ports:
-      - 5432
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: synapi_test
 
 volumes:
   - name: out

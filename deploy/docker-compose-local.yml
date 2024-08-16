@@ -2,17 +2,65 @@ version: '3.8'
 
 services:
   app:
-    container_name: synapi
+    container_name: m4d
     build:
       context: ../
       dockerfile: build/Dockerfile
       args:
         NEXUS_RAW_USERNAME: ${NEXUS_RAW_USERNAME}
         NEXUS_RAW_PASSWORD: ${NEXUS_RAW_PASSWORD}
+    environment:
+      OAUTH2_ISSUER_INTERNAL_URL: http://keycloak-1:8080/auth/realms/USERS
+      OAUTH2_ISSUER_PUBLIC_URL: http://keycloak-1:8080/auth/realms/USERS
+      KEYCLOAK_AUTHORIZATION_URI: http://localhost:8080/auth/realms/USERS/protocol/openid-connect/auth
+      SWAGGER_URL: http://localhost:8051
+      KEYCLOAK_SWAGGER_TOKEN_URI: http://localhost:8080/auth/realms/USERS/protocol/openid-connect/token
     ports:
-      - 8080:8080
-      - 8000:8000
-      - 5005:5005
+      - 8051:8051
+      - 8001:8001
+      - 5006:5006
+    depends_on:
+      - postgres_keycloak_1
+      - keycloak-1
+
+  postgres_keycloak_1:
+    container_name: postgres_keycloak_1
+    image: postgres:14
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: keycloak_db_1
+    healthcheck:
+      test: "exit 0"
+    ports:
+      - "5434:5432"
+    restart: unless-stopped
+    volumes:
+      - ./pgdata_keycloak:/var/lib/postgresql/data
+
+  # TODO: необходимо настроить HTTPS(tls protocol)
+  keycloak-1:
+    image: quay.io/keycloak/keycloak:legacy
+    container_name: keycloak_1
+    environment:
+      TZ: Europe/Moscow
+      DB_VENDOR: POSTGRES
+      DB_ADDR: postgres_keycloak_1
+      DB_DATABASE: keycloak_db_1
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin_password
+      KEYCLOAK_PORT: 8080
+      KEYCLOAK_HOST: localhost
+    restart: unless-stopped
+    healthcheck:
+      test: "exit 0"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres_keycloak_1:
+        condition: service_healthy
 #
 #    entrypoint: ['java', '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005', "-Dspring.profiles.active=local", '-jar', 'synapi-0.0.1-SNAPSHOT.jar']
 #
