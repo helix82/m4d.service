@@ -1,7 +1,13 @@
 # Описание работы сервиса локально
 
-1) Запускаем SYNAPI с использование PostgreSQL, 
-    swagger-ui располагается по адресу http://localhost:8080/swagger-ui/index.html#/
+1) Для работы с микросервисом необходим keycloak, по README из репозитории keycloak настраиваем 2 образа:
+   keycloak и postgres_keycloak. Либо отключаем SecurityConfig. Как и из контейнера, так и из среды разработки может
+   происходить общение с keycloak.
+P.S. Если проект дропнулся, то сначала настрой keycloak, а потом уже запускай сервис
+P.S.2. Общение между средой и keycloak происходит нормально, однако, если keycloak в другом compose находился и сборка 
+проекта происходит в контейнер, то необходимо, чтобы кейклок и сервис находились в одном docker-compose
+2) Ссылка на свагер http://localhost:8051/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config#
 
-2) Запускаем микросервис M4d так же с использованием PostgreSQL, 
-   swagger-ui располагается по адресу http://localhost:8050/m4d-service/swagger-ui/#/
+
+
+

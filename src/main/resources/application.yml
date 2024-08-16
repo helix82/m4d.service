@@ -1,6 +1,4 @@
 spring:
-  application:
-    name: m4d-service
   profiles:
     default: local
     active: "@spring.profiles.active@"
@@ -39,8 +37,6 @@ spring:
         format_sql: true
 server:
   port: 8051
-  servlet:
-    context-path: /m4d-service
 web:
   cors:
     allow-origin: "*"
@@ -103,5 +99,5 @@ springdoc:
     # It should be off for PROD
     enabled: true
   server:
-    url: ${SWAGGER_URL:http://localhost:8050}
+    url: ${SWAGGER_URL:http://localhost:8051}
     token-uri: ${KEYCLOAK_SWAGGER_TOKEN_URI:http://localhost:8080/auth/realms/USERS/protocol/openid-connect/token}

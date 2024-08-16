@@ -45,4 +45,4 @@ COPY --from=maven /app/target/${JAR_FILE}  $PROJECT_HOME/${JAR_FILE}
 
 WORKDIR $PROJECT_HOME
 
-ENTRYPOINT ["java", "-jar", $JAR_FILE]
+ENTRYPOINT ["sh", "-c", "java -jar /app/m4d-0.0.1-SNAPSHOT.jar"]
