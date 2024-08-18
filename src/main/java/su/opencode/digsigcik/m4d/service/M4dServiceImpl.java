@@ -2,6 +2,7 @@ package su.opencode.digsigcik.m4d.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -30,6 +31,8 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 @RequiredArgsConstructor
 @EnableTransactionManagement
 public class M4dServiceImpl implements M4dService {
+    @Value("${m4d.handbook.uri}")
+    private String HANDBOOK_URI;
     private final M4dRepository m4dRepository;
     private final M4dCredentialRepository m4dCredentialRepository;
     @Autowired
@@ -66,11 +69,11 @@ public class M4dServiceImpl implements M4dService {
         Long principId;
         Long represId;
         //------------------- save organisation ----------------
-        OrganisationResponse existsOrganisation = (restTemplate.getForEntity("http://localhost:8080/api/v1/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
+        OrganisationResponse existsOrganisation = (restTemplate.getForEntity(HANDBOOK_URI+"/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
         if (existsOrganisation == null) {
             OrganisationResponse respOrganisation;
             try {
-                respOrganisation = restTemplate.postForObject("http://localhost:8080/api/v1/organisation/save", organisation, OrganisationResponse.class);
+                respOrganisation = restTemplate.postForObject(HANDBOOK_URI+"/organisation/save", organisation, OrganisationResponse.class);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(ORGANISATION_IS_NULL);
             }
@@ -82,11 +85,11 @@ public class M4dServiceImpl implements M4dService {
         //------------------- end save organisation ----------------
 
         //------------------- save principal ----------------
-        PrincipalResponse existsPrincipal = (restTemplate.getForEntity("http://localhost:8080/api/v1/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
+        PrincipalResponse existsPrincipal = (restTemplate.getForEntity(HANDBOOK_URI+"/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
         if (existsPrincipal == null) {
             PrincipalResponse respPrincipal;
             try {
-                respPrincipal = restTemplate.postForObject("http://localhost:8080/api/v1/principal/save", principal, PrincipalResponse.class);
+                respPrincipal = restTemplate.postForObject(HANDBOOK_URI+"/principal/save", principal, PrincipalResponse.class);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(PRINCIPAL_IS_NULL);
             }
@@ -98,18 +101,18 @@ public class M4dServiceImpl implements M4dService {
         //------------------- end save principal ----------------
 
         //------------------- save representative and passport ----------------
-        RepresentativeResponse existsRepresentative = (restTemplate.getForEntity("http://localhost:8080/api/v1/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
+        RepresentativeResponse existsRepresentative = (restTemplate.getForEntity(HANDBOOK_URI+"/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
         if (existsRepresentative == null) {
             RepresentativeResponse respRepresentative;
             try {
-                respRepresentative = restTemplate.postForObject("http://localhost:8080/api/v1/representative/save", representative, RepresentativeResponse.class);
+                respRepresentative = restTemplate.postForObject(HANDBOOK_URI+"/representative/save", representative, RepresentativeResponse.class);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(REPRESENTATIVE_IS_NULL);
             }
             try {
                 assert respRepresentative != null;
                 representativePassport.setReprsentativeId(respRepresentative.getId());
-                restTemplate.postForObject("http://localhost:8080/api/v1/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
+                restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
             }
@@ -135,7 +138,7 @@ public class M4dServiceImpl implements M4dService {
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
             for (CredentialResponse c : credentialList) {
-                CredentialResponse[] existsCredentials = (restTemplate.getForEntity("http://localhost:8080/api/v1/credential/find_by_code_or_name/"+c.getCode(), CredentialResponse[].class)).getBody();
+                CredentialResponse[] existsCredentials = (restTemplate.getForEntity(HANDBOOK_URI+"/credential/find_by_code_or_name/"+c.getCode(), CredentialResponse[].class)).getBody();
                 assert existsCredentials != null;
                 if (existsCredentials.length == 0) {
                     CredentialResponse newCredential = new CredentialResponse();
@@ -143,7 +146,7 @@ public class M4dServiceImpl implements M4dService {
                     newCredential.setName(c.getName());
                     CredentialResponse credentialSave;
                     try {
-                        credentialSave = restTemplate.postForObject("http://localhost:8080/api/v1/credential/save", newCredential, CredentialResponse.class);
+                        credentialSave = restTemplate.postForObject(HANDBOOK_URI+"/credential/save", newCredential, CredentialResponse.class);
                     } catch (ConstraintViolationException e) {
                         throw new BadRequestException(CREDENTIAL_IS_NULL);
                     }
@@ -188,7 +191,7 @@ public class M4dServiceImpl implements M4dService {
             throw new M4dException(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND));
         }
         //------------------- save organisation ----------------
-        OrganisationResponse existsOrganisation = (restTemplate.getForEntity("http://localhost:8080/api/v1/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
+        OrganisationResponse existsOrganisation = (restTemplate.getForEntity(HANDBOOK_URI+"/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
         if (existsOrganisation != null) {
             organisation.setId(existsOrganisation.getId());
         }
@@ -196,7 +199,7 @@ public class M4dServiceImpl implements M4dService {
         if(!existsOrganisation.equals(organisation)){
             OrganisationResponse respOrganisation;
             try {
-                respOrganisation = restTemplate.postForObject("http://localhost:8080/api/v1/organisation/save", organisation, OrganisationResponse.class);
+                respOrganisation = restTemplate.postForObject(HANDBOOK_URI+"/organisation/save", organisation, OrganisationResponse.class);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(ORGANISATION_IS_NULL);
             }
@@ -210,13 +213,13 @@ public class M4dServiceImpl implements M4dService {
         //------------------- end save organisation ----------------
 
         //------------------- save principal ----------------
-        PrincipalResponse existsPrincipal = (restTemplate.getForEntity("http://localhost:8080/api/v1/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
+        PrincipalResponse existsPrincipal = (restTemplate.getForEntity(HANDBOOK_URI+"/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
         if (existsPrincipal != null) {
             principal.setId(existsPrincipal.getId());
         }
         PrincipalResponse respPrincipal;
         try {
-            respPrincipal = restTemplate.postForObject("http://localhost:8080/api/v1/principal/save", principal, PrincipalResponse.class);
+            respPrincipal = restTemplate.postForObject(HANDBOOK_URI+"/principal/save", principal, PrincipalResponse.class);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(PRINCIPAL_IS_NULL);
         }
@@ -226,26 +229,26 @@ public class M4dServiceImpl implements M4dService {
 
         //------------------- save representative and passport ----------------
 
-        RepresentativeResponse existsRepresentative = (restTemplate.getForEntity("http://localhost:8080/api/v1/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
+        RepresentativeResponse existsRepresentative = (restTemplate.getForEntity(HANDBOOK_URI+"/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
         if (existsRepresentative != null) {
             representative.setId(existsRepresentative.getId());
         }
         RepresentativeResponse respRepresentative;
         try {
 
-            respRepresentative = restTemplate.postForObject("http://localhost:8080/api/v1/representative/save", representative, RepresentativeResponse.class);
+            respRepresentative = restTemplate.postForObject(HANDBOOK_URI+"/representative/save", representative, RepresentativeResponse.class);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(REPRESENTATIVE_IS_NULL);
         }
 
-        RepresentativePassportResponse existsRepresentativePassport = (restTemplate.getForEntity("http://localhost:8080/api/v1/representative_passport/seriesNumber/"+representativePassport.getSeriesNumber(), RepresentativePassportResponse.class)).getBody();
+        RepresentativePassportResponse existsRepresentativePassport = (restTemplate.getForEntity(HANDBOOK_URI+"/representative_passport/seriesNumber/"+representativePassport.getSeriesNumber(), RepresentativePassportResponse.class)).getBody();
         if (existsRepresentativePassport != null) {
             representativePassport.setId(existsRepresentativePassport.getId());
         }
         try {
             assert respRepresentative != null;
             representativePassport.setReprsentativeId(respRepresentative.getId());
-            restTemplate.postForObject("http://localhost:8080/api/v1/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
+            restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
         }
@@ -273,7 +276,7 @@ public class M4dServiceImpl implements M4dService {
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
             for (CredentialResponse c : credentialList) {
-                CredentialResponse[] existsCredentials = (restTemplate.getForEntity("http://localhost:8080/api/v1/credential/find_by_code_or_name/"+c.getCode(), CredentialResponse[].class)).getBody();
+                CredentialResponse[] existsCredentials = (restTemplate.getForEntity(HANDBOOK_URI+"/credential/find_by_code_or_name/"+c.getCode(), CredentialResponse[].class)).getBody();
                 assert existsCredentials != null;
                 if (existsCredentials.length == 0) {
                     CredentialResponse newCredential = new CredentialResponse();
@@ -281,7 +284,7 @@ public class M4dServiceImpl implements M4dService {
                     newCredential.setName(c.getName());
                     CredentialResponse credentialSave;
                     try {
-                        credentialSave = restTemplate.postForObject("http://localhost:8080/api/v1/credential/save", newCredential, CredentialResponse.class);
+                        credentialSave = restTemplate.postForObject(HANDBOOK_URI+"/credential/save", newCredential, CredentialResponse.class);
                     } catch (ConstraintViolationException e) {
                         throw new BadRequestException(CREDENTIAL_IS_NULL);
                     }
@@ -312,42 +315,6 @@ public class M4dServiceImpl implements M4dService {
         }
         return m4dUpdated;
     }
-
-//    @Override
-//    public M4dWithFioDto findByMrpaRegistryId(@NotNull Long id) {
-////        M4dWithFioDto mrpaRegistry = this.m4dRepository.findMrpaRegistryById(id);
-////        if (mrpaRegistry == null) {
-////            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
-////        }
-////        return mrpaRegistry;
-//
-//        Object[] results = this.m4dRepository.findMrpaRegistryById(id);
-//        if (results == null) {
-//            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
-//        }
-//        return new M4dWithFioDto(
-//                (Long) ((BigInteger)results[0]).longValue(),
-//                (String) results[1],
-//                (String) results[2],
-//                (String) results[3],
-//                (String) results[4],
-//                (String) results[5],
-//                (String) results[6],
-//                (String) results[7],
-//                (String) results[8],
-//                (Long) ((BigInteger)results[9]).longValue(),
-//                (Long) ((BigInteger)results[10]).longValue(),
-//                (Long) ((BigInteger)results[11]).longValue(),
-//                (String) results[12],
-//                (String) results[13],
-//                (String) results[14],
-//                (String) results[15],
-//                (String) results[16],
-//                (String) results[17]
-//        );
-//
-//
-//    }
 
     @Override
     public Integer findMrpaRegistryByGuid(@NotNull String guid) {
@@ -401,13 +368,13 @@ public class M4dServiceImpl implements M4dService {
         Long representativeId = m4d.getRepresentativeId();
 
         String errorMessage = "Can`t %s mrpa registry because %s id null!";
-        if ((restTemplate.getForEntity("http://localhost:8080/api/v1/organisation/"+organisationId, OrganisationResponse[].class)).getBody() == null) {
+        if ((restTemplate.getForEntity(HANDBOOK_URI+"/organisation/"+organisationId, OrganisationResponse[].class)).getBody() == null) {
             throw new BadRequestException(String.format(errorMessage, operationType, "organisation", organisationId));
         }
-        if ((restTemplate.getForEntity("http://localhost:8080/api/v1/principal/"+principalId, PrincipalResponse[].class)).getBody() == null) {
+        if ((restTemplate.getForEntity(HANDBOOK_URI+"/principal/"+principalId, PrincipalResponse[].class)).getBody() == null) {
             throw new BadRequestException(String.format(errorMessage, operationType, "principal", principalId));
         }
-        if ((restTemplate.getForEntity("http://localhost:8080/api/v1/representative/"+representativeId, RepresentativeResponse[].class)).getBody() == null) {
+        if ((restTemplate.getForEntity(HANDBOOK_URI+"/representative/"+representativeId, RepresentativeResponse[].class)).getBody() == null) {
             throw new BadRequestException(String.format(errorMessage, operationType, "representative", representativeId));
         }
     }
@@ -423,7 +390,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     public List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId) {
-        CredentialResponse[] credentials = (restTemplate.getForEntity("http://localhost:8080/api/v1/credential/mrpaId/"+mrpaId, CredentialResponse[].class)).getBody();
+        CredentialResponse[] credentials = (restTemplate.getForEntity(HANDBOOK_URI+"/credential/mrpaId/"+mrpaId, CredentialResponse[].class)).getBody();
         List<M4dResponseDto.CredentialDTO> credentialDTOList = new ArrayList<>();
         assert credentials != null;
         for (CredentialResponse c : credentials) {
@@ -569,7 +536,7 @@ public class M4dServiceImpl implements M4dService {
     @Transactional(readOnly = true)
     @Override
     public List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) {
-        return Stream.of(Objects.requireNonNull((restTemplate.getForEntity("http://localhost:8080/api/v1/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
+        return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
                 .map(PublicKeyUserCertificateResponse::getInn)
                 .flatMap(inn -> m4dRepository.findMrpaRegistriesByPrincipalInnLikePrincipalAndRepresentative(inn).stream().map(
                         results -> M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("status"),
