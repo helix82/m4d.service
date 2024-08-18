@@ -9,6 +9,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.joda.time.Instant;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
@@ -48,6 +49,8 @@ import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 @M4dExceptionHandler
 @RequestMapping("/api/v1/mrpa_registry" )
 public class M4dController {
+    @Value("${m4d.handbook.uri}")
+    private String HANDBOOK_URI;
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     @Autowired
@@ -66,7 +69,16 @@ public class M4dController {
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistry(){
-        return new ResponseEntity<>(findMrpaRegistryForResponse(), HttpStatus.OK);
+        List<M4dResponseDto> mrpaRegistryFindAll;
+        try {
+            mrpaRegistryFindAll = this.m4dService.findAllMrpaRegistry();
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        for(M4dResponseDto m: mrpaRegistryFindAll){
+            m.credentials = this.m4dService.getCredentialByMrpaRegistryId(m.getId());
+        }
+        return new ResponseEntity<>(mrpaRegistryFindAll, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_SAVE_SUMMARY, description = CONTROLLER_MRPA_SAVE_DESCRIPTION )
@@ -210,7 +222,7 @@ public class M4dController {
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-            reportDto = restTemplate.postForObject("http://localhost:8080/api/v1/get-container-part-json", requestEntity, ReportDto.class);
+            reportDto = restTemplate.postForObject(HANDBOOK_URI+"/get-container-part-json", requestEntity, ReportDto.class);
 
 
 //        (restTemplate.getForObject("http://localhost:8080/api/v1/get-container-part-json", container, ReportDto.class)).getBody()
@@ -234,7 +246,7 @@ public class M4dController {
 
             HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map, headers);
 
-            res = restTemplate.postForObject("http://localhost:8080/api/v1/get-container-part", requestEntity1, ContainerPartResponse.class);
+            res = restTemplate.postForObject(HANDBOOK_URI+"/get-container-part", requestEntity1, ContainerPartResponse.class);
             //res = restTemplate.getForObject("http://localhost:8080/api/v1/get-container-part", container, selector, ContainerPartResponse.class);
 
 
@@ -429,19 +441,6 @@ public class M4dController {
         return listMrpaRegistry.isEmpty() ?
                 noContent().build() :
                 new ResponseEntity<>(listMrpaRegistry, HttpStatus.OK);
-    }
-
-    private List<M4dResponseDto> findMrpaRegistryForResponse(){
-        List<M4dResponseDto> mrpaRegistryFindAll;
-        try {
-            mrpaRegistryFindAll = this.m4dService.findAllMrpaRegistry();
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
-        }
-        for(M4dResponseDto m: mrpaRegistryFindAll){
-            m.credentials = this.m4dService.getCredentialByMrpaRegistryId(m.getId());
-        }
-        return mrpaRegistryFindAll;
     }
 
     private M4dResponseDto findMrpaRegistryByIdForResponse(Long id) throws ParseException, JAXBException {

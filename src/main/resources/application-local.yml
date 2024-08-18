@@ -88,3 +88,6 @@ springdoc:
     url: ${SWAGGER_URL:http://localhost:8051}
     token-uri: ${KEYCLOAK_SWAGGER_TOKEN_URI:http://localhost:8080/auth/realms/USERS/protocol/openid-connect/token}
 
+m4d:
+  handbook:
+    uri: http://localhost:8080/api/v1
