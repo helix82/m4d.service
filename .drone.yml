@@ -80,7 +80,9 @@ steps:
       yaml: ./deploy/k8s-m4d-ocode.yaml
       tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       kubeconfig:
-        from_secret: k8s
+        from_secret: kubeconfig
+    depends_on:
+      - build
     when:
       branch:
         - master
@@ -354,6 +356,8 @@ steps:
       - git commit -m "Add Docker image archive for synapi-${DRONE_SOURCE_BRANCH/\//-} in image folder"
       - git push https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/helm-charts.git refs/heads/test-2
       - rm -f /drone/src/$GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar
+      - cd ..
+      - rm -rf helm-charts
     depends_on:
       - save-image-archive
     when:
