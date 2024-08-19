@@ -80,7 +80,7 @@ steps:
       yaml: ./deploy/k8s-m4d-ocode.yaml
       tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       kubeconfig:
-        from_secret: kubeconfig
+        from_secret: k8s
     when:
       branch:
         - master
