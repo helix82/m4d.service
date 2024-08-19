@@ -1,11 +1,7 @@
 # Описание работы сервиса локально
 
 1) Для работы с микросервисом необходим keycloak, по README из репозитории keycloak настраиваем 2 образа:
-   keycloak и postgres_keycloak. Либо отключаем SecurityConfig. Как и из контейнера, так и из среды разработки может
-   происходить общение с keycloak.
-P.S. Если проект дропнулся, то сначала настрой keycloak, а потом уже запускай сервис
-P.S.2. Общение между средой и keycloak происходит нормально, однако, если keycloak в другом compose находился и сборка 
-проекта происходит в контейнер, то необходимо, чтобы кейклок и сервис находились в одном docker-compose
+   keycloak и postgres_keycloak. Либо отключаем SecurityConfig. 
 2) Ссылка на свагер http://localhost:8051/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config#
 
 
