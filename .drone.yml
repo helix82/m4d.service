@@ -59,6 +59,16 @@ steps:
       - build
 
   - name: run
+    environment:
+      DRONE_DEBUG: true
+      OAUTH2_ISSUER_INTERNAL_URL:
+        from_secret: oauth2_issuer_internal_url
+      OAUTH2_ISSUER_PUBLIC_URL:
+        from_secret: oauth2_issuer_public_url
+      KEYCLOAK_AUTHORIZATION_URI:
+        from_secret: keycloak_authorization_uri
+      KEYCLOAK_SWAGGER_TOKEN_URI:
+        from_secret: keycloak_swagger_token_url
     settings:
       insecure: true
     image: nexus.essocode.ru:5001/ess/m4d:${DRONE_SOURCE_BRANCH/\//-}
@@ -73,6 +83,18 @@ steps:
     depends_on:
       - build
 
+  - name: check
+    image: curlimages/curl
+    environment:
+      DRONE_DEBUG: true
+      M4D_URL: http://run:8051
+    commands:
+      - echo "$M4D_URL"
+      - timeout 60 sh -c 'while ! curl -s -f -o /dev/null $M4D_URL/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config#/; do sleep 5; done'
+    depends_on:
+      - run
+
+
 
   - name: deploy
     image: ghcr.io/bh90210/dron8s:latest
@@ -82,7 +104,7 @@ steps:
       kubeconfig:
         from_secret: kubeconfig
     depends_on:
-      - build
+      - check
     when:
       branch:
         - master
