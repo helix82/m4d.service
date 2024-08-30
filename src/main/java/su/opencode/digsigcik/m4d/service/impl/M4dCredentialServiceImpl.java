@@ -1,10 +1,11 @@
-package su.opencode.digsigcik.m4d.service;
+package su.opencode.digsigcik.m4d.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import su.opencode.digsigcik.m4d.model.M4dCredential;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
+import su.opencode.digsigcik.m4d.service.M4dCredentialService;
 
 @Service
 @Primary

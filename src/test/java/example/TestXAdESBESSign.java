@@ -1,6 +1,6 @@
 package example;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -32,7 +32,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
 
-@Slf4j
+@Log4j2
 public class TestXAdESBESSign {
     public static void main(String[] args) throws Exception {
         Security.addProvider(new JCP());

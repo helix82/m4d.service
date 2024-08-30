@@ -42,7 +42,7 @@ import java.util.*;
 
 import static org.springframework.http.ResponseEntity.noContent;
 import static su.opencode.digsigcik.m4d.util.Constants.*;
-import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getAuthenticationEmail;
+import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getAuthenticationUsername;
 import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
 @RestController
@@ -436,7 +436,7 @@ public class M4dController {
     })
     @GetMapping(value = "/me",produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistryForUser(Authentication authentication){
-        List<M4dResponseDto> listMrpaRegistry = m4dService.findAllMrpaRegistryByLogin(getAuthenticationEmail(authentication));
+        List<M4dResponseDto> listMrpaRegistry = m4dService.findAllMrpaRegistryByLogin(getAuthenticationUsername(authentication));
 
         return listMrpaRegistry.isEmpty() ?
                 noContent().build() :

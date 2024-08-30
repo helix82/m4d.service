@@ -54,6 +54,13 @@
         </profile>
     </profiles>
 
+    <repositories>
+        <repository>
+            <id>nexus</id>
+            <url>https://nexus.essocode.ru/repository/mvn-ocode/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
 
         <dependency>
@@ -111,18 +118,6 @@
         </dependency>
 
         <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>1.2</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>2.0.12</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20240303</version>
@@ -137,6 +132,16 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
 <!--        commented due to conflict with swagger-->
 <!--        <dependency>-->
@@ -461,6 +466,25 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.5.9</version>
         </dependency>
+
+        <!-- KAFKA DEPENDENCIES -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>su.opencode.digsigcik</groupId>
+            <artifactId>dtos</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
+        <!-- KAFKA DEPENDENCIES -->
     </dependencies>
 
     <build>
