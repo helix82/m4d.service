@@ -1,12 +1,13 @@
 package su.opencode.digsigcik.m4d.util;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
+import org.springframework.security.oauth2.jwt.Jwt;
 
-//TODO @vitalik.sahnov Временное решение. Удалить после интеграции авторизации
-@Component
+@UtilityClass
 public class JwtTokenUtils {
-    public static String getAuthenticationEmail(Authentication authentication) {
-        return (String) authentication.getPrincipal();
+    public static String getAuthenticationUsername(Authentication authentication) {
+        Jwt token = (Jwt) authentication.getPrincipal();
+        return (String) token.getClaims().get("preferred_username");
     }
 }

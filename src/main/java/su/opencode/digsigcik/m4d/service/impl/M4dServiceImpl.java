@@ -1,4 +1,4 @@
-package su.opencode.digsigcik.m4d.service;
+package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,7 @@ import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.*;
 import su.opencode.digsigcik.m4d.dto.response.*;
+import su.opencode.digsigcik.m4d.service.M4dService;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;

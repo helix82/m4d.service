@@ -35,6 +35,24 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  #Kafka settings
+  kafka:
+    bootstrap-servers: ${KAFKA_BROKERS_LIST_URL:localhost:29092,localhost:39092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: 1
+      batch-size: 32768
+      compression-type: lz4
+      properties:
+        linger.ms: 1000
+      retries: 3
+    #Здесь указываются топики, которые вы хотите использовать
+    topics:
+      test: TEST
+
+
+
 server:
   port: 8051
 web:
@@ -45,9 +63,6 @@ web:
     max-age: 5
   server:
     uri: http://localhost
-logging:
-  level:
-    su.opencode.digsigcik.synapi: DEBUG
 ---
 
 spring:
@@ -64,14 +79,6 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
-
-logging:
-  level:
-    su.opencode.digsigcik.synapi: TRACE
-
-jwt:
-  secret: $2a$12$HmLdYNemJ6B6tFTC9InU.OoF5hB3w.3109Pb4sc.Fthvm4X3TZz4i
-  lifetime: PT4320H
 
 tls:
   ca:

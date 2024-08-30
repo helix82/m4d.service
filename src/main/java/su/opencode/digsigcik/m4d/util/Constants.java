@@ -95,6 +95,9 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY = "Получить список МЧД пользователя";
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список МЧД пользователя";
 
+    String CONTROLLER_TEST_KAFKA_SUMMARY = "Отправляет логин пользователя через брокер сообщений в другой микросервис";
+    String CONTROLLER_TEST_KAFKA_DESCRIPTION = "Возвращает логин, если отправилось";
+
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
     String API_RESPONSE_CODE_201_MESSAGE = "Создано";
     String API_RESPONSE_CODE_204_MESSAGE = "Нет контента";

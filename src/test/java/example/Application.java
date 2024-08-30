@@ -1,7 +1,7 @@
 package example;
 
-import lombok.extern.slf4j.Slf4j;
-
+import lombok.extern.log4j.Log4j2;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,9 +10,7 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-@Slf4j
+@Log4j2
 public class Application {
     public static void main(String[] args) throws UnsupportedEncodingException {
         KeyPair keyPair = readKeyPairFromPkcs12("oper.pfx","1234");

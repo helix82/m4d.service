@@ -15,6 +15,7 @@ data:
   OAUTH2_ISSUER_PUBLIC_URL: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUw==
   KEYCLOAK_AUTHORIZATION_URI: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUy9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
   KEYCLOAK_SWAGGER_TOKEN_URI: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUy9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
+  KAFKA_BROKERS_LIST_URL: c3J2My5lc3NvY29kZS5ydToyOTA5MixzcnYzLmVzc29jb2RlLnJ1OjM5MDky
   SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
 ---
 
@@ -89,6 +90,11 @@ spec:
                 secretKeyRef:
                   name: back-cred
                   key: SWAGGER_URL
+            - name: KAFKA_BROKERS_LIST_URL
+              valueFrom:
+                secretKeyRef:
+                  name: back-cred
+                  key: KAFKA_BROKERS_LIST_URL
       imagePullSecrets:
         - name: registrypullsecret
 

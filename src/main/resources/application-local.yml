@@ -51,14 +51,6 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
-logging:
-  level:
-    su.opencode.digsigcik.synapi: TRACE
-
-jwt:
-  secret: $2a$12$HmLdYNemJ6B6tFTC9InU.OoF5hB3w.3109Pb4sc.Fthvm4X3TZz4i
-  lifetime: 40m
-
 tls:
   ca:
     uri: https://192.168.0.53:4433/acme/acme/directory

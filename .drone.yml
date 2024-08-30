@@ -69,6 +69,8 @@ steps:
         from_secret: keycloak_authorization_uri
       KEYCLOAK_SWAGGER_TOKEN_URI:
         from_secret: keycloak_swagger_token_url
+      KAFKA_BROKERS_LIST_URL:
+        from_secret: kafka_brokers_list_url
     settings:
       insecure: true
     image: nexus.essocode.ru:5001/ess/m4d:${DRONE_SOURCE_BRANCH/\//-}

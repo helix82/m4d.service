@@ -1,7 +1,7 @@
 package example;
 
 import com.lowagie.text.DocumentException;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-@Slf4j
+@Log4j2
 public class TestSign {
     public static void main(String[] args) throws IOException, DocumentException, CertificateEncodingException, OperatorCreationException, CMSException, CAdESException {
      //   Security.addProvider(new JCP());
