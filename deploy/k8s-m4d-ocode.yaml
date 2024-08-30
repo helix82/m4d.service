@@ -8,14 +8,14 @@ apiVersion: v1
 kind: Secret
 type: Opaque
 metadata:
-  name: back-cred
+  name: m4d-back-cred
   namespace: ocode-dev
 data:
   OAUTH2_ISSUER_INTERNAL_URL: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUw==
   OAUTH2_ISSUER_PUBLIC_URL: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUw==
   KEYCLOAK_AUTHORIZATION_URI: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUy9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
   KEYCLOAK_SWAGGER_TOKEN_URI: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUy9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
-  KAFKA_BROKERS_LIST_URL: c3J2My5lc3NvY29kZS5ydToyOTA5MixzcnYzLmVzc29jb2RlLnJ1OjM5MDky
+  KAFKA_BROKERS_LIST_URL: MTQ5LjE1NC42NC4xOToyOTA5MiwgMTQ5LjE1NC42NC4xOTozOTA5Mg==
   SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
 ---
 
@@ -68,32 +68,32 @@ spec:
             - name: OAUTH2_ISSUER_INTERNAL_URL
               valueFrom:
                 secretKeyRef:
-                  name: back-cred
+                  name: m4d-back-cred
                   key: OAUTH2_ISSUER_INTERNAL_URL
             - name: OAUTH2_ISSUER_PUBLIC_URL
               valueFrom:
                 secretKeyRef:
-                  name: back-cred
+                  name: m4d-back-cred
                   key: OAUTH2_ISSUER_PUBLIC_URL
             - name: KEYCLOAK_AUTHORIZATION_URI
               valueFrom:
                 secretKeyRef:
-                  name: back-cred
+                  name: m4d-back-cred
                   key: KEYCLOAK_AUTHORIZATION_URI
             - name: KEYCLOAK_SWAGGER_TOKEN_URI
               valueFrom:
                 secretKeyRef:
-                  name: back-cred
+                  name: m4d-back-cred
                   key: KEYCLOAK_SWAGGER_TOKEN_URI
             - name: SWAGGER_URL
               valueFrom:
                 secretKeyRef:
-                  name: back-cred
+                  name: m4d-back-cred
                   key: SWAGGER_URL
             - name: KAFKA_BROKERS_LIST_URL
               valueFrom:
                 secretKeyRef:
-                  name: back-cred
+                  name: m4d-back-cred
                   key: KAFKA_BROKERS_LIST_URL
       imagePullSecrets:
         - name: registrypullsecret
