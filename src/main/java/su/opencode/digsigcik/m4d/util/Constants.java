@@ -71,7 +71,28 @@ public interface Constants {
     String XML_ATTRIBUTE_CREDENTIAL_CODE = "КодПолн";
     String XML_ATTRIBUTE_CREDENTIAL_NAME = "НаимПолн";
 
+    String XML_ELEMENT_RECALL_FILE = "Файл";
+    String XML_ELEMENT_RECALL_INFO = "СвЗаяв";
+    String XML_ATTRIBUTE_RECALL_GUID = "НомДовер";
+    String XML_ATTRIBUTE_RECALL_ARGUMENT = "ПричОтз";
+    String XML_ELEMENT_RECALL_WHO = "СвЗаявит";
+    String XML_ELEMENT_RECALL_PRINCIPALS = "СвДоверит";
+    String XML_ELEMENT_RECALL_LEGAL_ENTITY = "РосОргДовер";
+    String XML_ATTRIBUTE_RECALL_ORGANISATION_NAME = "НаимОрг";
+    String XML_ATTRIBUTE_RECALL_ORGANISATION_INN = "ИННЮЛ";
+    String XML_ATTRIBUTE_RECALL_ORGANISATION_KPP = "КПП";
+    String XML_ATTRIBUTE_RECALL_ORGANISATION_OGRN = "ОГРН";
+    String XML_ELEMENT_RECALL_REPRESENTATIVE = "СвПред";
+    String XML_ELEMENT_RECALL_DETAIL_REPRESENTATIVE = "СведФизЛ";
+    String XML_ATTRIBUTE_RECALL_INN = "ИННФЛ";
+    String XML_ATTRIBUTE_RECALL_SNILS = "СНИЛС";
+    String XML_ELEMENT_RECALL_FIO = "ФИО";
+    String XML_ATTRIBUTE_RECALL_FIO_NAME = "Имя";
+    String XML_ATTRIBUTE_RECALL_FIO_SURNAME = "Фамилия";
+    String XML_ATTRIBUTE_RECALL_FIO_PATRONYMIC = "Отчество";
+
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
+    String PARAMETER_MRPA_RECALL_ID_DESCRIPTION = "ИД заявления на отзыв МЧД";
     String PARAMETER_PRINCIPAL_INN_DESCRIPTION = "ИНН доверителя";
 
     String CONTROLLER_MRPA_FIND_ALL_SUMMARY = "Получить список МЧД с ФИО представителя и ФИО доверителя";
@@ -90,10 +111,24 @@ public interface Constants {
     String CONTROLLER_MRPA_UPLOAD_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_UPLOAD_XML_SUMMARY = "Импорт МЧД";
     String CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
-    String CONTROLLER_MRPA_RECALL_SUMMARY = "Отозвать МЧД";
-    String CONTROLLER_MRPA_RECALL_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_CLEAR_SIG_SUMMARY = "Удалить ЭП МЧД";
+    String CONTROLLER_MRPA_CLEAR_SIG_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY = "Получить список МЧД пользователя";
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список МЧД пользователя";
+    String CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY = "Получить список заявлений на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_FIND_ALL_DESCRIPTION = "Возвращает список заявлений на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_FIND_BY_ID_SUMMARY = "Получить заявление на отзыв МЧД по ИД";
+    String CONTROLLER_MRPA_RECALL_FIND_BY_ID_DESCRIPTION = "Возвращает заявление на отзыв МЧД по ИД";
+    String CONTROLLER_MRPA_RECALL_SAVE_SUMMARY = "Сохранить заявление на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_SAVE_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_UPDATE_SUMMARY = "Изменить заявление на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_UPDATE_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_DELETE_SUMMARY = "Удалить заявление на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_SUMMARY = "Получить список заявлени на отзыв МЧД пользователя";
+    String CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список заявлений на отзыв МЧД пользователя";
+    String CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY = "Загрузить ЭП заявления на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
 
     String CONTROLLER_TEST_KAFKA_SUMMARY = "Отправляет логин пользователя через брокер сообщений в другой микросервис";
     String CONTROLLER_TEST_KAFKA_DESCRIPTION = "Возвращает логин, если отправилось";
@@ -106,7 +141,10 @@ public interface Constants {
 
     String NULL = "null";
     String ID_IS_NULL = String.format("ID is %s", NULL);
+    String INN_IS_NULL = String.format("INN is %s", NULL);
     String MRPA_IS_NULL = String.format("MRPA is %s", NULL);
+    String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
+    String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
     String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);
     String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
     String MRPA_REGISTRY_IS_EXISTS = "Добавляемая МЧД уже существует в базе";

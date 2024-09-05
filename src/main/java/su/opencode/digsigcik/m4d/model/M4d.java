@@ -56,12 +56,6 @@ public class M4d {
     @JsonProperty("endDate")
     private String endDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "EXPIRED")
-    @JsonProperty("status")
-    private StatusTypeEnum status;
-
     @Column(name = "sig_path", columnDefinition = "TEXT")
     @Schema(example = "")
     @JsonProperty("sigPath")
@@ -81,6 +75,10 @@ public class M4d {
     @Schema(example = "")
     @JsonProperty("recalledXmlPath")
     private String recalledXmlPath;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "mrpa_recall_id", referencedColumnName = "id")
+    private M4dRecall mrpaRecall;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "mrpa_registry_id")

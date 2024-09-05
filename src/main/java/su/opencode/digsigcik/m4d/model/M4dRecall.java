@@ -1,0 +1,35 @@
+package su.opencode.digsigcik.m4d.model;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import su.opencode.digsigcik.m4d.enums.AuthorTypeEnum;
+
+import javax.persistence.*;
+
+@Data
+@Entity
+@Table(name = "mrpa_recall")
+public class M4dRecall {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(example = "1", required = true)
+    @JsonProperty("id")
+    private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "author", columnDefinition = "VARCHAR(255)")
+    @Schema(example = "PRINCIPAL")
+    @JsonProperty("author")
+    private AuthorTypeEnum author;
+
+    @Column(name = "argument", columnDefinition = "TEXT")
+    @Schema(example = "")
+    @JsonProperty("argument")
+    private String argument;
+
+    @Column(name = "signature", columnDefinition = "TEXT")
+    @Schema(example = "")
+    @JsonProperty("signature")
+    private String signature;
+}
