@@ -5,5 +5,3 @@
 2) Ссылка на свагер http://localhost:8051/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config#
 
 
-
-
