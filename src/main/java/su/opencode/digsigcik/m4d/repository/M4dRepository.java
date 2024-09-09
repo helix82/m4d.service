@@ -12,6 +12,8 @@ import java.util.Map;
 
 @Repository
 public interface M4dRepository extends JpaRepository<M4d, Long> {
+    M4d findM4dByMrpaRecallId(Long m4dRecallId);
+
     @Transactional(readOnly = true)
     @Query(value = "SELECT cast(mr.id as text), mr.guid, mr.internal_number, mr.start_date, mr.end_date, mr.status, mr.create_date, "
             + " cast(p.id as text) AS p_id, p.inn AS p_inn, p.snils AS p_snils, p.job_title AS p_job_title, p.name AS p_name, p.surname AS p_surname, p.patronymic AS p_patronymic,"
@@ -52,11 +54,6 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
 
     @Query(value = "SELECT * from mrpa_registry where id=:id ", nativeQuery = true)
     M4d findMrpaById(Long id);
-
-    @Modifying
-    @Transactional
-    @Query(value = "update mrpa_registry mr set status = 'WITHDRAWN' where mr.id=:id", nativeQuery = true)
-    void recallMrpaRegistryById(Long id);
 
     @Query(value = "SELECT cast(mr.id as text), mr.guid, mr.internal_number, mr.start_date, mr.end_date, mr.status, mr.sig_path, mr.create_date, mr.recalled_xml_path, "
             + " cast(p.id as text) AS p_id, p.inn AS p_inn, p.snils AS p_snils, p.job_title AS p_job_title, p.name AS p_name, p.surname AS p_surname,"

@@ -1,16 +1,16 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import su.opencode.digsigcik.m4d.dto.*;
-import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.*;
@@ -19,7 +19,9 @@ import su.opencode.digsigcik.m4d.service.M4dService;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,9 +37,9 @@ public class M4dServiceImpl implements M4dService {
     @Value("${m4d.handbook.uri}")
     private String HANDBOOK_URI;
     private final M4dRepository m4dRepository;
+    private final M4dRecallRepository m4dRecallRepository;
     private final M4dCredentialRepository m4dCredentialRepository;
-    @Autowired
-    private RestTemplate restTemplate;
+    public RestTemplate restTemplate;
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistry() {
@@ -49,7 +51,7 @@ public class M4dServiceImpl implements M4dService {
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
 
         for (Map<String, Object> result : results) {
-            M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) result.get("id"), (String) result.get("guid"), (String) result.get("internal_number"), (String) result.get("start_date"), (String) result.get("end_date"), (String) result.get("status"),
+            M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) result.get("id"), (String) result.get("guid"), (String) result.get("internal_number"), (String) result.get("start_date"), (String) result.get("end_date"),
                     (String) result.get("create_date"), (String) result.get("p_id"), (String) result.get("p_inn"), (String) result.get("p_snils"), (String) result.get("p_job_title"), (String) result.get("p_name"), (String) result.get("p_surname"), (String) result.get("p_patronymic"),
                     (String) result.get("r_id"), (String) result.get("r_inn"), (String) result.get("r_snils"), (String) result.get("r_birth_date"), (String) result.get("r_name"), (String) result.get("r_surname"), (String) result.get("r_patronymic")
             );
@@ -60,12 +62,17 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     public M4d saveMrpaRegistry(@NotNull M4d m4d) {
-        throwExceptionIfRecordWithIdNotExist(m4d, "create");
         return this.m4dRepository.save(m4d);
     }
 
+    @Override
+    //@AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_CREATE)
+    public M4d updateMrpaRegistry(@NotNull M4d mrpaRegistry) {
+        return this.m4dRepository.save(mrpaRegistry);
+    }
+
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
-    public M4d saveAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
+    public ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long represId;
@@ -76,7 +83,7 @@ public class M4dServiceImpl implements M4dService {
             try {
                 respOrganisation = restTemplate.postForObject(HANDBOOK_URI+"/organisation/save", organisation, OrganisationResponse.class);
             } catch (ConstraintViolationException e) {
-                throw new BadRequestException(ORGANISATION_IS_NULL);
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
             assert respOrganisation != null;
             orgId = respOrganisation.getId();
@@ -92,7 +99,7 @@ public class M4dServiceImpl implements M4dService {
             try {
                 respPrincipal = restTemplate.postForObject(HANDBOOK_URI+"/principal/save", principal, PrincipalResponse.class);
             } catch (ConstraintViolationException e) {
-                throw new BadRequestException(PRINCIPAL_IS_NULL);
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
             assert respPrincipal != null;
             principId = respPrincipal.getId();
@@ -108,14 +115,14 @@ public class M4dServiceImpl implements M4dService {
             try {
                 respRepresentative = restTemplate.postForObject(HANDBOOK_URI+"/representative/save", representative, RepresentativeResponse.class);
             } catch (ConstraintViolationException e) {
-                throw new BadRequestException(REPRESENTATIVE_IS_NULL);
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
             try {
                 assert respRepresentative != null;
                 representativePassport.setReprsentativeId(respRepresentative.getId());
                 restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
             } catch (ConstraintViolationException e) {
-                throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
             represId = respRepresentative.getId();
         } else {
@@ -124,7 +131,7 @@ public class M4dServiceImpl implements M4dService {
         //------------------- end save representative and passport ----------------
 
         if (orgId == null || principId == null || represId == null) {
-            throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_FULL), HttpStatus.BAD_REQUEST);
         }
         m4d.setOrganisationId(orgId);
         m4d.setPrincipalId(principId);
@@ -134,7 +141,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             m4dSaved = this.m4dRepository.save(m4d);
         } catch (ConstraintViolationException e) {
-            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
@@ -149,7 +156,7 @@ public class M4dServiceImpl implements M4dService {
                     try {
                         credentialSave = restTemplate.postForObject(HANDBOOK_URI+"/credential/save", newCredential, CredentialResponse.class);
                     } catch (ConstraintViolationException e) {
-                        throw new BadRequestException(CREDENTIAL_IS_NULL);
+                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                     }
                     assert credentialSave != null;
                     credList.add(credentialSave.getId());
@@ -171,25 +178,25 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     this.m4dCredentialRepository.save(m4dCredential);
                 } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                 }
             }
         }
 
-        return m4dSaved;
+        return new ResponseEntity<>(m4dSaved.getId(), HttpStatus.OK);
     }
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
-    public M4d updateAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
+    public ResponseEntity<?> updateAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long represId;
         if (m4d.getId() == null) {
-            throw new BadRequestException("Can`t update mrpa registry because id null!");
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Can`t update mrpa registry because id null!"), HttpStatus.BAD_REQUEST);
         }
         M4d existMrpaRegistry = this.findById(m4d.getId());
         if (existMrpaRegistry == null) {
-            throw new M4dException(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND));
+            return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND)), HttpStatus.NOT_FOUND);
         }
         //------------------- save organisation ----------------
         OrganisationResponse existsOrganisation = (restTemplate.getForEntity(HANDBOOK_URI+"/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
@@ -202,7 +209,7 @@ public class M4dServiceImpl implements M4dService {
             try {
                 respOrganisation = restTemplate.postForObject(HANDBOOK_URI+"/organisation/save", organisation, OrganisationResponse.class);
             } catch (ConstraintViolationException e) {
-                throw new BadRequestException(ORGANISATION_IS_NULL);
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
             assert respOrganisation != null;
             orgId = respOrganisation.getId();
@@ -222,7 +229,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             respPrincipal = restTemplate.postForObject(HANDBOOK_URI+"/principal/save", principal, PrincipalResponse.class);
         } catch (ConstraintViolationException e) {
-            throw new BadRequestException(PRINCIPAL_IS_NULL);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         assert respPrincipal != null;
         principId = respPrincipal.getId();
@@ -239,7 +246,7 @@ public class M4dServiceImpl implements M4dService {
 
             respRepresentative = restTemplate.postForObject(HANDBOOK_URI+"/representative/save", representative, RepresentativeResponse.class);
         } catch (ConstraintViolationException e) {
-            throw new BadRequestException(REPRESENTATIVE_IS_NULL);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
 
         RepresentativePassportResponse existsRepresentativePassport = (restTemplate.getForEntity(HANDBOOK_URI+"/representative_passport/seriesNumber/"+representativePassport.getSeriesNumber(), RepresentativePassportResponse.class)).getBody();
@@ -251,13 +258,13 @@ public class M4dServiceImpl implements M4dService {
             representativePassport.setReprsentativeId(respRepresentative.getId());
             restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
         } catch (ConstraintViolationException e) {
-            throw new BadRequestException(REPRESENTATIVE_PASSPORT_IS_NULL);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         represId = respRepresentative.getId();
         //------------------- end save representative and passport ----------------
 
         if (orgId == null || principId == null || represId == null) {
-            throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_FULL), HttpStatus.BAD_REQUEST);
         }
         if(!m4d.getOrganisationId().equals(orgId)){
             m4d.setOrganisationId(orgId);
@@ -272,7 +279,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             m4dUpdated = this.m4dRepository.save(m4d);
         } catch (ConstraintViolationException e) {
-            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
@@ -287,7 +294,7 @@ public class M4dServiceImpl implements M4dService {
                     try {
                         credentialSave = restTemplate.postForObject(HANDBOOK_URI+"/credential/save", newCredential, CredentialResponse.class);
                     } catch (ConstraintViolationException e) {
-                        throw new BadRequestException(CREDENTIAL_IS_NULL);
+                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                     }
                     assert credentialSave != null;
                     credList.add(credentialSave.getId());
@@ -310,11 +317,11 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     this.m4dCredentialRepository.save(m4dCredential);
                 } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(MRPA_REGISTRY_CREDENTIAL_IS_NULL);
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                 }
             }
         }
-        return m4dUpdated;
+        return new ResponseEntity<>(m4dUpdated.getId(), HttpStatus.OK);
     }
 
     @Override
@@ -328,12 +335,12 @@ public class M4dServiceImpl implements M4dService {
         if (results == null) {
             throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
         }
-        M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("status"), (String) results.get("sig_path"),
-                (String) results.get("create_date"), (String) results.get("recalled_xml_path"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
+        M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("sig_path"),
+                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
                 (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic"),
                 (String) results.get("rp_id"), (String) results.get("rp_date_issue"), (String) results.get("rp_who_issue"), (String) results.get("rp_series_number"), (String) results.get("rp_department_code"),
                 (String) results.get("org_id"), (String) results.get("org_inn"), (String) results.get("org_kpp"), (String) results.get("org_ogrn"), (String) results.get("org_name"), (String) results.get("org_region_code"), (String) results.get("org_legal_address")
-                );
+        );
 
         return m4dResponseDto;
     }
@@ -355,38 +362,12 @@ public class M4dServiceImpl implements M4dService {
         if (results == null) {
             throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
         }
-        M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("status"),
+        M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"),
                 (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
                 (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
         );
 
         return m4dResponseDto;
-    }
-
-    private void throwExceptionIfRecordWithIdNotExist(M4d m4d, String operationType) {
-        Long organisationId = m4d.getOrganisationId();
-        Long principalId = m4d.getPrincipalId();
-        Long representativeId = m4d.getRepresentativeId();
-
-        String errorMessage = "Can`t %s mrpa registry because %s id null!";
-        if ((restTemplate.getForEntity(HANDBOOK_URI+"/organisation/"+organisationId, OrganisationResponse[].class)).getBody() == null) {
-            throw new BadRequestException(String.format(errorMessage, operationType, "organisation", organisationId));
-        }
-        if ((restTemplate.getForEntity(HANDBOOK_URI+"/principal/"+principalId, PrincipalResponse[].class)).getBody() == null) {
-            throw new BadRequestException(String.format(errorMessage, operationType, "principal", principalId));
-        }
-        if ((restTemplate.getForEntity(HANDBOOK_URI+"/representative/"+representativeId, RepresentativeResponse[].class)).getBody() == null) {
-            throw new BadRequestException(String.format(errorMessage, operationType, "representative", representativeId));
-        }
-    }
-
-    @Override
-    public void recallMrpaRegistryById(Long id) {
-        M4d mrpaRegistry = this.findById(id);
-        if (mrpaRegistry == null) {
-            throw new M4dException(String.format("Can`t recall mrpa registry because mrpa registry %s", NOT_FOUND));
-        }
-        this.m4dRepository.recallMrpaRegistryById(id);
     }
 
     @Override
@@ -426,8 +407,12 @@ public class M4dServiceImpl implements M4dService {
 
         mrpas.setGuid(m4dFullDTO.getGuid());
 
-        mrpas.setStartDate(convertDateIsoInstantToMchdXml(m4dFullDTO.getStartDate()));
-        mrpas.setEndDate(convertDateIsoInstantToMchdXml(m4dFullDTO.getEndDate()));
+        if (m4dFullDTO.getStartDate() != null) {
+            mrpas.setStartDate(convertDateIsoInstantToMchdXml(m4dFullDTO.getStartDate()));
+        }
+        if (m4dFullDTO.getEndDate() != null) {
+            mrpas.setEndDate(convertDateIsoInstantToMchdXml(m4dFullDTO.getEndDate()));
+        }
         mrpas.setInfoSystem("sep.cik");
 
         M4dFullXML.Document document = new M4dFullXML.Document();
@@ -482,7 +467,9 @@ public class M4dServiceImpl implements M4dService {
         detailRepresentative.setSnils(m4dFullDTO.representative.getSnils());
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual infoIndividual = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual();
         detailRepresentative.setInfoIndividual(infoIndividual);
-        infoIndividual.setBirthDate(convertDateIsoInstantToMchdXml(m4dFullDTO.representative.getBirthDate()));
+        if (m4dFullDTO.representative.getBirthDate() != null) {
+            infoIndividual.setBirthDate(convertDateIsoInstantToMchdXml(m4dFullDTO.representative.getBirthDate()));
+        }
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative fioRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative();
         infoIndividual.setFioRepresentative(fioRepresentative);
         fioRepresentative.setName(m4dFullDTO.representative.getName());
@@ -492,7 +479,9 @@ public class M4dServiceImpl implements M4dService {
         infoIndividual.setRepresentativePassport(representativePassport);
         representativePassport.setTypeDocument("21");
         representativePassport.setSeriesNumber(m4dFullDTO.representative.representativePassport.getSeriesNumber());
-        representativePassport.setDateIssue(convertDateIsoInstantToMchdXml(m4dFullDTO.representative.representativePassport.getDateIssue()));
+        if (m4dFullDTO.representative.representativePassport.getDateIssue() != null) {
+            representativePassport.setDateIssue(convertDateIsoInstantToMchdXml(m4dFullDTO.representative.representativePassport.getDateIssue()));
+        }
         representativePassport.setWhoIssue(m4dFullDTO.representative.representativePassport.getWhoIssue());
         representativePassport.setDepartmentCode(m4dFullDTO.representative.representativePassport.getDepartmentCode());
         M4dFullXML.Document.PowerAttorneys.Credentials credentials = new M4dFullXML.Document.PowerAttorneys.Credentials();
@@ -540,13 +529,43 @@ public class M4dServiceImpl implements M4dService {
         return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
                 .map(PublicKeyUserCertificateResponse::getInn)
                 .flatMap(inn -> m4dRepository.findMrpaRegistriesByPrincipalInnLikePrincipalAndRepresentative(inn).stream().map(
-                        results -> M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("status"),
-                        (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
-                        (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
-                )
+                        results -> M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"),
+                                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
+                                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
+                        )
                 ))
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    public Map<String, String> getCustomErrorJsonFromString(String text) {
+        Map<String, String> body = new HashMap<>();
+        body.put("error", text);
+        return body;
+    }
+
+    public String getStatusM4d(Long id) throws ParseException {
+        M4d mrpaRegistry = this.m4dRepository.findMrpaById(id);
+        Date currentDT = Date.from(Instant.now());
+        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(mrpaRegistry.getStartDate());
+        Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(mrpaRegistry.getEndDate());
+        if (currentDT.before(startDate) && currentDT.after(endDate)) {
+            return "EXPIRED";
+        }
+        if (mrpaRegistry.getMrpaRecall() != null) {
+            M4dRecall mrpaRecall = this.m4dRecallRepository.findM4dRecallById(mrpaRegistry.getMrpaRecall().getId());
+            if (mrpaRecall.getSignature() != null) {
+                return "WITHDRAWN";
+            } else {
+                return "WITHDRAWAL";
+            }
+        } else {
+            if (mrpaRegistry.getSigPath() != null) {
+                return "VALID";
+            } else {
+                return "NOT_SIGNED";
+            }
+        }
     }
 }
 
