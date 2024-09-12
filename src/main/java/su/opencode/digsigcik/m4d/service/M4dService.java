@@ -12,7 +12,7 @@ import java.text.ParseException;
 import java.util.List;
 
 public interface M4dService {
-    List<M4dResponseDto> findAllMrpaRegistry();
+    List<M4dResponseDto> findAllMrpaRegistry() throws ParseException;
     M4d saveMrpaRegistry(@NotNull M4d m4d);
     M4d updateMrpaRegistry(@NotNull M4d m4d);
     ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials);
@@ -26,4 +26,5 @@ public interface M4dService {
     M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException;
     List<M4dResponseDto> findAllMrpaRegistryByLogin(String login);
     String getStatusM4d(Long id) throws ParseException;
+    M4dResponseDto convertM4dToM4dResponseDto(M4d m4d) throws ParseException;
 }

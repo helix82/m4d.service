@@ -53,40 +53,38 @@ public class M4dController {
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dRecallService m4dRecallService;
-    public RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, RestTemplate restTemplate) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dRecallService = m4dRecallService;
+        this.restTemplate = restTemplate;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION)
-    @io.swagger.annotations.ApiResponses(value = {
-            @io.swagger.annotations.ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @io.swagger.annotations.ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE),
-            @io.swagger.annotations.ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistry(){
         List<M4dResponseDto> mrpaRegistryFindAll;
         try {
             mrpaRegistryFindAll = this.m4dService.findAllMrpaRegistry();
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
-        }
-        for(M4dResponseDto m: mrpaRegistryFindAll){
-            m.credentials = this.m4dService.getCredentialByMrpaRegistryId(m.getId());
+        } catch (ConstraintViolationException | ParseException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(mrpaRegistryFindAll, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_SAVE_SUMMARY, description = CONTROLLER_MRPA_SAVE_DESCRIPTION )
-    @io.swagger.annotations.ApiResponses(value = {
-            @io.swagger.annotations.ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @io.swagger.annotations.ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE),
-            @io.swagger.annotations.ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "save_all",produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody M4dRequestSaveFullDto m4dSaveFullDto) throws JAXBException, ParseException {
@@ -103,15 +101,16 @@ public class M4dController {
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        return findMrpaRegistryByIdForResponse((Long) m4dSaved.getBody());
+
+        return findMrpaRegistryById((Long) m4dSaved.getBody());
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_BY_ID_SUMMARY,
             description = CONTROLLER_MRPA_FIND_BY_ID_DESCRIPTION)
-    @io.swagger.annotations.ApiResponses(value = {
-            @io.swagger.annotations.ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
-            @io.swagger.annotations.ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE),
-            @io.swagger.annotations.ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(code = 400, message = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
@@ -119,8 +118,20 @@ public class M4dController {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
-        this.m4dService.getStatusM4d(id);
-        return findMrpaRegistryByIdForResponse(id);
+        M4d m4d;
+        try {
+            m4d = this.m4dService.findById(id);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if (m4d == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+        }
+        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d);
+        M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
+        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
+        m4dResponseDto.setMrpaXml(xmlString);
+        return new ResponseEntity<>(m4dResponseDto, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_UPDATE_SUMMARY, description = CONTROLLER_MRPA_UPDATE_DESCRIPTION )
@@ -148,7 +159,7 @@ public class M4dController {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        return findMrpaRegistryByIdForResponse((Long) m4dUpdated.getBody());
+        return findMrpaRegistryById((Long) m4dUpdated.getBody());
     }
 
     //TODO: @helix82 При удалении физически не удаляем а ставим пометку об удалении

@@ -1,10 +1,15 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
+import com.nimbusds.jose.proc.SecurityContext;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
@@ -36,26 +41,18 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 public class M4dServiceImpl implements M4dService {
     @Value("${m4d.handbook.uri}")
     private String HANDBOOK_URI;
+    private final ModelMapper modelMapper;
     private final M4dRepository m4dRepository;
     private final M4dRecallRepository m4dRecallRepository;
     private final M4dCredentialRepository m4dCredentialRepository;
-    public RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
     @Override
-    public List<M4dResponseDto> findAllMrpaRegistry() {
-        List<Map<String, Object>> results = this.m4dRepository.findAllMrpaRegistries();
-
-        if (results == null) {
-            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
-        }
+    public List<M4dResponseDto> findAllMrpaRegistry() throws ParseException {
+        List<M4d> m4ds = m4dRepository.findAll();
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
-
-        for (Map<String, Object> result : results) {
-            M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) result.get("id"), (String) result.get("guid"), (String) result.get("internal_number"), (String) result.get("start_date"), (String) result.get("end_date"),
-                    (String) result.get("create_date"), (String) result.get("p_id"), (String) result.get("p_inn"), (String) result.get("p_snils"), (String) result.get("p_job_title"), (String) result.get("p_name"), (String) result.get("p_surname"), (String) result.get("p_patronymic"),
-                    (String) result.get("r_id"), (String) result.get("r_inn"), (String) result.get("r_snils"), (String) result.get("r_birth_date"), (String) result.get("r_name"), (String) result.get("r_surname"), (String) result.get("r_patronymic")
-            );
-            m4dResponseDtoList.add(m4dResponseDto);
+        for (M4d m4d: m4ds) {
+            m4dResponseDtoList.add(convertM4dToM4dResponseDto(m4d));
         }
         return m4dResponseDtoList;
     }
@@ -347,7 +344,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     public M4d findById(@NotNull Long id) {
-        return this.m4dRepository.findMrpaById(id);
+        return this.m4dRepository.findM4dById(id);
     }
 
     @Override
@@ -545,7 +542,7 @@ public class M4dServiceImpl implements M4dService {
     }
 
     public String getStatusM4d(Long id) throws ParseException {
-        M4d mrpaRegistry = this.m4dRepository.findMrpaById(id);
+        M4d mrpaRegistry = this.m4dRepository.findM4dById(id);
         Date currentDT = Date.from(Instant.now());
         Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(mrpaRegistry.getStartDate());
         Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(mrpaRegistry.getEndDate());
@@ -566,6 +563,47 @@ public class M4dServiceImpl implements M4dService {
                 return "NOT_SIGNED";
             }
         }
+    }
+
+    public M4dResponseDto convertM4dToM4dResponseDto(M4d m4d) throws ParseException {
+        M4dResponseDto m4dResponseDto = modelMapper.map(m4d, M4dResponseDto.class);
+        OrganisationResponse organisation = (restTemplate.getForEntity(HANDBOOK_URI+"/organisation/"+m4d.getOrganisationId(), OrganisationResponse.class)).getBody();
+        if (organisation != null) {
+            m4dResponseDto.setOrganization(convertOrganisationToDto(organisation));
+        }
+        PrincipalResponse principal = (restTemplate.getForEntity(HANDBOOK_URI+"/principal/"+m4d.getPrincipalId(), PrincipalResponse.class)).getBody();
+        if (principal != null) {
+            m4dResponseDto.setPrincipal(convertPrincipalToDto(principal));
+        }
+        RepresentativeResponse representative = (restTemplate.getForEntity(HANDBOOK_URI+"/representative/"+m4d.getRepresentativeId(), RepresentativeResponse.class)).getBody();
+        if (representative != null) {
+            m4dResponseDto.setRepresentative(convertRepresentativeToDto(representative));
+            m4dResponseDto.representative.setRepresentativePassport(convertRepresentativePassportToDto(representative.getRepresentativePassports().get(0)));
+        }
+        m4dResponseDto.setCredentials(this.getCredentialByMrpaRegistryId(m4d.getId()));
+        m4dResponseDto.setStatus(this.getStatusM4d(m4dResponseDto.getId()));
+        return m4dResponseDto;
+    }
+
+    private M4dResponseDto.OrganizationDTO convertOrganisationToDto(OrganisationResponse organisation){
+        M4dResponseDto.OrganizationDTO organisationDto = modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
+        return organisationDto;
+    }
+
+    private M4dResponseDto.PrincipalDTO convertPrincipalToDto(PrincipalResponse principal){
+        M4dResponseDto.PrincipalDTO principalDto = modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
+        return principalDto;
+    }
+
+    private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(RepresentativeResponse representative){
+        M4dResponseDto.RepresentativeDTO representativeDto = modelMapper.map(representative, M4dResponseDto.RepresentativeDTO.class);
+        representativeDto.representativePassport = modelMapper.map(representative.getRepresentativePassports(), M4dResponseDto.RepresentativePassportDTO.class);
+        return representativeDto;
+    }
+
+    private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassportResponse representativePassport){
+        M4dResponseDto.RepresentativePassportDTO representativePassportDto = modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDTO.class);
+        return representativePassportDto;
     }
 }
 
