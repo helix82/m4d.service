@@ -75,7 +75,8 @@ public class M4dServiceImpl implements M4dService {
         Long represId;
         //------------------- save organisation ----------------
         OrganisationResponse existsOrganisation = (restTemplate.getForEntity(HANDBOOK_URI+"/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
-        if (existsOrganisation == null) {
+        assert existsOrganisation != null;
+        if (existsOrganisation.getId() == null) {
             OrganisationResponse respOrganisation;
             try {
                 respOrganisation = restTemplate.postForObject(HANDBOOK_URI+"/organisation/save", organisation, OrganisationResponse.class);
@@ -91,7 +92,8 @@ public class M4dServiceImpl implements M4dService {
 
         //------------------- save principal ----------------
         PrincipalResponse existsPrincipal = (restTemplate.getForEntity(HANDBOOK_URI+"/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
-        if (existsPrincipal == null) {
+        assert existsPrincipal != null;
+        if (existsPrincipal.getId() == null) {
             PrincipalResponse respPrincipal;
             try {
                 respPrincipal = restTemplate.postForObject(HANDBOOK_URI+"/principal/save", principal, PrincipalResponse.class);
@@ -107,20 +109,24 @@ public class M4dServiceImpl implements M4dService {
 
         //------------------- save representative and passport ----------------
         RepresentativeResponse existsRepresentative = (restTemplate.getForEntity(HANDBOOK_URI+"/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
-        if (existsRepresentative == null) {
+        assert existsRepresentative != null;
+        if (existsRepresentative.getId() == null) {
             RepresentativeResponse respRepresentative;
             try {
                 respRepresentative = restTemplate.postForObject(HANDBOOK_URI+"/representative/save", representative, RepresentativeResponse.class);
             } catch (ConstraintViolationException e) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
-            try {
-                assert respRepresentative != null;
-                representativePassport.setReprsentativeId(respRepresentative.getId());
-                restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
-            } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            assert respRepresentative != null;
+            if (respRepresentative.getId() != null) {
+                representativePassport.setRepresentativeId(respRepresentative.getId());
+                try {
+                    restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
             }
+
             represId = respRepresentative.getId();
         } else {
             represId = existsRepresentative.getId();
@@ -252,7 +258,7 @@ public class M4dServiceImpl implements M4dService {
         }
         try {
             assert respRepresentative != null;
-            representativePassport.setReprsentativeId(respRepresentative.getId());
+            representativePassport.setRepresentativeId(respRepresentative.getId());
             restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
@@ -323,23 +329,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     public Integer findMrpaRegistryByGuid(@NotNull String guid) {
-        return this.m4dRepository.findMrpaRegistryByGuid(guid);
-    }
-
-    @Override
-    public M4dResponseDto findMrpaRegistryFullById(@NotNull Long id) {
-        Map<String, Object> results = this.m4dRepository.findMrpaRegistryFullById(id);
-        if (results == null) {
-            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
-        }
-        M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"), (String) results.get("sig_path"),
-                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
-                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic"),
-                (String) results.get("rp_id"), (String) results.get("rp_date_issue"), (String) results.get("rp_who_issue"), (String) results.get("rp_series_number"), (String) results.get("rp_department_code"),
-                (String) results.get("org_id"), (String) results.get("org_inn"), (String) results.get("org_kpp"), (String) results.get("org_ogrn"), (String) results.get("org_name"), (String) results.get("org_region_code"), (String) results.get("org_legal_address")
-        );
-
-        return m4dResponseDto;
+        return this.m4dRepository.countByGuid(guid);
     }
 
     @Override
@@ -350,21 +340,6 @@ public class M4dServiceImpl implements M4dService {
     @Override
     public void deleteMrpaRegistry(@NotNull Long id) {
         this.m4dRepository.deleteById(id);
-    }
-
-    @Override
-    public M4dResponseDto findByMrpaRegistryPrincipalInn(String inn) {
-        //return this.m4dRepository.findMrpaRegistriesByPrincipalInn(inn);
-        Map<String, Object> results = this.m4dRepository.findMrpaRegistriesByPrincipalInn(inn);
-        if (results == null) {
-            throw new M4dException(String.format("Mrpa registry %s", NOT_FOUND));
-        }
-        M4dResponseDto m4dResponseDto = M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"),
-                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
-                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
-        );
-
-        return m4dResponseDto;
     }
 
     @Override
@@ -522,15 +497,24 @@ public class M4dServiceImpl implements M4dService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) {
+    public List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) throws ParseException {
+        List<M4dResponseDto> m4dResponseDtoList = findAllMrpaRegistry();
+        List<PublicKeyUserCertificateResponse> publicKeyUserCertificateResponse = List.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI + "/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody()));
+        System.out.println(publicKeyUserCertificateResponse.stream().map(PublicKeyUserCertificateResponse::getInn).collect(Collectors.toList()));
+//m4dResponseDtoList.stream().filter(c -> Objects.equals(c.representative.getInn(), "1234") && Objects.equals(c.principal.getInn(), "123")).collect(Collectors.toList());
+//return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
+//                .map(PublicKeyUserCertificateResponse::getInn)
+//                .flatMap(inn -> m4dRepository.findMrpaRegistriesByPrincipalInnLikePrincipalAndRepresentative(inn).stream().map(
+//                        results -> M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"),
+//                                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
+//                                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
+//                        )
+//                ))
+//                .distinct()
+//                .collect(Collectors.toList());
         return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
                 .map(PublicKeyUserCertificateResponse::getInn)
-                .flatMap(inn -> m4dRepository.findMrpaRegistriesByPrincipalInnLikePrincipalAndRepresentative(inn).stream().map(
-                        results -> M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"),
-                                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
-                                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
-                        )
-                ))
+                .flatMap(inn -> m4dResponseDtoList.stream().filter(c -> Objects.equals(c.representative.getInn(), inn) && Objects.equals(c.principal.getInn(), inn)))
                 .distinct()
                 .collect(Collectors.toList());
     }

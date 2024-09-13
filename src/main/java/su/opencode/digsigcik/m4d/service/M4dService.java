@@ -18,13 +18,11 @@ public interface M4dService {
     ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials);
     ResponseEntity<?> updateAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials);
     Integer findMrpaRegistryByGuid(@NotNull String guid);
-    M4dResponseDto findMrpaRegistryFullById(Long id);
     M4d findById(@NotNull Long id);
     void deleteMrpaRegistry(@NotNull Long id);
-    M4dResponseDto findByMrpaRegistryPrincipalInn(String inn);
     List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId);
     M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException;
-    List<M4dResponseDto> findAllMrpaRegistryByLogin(String login);
+    List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) throws ParseException;
     String getStatusM4d(Long id) throws ParseException;
     M4dResponseDto convertM4dToM4dResponseDto(M4d m4d) throws ParseException;
 }

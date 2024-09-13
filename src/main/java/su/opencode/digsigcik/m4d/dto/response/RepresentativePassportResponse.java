@@ -9,5 +9,5 @@ public class RepresentativePassportResponse {
     private String dateIssue;
     private String whoIssue;
     private String departmentCode;
-    private Long reprsentativeId;
+    private Long representativeId;
 }
