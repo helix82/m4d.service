@@ -14,6 +14,6 @@ public interface M4dRecallService {
     M4dRecall findById(Long id);
     void deleteMrpaRecallById(Long id);
     M4dRecall updateMrpaRecall(M4dRecall mrpaRecall);
-    List<M4dResponseDto> findAllMrpaRecallByLogin(String login);
+    List<M4dResponseDto> findAllMrpaRecallByLogin(String login) throws ParseException;
     M4dRecallXml ConvertMrpaRecallToXml(M4dResponseDto mrpaRegistryResponseDto);
 }

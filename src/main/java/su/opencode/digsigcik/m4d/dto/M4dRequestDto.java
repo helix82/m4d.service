@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
-public class M4dRequestSaveFullDto {
+public class M4dRequestDto {
     public MrpaRegistry mrpaRegistry;
 
     @Data

@@ -93,7 +93,8 @@ public interface Constants {
 
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
     String PARAMETER_MRPA_RECALL_ID_DESCRIPTION = "ИД заявления на отзыв МЧД";
-    String PARAMETER_PRINCIPAL_INN_DESCRIPTION = "ИНН доверителя";
+    String PARAMETER_CREDENTIAL_ID_DESCRIPTION = "ИД полномочия";
+    String PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION = "Код или наименование полномочия";
 
     String CONTROLLER_MRPA_FIND_ALL_SUMMARY = "Получить список МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_DESCRIPTION = "Возвращает список МЧД с ФИО представителя и ФИО доверителя";
@@ -105,8 +106,6 @@ public interface Constants {
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
     String CONTROLLER_MRPA_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
-    String CONTROLLER_MRPA_FIND_BY_PRINCIPAL_INN_SUMMARY = "Получить МЧД с ФИО представителя и ФИО доверителя по ИНН доверителя";
-    String CONTROLLER_MRPA_FIND_BY_PRINCIPAL_INN_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_UPLOAD_SUMMARY = "Загрузить ЭП";
     String CONTROLLER_MRPA_UPLOAD_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_UPLOAD_XML_SUMMARY = "Импорт МЧД";
@@ -130,6 +129,21 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY = "Загрузить ЭП заявления на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
 
+    String CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY = "Получить список полномочий";
+    String CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION = "Возвращает список полномочий";
+    String CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_SUMMARY = "Получить список полномочий с фильтром по коду или наименованию";
+    String CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_DESCRIPTION = "Возвращает список полномочий с фильтром по коду или наименованию";
+    String CONTROLLER_CREDENTIAL_FIND_BY_MRPA_ID_SUMMARY = "Получить список полномочий с фильтром по ИД МЧД";
+    String CONTROLLER_CREDENTIAL_FIND_BY_MRPA_ID_DESCRIPTION = "Возвращает список полномочий";
+    String CONTROLLER_CREDENTIAL_SAVE_SUMMARY = "Сохранить запись полномочия";
+    String CONTROLLER_CREDENTIAL_SAVE_DESCRIPTION = "Возвращает созданную запись полномочия";
+    String CONTROLLER_CREDENTIAL_FIND_BY_ID_SUMMARY = "Получить запись полномочия по ИД";
+    String CONTROLLER_CREDENTIAL_FIND_BY_ID_DESCRIPTION = "Возвращает запись полномочия";
+    String CONTROLLER_CREDENTIAL_UPDATE_SUMMARY = "Изменить запись полномочия";
+    String CONTROLLER_CREDENTIAL_UPDATE_DESCRIPTION = "Возвращает измененную запись полномочия";
+    String CONTROLLER_CREDENTIAL_DELETE_SUMMARY = "Удалить запись полномочия по ИД";
+    String CONTROLLER_CREDENTIAL_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+
     String CONTROLLER_TEST_KAFKA_SUMMARY = "Отправляет логин пользователя через брокер сообщений в другой микросервис";
     String CONTROLLER_TEST_KAFKA_DESCRIPTION = "Возвращает логин, если отправилось";
 
@@ -141,7 +155,6 @@ public interface Constants {
 
     String NULL = "null";
     String ID_IS_NULL = String.format("ID is %s", NULL);
-    String INN_IS_NULL = String.format("INN is %s", NULL);
     String MRPA_IS_NULL = String.format("MRPA is %s", NULL);
     String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
@@ -155,11 +168,9 @@ public interface Constants {
     String MRPA_REGISTRY_WRONG_FORMAT_XML = "Не верный формат XML";
     String MRPA_REGISTRY_XML_NOT_VERIFY = "XML не прошел проверку";
     String MRPA_REGISTRY_NOT_VERIFY = "Контейнер не прошел проверку";
-    String CREDENTIAL_IS_NULL = String.format("Credential is %s!", NULL);
     String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
     String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);
     String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);
-    String REPRESENTATIVE_PASSPORT_IS_NULL = String.format("Representative passport is %s!", NULL);
 
     String NOT_FOUND = "not found!";
 }

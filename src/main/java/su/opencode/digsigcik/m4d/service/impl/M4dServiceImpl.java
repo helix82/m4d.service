@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import su.opencode.digsigcik.m4d.audit.AuditLogEventEnum;
+import su.opencode.digsigcik.m4d.audit.AuditLogThis;
+import su.opencode.digsigcik.m4d.controller.M4dCredentialController;
 import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
@@ -45,6 +48,7 @@ public class M4dServiceImpl implements M4dService {
     private final M4dRepository m4dRepository;
     private final M4dRecallRepository m4dRecallRepository;
     private final M4dCredentialRepository m4dCredentialRepository;
+    private final CredentialRepository credentialRepository;
     private final RestTemplate restTemplate;
 
     @Override
@@ -63,12 +67,13 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
-    //@AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_CREATE)
+    @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_CREATE)
     public M4d updateMrpaRegistry(@NotNull M4d mrpaRegistry) {
         return this.m4dRepository.save(mrpaRegistry);
     }
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
+    @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
     public ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
@@ -149,22 +154,21 @@ public class M4dServiceImpl implements M4dService {
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
             for (CredentialResponse c : credentialList) {
-                CredentialResponse[] existsCredentials = (restTemplate.getForEntity(HANDBOOK_URI+"/credential/find_by_code_or_name/"+c.getCode(), CredentialResponse[].class)).getBody();
+                List<Credential> existsCredentials = this.credentialRepository.findCredentialByCodeIgnoreCase(c.getCode());
                 assert existsCredentials != null;
-                if (existsCredentials.length == 0) {
-                    CredentialResponse newCredential = new CredentialResponse();
+                if (existsCredentials.isEmpty()) {
+                    Credential newCredential = new Credential();
                     newCredential.setCode(c.getCode());
                     newCredential.setName(c.getName());
-                    CredentialResponse credentialSave;
+                    Credential credentialSave;
                     try {
-                        credentialSave = restTemplate.postForObject(HANDBOOK_URI+"/credential/save", newCredential, CredentialResponse.class);
+                        credentialSave = this.credentialRepository.save(newCredential);
                     } catch (ConstraintViolationException e) {
                         return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                     }
-                    assert credentialSave != null;
                     credList.add(credentialSave.getId());
                 } else {
-                    for (CredentialResponse crd : existsCredentials) {
+                    for (Credential crd : existsCredentials) {
                         credList.add(crd.getId());
                     }
                 }
@@ -189,6 +193,7 @@ public class M4dServiceImpl implements M4dService {
         return new ResponseEntity<>(m4dSaved.getId(), HttpStatus.OK);
     }
 
+    @AuditLogThis(event = AuditLogEventEnum.M4D_UPDATE)
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     public ResponseEntity<?> updateAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
         Long orgId;
@@ -287,22 +292,21 @@ public class M4dServiceImpl implements M4dService {
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
             for (CredentialResponse c : credentialList) {
-                CredentialResponse[] existsCredentials = (restTemplate.getForEntity(HANDBOOK_URI+"/credential/find_by_code_or_name/"+c.getCode(), CredentialResponse[].class)).getBody();
+                List<Credential> existsCredentials = this.credentialRepository.findCredentialByCodeIgnoreCase(c.getCode());
                 assert existsCredentials != null;
-                if (existsCredentials.length == 0) {
-                    CredentialResponse newCredential = new CredentialResponse();
+                if (existsCredentials.isEmpty()) {
+                    Credential newCredential = new Credential();
                     newCredential.setCode(c.getCode());
                     newCredential.setName(c.getName());
-                    CredentialResponse credentialSave;
+                    Credential credentialSave;
                     try {
-                        credentialSave = restTemplate.postForObject(HANDBOOK_URI+"/credential/save", newCredential, CredentialResponse.class);
+                        credentialSave = this.credentialRepository.save(newCredential);
                     } catch (ConstraintViolationException e) {
                         return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                     }
-                    assert credentialSave != null;
                     credList.add(credentialSave.getId());
                 } else {
-                    for (CredentialResponse crd : existsCredentials) {
+                    for (Credential crd : existsCredentials) {
                         credList.add(crd.getId());
                     }
                 }
@@ -338,16 +342,17 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_DELETE, deleteByIdRepository = M4dRepository.class)
     public void deleteMrpaRegistry(@NotNull Long id) {
         this.m4dRepository.deleteById(id);
     }
 
     @Override
     public List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId) {
-        CredentialResponse[] credentials = (restTemplate.getForEntity(HANDBOOK_URI+"/credential/mrpaId/"+mrpaId, CredentialResponse[].class)).getBody();
+        List<Credential> credentials = this.credentialRepository.findCredentialByMrpaId(mrpaId);
         List<M4dResponseDto.CredentialDTO> credentialDTOList = new ArrayList<>();
         assert credentials != null;
-        for (CredentialResponse c : credentials) {
+        for (Credential c : credentials) {
             M4dResponseDto.CredentialDTO credentialDTO = new M4dResponseDto.CredentialDTO();
             credentialDTO.setId(c.getId());
             credentialDTO.setName(c.getName());
@@ -499,19 +504,6 @@ public class M4dServiceImpl implements M4dService {
     @Override
     public List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) throws ParseException {
         List<M4dResponseDto> m4dResponseDtoList = findAllMrpaRegistry();
-        List<PublicKeyUserCertificateResponse> publicKeyUserCertificateResponse = List.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI + "/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody()));
-        System.out.println(publicKeyUserCertificateResponse.stream().map(PublicKeyUserCertificateResponse::getInn).collect(Collectors.toList()));
-//m4dResponseDtoList.stream().filter(c -> Objects.equals(c.representative.getInn(), "1234") && Objects.equals(c.principal.getInn(), "123")).collect(Collectors.toList());
-//return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
-//                .map(PublicKeyUserCertificateResponse::getInn)
-//                .flatMap(inn -> m4dRepository.findMrpaRegistriesByPrincipalInnLikePrincipalAndRepresentative(inn).stream().map(
-//                        results -> M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"),
-//                                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
-//                                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic")
-//                        )
-//                ))
-//                .distinct()
-//                .collect(Collectors.toList());
         return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
                 .map(PublicKeyUserCertificateResponse::getInn)
                 .flatMap(inn -> m4dResponseDtoList.stream().filter(c -> Objects.equals(c.representative.getInn(), inn) && Objects.equals(c.principal.getInn(), inn)))

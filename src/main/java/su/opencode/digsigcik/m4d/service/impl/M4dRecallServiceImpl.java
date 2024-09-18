@@ -83,24 +83,11 @@ public class M4dRecallServiceImpl implements M4dRecallService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<M4dResponseDto> findAllMrpaRecallByLogin(String login) {
-//        return publicKeyUserCertificateService.findAllPublicKeyUserCertificateByLogin(login)
-//                .stream()
-//                .map(PublicKeyUserCertificate::getInn)
-//                .distinct()
-//                .flatMap(inn -> mrpaRecallRepository.findMrpaRegistriesByPrincipalInnLikePrincipalAndRepresentative(inn).stream())
-//                .distinct()
-//                .collect(Collectors.toList());
-
+    public List<M4dResponseDto> findAllMrpaRecallByLogin(String login) throws ParseException {
+        List<M4dResponseDto> m4dResponseDtoList = this.findAllMrpaRegistriesWithRecall();
         return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
                 .map(PublicKeyUserCertificateResponse::getInn)
-                .flatMap(inn -> mrpaRecallRepository.findM4dByPrincipalInnLikePrincipalAndRepresentative(inn).stream().map(
-                        results -> M4dResponseDto.fill((String) results.get("id"), (String) results.get("guid"), (String) results.get("internal_number"), (String) results.get("start_date"), (String) results.get("end_date"),
-                                (String) results.get("create_date"), (String) results.get("p_id"), (String) results.get("p_inn"), (String) results.get("p_snils"), (String) results.get("p_job_title"), (String) results.get("p_name"), (String) results.get("p_surname"), (String) results.get("p_patronymic"),
-                                (String) results.get("r_id"), (String) results.get("r_inn"), (String) results.get("r_snils"), (String) results.get("r_birth_date"), (String) results.get("r_name"), (String) results.get("r_surname"), (String) results.get("r_patronymic"),
-                                (String) results.get("mc_id"), (String) results.get("mc_argument"), (String) results.get("mc_author"), (String) results.get("mc_signature")
-                        )
-                ))
+                .flatMap(inn -> m4dResponseDtoList.stream().filter(c -> Objects.equals(c.representative.getInn(), inn) && Objects.equals(c.principal.getInn(), inn)))
                 .distinct()
                 .collect(Collectors.toList());
     }
