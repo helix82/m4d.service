@@ -111,27 +111,6 @@ steps:
       branch:
         - master
 
-  - name: notify
-    image: appleboy/drone-discord
-    settings:
-      webhook_id:
-        from_secret: discord_webhook_id
-      webhook_token:
-        from_secret: discord_webhook_token
-      message: >
-        {{#success build.status}}✅ Build Successful!{{else}}❌ Build Failed!{{/success}}
-        **Repository:** `[{{repo.name}}/{{commit.branch}}]`
-        **Event:** `[{{uppercase build.event}}]` triggered the build.
-        **Commit:** [[{{commit.sha}}]({{commit.link}})]
-        **Author:** `[{{commit.author}} / {{commit.email}}]`
-        **Message:** {{commit.message}}
-        **Build Status:** `[{{uppercase build.status}}]`
-        **Build Number:** `#{{build.number}}`
-        **Timestamp:** `[{{datetime build.finished "2006.01.02 15:04" ""}}]`
-    when:
-      status: [ success, failure, changed ]
-
-
   - name: checkout
     image: alpine/git
     environment:
@@ -388,7 +367,25 @@ steps:
       branch:
         - release-*
 
-
+  - name: notify
+    image: appleboy/drone-discord
+    settings:
+      webhook_id:
+        from_secret: discord_webhook_id
+      webhook_token:
+        from_secret: discord_webhook_token
+      message: >
+        {{#success build.status}}✅ Build Successful!{{else}}❌ Build Failed!{{/success}}
+        **Repository:** `[{{repo.name}}/{{commit.branch}}]`
+        **Event:** `[{{uppercase build.event}}]` triggered the build.
+        **Commit:** [[{{commit.sha}}]({{commit.link}})]
+        **Author:** `[{{commit.author}} / {{commit.email}}]`
+        **Message:** {{commit.message}}
+        **Build Status:** `[{{uppercase build.status}}]`
+        **Build Number:** `#{{build.number}}`
+        **Timestamp:** `[{{datetime build.finished "2006.01.02 15:04" ""}}]`
+    when:
+      status: [ success, failure, changed ]
 
 image_pull_secrets:
   - dockerconfig
