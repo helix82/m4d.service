@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
-public class M4dRequestSaveFullDto {
+public class M4dRequestDto {
     public MrpaRegistry mrpaRegistry;
 
     @Data
@@ -28,6 +28,7 @@ public class M4dRequestSaveFullDto {
 
     @Data
     public static class Organisation {
+        private Long id;
         private String inn;
         private String kpp;
         private String ogrn;
@@ -41,6 +42,7 @@ public class M4dRequestSaveFullDto {
 
     @Data
     public static class Principal {
+        private Long id;
         private String inn;
         private String snils;
         private String jobTitle;
@@ -53,6 +55,7 @@ public class M4dRequestSaveFullDto {
 
     @Data
     public static class Representative {
+        private Long id;
         private String inn;
         private String snils;
         private String birthDate;
@@ -65,10 +68,12 @@ public class M4dRequestSaveFullDto {
 
     @Data
     public static  class RepresentativePassport {
+        private Long id;
         private String seriesNumber;
         private String dateIssue;
         private String whoIssue;
         private String departmentCode;
+        private Long representativeId;
     }
 
     @JsonProperty("credentials")

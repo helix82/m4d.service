@@ -1,11 +1,11 @@
-package su.opencode.digsigcik.m4d.dto.response;
+package su.opencode.digsigcik.m4d.dto;
 
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class RepresentativeResponse {
+public class RepresentativeDto {
     private Long id;
     private String name;
     private String surname;
@@ -13,5 +13,5 @@ public class RepresentativeResponse {
     private String inn;
     private String snils;
     private String birthDate;
-    private List<RepresentativePassportResponse> representativePassports;
+    private List<RepresentativePassportDto> representativePassports;
 }
