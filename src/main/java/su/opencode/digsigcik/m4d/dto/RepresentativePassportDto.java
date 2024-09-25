@@ -1,9 +1,9 @@
-package su.opencode.digsigcik.m4d.dto.response;
+package su.opencode.digsigcik.m4d.dto;
 
 import lombok.Data;
 
 @Data
-public class RepresentativePassportResponse {
+public class RepresentativePassportDto {
     private Long id;
     private String seriesNumber;
     private String dateIssue;

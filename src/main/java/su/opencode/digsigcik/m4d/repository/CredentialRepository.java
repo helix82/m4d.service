@@ -13,6 +13,6 @@ public interface CredentialRepository extends JpaRepository<Credential, Long> {
     List<Credential> findCredentialByCodeIgnoreCase(String code);
     List<Credential> findCredentialByCodeContainingIgnoreCase(String code);
     List<Credential> findCredentialByNameContainingIgnoreCase(String name);
-    @Query(value = "SELECT c.id, c.code, c.name FROM credential c left join mrpa_registry_credential mrc on mrc.credential_id=c.id where mrc.mrpa_registry_id=:mrpaId", nativeQuery = true)
+    @Query(value = "SELECT c.id, c.code, c.name FROM m4d_credential c left join m4d_registry_m4d_credential mrc on mrc.credential_id=c.id where mrc.mrpa_registry_id=:mrpaId", nativeQuery = true)
     List<Credential> findCredentialByMrpaId(Long mrpaId);
 }

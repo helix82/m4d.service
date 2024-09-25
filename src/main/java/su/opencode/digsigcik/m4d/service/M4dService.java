@@ -1,8 +1,6 @@
 package su.opencode.digsigcik.m4d.service;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.*;
 import su.opencode.digsigcik.m4d.model.*;
@@ -15,8 +13,8 @@ public interface M4dService {
     List<M4dResponseDto> findAllMrpaRegistry() throws ParseException;
     M4d saveMrpaRegistry(@NotNull M4d m4d);
     M4d updateMrpaRegistry(@NotNull M4d m4d);
-    ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials);
-    ResponseEntity<?> updateAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials);
+    ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
+    ResponseEntity<?> updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
     Integer findMrpaRegistryByGuid(@NotNull String guid);
     M4d findById(@NotNull Long id);
     void deleteMrpaRegistry(@NotNull Long id);

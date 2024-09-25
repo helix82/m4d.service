@@ -9,7 +9,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "m4d-revoke")
+@Table(name = "m4d_revoke")
 public class M4dRecall {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

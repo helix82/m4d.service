@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,6 @@ import static su.opencode.digsigcik.m4d.util.Constants.NOT_FOUND;
 
 @Service
 @Primary
-@RequiredArgsConstructor
 public class M4dRecallServiceImpl implements M4dRecallService {
     @Value("${m4d.handbook.uri}")
     private String HANDBOOK_URI;
@@ -41,6 +41,12 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     private final RestTemplate restTemplate;
     private final M4dService m4dService;
 
+    public M4dRecallServiceImpl(M4dRecallRepository mrpaRecallRepository, M4dRepository m4dRepository, RestTemplate restTemplate, @Lazy M4dService m4dService) {
+        this.mrpaRecallRepository = mrpaRecallRepository;
+        this.m4dRepository = m4dRepository;
+        this.restTemplate = restTemplate;
+        this.m4dService = m4dService;
+    }
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistriesWithRecall() throws ParseException {

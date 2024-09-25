@@ -8,7 +8,7 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "m4d-registry-credential")
+@Table(name = "m4d_registry_m4d_credential")
 public class M4dCredential {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

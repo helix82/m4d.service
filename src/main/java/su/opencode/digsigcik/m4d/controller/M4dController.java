@@ -36,7 +36,10 @@ import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static org.springframework.http.ResponseEntity.noContent;
@@ -90,11 +93,12 @@ public class M4dController {
     public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody M4dRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         M4d m4d = convertMrpaRegistryToEntity(m4dSaveFullDto.mrpaRegistry);
         m4d.setGuid();
-        m4d.setCreateDate(String.valueOf(Instant.now()));
-        OrganisationResponse organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
-        PrincipalResponse principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
-        RepresentativeResponse representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
-        RepresentativePassportResponse representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
+        Date date = new Date();
+        m4d.setCreateDate(new Timestamp(date.getTime()));
+        Organisation organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
+        Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
+        Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
+        RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
         ResponseEntity<?> m4dSaved;
         try {
             m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
@@ -148,16 +152,16 @@ public class M4dController {
     @PutMapping(value = "update",produces = "application/json; charset=UTF-8" )
     public ResponseEntity<?> updateAllDataMrpaRegistry(@RequestBody M4dRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         M4d m4d = this.m4dService.findById(m4dSaveFullDto.mrpaRegistry.getId());
-        m4d.setStartDate(m4dSaveFullDto.mrpaRegistry.getStartDate());
-        m4d.setEndDate(m4dSaveFullDto.mrpaRegistry.getEndDate());
+        m4d.setStartDate(this.convertStringToTimestamp(m4dSaveFullDto.mrpaRegistry.getStartDate()));
+        m4d.setEndDate(this.convertStringToTimestamp(m4dSaveFullDto.mrpaRegistry.getEndDate()));
         if(m4dSaveFullDto.mrpaRegistry.getInternalNumber() != null){
             m4d.setInternalNumber(m4dSaveFullDto.mrpaRegistry.getInternalNumber());
         }
 
-        OrganisationResponse organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
-        PrincipalResponse principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
-        RepresentativeResponse representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
-        RepresentativePassportResponse representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
+        Organisation organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
+        Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
+        Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
+        RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
         ResponseEntity<?> m4dUpdated;
         try {
             m4dUpdated = m4dService.updateAllDataMrpaRegistry(m4d, organisation, principal, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
@@ -365,11 +369,10 @@ public class M4dController {
             M4d m4d = new M4d();
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             m4d.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
-            m4d.setStartDate(DateUtils.parse(m4dXml.document.powerAttorneys.mrpa.getStartDate()).toInstant().toString());
-            m4d.setEndDate(DateUtils.parse(m4dXml.document.powerAttorneys.mrpa.getEndDate()).toInstant().toString());
-            m4d.setMrpaXmlFilename(sourceFile.getOriginalFilename());
+            m4d.setStartDate(this.convertStringToTimestamp(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
+            m4d.setEndDate(this.convertStringToTimestamp(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
-            OrganisationResponse organisation = new OrganisationResponse();
+            Organisation organisation = new Organisation();
             organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
             organisation.setKpp(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getKpp());
             organisation.setOgrn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getOgrn());
@@ -379,7 +382,7 @@ public class M4dController {
             if (organisation.getInn() == null || organisation.getInn().isEmpty()) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(ORGANISATION_IS_NULL), HttpStatus.BAD_REQUEST);
             }
-            PrincipalResponse principal = new PrincipalResponse();
+            Principal principal = new Principal();
             principal.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getInn());
             principal.setSnils(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getSnils());
             principal.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
@@ -389,26 +392,26 @@ public class M4dController {
             if (principal.getInn() == null || principal.getInn().isEmpty()) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(PRINCIPAL_IS_NULL), HttpStatus.BAD_REQUEST);
             }
-            RepresentativeResponse representative = new RepresentativeResponse();
+            Representative representative = new Representative();
             representative.setInn(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.getInn());
             representative.setSnils(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.getSnils());
-            representative.setBirthDate(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString());
+            representative.setBirthDate(Timestamp.valueOf(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString()));
             representative.setName(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
             representative.setSurname(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
             representative.setPatronymic(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
             if (representative.getInn() == null || representative.getInn().isEmpty()) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(REPRESENTATIVE_IS_NULL), HttpStatus.BAD_REQUEST);
             }
-            RepresentativePassportResponse represPassport = new RepresentativePassportResponse();
+            RepresentativePassport represPassport = new RepresentativePassport();
             represPassport.setSeriesNumber(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-            represPassport.setDateIssue(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString());
+            represPassport.setDateIssue(Timestamp.valueOf(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()));
             represPassport.setWhoIssue(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
             represPassport.setDepartmentCode(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
 
-            List<CredentialResponse> credentialList = new ArrayList<>();
+            List<CredentialDto> credentialList = new ArrayList<>();
             if (m4dXml.document.powerAttorneys.credential.credentials != null) {
                 for (M4dXml.Document.PowerAttorneys.Credentials.Credential c : m4dXml.document.powerAttorneys.credential.credentials) {
-                    CredentialResponse newCredential = new CredentialResponse();
+                    CredentialDto newCredential = new CredentialDto();
                     newCredential.setCode(c.getCode());
                     newCredential.setName(c.getName());
                     credentialList.add(newCredential);
@@ -449,27 +452,45 @@ public class M4dController {
     }
 
     private M4d convertMrpaRegistryToEntity(M4dRequestDto.MrpaRegistry mrpaRegistryDto){
-        M4d m4d = modelMapper.map(mrpaRegistryDto, M4d.class);
+        M4d m4d = new M4d();// modelMapper.map(mrpaRegistryDto, M4d.class);
+        if(mrpaRegistryDto.getInternalNumber() != null) {
+            m4d.setInternalNumber(mrpaRegistryDto.getInternalNumber());
+        }
+        m4d.setStartDate(this.convertStringToTimestamp(mrpaRegistryDto.getStartDate()));
+        m4d.setEndDate(this.convertStringToTimestamp(mrpaRegistryDto.getEndDate()));
         return m4d;
     }
 
-    private OrganisationResponse convertOrganisationToEntity(M4dRequestDto.Organisation organisationDto){
-        OrganisationResponse organisation = modelMapper.map(organisationDto, OrganisationResponse.class);
+    private Organisation convertOrganisationToEntity(M4dRequestDto.Organisation organisationDto){
+        Organisation organisation = modelMapper.map(organisationDto, Organisation.class);
         return organisation;
     }
 
-    private PrincipalResponse convertPrincipalToEntity(M4dRequestDto.Principal principalDto){
-        PrincipalResponse principal = modelMapper.map(principalDto, PrincipalResponse.class);
+    private Principal convertPrincipalToEntity(M4dRequestDto.Principal principalDto){
+        Principal principal = modelMapper.map(principalDto, Principal.class);
         return principal;
     }
 
-    private RepresentativeResponse convertRepresentativeToEntity(M4dRequestDto.Representative representativeDto){
-        RepresentativeResponse representative = modelMapper.map(representativeDto, RepresentativeResponse.class);
+    private Representative convertRepresentativeToEntity(M4dRequestDto.Representative representativeDto){
+        Representative representative = new Representative();
+        representative.setId(representativeDto.getId());
+        representative.setInn(representativeDto.getInn());
+        representative.setSnils(representativeDto.getSnils());
+        representative.setBirthDate(this.convertStringToTimestamp(representativeDto.getBirthDate()));
+        representative.setSurname(representativeDto.getSurname());
+        representative.setName(representativeDto.getName());
+        representative.setPatronymic(representativeDto.getPatronymic());
         return representative;
     }
 
-    private RepresentativePassportResponse convertRepresentativePassportToEntity(M4dRequestDto.RepresentativePassport representativePassportDto){
-        RepresentativePassportResponse representativePassport = modelMapper.map(representativePassportDto, RepresentativePassportResponse.class);
+    private RepresentativePassport convertRepresentativePassportToEntity(M4dRequestDto.RepresentativePassport representativePassportDto){
+        RepresentativePassport representativePassport = new RepresentativePassport();
+        representativePassport.setId(representativePassportDto.getId());
+        representativePassport.setSeriesNumber(representativePassportDto.getSeriesNumber());
+        representativePassport.setDateIssue(this.convertStringToTimestamp(representativePassportDto.getDateIssue()));
+        representativePassport.setWhoIssue(representativePassportDto.getWhoIssue());
+        representativePassport.setDepartmentCode(representativePassportDto.getDepartmentCode());
+        representativePassport.setRepresentativeId(representativePassportDto.getRepresentativeId());
         return representativePassport;
     }
 
@@ -745,5 +766,16 @@ public class M4dController {
         }
         M4dRecall mrpaRecall = modelMapper.map(mrpaRecallRequestDto, M4dRecall.class);
         return mrpaRecall;
+    }
+
+    private Timestamp convertStringToTimestamp(String date) {
+        DateTimeFormatter formatter;
+        if(date.length()>20){
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+        } else {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+        }
+        LocalDateTime localDateTime = LocalDateTime.from(formatter.parse(date));
+        return Timestamp.valueOf(localDateTime);
     }
 }

@@ -10,7 +10,7 @@ import java.util.Set;
 
 @Data
 @Entity
-@Table(name = "m4d-credential")
+@Table(name = "m4d_credential")
 public class Credential {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

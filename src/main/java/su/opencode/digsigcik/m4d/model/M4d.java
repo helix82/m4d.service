@@ -7,13 +7,15 @@ import su.opencode.digsigcik.m4d.audit.AllowAudit;
 import su.opencode.digsigcik.m4d.enums.StatusTypeEnum;
 
 import javax.persistence.*;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "m4d-registry")
+@Table(name = "m4d_registry")
 // Реестр МЧД
 public class M4d {
     @Id
@@ -57,13 +59,13 @@ public class M4d {
     @Schema(example = "")
     @JsonProperty("startDate")
     @AllowAudit
-    private String startDate;
+    private Timestamp startDate;
 
     @Column(name = "end_date")
     @Schema(example = "")
     @JsonProperty("endDate")
     @AllowAudit
-    private String endDate;
+    private Timestamp endDate;
 
     @Column(name = "sig_path", columnDefinition = "TEXT")
     @Schema(example = "")
@@ -75,19 +77,7 @@ public class M4d {
     @Schema(example = "")
     @JsonProperty("createDate")
     @AllowAudit
-    private String createDate;
-
-    @Column(name = "mrpa_xml_filename")
-    @Schema(example = "")
-    @JsonProperty("mrpaXmlFilename")
-    @AllowAudit
-    private String mrpaXmlFilename;
-
-    @Column(name = "recalled_xml_path", columnDefinition = "TEXT")
-    @Schema(example = "")
-    @JsonProperty("recalledXmlPath")
-    @AllowAudit
-    private String recalledXmlPath;
+    private Timestamp createDate;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "mrpa_recall_id", referencedColumnName = "id")

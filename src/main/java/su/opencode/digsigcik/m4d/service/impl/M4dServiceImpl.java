@@ -1,15 +1,11 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
-import com.nimbusds.jose.proc.SecurityContext;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
@@ -17,19 +13,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import su.opencode.digsigcik.m4d.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.m4d.audit.AuditLogThis;
-import su.opencode.digsigcik.m4d.controller.M4dCredentialController;
 import su.opencode.digsigcik.m4d.dto.*;
-import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.*;
 import su.opencode.digsigcik.m4d.dto.response.*;
-import su.opencode.digsigcik.m4d.service.M4dService;
+import su.opencode.digsigcik.m4d.service.*;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
+import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,9 +44,13 @@ public class M4dServiceImpl implements M4dService {
     private String HANDBOOK_URI;
     private final ModelMapper modelMapper;
     private final M4dRepository m4dRepository;
-    private final M4dRecallRepository m4dRecallRepository;
+    private final M4dRecallService m4dRecallService;
     private final M4dCredentialRepository m4dCredentialRepository;
-    private final CredentialRepository credentialRepository;
+    private final CredentialService credentialService;
+    private final OrganisationService organisationService;
+    private final PrincipalService principalService;
+    private final RepresentativeService representativeService;
+    private final RepresentativePassportService representativePassportService;
     private final RestTemplate restTemplate;
 
     @Override
@@ -74,68 +76,82 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
+    public ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long represId;
         //------------------- save organisation ----------------
-        OrganisationResponse existsOrganisation = (restTemplate.getForEntity(HANDBOOK_URI+"/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
-        assert existsOrganisation != null;
-        if (existsOrganisation.getId() == null) {
-            OrganisationResponse respOrganisation;
-            try {
-                respOrganisation = restTemplate.postForObject(HANDBOOK_URI+"/organisation/save", organisation, OrganisationResponse.class);
-            } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        Organisation existsOrganisation;
+        try {
+            existsOrganisation = this.organisationService.findByOrganisationInn(organisation.getInn());
+            if (existsOrganisation == null) {
+                Organisation respOrganisation;
+                try {
+                    respOrganisation = this.organisationService.saveOrganisation(organisation);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+                assert respOrganisation != null;
+                orgId = respOrganisation.getId();
+            } else {
+                orgId = existsOrganisation.getId();
             }
-            assert respOrganisation != null;
-            orgId = respOrganisation.getId();
-        } else {
-            orgId = existsOrganisation.getId();
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         //------------------- end save organisation ----------------
 
         //------------------- save principal ----------------
-        PrincipalResponse existsPrincipal = (restTemplate.getForEntity(HANDBOOK_URI+"/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
-        assert existsPrincipal != null;
-        if (existsPrincipal.getId() == null) {
-            PrincipalResponse respPrincipal;
-            try {
-                respPrincipal = restTemplate.postForObject(HANDBOOK_URI+"/principal/save", principal, PrincipalResponse.class);
-            } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-            }
-            assert respPrincipal != null;
-            principId = respPrincipal.getId();
-        } else {
-            principId = existsPrincipal.getId();
-        }
-        //------------------- end save principal ----------------
-
-        //------------------- save representative and passport ----------------
-        RepresentativeResponse existsRepresentative = (restTemplate.getForEntity(HANDBOOK_URI+"/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
-        assert existsRepresentative != null;
-        if (existsRepresentative.getId() == null) {
-            RepresentativeResponse respRepresentative;
-            try {
-                respRepresentative = restTemplate.postForObject(HANDBOOK_URI+"/representative/save", representative, RepresentativeResponse.class);
-            } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-            }
-            assert respRepresentative != null;
-            if (respRepresentative.getId() != null) {
-                representativePassport.setRepresentativeId(respRepresentative.getId());
+        Principal existsPrincipal;
+        try {
+            existsPrincipal = this.principalService.findPrincipalByInn(principal.getInn());
+            if (existsPrincipal == null) {
+                Principal respPrincipal;
                 try {
-                    restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
+                    respPrincipal = this.principalService.savePrincipal(principal);
                 } catch (ConstraintViolationException e) {
                     return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                 }
+                assert respPrincipal != null;
+                principId = respPrincipal.getId();
+            } else {
+                principId = existsPrincipal.getId();
             }
-
-            represId = respRepresentative.getId();
-        } else {
-            represId = existsRepresentative.getId();
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
+
+        //------------------- end save principal ----------------
+
+        //------------------- save representative and passport ----------------
+        Representative existsRepresentative;
+        try {
+            existsRepresentative = this.representativeService.findRepresentativeByInn(representative.getInn());
+            if (existsRepresentative == null) {
+                Representative respRepresentative;
+                try {
+                    respRepresentative = this.representativeService.saveRepresentative(representative);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+                if (respRepresentative.getId() != null) {
+                    representativePassport.setRepresentativeId(respRepresentative.getId());
+                    try {
+                        this.representativePassportService.saveRepresentativePassport(representativePassport);
+                    } catch (ConstraintViolationException e) {
+                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    }
+                }
+
+                represId = respRepresentative.getId();
+            } else {
+                represId = existsRepresentative.getId();
+            }
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+
+
         //------------------- end save representative and passport ----------------
 
         if (orgId == null || principId == null || represId == null) {
@@ -153,8 +169,8 @@ public class M4dServiceImpl implements M4dService {
         }
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
-            for (CredentialResponse c : credentialList) {
-                List<Credential> existsCredentials = this.credentialRepository.findCredentialByCodeIgnoreCase(c.getCode());
+            for (CredentialDto c : credentialList) {
+                List<Credential> existsCredentials = this.credentialService.findCredentialByCodeOrName(c.getCode());
                 assert existsCredentials != null;
                 if (existsCredentials.isEmpty()) {
                     Credential newCredential = new Credential();
@@ -162,7 +178,7 @@ public class M4dServiceImpl implements M4dService {
                     newCredential.setName(c.getName());
                     Credential credentialSave;
                     try {
-                        credentialSave = this.credentialRepository.save(newCredential);
+                        credentialSave = this.credentialService.saveCredential(newCredential);
                     } catch (ConstraintViolationException e) {
                         return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                     }
@@ -195,7 +211,7 @@ public class M4dServiceImpl implements M4dService {
 
     @AuditLogThis(event = AuditLogEventEnum.M4D_UPDATE)
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
-    public ResponseEntity<?> updateAllDataMrpaRegistry(M4d m4d, OrganisationResponse organisation, PrincipalResponse principal, RepresentativeResponse representative, RepresentativePassportResponse representativePassport, List<CredentialResponse> credentialList, List<Long> credentials) {
+    public ResponseEntity<?> updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long represId;
@@ -207,68 +223,75 @@ public class M4dServiceImpl implements M4dService {
             return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND)), HttpStatus.NOT_FOUND);
         }
         //------------------- save organisation ----------------
-        OrganisationResponse existsOrganisation = (restTemplate.getForEntity(HANDBOOK_URI+"/organisation/inn/"+organisation.getInn(), OrganisationResponse.class)).getBody();
-        if (existsOrganisation != null) {
-            organisation.setId(existsOrganisation.getId());
-        }
-        assert existsOrganisation != null;
-        if(!existsOrganisation.equals(organisation)){
-            OrganisationResponse respOrganisation;
-            try {
-                respOrganisation = restTemplate.postForObject(HANDBOOK_URI+"/organisation/save", organisation, OrganisationResponse.class);
-            } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-            }
-            assert respOrganisation != null;
-            orgId = respOrganisation.getId();
-        } else {
-            orgId = existsOrganisation.getId();
-        }
-
-
-        //------------------- end save organisation ----------------
-
-        //------------------- save principal ----------------
-        PrincipalResponse existsPrincipal = (restTemplate.getForEntity(HANDBOOK_URI+"/principal/inn/"+principal.getInn(), PrincipalResponse.class)).getBody();
-        if (existsPrincipal != null) {
-            principal.setId(existsPrincipal.getId());
-        }
-        PrincipalResponse respPrincipal;
+        Organisation existsOrganisation;
         try {
-            respPrincipal = restTemplate.postForObject(HANDBOOK_URI+"/principal/save", principal, PrincipalResponse.class);
+            existsOrganisation = this.organisationService.findByOrganisationInn(organisation.getInn());
+            if (existsOrganisation != null) {
+                organisation.setId(existsOrganisation.getId());
+            }
+            if(!existsOrganisation.equals(organisation)){
+                Organisation respOrganisation;
+                try {
+                    respOrganisation = this.organisationService.saveOrganisation(organisation);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+                orgId = respOrganisation.getId();
+            } else {
+                orgId = existsOrganisation.getId();
+            }
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        assert respPrincipal != null;
-        principId = respPrincipal.getId();
+        //------------------- end save organisation ----------------
+
+        //------------------- save principal ----------------
+        Principal existsPrincipal;
+        try {
+            existsPrincipal = this.principalService.findPrincipalByInn(principal.getInn());
+            if (existsPrincipal != null) {
+                principal.setId(existsPrincipal.getId());
+            }
+            Principal respPrincipal;
+            try {
+                respPrincipal = this.principalService.savePrincipal(principal);
+            } catch (ConstraintViolationException e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+            principId = respPrincipal.getId();
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
         //------------------- end save principal ----------------
 
         //------------------- save representative and passport ----------------
 
-        RepresentativeResponse existsRepresentative = (restTemplate.getForEntity(HANDBOOK_URI+"/representative/inn/"+representative.getInn(), RepresentativeResponse.class)).getBody();
-        if (existsRepresentative != null) {
-            representative.setId(existsRepresentative.getId());
-        }
-        RepresentativeResponse respRepresentative;
+        Representative existsRepresentative;
         try {
-
-            respRepresentative = restTemplate.postForObject(HANDBOOK_URI+"/representative/save", representative, RepresentativeResponse.class);
+            existsRepresentative = this.representativeService.findRepresentativeByInn(representative.getInn());
+            if (existsRepresentative != null) {
+                representative.setId(existsRepresentative.getId());
+            }
+            Representative respRepresentative;
+            try {
+                respRepresentative = this.representativeService.saveRepresentative(representative);
+            } catch (ConstraintViolationException e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+            RepresentativePassport existsRepresentativePassport = this.representativePassportService.findRepresentativePassportBySeriesNumber(representativePassport.getSeriesNumber());
+            if (existsRepresentativePassport != null) {
+                representativePassport.setId(existsRepresentativePassport.getId());
+            }
+            try {
+                representativePassport.setRepresentativeId(respRepresentative.getId());
+                this.representativePassportService.saveRepresentativePassport(representativePassport);
+            } catch (ConstraintViolationException e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+            represId = respRepresentative.getId();
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-
-        RepresentativePassportResponse existsRepresentativePassport = (restTemplate.getForEntity(HANDBOOK_URI+"/representative_passport/seriesNumber/"+representativePassport.getSeriesNumber(), RepresentativePassportResponse.class)).getBody();
-        if (existsRepresentativePassport != null) {
-            representativePassport.setId(existsRepresentativePassport.getId());
-        }
-        try {
-            assert respRepresentative != null;
-            representativePassport.setRepresentativeId(respRepresentative.getId());
-            restTemplate.postForObject(HANDBOOK_URI+"/representative_passport/save", representativePassport, RepresentativePassportResponse.class);
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        represId = respRepresentative.getId();
         //------------------- end save representative and passport ----------------
 
         if (orgId == null || principId == null || represId == null) {
@@ -291,8 +314,8 @@ public class M4dServiceImpl implements M4dService {
         }
         List<Long> credList = new ArrayList<>();
         if (credentialList != null) {
-            for (CredentialResponse c : credentialList) {
-                List<Credential> existsCredentials = this.credentialRepository.findCredentialByCodeIgnoreCase(c.getCode());
+            for (CredentialDto c : credentialList) {
+                List<Credential> existsCredentials = this.credentialService.findCredentialByCodeOrName(c.getCode());
                 assert existsCredentials != null;
                 if (existsCredentials.isEmpty()) {
                     Credential newCredential = new Credential();
@@ -300,7 +323,7 @@ public class M4dServiceImpl implements M4dService {
                     newCredential.setName(c.getName());
                     Credential credentialSave;
                     try {
-                        credentialSave = this.credentialRepository.save(newCredential);
+                        credentialSave = this.credentialService.saveCredential(newCredential);
                     } catch (ConstraintViolationException e) {
                         return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                     }
@@ -349,7 +372,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     public List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId) {
-        List<Credential> credentials = this.credentialRepository.findCredentialByMrpaId(mrpaId);
+        List<Credential> credentials = this.credentialService.findCredentialByMrpaId(mrpaId);
         List<M4dResponseDto.CredentialDTO> credentialDTOList = new ArrayList<>();
         assert credentials != null;
         for (Credential c : credentials) {
@@ -363,8 +386,8 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
-    public M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) {
-        String idFile = "ON_EMCHD_" + convertDateIsoInstantToMchdXmlNotDash(m4dFullDTO.getCreateDate()) + "_" + m4dFullDTO.getGuid();
+    public M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException {
+        String idFile = "ON_EMCHD_" + m4dFullDTO.getCreateDate().substring(0,10).replace("-", "") + "_" + m4dFullDTO.getGuid();
         M4dFullXML m4dFullXML = new M4dFullXML();
         m4dFullXML.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
         m4dFullXML.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
@@ -385,10 +408,10 @@ public class M4dServiceImpl implements M4dService {
         mrpas.setGuid(m4dFullDTO.getGuid());
 
         if (m4dFullDTO.getStartDate() != null) {
-            mrpas.setStartDate(convertDateIsoInstantToMchdXml(m4dFullDTO.getStartDate()));
+            mrpas.setStartDate(m4dFullDTO.getStartDate().substring(0,10));
         }
         if (m4dFullDTO.getEndDate() != null) {
-            mrpas.setEndDate(convertDateIsoInstantToMchdXml(m4dFullDTO.getEndDate()));
+            mrpas.setEndDate(m4dFullDTO.getEndDate().substring(0,10));
         }
         mrpas.setInfoSystem("sep.cik");
 
@@ -445,7 +468,7 @@ public class M4dServiceImpl implements M4dService {
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual infoIndividual = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual();
         detailRepresentative.setInfoIndividual(infoIndividual);
         if (m4dFullDTO.representative.getBirthDate() != null) {
-            infoIndividual.setBirthDate(convertDateIsoInstantToMchdXml(m4dFullDTO.representative.getBirthDate()));
+            infoIndividual.setBirthDate(m4dFullDTO.representative.getBirthDate().substring(0,10));
         }
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative fioRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative();
         infoIndividual.setFioRepresentative(fioRepresentative);
@@ -457,7 +480,7 @@ public class M4dServiceImpl implements M4dService {
         representativePassport.setTypeDocument("21");
         representativePassport.setSeriesNumber(m4dFullDTO.representative.representativePassport.getSeriesNumber());
         if (m4dFullDTO.representative.representativePassport.getDateIssue() != null) {
-            representativePassport.setDateIssue(convertDateIsoInstantToMchdXml(m4dFullDTO.representative.representativePassport.getDateIssue()));
+            representativePassport.setDateIssue(m4dFullDTO.representative.representativePassport.getDateIssue().substring(0,10));
         }
         representativePassport.setWhoIssue(m4dFullDTO.representative.representativePassport.getWhoIssue());
         representativePassport.setDepartmentCode(m4dFullDTO.representative.representativePassport.getDepartmentCode());
@@ -476,21 +499,6 @@ public class M4dServiceImpl implements M4dService {
         powerAttorneys.setCredential(credentials);
 
         return m4dFullXML;
-    }
-
-    private static String convertDateIsoInstantToMchdXml(String date) {
-        Date myDate = Date.from(parse(date));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        String formattedDate = formatter.format(myDate);
-        return formattedDate;
-    }
-
-    private static String convertDateIsoInstantToMchdXmlNotDash(String date) {
-        Date myDate = Date.from(parse(date));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-        formatter.setTimeZone(TimeZone.getTimeZone("UTC")); //GMT
-        String formattedDate = formatter.format(myDate);
-        return formattedDate;
     }
 
     /*
@@ -520,13 +528,13 @@ public class M4dServiceImpl implements M4dService {
     public String getStatusM4d(Long id) throws ParseException {
         M4d mrpaRegistry = this.m4dRepository.findM4dById(id);
         Date currentDT = Date.from(Instant.now());
-        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(mrpaRegistry.getStartDate());
-        Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(mrpaRegistry.getEndDate());
+        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(mrpaRegistry.getStartDate()));
+        Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(mrpaRegistry.getEndDate()));
         if (currentDT.before(startDate) && currentDT.after(endDate)) {
             return "EXPIRED";
         }
         if (mrpaRegistry.getMrpaRecall() != null) {
-            M4dRecall mrpaRecall = this.m4dRecallRepository.findM4dRecallById(mrpaRegistry.getMrpaRecall().getId());
+            M4dRecall mrpaRecall = this.m4dRecallService.findById(mrpaRegistry.getMrpaRecall().getId());
             if (mrpaRecall.getSignature() != null) {
                 return "WITHDRAWN";
             } else {
@@ -543,41 +551,42 @@ public class M4dServiceImpl implements M4dService {
 
     public M4dResponseDto convertM4dToM4dResponseDto(M4d m4d) throws ParseException {
         M4dResponseDto m4dResponseDto = modelMapper.map(m4d, M4dResponseDto.class);
-        OrganisationResponse organisation = (restTemplate.getForEntity(HANDBOOK_URI+"/organisation/"+m4d.getOrganisationId(), OrganisationResponse.class)).getBody();
+        Organisation organisation = this.organisationService.findByOrganisationId(m4d.getOrganisationId());
         if (organisation != null) {
             m4dResponseDto.setOrganization(convertOrganisationToDto(organisation));
         }
-        PrincipalResponse principal = (restTemplate.getForEntity(HANDBOOK_URI+"/principal/"+m4d.getPrincipalId(), PrincipalResponse.class)).getBody();
+        Principal principal = this.principalService.findByPrincipalId(m4d.getPrincipalId());
         if (principal != null) {
             m4dResponseDto.setPrincipal(convertPrincipalToDto(principal));
         }
-        RepresentativeResponse representative = (restTemplate.getForEntity(HANDBOOK_URI+"/representative/"+m4d.getRepresentativeId(), RepresentativeResponse.class)).getBody();
+        Representative representative = this.representativeService.findByRepresentativeId(m4d.getRepresentativeId());
         if (representative != null) {
             m4dResponseDto.setRepresentative(convertRepresentativeToDto(representative));
-            m4dResponseDto.representative.setRepresentativePassport(convertRepresentativePassportToDto(representative.getRepresentativePassports().get(0)));
+            RepresentativePassport representativePassport = this.representativePassportService.findRepresentativePassportyByRepresentativeId(representative.getId());
+            m4dResponseDto.representative.setRepresentativePassport(convertRepresentativePassportToDto(representativePassport));
         }
         m4dResponseDto.setCredentials(this.getCredentialByMrpaRegistryId(m4d.getId()));
         m4dResponseDto.setStatus(this.getStatusM4d(m4dResponseDto.getId()));
         return m4dResponseDto;
     }
 
-    private M4dResponseDto.OrganizationDTO convertOrganisationToDto(OrganisationResponse organisation){
+    private M4dResponseDto.OrganizationDTO convertOrganisationToDto(Organisation organisation){
         M4dResponseDto.OrganizationDTO organisationDto = modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
         return organisationDto;
     }
 
-    private M4dResponseDto.PrincipalDTO convertPrincipalToDto(PrincipalResponse principal){
+    private M4dResponseDto.PrincipalDTO convertPrincipalToDto(Principal principal){
         M4dResponseDto.PrincipalDTO principalDto = modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
         return principalDto;
     }
 
-    private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(RepresentativeResponse representative){
+    private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(Representative representative){
         M4dResponseDto.RepresentativeDTO representativeDto = modelMapper.map(representative, M4dResponseDto.RepresentativeDTO.class);
         representativeDto.representativePassport = modelMapper.map(representative.getRepresentativePassports(), M4dResponseDto.RepresentativePassportDTO.class);
         return representativeDto;
     }
 
-    private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassportResponse representativePassport){
+    private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassport representativePassport){
         M4dResponseDto.RepresentativePassportDTO representativePassportDto = modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDTO.class);
         return representativePassportDto;
     }

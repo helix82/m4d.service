@@ -1,9 +1,9 @@
-package su.opencode.digsigcik.m4d.dto.response;
+package su.opencode.digsigcik.m4d.dto;
 
 import lombok.Data;
 
 @Data
-public class OrganisationResponse {
+public class OrganisationDto {
     private Long id;
     private String name;
     private String inn;
