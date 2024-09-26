@@ -22,7 +22,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 public class SecurityConfig {
     private final JwtAuthConverter jwtAuthConverter;
     private final CustomCorsConfigurationSource corsConfigurationSource;
-    private final KeyCloakProperties keyCloakProperties;
+    private final RPDProperties RPDProperties;
     private static final String[] WHITE_LIST = {
             "/v3/api-docs/**",
             "/configuration/ui",
@@ -77,7 +77,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        return new JwtMultiIssuerDecoder(keyCloakProperties.getIssuerInternalUri(), keyCloakProperties.getIssuerPublicUri());
+        return new JwtIssuerDecoder(RPDProperties.getIssuerUri());
     }
 }
 

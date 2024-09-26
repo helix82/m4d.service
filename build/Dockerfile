@@ -29,9 +29,13 @@ RUN apt-get update && \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias stepcarootca -file step_ca_root_ca.crt \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias stepcaintermediateca -file step_ca_intermediate_ca.crt \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias keylabtlsca -file keylab_tls_ca.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias ssorpdroot -file _.test.st.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias ssorpdintermediate -file sso.rpd.zk.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/step_ca_root_ca.crt \
     && rm -rf  $JAVA_HOME/lib/security/step_ca_intermediate_ca.crt \
     && rm -rf  $JAVA_HOME/lib/security/keylab_tls_ca.crt \
+    && rm -rf  $JAVA_HOME/lib/security/_.test.st.crt \
+    && rm -rf  $JAVA_HOME/lib/security/sso.rpd.zk.test.st.crt \
     && unzip -o /app/security.zip -d $JAVA_HOME/conf \
     && rm -rf  /app/security.zip \
     && mkdir -p /app \
