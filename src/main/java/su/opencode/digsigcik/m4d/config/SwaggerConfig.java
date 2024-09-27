@@ -44,7 +44,7 @@ import java.util.Collections;
         flows = @OAuthFlows(
                 authorizationCode =
                 @OAuthFlow(
-                        authorizationUrl = "${spring.security.oauth2.client.provider.keycloak.authorization-uri}",
+                        authorizationUrl = "${spring.security.oauth2.client.provider.rpd.authorization-uri}",
                         tokenUrl = "${springdoc.server.token-uri}"
 
 

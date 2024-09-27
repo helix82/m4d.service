@@ -58,43 +58,44 @@ steps:
     depends_on:
       - build
 
-  - name: run
-    environment:
-      DRONE_DEBUG: true
-      OAUTH2_ISSUER_INTERNAL_URL:
-        from_secret: oauth2_issuer_internal_url
-      OAUTH2_ISSUER_PUBLIC_URL:
-        from_secret: oauth2_issuer_public_url
-      KEYCLOAK_AUTHORIZATION_URI:
-        from_secret: keycloak_authorization_uri
-      KEYCLOAK_SWAGGER_TOKEN_URI:
-        from_secret: keycloak_swagger_token_url
-      KAFKA_BROKERS_LIST_URL:
-        from_secret: kafka_brokers_list_url
-    settings:
-      insecure: true
-    image: nexus.essocode.ru:5001/ess/m4d:${DRONE_SOURCE_BRANCH/\//-}
-    volumes:
-      - name: out
-        path: /out
-    pull: always
-    detach: true
-    commands:
-      - cd /app
-      - java -jar m4d-0.0.1-SNAPSHOT.jar
-    depends_on:
-      - build
-
-  - name: check
-    image: curlimages/curl
-    environment:
-      DRONE_DEBUG: true
-      M4D_URL: http://run:8051
-    commands:
-      - echo "$M4D_URL"
-      - timeout 60 sh -c 'while ! curl -s -f -o /dev/null $M4D_URL/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config#/; do sleep 5; done'
-    depends_on:
-      - run
+# TODO: скипать, пока дрон не перейдет на общий сервер, где настроен ВПН для РПД
+#  - name: run
+#    environment:
+#      DRONE_DEBUG: true
+#      OAUTH2_ISSUER_URL:
+#        from_secret: oauth2_issuer_url
+#      RPD_AUTHORIZATION_URI:
+#        from_secret: rpd_authorization_uri
+#      RPD_SWAGGER_TOKEN_URI:
+#        from_secret: rpd_swagger_token_url
+#      KAFKA_BROKERS_LIST_URL:
+#        from_secret: kafka_brokers_list_url
+#    settings:
+#      insecure: true
+#    image: nexus.essocode.ru:5001/ess/m4d:${DRONE_SOURCE_BRANCH/\//-}
+#    volumes:
+#      - name: out
+#        path: /out
+#    pull: always
+#    detach: true
+#    extra_hosts:
+#      - "sso.rpd.zk.test.st:10.1.176.210"
+#    commands:
+#      - cd /app
+#      - java -jar m4d-0.0.1-SNAPSHOT.jar
+#    depends_on:
+#      - build
+#
+#  - name: check
+#    image: curlimages/curl
+#    environment:
+#      DRONE_DEBUG: true
+#      M4D_URL: http://run:8051
+#    commands:
+#      - echo "$M4D_URL"
+#      - timeout 60 sh -c 'while ! curl -s -f -o /dev/null $M4D_URL/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config#/; do sleep 5; done'
+#    depends_on:
+#      - run
 
 
 
@@ -105,8 +106,8 @@ steps:
       tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       kubeconfig:
         from_secret: kubeconfig
-    depends_on:
-      - check
+#    depends_on:
+#      - check
     when:
       branch:
         - master

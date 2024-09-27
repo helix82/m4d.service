@@ -11,10 +11,9 @@ metadata:
   name: m4d-back-cred
   namespace: ocode-dev
 data:
-  OAUTH2_ISSUER_INTERNAL_URL: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUw==
-  OAUTH2_ISSUER_PUBLIC_URL: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUw==
-  KEYCLOAK_AUTHORIZATION_URI: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUy9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
-  KEYCLOAK_SWAGGER_TOKEN_URI: aHR0cHM6Ly9rZXljbG9hay5lc3NvY29kZS5ydS9hdXRoL3JlYWxtcy9VU0VSUy9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
+  RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
+  OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3Q=
+  RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvdG9rZW4=
   KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
   SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
 ---
@@ -47,6 +46,10 @@ spec:
       labels:
         app: m4d
     spec:
+      hostAliases:
+        - ip: "10.1.176.210"
+          hostnames:
+            - "sso.rpd.zk.test.st"
       containers:
         - name: m4d
           image: nexus.essocode.ru/ess/m4d:{{.tag}}
@@ -65,26 +68,21 @@ spec:
           ports:
             - containerPort: 8051
           env:
-            - name: OAUTH2_ISSUER_INTERNAL_URL
+            - name: OAUTH2_ISSUER_URL
               valueFrom:
                 secretKeyRef:
                   name: m4d-back-cred
-                  key: OAUTH2_ISSUER_INTERNAL_URL
-            - name: OAUTH2_ISSUER_PUBLIC_URL
+                  key: OAUTH2_ISSUER_URL
+            - name: RPD_AUTHORIZATION_URI
               valueFrom:
                 secretKeyRef:
                   name: m4d-back-cred
-                  key: OAUTH2_ISSUER_PUBLIC_URL
-            - name: KEYCLOAK_AUTHORIZATION_URI
+                  key: RPD_AUTHORIZATION_URI
+            - name: RPD_SWAGGER_TOKEN_URI
               valueFrom:
                 secretKeyRef:
                   name: m4d-back-cred
-                  key: KEYCLOAK_AUTHORIZATION_URI
-            - name: KEYCLOAK_SWAGGER_TOKEN_URI
-              valueFrom:
-                secretKeyRef:
-                  name: m4d-back-cred
-                  key: KEYCLOAK_SWAGGER_TOKEN_URI
+                  key: RPD_SWAGGER_TOKEN_URI
             - name: SWAGGER_URL
               valueFrom:
                 secretKeyRef:

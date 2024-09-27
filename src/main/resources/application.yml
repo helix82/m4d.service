@@ -17,12 +17,11 @@ spring:
     oauth2:
       client:
         provider:
-          keycloak:
-            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:http://localhost:8080/auth/realms/USERS/protocol/openid-connect/auth}
+          rpd:
+            authorization-uri: ${RPD_AUTHORIZATION_URI:https://sso.rpd.zk.test.st/realms/test/protocol/openid-connect/auth}
       resourceserver:
-        issuers:
-          internal-uri: ${OAUTH2_ISSUER_INTERNAL_URL:http://localhost:8080/auth/realms/USERS}
-          public-uri: ${OAUTH2_ISSUER_PUBLIC_URL:http://localhost:8080/auth/realms/USERS}
+        jwt:
+         issuer-uri: ${OAUTH2_ISSUER_URL:https://sso.rpd.zk.test.st/realms/test}
 
 
   jpa:
@@ -51,7 +50,11 @@ spring:
     topics:
       test: TEST
 
-
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.apache.http: DEBUG
+    org.apache.http.wire: TRACE
 
 server:
   port: 8051
@@ -107,7 +110,7 @@ springdoc:
     enabled: true
   server:
     url: ${SWAGGER_URL:http://localhost:8051}
-    token-uri: ${KEYCLOAK_SWAGGER_TOKEN_URI:http://localhost:8080/auth/realms/USERS/protocol/openid-connect/token}
+    token-uri: ${RPD_SWAGGER_TOKEN_URI:https://sso.rpd.zk.test.st/realms/test/protocol/openid-connect/token}
 
 m4d:
   handbook:
