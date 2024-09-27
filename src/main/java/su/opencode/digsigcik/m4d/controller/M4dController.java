@@ -203,7 +203,7 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "/{id}/upload-dscp", produces = "application/json; charset=UTF-8")
+    @PutMapping(value = "/{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSig(Authentication authentication,
                                        @PathVariable @Parameter(name = "id",
                                                description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container) throws IOException, ParseException, JAXBException {
@@ -318,7 +318,7 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PostMapping(value = "/upload", produces = "application/json; charset=UTF-8")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, ParseException, SAXException, JAXBException {
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {

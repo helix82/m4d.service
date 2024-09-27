@@ -13,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 
 @Configuration
@@ -21,7 +22,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthConverter jwtAuthConverter;
-    private final CustomCorsConfigurationSource corsConfigurationSource;
+    private final CorsConfigurationSource corsConfigurationSource;
     private final RPDProperties RPDProperties;
     private static final String[] WHITE_LIST = {
             "/v3/api-docs/**",
