@@ -1,11 +1,13 @@
-FROM nexus.essocode.ru/adoptopenjdk/maven-openjdk11 AS maven
+FROM adoptopenjdk/maven-openjdk11 AS maven
+#FROM nexus.essocode.ru/adoptopenjdk/maven-openjdk11 AS maven
 WORKDIR /app
 COPY ./build/settings.xml /usr/share/maven/conf/
 COPY ../pom.xml ./
 RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline -B
 COPY ../ ./
 RUN --mount=type=cache,target=/root/.m2 mvn clean install -Dmaven.test.skip=true
-FROM nexus.essocode.ru/bellsoft/liberica-openjdk-debian:11
+FROM bellsoft/liberica-openjdk-debian:11
+#FROM nexus.essocode.ru/bellsoft/liberica-openjdk-debian:11
 COPY ./build/cert/* $JAVA_HOME/lib/security
 COPY ./build/security.zip /app/
 ARG NEXUS_RAW_USERNAME
