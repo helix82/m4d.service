@@ -11,6 +11,7 @@ metadata:
   name: m4d-back-cred
   namespace: ocode-dev
 data:
+  RPD_STATE_BASE64_SECRET_KEY: Vjc5UTVzb3lFb25BVTVMbitpVmdBZUoySFdGNDRUa2U0YjA2OEpMUUp3MD0=
   RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
   OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3Q=
   RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvdG9rZW4=
@@ -93,6 +94,11 @@ spec:
                 secretKeyRef:
                   name: m4d-back-cred
                   key: KAFKA_BROKERS_LIST_URL
+            - name: RPD_STATE_BASE64_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: RPD_STATE_BASE64_SECRET_KEY
       imagePullSecrets:
         - name: registrypullsecret
 

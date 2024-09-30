@@ -106,8 +106,8 @@ steps:
       tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       kubeconfig:
         from_secret: kubeconfig
-#    depends_on:
-#      - check
+    depends_on:
+      - build
     when:
       branch:
         - master
