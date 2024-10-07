@@ -31,6 +31,7 @@
         <version.lombok>1.18.18</version.lombok>
         <version.mapstruct-lombok>0.2.0</version.mapstruct-lombok>
         <maven.test.skip>true</maven.test.skip>
+        <liquibase.version>4.20.0</liquibase.version>
     </properties>
 
     <profiles>
@@ -240,12 +241,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>2.2.224</version>
-<!--            <scope>runtime</scope>-->
         </dependency>
         <dependency>
             <groupId>org.modelmapper</groupId>
@@ -487,6 +482,18 @@
         </dependency>
 
         <!-- KAFKA DEPENDENCIES -->
+
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>${liquibase.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.0</version>
+        </dependency>
     </dependencies>
 
     <build>

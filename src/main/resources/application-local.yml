@@ -3,8 +3,8 @@ server:
 web:
   cors:
     allow-origin: "*"
-    allow-methods: "*"
-    allow-headers: "Authorization,*"
+    allow-methods: OPTIONS, HEAD, POST, PUT, GET, DELETE
+    allow-headers: "*"
     max-age: 5
   server:
     uri: http://localhost
@@ -17,35 +17,10 @@ spring:
   application:
     name: m4d-service
   config.activate.on-profile: local
-  datasource:
-#    url: jdbc:postgresql://localhost:5434/localsepdb
-#    username: root
-#    password: root
-#    driver-class-name: org.postgresql.Driver
-
-    url: jdbc:h2:mem:testdb1
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    database: postgresql
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-#      database-platform: org.hibernate.dialect.H2Dialect
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
 #  hotfix for running swagger in spring boot 2
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-  sql:
-    init:
-      schema-locations: classpath*:db/h2/schema.sql
-      data-locations: classpath*:db/h2/data.sql
   servlet:
     multipart:
       max-file-size: 50MB

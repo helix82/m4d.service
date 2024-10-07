@@ -11,6 +11,9 @@ metadata:
   name: m4d-back-cred
   namespace: ocode-dev
 data:
+  SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vcG9zdGdyZXMtbWFpbi5vY29kZS1kZXYuc3ZjOjU0MzIvbTRkX3NjaGVtZQ==
+  SPRING_DATASOURCE_USERNAME: cm9vdA==
+  SPRING_DATASOURCE_PASSWORD: cm9vdA==
   RPD_STATE_BASE64_SECRET_KEY: Vjc5UTVzb3lFb25BVTVMbitpVmdBZUoySFdGNDRUa2U0YjA2OEpMUUp3MD0=
   RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
   OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3Q=
@@ -99,6 +102,21 @@ spec:
                 secretKeyRef:
                   name: m4d-back-cred
                   key: RPD_STATE_BASE64_SECRET_KEY
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: SPRING_DATASOURCE_PASSWORD
       imagePullSecrets:
         - name: registrypullsecret
 

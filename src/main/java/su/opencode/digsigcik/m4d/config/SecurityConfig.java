@@ -1,10 +1,8 @@
 package su.opencode.digsigcik.m4d.config;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -31,26 +29,10 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/webjars/**",
-            "/.well-known/acme-challenge/**"
+            "/.well-known/acme-challenge/**",
+            "/favicon.ico"
     };
 
-    @Order(1)
-    @Bean
-    public SecurityFilterChain h2FilterChain(HttpSecurity http) throws Exception {
-        http.antMatcher("/h2-console/**")
-                .csrf(csrf -> csrf.ignoringRequestMatchers(PathRequest.toH2Console()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PathRequest.toH2Console())
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated()
-                )
-                .headers(headers -> headers.frameOptions().sameOrigin());
-
-        return http.build();
-    }
-
-    @Order(2)
     @Bean
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
@@ -62,7 +44,8 @@ public class SecurityConfig {
                 .and()
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt
-                                .jwtAuthenticationConverter(jwtAuthConverter)))
+                                .jwtAuthenticationConverter(jwtAuthConverter))
+                        .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()

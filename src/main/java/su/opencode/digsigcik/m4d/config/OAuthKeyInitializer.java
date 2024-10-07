@@ -18,7 +18,7 @@ public class OAuthKeyInitializer {
         byte[] key = Base64.getDecoder().decode(hmacKey);
 
         if (key.length != 32) {
-            throw new IllegalArgumentException("Key must be 32 bytes long");
+            throw new IllegalArgumentException("Ключ для State должен быть 32 байта длиной");
         }
 
         OAuthUtils.init(key);
