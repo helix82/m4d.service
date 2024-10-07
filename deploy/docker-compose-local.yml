@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+
+  postgres:
+    container_name: postgres
+    image: postgres:14
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: m4d_scheme
+    healthcheck:
+      test: "exit 0"
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./pgdata_main:/var/lib/m4d_scheme/data
+
   app:
     container_name: m4d
     network_mode: "host"

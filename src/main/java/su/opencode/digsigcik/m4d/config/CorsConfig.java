@@ -19,7 +19,8 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(corsProperties.getAllowOrigin());
+        // TODO: потом настроить ориджины скорее всего надо
+        config.setAllowedOriginPatterns(corsProperties.getAllowOrigin());
         config.setAllowedMethods(corsProperties.getAllowMethods());
         config.setAllowedHeaders(corsProperties.getAllowHeaders());
         config.setMaxAge(Duration.ofMinutes(corsProperties.getMaxAge()));
