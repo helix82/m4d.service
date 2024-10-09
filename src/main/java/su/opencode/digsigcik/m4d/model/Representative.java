@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,7 +45,7 @@ public class Representative {
     @Column(name = "birth_date")
     @Schema(example = "")
     @JsonProperty("birthDate")
-    private Timestamp birthDate;
+    private LocalDateTime birthDate;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "representative_id", updatable = false)

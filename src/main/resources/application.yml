@@ -110,7 +110,7 @@ springdoc:
 
 m4d:
   handbook:
-    uri: https://sp.essocode.ru/api/v1
+    uri: ${M4D_HANDBOOK_URI:https://sp.essocode.ru/api/v1}
 
 oauth:
   hmac:

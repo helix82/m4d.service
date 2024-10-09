@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -25,7 +25,7 @@ public class RepresentativePassport {
     @Column(name = "date_issue")
     @Schema(example = "01.01.2000")
     @JsonProperty("dateIssue")
-    private Timestamp dateIssue;
+    private LocalDateTime dateIssue;
 
     @Column(name = "who_issue")
     @Schema(example = "")

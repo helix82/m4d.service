@@ -1,11 +1,17 @@
 package su.opencode.digsigcik.m4d.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class M4dResponseDto {
     @JsonProperty("id")
     private Long id;

@@ -2,46 +2,41 @@ package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 import su.opencode.digsigcik.m4d.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.m4d.audit.AuditLogThis;
-import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.CredentialDto;
+import su.opencode.digsigcik.m4d.dto.M4dFullXML;
+import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.mapper.M4dMapper;
 import su.opencode.digsigcik.m4d.model.*;
-import su.opencode.digsigcik.m4d.repository.*;
-import su.opencode.digsigcik.m4d.dto.response.*;
+import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
+import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
-import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static java.time.Instant.parse;
-import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.Constants.MRPA_REGISTRY_NOT_FULL;
+import static su.opencode.digsigcik.m4d.util.Constants.NOT_FOUND;
 
 @Service
 @Primary
 @RequiredArgsConstructor
 @EnableTransactionManagement
 public class M4dServiceImpl implements M4dService {
-    @Value("${m4d.handbook.uri}")
-    private String HANDBOOK_URI;
     private final ModelMapper modelMapper;
     private final M4dRepository m4dRepository;
     private final M4dRecallService m4dRecallService;
@@ -51,13 +46,14 @@ public class M4dServiceImpl implements M4dService {
     private final PrincipalService principalService;
     private final RepresentativeService representativeService;
     private final RepresentativePassportService representativePassportService;
-    private final RestTemplate restTemplate;
+    private final UserCertificateService userCertificateService;
+    private final M4dMapper m4dMapper;
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistry() throws ParseException {
         List<M4d> m4ds = m4dRepository.findAll();
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
-        for (M4d m4d: m4ds) {
+        for (M4d m4d : m4ds) {
             m4dResponseDtoList.add(convertM4dToM4dResponseDto(m4d));
         }
         return m4dResponseDtoList;
@@ -189,7 +185,7 @@ public class M4dServiceImpl implements M4dService {
                     }
                 }
             }
-        } else if(credentials != null) {
+        } else if (credentials != null) {
             credList = credentials;
         }
 
@@ -229,7 +225,7 @@ public class M4dServiceImpl implements M4dService {
             if (existsOrganisation != null) {
                 organisation.setId(existsOrganisation.getId());
             }
-            if(!existsOrganisation.equals(organisation)){
+            if (!existsOrganisation.equals(organisation)) {
                 Organisation respOrganisation;
                 try {
                     respOrganisation = this.organisationService.saveOrganisation(organisation);
@@ -297,13 +293,13 @@ public class M4dServiceImpl implements M4dService {
         if (orgId == null || principId == null || represId == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_FULL), HttpStatus.BAD_REQUEST);
         }
-        if(!m4d.getOrganisationId().equals(orgId)){
+        if (!m4d.getOrganisationId().equals(orgId)) {
             m4d.setOrganisationId(orgId);
         }
-        if(!m4d.getPrincipalId().equals(principId)) {
+        if (!m4d.getPrincipalId().equals(principId)) {
             m4d.setPrincipalId(principId);
         }
-        if(!m4d.getRepresentativeId().equals(represId)) {
+        if (!m4d.getRepresentativeId().equals(represId)) {
             m4d.setRepresentativeId(represId);
         }
         M4d m4dUpdated;
@@ -338,7 +334,7 @@ public class M4dServiceImpl implements M4dService {
             credList = credentials;
         }
 
-        if(!credList.isEmpty()){
+        if (!credList.isEmpty()) {
             this.m4dCredentialRepository.deleteAllByMrpaRegistryId(m4dUpdated.getId());
             for (Long x : credList) {
                 M4dCredential m4dCredential = new M4dCredential();
@@ -387,7 +383,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     public M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException {
-        String idFile = "ON_EMCHD_" + m4dFullDTO.getCreateDate().substring(0,10).replace("-", "") + "_" + m4dFullDTO.getGuid();
+        String idFile = "ON_EMCHD_" + m4dFullDTO.getCreateDate().substring(0, 10).replace("-", "") + "_" + m4dFullDTO.getGuid();
         M4dFullXML m4dFullXML = new M4dFullXML();
         m4dFullXML.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
         m4dFullXML.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
@@ -408,10 +404,10 @@ public class M4dServiceImpl implements M4dService {
         mrpas.setGuid(m4dFullDTO.getGuid());
 
         if (m4dFullDTO.getStartDate() != null) {
-            mrpas.setStartDate(m4dFullDTO.getStartDate().substring(0,10));
+            mrpas.setStartDate(m4dFullDTO.getStartDate().substring(0, 10));
         }
         if (m4dFullDTO.getEndDate() != null) {
-            mrpas.setEndDate(m4dFullDTO.getEndDate().substring(0,10));
+            mrpas.setEndDate(m4dFullDTO.getEndDate().substring(0, 10));
         }
         mrpas.setInfoSystem("sep.cik");
 
@@ -468,7 +464,7 @@ public class M4dServiceImpl implements M4dService {
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual infoIndividual = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual();
         detailRepresentative.setInfoIndividual(infoIndividual);
         if (m4dFullDTO.representative.getBirthDate() != null) {
-            infoIndividual.setBirthDate(m4dFullDTO.representative.getBirthDate().substring(0,10));
+            infoIndividual.setBirthDate(m4dFullDTO.representative.getBirthDate().substring(0, 10));
         }
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative fioRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative();
         infoIndividual.setFioRepresentative(fioRepresentative);
@@ -480,7 +476,7 @@ public class M4dServiceImpl implements M4dService {
         representativePassport.setTypeDocument("21");
         representativePassport.setSeriesNumber(m4dFullDTO.representative.representativePassport.getSeriesNumber());
         if (m4dFullDTO.representative.representativePassport.getDateIssue() != null) {
-            representativePassport.setDateIssue(m4dFullDTO.representative.representativePassport.getDateIssue().substring(0,10));
+            representativePassport.setDateIssue(m4dFullDTO.representative.representativePassport.getDateIssue().substring(0, 10));
         }
         representativePassport.setWhoIssue(m4dFullDTO.representative.representativePassport.getWhoIssue());
         representativePassport.setDepartmentCode(m4dFullDTO.representative.representativePassport.getDepartmentCode());
@@ -510,12 +506,12 @@ public class M4dServiceImpl implements M4dService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) throws ParseException {
-        List<M4dResponseDto> m4dResponseDtoList = findAllMrpaRegistry();
-        return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
-                .map(PublicKeyUserCertificateResponse::getInn)
-                .flatMap(inn -> m4dResponseDtoList.stream().filter(c -> Objects.equals(c.representative.getInn(), inn) && Objects.equals(c.principal.getInn(), inn)))
-                .distinct()
+    public List<M4dResponseDto> findAllM4dUsers(Authentication authentication, String refererHeader) throws ParseException {
+        Set<String> setINNs = userCertificateService.getUserCertificateINNs(refererHeader, authentication);
+
+        // TODO: когда будут связи доделать запрос
+        return m4dRepository.findListM4dBySetInn(setINNs).stream()
+                .map(m4dMapper::mapToM4dResponseDto)
                 .collect(Collectors.toList());
     }
 
@@ -570,23 +566,23 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-    private M4dResponseDto.OrganizationDTO convertOrganisationToDto(Organisation organisation){
+    private M4dResponseDto.OrganizationDTO convertOrganisationToDto(Organisation organisation) {
         M4dResponseDto.OrganizationDTO organisationDto = modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
         return organisationDto;
     }
 
-    private M4dResponseDto.PrincipalDTO convertPrincipalToDto(Principal principal){
+    private M4dResponseDto.PrincipalDTO convertPrincipalToDto(Principal principal) {
         M4dResponseDto.PrincipalDTO principalDto = modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
         return principalDto;
     }
 
-    private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(Representative representative){
+    private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(Representative representative) {
         M4dResponseDto.RepresentativeDTO representativeDto = modelMapper.map(representative, M4dResponseDto.RepresentativeDTO.class);
         representativeDto.representativePassport = modelMapper.map(representative.getRepresentativePassports(), M4dResponseDto.RepresentativePassportDTO.class);
         return representativeDto;
     }
 
-    private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassport representativePassport){
+    private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassport representativePassport) {
         M4dResponseDto.RepresentativePassportDTO representativePassportDto = modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDTO.class);
         return representativePassportDto;
     }
