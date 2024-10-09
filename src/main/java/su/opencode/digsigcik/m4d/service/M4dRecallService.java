@@ -1,7 +1,9 @@
 package su.opencode.digsigcik.m4d.service;
 
+import org.springframework.security.core.Authentication;
 import su.opencode.digsigcik.m4d.dto.M4dRecallXml;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseDto;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 
@@ -14,6 +16,6 @@ public interface M4dRecallService {
     M4dRecall findById(Long id);
     void deleteMrpaRecallById(Long id);
     M4dRecall updateMrpaRecall(M4dRecall mrpaRecall);
-    List<M4dResponseDto> findAllMrpaRecallByLogin(String login) throws ParseException;
+    List<M4dRevokeResponseDto> findAllM4dRevokeUsers(Authentication authentication, String refererHeader);
     M4dRecallXml ConvertMrpaRecallToXml(M4dResponseDto mrpaRegistryResponseDto);
 }

@@ -1,58 +1,53 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 import su.opencode.digsigcik.m4d.dto.M4dRecallXml;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
-import su.opencode.digsigcik.m4d.dto.response.*;
-import su.opencode.digsigcik.m4d.exception.M4dException;
+import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseDto;
+import su.opencode.digsigcik.m4d.mapper.M4dRevokeMapper;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.repository.M4dRecallRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
+import su.opencode.digsigcik.m4d.service.UserCertificateService;
 
 import javax.validation.constraints.NotNull;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static su.opencode.digsigcik.m4d.util.Constants.NOT_FOUND;
 
 @Service
 @Primary
 public class M4dRecallServiceImpl implements M4dRecallService {
-    @Value("${m4d.handbook.uri}")
-    private String HANDBOOK_URI;
-    private final M4dRecallRepository mrpaRecallRepository;
+    private final M4dRecallRepository m4dRevokeRepository;
     private final M4dRepository m4dRepository;
-    private final RestTemplate restTemplate;
+    private final M4dRevokeMapper m4dRevokeMapper;
     private final M4dService m4dService;
+    private final UserCertificateService userCertificateService;
 
-    public M4dRecallServiceImpl(M4dRecallRepository mrpaRecallRepository, M4dRepository m4dRepository, RestTemplate restTemplate, @Lazy M4dService m4dService) {
-        this.mrpaRecallRepository = mrpaRecallRepository;
+    public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository, M4dRevokeMapper m4dRevokeMapper,
+                                @Lazy M4dService m4dService, UserCertificateService userCertificateService) {
+        this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
-        this.restTemplate = restTemplate;
+        this.m4dRevokeMapper = m4dRevokeMapper;
         this.m4dService = m4dService;
+        this.userCertificateService = userCertificateService;
     }
+
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistriesWithRecall() throws ParseException {
-        List<M4d> m4ds = m4dRepository.findAll().stream().filter(c->c.getMrpaRecall() != null).collect(Collectors.toList());
+        List<M4d> m4ds = m4dRepository.findAll().stream().filter(c -> c.getMrpaRecall() != null).collect(Collectors.toList());
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
-        for (M4d m4d: m4ds) {
+        for (M4d m4d : m4ds) {
             m4dResponseDtoList.add(m4dService.convertM4dToM4dResponseDto(m4d));
         }
         return m4dResponseDtoList;
@@ -64,7 +59,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     public M4dRecall findById(Long id) {
-        return this.mrpaRecallRepository.findM4dRecallById(id);
+        return this.m4dRevokeRepository.findM4dRecallById(id);
     }
 
     @Override
@@ -72,29 +67,21 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         M4d mrpaRegistry = this.m4dRepository.findM4dByMrpaRecallId(id);
         mrpaRegistry.setMrpaRecall(null);
         this.m4dRepository.save(mrpaRegistry);
-        this.mrpaRecallRepository.deleteById(id);
+        this.m4dRevokeRepository.deleteById(id);
     }
 
     @Override
     public M4dRecall updateMrpaRecall(M4dRecall mrpaRecall) {
-        return this.mrpaRecallRepository.save(mrpaRecall);
+        return this.m4dRevokeRepository.save(mrpaRecall);
     }
 
-    /*
-     * Берет ИННы сертификатов пользователя, потом по ИНН через ID представителей
-     * и заявителей находит все МЧД пользователя (т.е. по всем ИНН (как в Представителях, так и в Заявителях) принадлежащим пользователю находит все МЧД)
-     *
-     * @param login Логин пользователя. Берется из JWT.
-     * @return Возвращает все МЧД пользователя
-     */
     @Transactional(readOnly = true)
     @Override
-    public List<M4dResponseDto> findAllMrpaRecallByLogin(String login) throws ParseException {
-        List<M4dResponseDto> m4dResponseDtoList = this.findAllMrpaRegistriesWithRecall();
-        return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
-                .map(PublicKeyUserCertificateResponse::getInn)
-                .flatMap(inn -> m4dResponseDtoList.stream().filter(c -> Objects.equals(c.representative.getInn(), inn) && Objects.equals(c.principal.getInn(), inn)))
-                .distinct()
+    public List<M4dRevokeResponseDto> findAllM4dRevokeUsers(Authentication authentication, String refererHeader) {
+        Set<String> setINNs = userCertificateService.getUserCertificateINNs(refererHeader, authentication);
+
+        return m4dRevokeRepository.findListM4dRevokeBySetInn(setINNs).stream()
+                .map(m4dRevokeMapper::mapToRevokeResponseDto)
                 .collect(Collectors.toList());
     }
 
