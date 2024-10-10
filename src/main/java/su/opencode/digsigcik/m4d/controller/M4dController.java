@@ -4,8 +4,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
-import org.joda.time.Instant;
+import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -30,7 +32,6 @@ import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.DateUtils;
-import su.opencode.digsigcik.m4d.util.JwtTokenUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 import su.opencode.digsigcik.m4d.util.XmlValidator;
 
@@ -44,14 +45,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import static org.springframework.http.ResponseEntity.noContent;
 import static su.opencode.digsigcik.m4d.util.Constants.*;
-import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getAuthenticationUsername;
+import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
 @RestController
 @M4dExceptionHandler
-@RequestMapping("/api/v1/m4d-registry")
+@RequestMapping("/api/v1/m4d")
+@RequiredArgsConstructor
+@Tag(name = "M4d Controller")
 public class M4dController {
     @Value("${m4d.handbook.uri}")
     private String HANDBOOK_URI;
@@ -97,8 +99,7 @@ public class M4dController {
     public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody M4dRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         M4d m4d = convertMrpaRegistryToEntity(m4dSaveFullDto.mrpaRegistry);
         m4d.setGuid();
-        Date date = new Date();
-        m4d.setCreateDate(new Timestamp(date.getTime()));
+        m4d.setCreateDate(LocalDateTime.now());
         Organisation organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
@@ -156,9 +157,9 @@ public class M4dController {
     @PutMapping(value = "update", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> updateAllDataMrpaRegistry(@RequestBody M4dRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         M4d m4d = this.m4dService.findById(m4dSaveFullDto.mrpaRegistry.getId());
-        m4d.setStartDate(this.convertStringToTimestamp(m4dSaveFullDto.mrpaRegistry.getStartDate()));
-        m4d.setEndDate(this.convertStringToTimestamp(m4dSaveFullDto.mrpaRegistry.getEndDate()));
-        if(m4dSaveFullDto.mrpaRegistry.getInternalNumber() != null){
+        m4d.setStartDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getStartDate()));
+        m4d.setEndDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getEndDate()));
+        if (m4dSaveFullDto.mrpaRegistry.getInternalNumber() != null) {
             m4d.setInternalNumber(m4dSaveFullDto.mrpaRegistry.getInternalNumber());
         }
 
@@ -213,6 +214,7 @@ public class M4dController {
     public ResponseEntity<?> uploadSig(Authentication authentication,
                                        @PathVariable @Parameter(name = "id",
                                                description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container) throws IOException, ParseException, JAXBException {
+        String bearerToken = getTokenValue(authentication);
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -227,43 +229,43 @@ public class M4dController {
         ReportDto reportDto;
         M4d m4d = null;
         ContainerPartResponse res = null;
-//        try {
-//            tempFileName = "/tmp/" + container.getOriginalFilename();
-//            tempFileNames.add(tempFileName);
-//            fo = new FileOutputStream(tempFileName);
-//            fo.write(container.getBytes());
-//            fo.close();
-//            map.add("files", new FileSystemResource(tempFileName));
-//
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-//
-//            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-//            reportDto = restTemplate.postForObject(HANDBOOK_URI+"/get-container-part-json", requestEntity, ReportDto.class);
-//            assert reportDto != null;
-//            reportDto.getResults().stream()
-//                    .flatMap(result -> result.getVerificationResults().stream())
-//                    .findFirst()
-//                    .ifPresent(verificationResult -> {
-//                        boolean isResultTrue = verificationResult.isResult();
-//                        System.out.println("Result value: " + isResultTrue);
-//                        if(!isResultTrue){
-//                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
-//                        }
-//                    });
-//            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map, headers);
-//            res = restTemplate.postForObject(HANDBOOK_URI+"/get-container-part", requestEntity1, ContainerPartResponse.class);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        for (String fileName : tempFileNames) {
-//            File f = new File(fileName);
-//            f.delete();
-//        }
-//
-//        assert res != null;
-//        var resource = new ByteArrayResource(res.getData());
+        try {
+            tempFileName = "/tmp/" + container.getOriginalFilename();
+            tempFileNames.add(tempFileName);
+            fo = new FileOutputStream(tempFileName);
+            fo.write(container.getBytes());
+            fo.close();
+            map.add("files", new FileSystemResource(tempFileName));
+
+            HttpHeaders headers = createHttpHeaders(bearerToken);
+
+            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
+            reportDto = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part-json", requestEntity, ReportDto.class);
+
+            assert reportDto != null;
+            reportDto.getResults().stream()
+                    .flatMap(result -> result.getVerificationResults().stream())
+                    .findFirst()
+                    .ifPresent(verificationResult -> {
+                        boolean isResultTrue = verificationResult.isResult();
+                        System.out.println("Result value: " + isResultTrue);
+                        if (!isResultTrue) {
+                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
+                        }
+                    });
+            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map, headers);
+            res = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part", requestEntity1, ContainerPartResponse.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (String fileName : tempFileNames) {
+            File f = new File(fileName);
+            f.delete();
+        }
+
+        assert res != null;
+        var resource = new ByteArrayResource(res.getData());
         try {
             m4d = this.m4dService.findById(id);
         } catch (ConstraintViolationException e) {
@@ -272,14 +274,14 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
-//        //----------------- XML M4D ----------------------
-//        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d);
-//        M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
-//        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
-//        //-------------------------------------------------
-//        if(!Arrays.equals(resource.getByteArray(), xmlString.getBytes())){
-//            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY), HttpStatus.BAD_REQUEST);
-//        }
+        //----------------- XML M4D ----------------------
+        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d);
+        M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
+        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
+        //-------------------------------------------------
+        if(!Arrays.equals(resource.getByteArray(), xmlString.getBytes())){
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY), HttpStatus.BAD_REQUEST);
+        }
         M4dFile m4dFile = new M4dFile();
         m4dFile.setContent(Arrays.toString(container.getBytes()));
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
@@ -294,6 +296,13 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         return findMrpaRegistryById(m4dSaved.getId());
+    }
+
+    private static @NotNull HttpHeaders createHttpHeaders(String bearerToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.setBearerAuth(bearerToken);
+        return headers;
     }
 
     //TODO: @helix82 Временный эндпоинт для Дениса
@@ -385,8 +394,8 @@ public class M4dController {
             M4d m4d = new M4d();
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             m4d.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
-            m4d.setStartDate(this.convertStringToTimestamp(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
-            m4d.setEndDate(this.convertStringToTimestamp(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
+            m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
+            m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
             Organisation organisation = new Organisation();
             organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
@@ -411,7 +420,7 @@ public class M4dController {
             Representative representative = new Representative();
             representative.setInn(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.getInn());
             representative.setSnils(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.getSnils());
-            representative.setBirthDate(Timestamp.valueOf(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString()));
+            representative.setBirthDate(Timestamp.valueOf(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString()).toLocalDateTime());
             representative.setName(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
             representative.setSurname(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
             representative.setPatronymic(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
@@ -420,7 +429,7 @@ public class M4dController {
             }
             RepresentativePassport represPassport = new RepresentativePassport();
             represPassport.setSeriesNumber(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-            represPassport.setDateIssue(Timestamp.valueOf(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()));
+            represPassport.setDateIssue(Timestamp.valueOf(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()).toLocalDateTime());
             represPassport.setWhoIssue(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
             represPassport.setDepartmentCode(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
 
@@ -460,11 +469,7 @@ public class M4dController {
     })
     @GetMapping(value = "/me", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistryForUser(Authentication authentication) throws ParseException {
-        List<M4dResponseDto> listMrpaRegistry = m4dService.findAllMrpaRegistryByLogin(getAuthenticationUsername(authentication));
-
-        return listMrpaRegistry.isEmpty() ?
-                noContent().build() :
-                new ResponseEntity<>(listMrpaRegistry, HttpStatus.OK);
+        return new ResponseEntity<>(m4dService.findAllM4dUsers(authentication), HttpStatus.OK);
     }
 
     private M4d convertMrpaRegistryToEntity(M4dRequestDto.MrpaRegistry mrpaRegistryDto){
@@ -472,8 +477,8 @@ public class M4dController {
         if(mrpaRegistryDto.getInternalNumber() != null) {
             m4d.setInternalNumber(mrpaRegistryDto.getInternalNumber());
         }
-        m4d.setStartDate(this.convertStringToTimestamp(mrpaRegistryDto.getStartDate()));
-        m4d.setEndDate(this.convertStringToTimestamp(mrpaRegistryDto.getEndDate()));
+        m4d.setStartDate(this.convertStringToLocalDateTime(mrpaRegistryDto.getStartDate()));
+        m4d.setEndDate(this.convertStringToLocalDateTime(mrpaRegistryDto.getEndDate()));
         return m4d;
     }
 
@@ -492,7 +497,7 @@ public class M4dController {
         representative.setId(representativeDto.getId());
         representative.setInn(representativeDto.getInn());
         representative.setSnils(representativeDto.getSnils());
-        representative.setBirthDate(this.convertStringToTimestamp(representativeDto.getBirthDate()));
+        representative.setBirthDate(this.convertStringToLocalDateTime(representativeDto.getBirthDate()));
         representative.setSurname(representativeDto.getSurname());
         representative.setName(representativeDto.getName());
         representative.setPatronymic(representativeDto.getPatronymic());
@@ -503,7 +508,7 @@ public class M4dController {
         RepresentativePassport representativePassport = new RepresentativePassport();
         representativePassport.setId(representativePassportDto.getId());
         representativePassport.setSeriesNumber(representativePassportDto.getSeriesNumber());
-        representativePassport.setDateIssue(this.convertStringToTimestamp(representativePassportDto.getDateIssue()));
+        representativePassport.setDateIssue(this.convertStringToLocalDateTime(representativePassportDto.getDateIssue()));
         representativePassport.setWhoIssue(representativePassportDto.getWhoIssue());
         representativePassport.setDepartmentCode(representativePassportDto.getDepartmentCode());
         representativePassport.setRepresentativeId(representativePassportDto.getRepresentativeId());
@@ -665,16 +670,9 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-//    @ApiImplicitParams({
-//            @ApiImplicitParam(name = "Authorization", value = "Bearer token for authorization", required = true, dataTypeClass = String.class, paramType = "header")
-//    })
     @GetMapping(value = "revoke/me", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> findAllMrpaRecallForUser(Authentication authentication) throws ParseException {
-        List<M4dResponseDto> listMrpaRegistry = m4dRecallService.findAllMrpaRecallByLogin(getAuthenticationUsername(authentication));
-        for (M4dResponseDto m : listMrpaRegistry) {
-            m.setStatus(this.m4dService.getStatusM4d(m.getId()));
-        }
-        return new ResponseEntity<>(listMrpaRegistry, HttpStatus.OK);
+    public ResponseEntity<?> findAllM4dRevokeForUser(Authentication authentication) {
+        return new ResponseEntity<>(m4dRecallService.findAllM4dRevokeUsers(authentication), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY, description = CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION)
@@ -683,8 +681,8 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "revoke/{id}/upload-dscp", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> uploadSigRecall(@PathVariable @Parameter(name = "id",
+    @PutMapping(value = "revoke/{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> uploadSigRecall(Authentication authentication, @PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container) throws IOException, JAXBException, ParseException {
         String extension = FilenameUtils.getExtension(container.getOriginalFilename());
         if(!Objects.equals(extension, "dscp")) {
@@ -704,59 +702,57 @@ public class M4dController {
         ReportDto reportDto;
         ContainerPartResponse res = null;
 
-//        try {
-//            tempFileName = "/tmp/" + container.getOriginalFilename();
-//            tempFileNames.add(tempFileName);
-//            fo = new FileOutputStream(tempFileName);
-//            fo.write(container.getBytes());
-//            fo.close();
-//            map.add("files", new FileSystemResource(tempFileName));
-//
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-//
-//            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-//            reportDto = restTemplate.postForObject(HANDBOOK_URI+"/get-container-part-json", requestEntity, ReportDto.class);
-//
-//            assert reportDto != null;
-//            reportDto.getResults().stream()
-//                    .flatMap(result -> result.getVerificationResults().stream())
-//                    .findFirst()
-//                    .ifPresent(verificationResult -> {
-//                        boolean isResultTrue = verificationResult.isResult();
-//                        System.out.println("Result value: " + isResultTrue);
-//                        if(!isResultTrue){
-//                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
-//                        }
-//                    });
-//
-//            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map, headers);
-//
-//            res = restTemplate.postForObject(HANDBOOK_URI+"/get-container-part", requestEntity1, ContainerPartResponse.class);
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            tempFileName = "/tmp/" + container.getOriginalFilename();
+            tempFileNames.add(tempFileName);
+            fo = new FileOutputStream(tempFileName);
+            fo.write(container.getBytes());
+            fo.close();
+            map.add("files", new FileSystemResource(tempFileName));
 
-//        for (String fileName : tempFileNames) {
-//            File f = new File(fileName);
-//            f.delete();
-//        }
-//        assert res != null;
-//        var resource = new ByteArrayResource(res.getData());
+            HttpHeaders headers = createHttpHeaders(bearerToken);
+
+            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
+            reportDto = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part-json", requestEntity, ReportDto.class);
+
+            assert reportDto != null;
+            reportDto.getResults().stream()
+                    .flatMap(result -> result.getVerificationResults().stream())
+                    .findFirst()
+                    .ifPresent(verificationResult -> {
+                        boolean isResultTrue = verificationResult.isResult();
+                        System.out.println("Result value: " + isResultTrue);
+                        if (!isResultTrue) {
+                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
+                        }
+                    });
+
+            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map, headers);
+
+            res = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part", requestEntity1, ContainerPartResponse.class);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (String fileName : tempFileNames) {
+            File f = new File(fileName);
+            f.delete();
+        }
+        assert res != null;
+        var resource = new ByteArrayResource(res.getData());
         M4d mrpaRegistryFind = this.m4dRecallService.findMrpaRecallById(id);
         if (mrpaRegistryFind == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.BAD_REQUEST);
         }
-        //M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(mrpaRegistryFind, false);
+        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(mrpaRegistryFind);
         //----------------- XML RECALL ----------------------
-        //M4dRecallXml mrpaRecallXml = this.m4dRecallService.ConvertMrpaRecallToXml(m4dResponseDto);
-        //String xmlRecallString = XMLUtil.marshall(mrpaRecallXml, M4dRecallXml.class);
+        M4dRecallXml mrpaRecallXml = this.m4dRecallService.ConvertMrpaRecallToXml(m4dResponseDto);
+        String xmlRecallString = XMLUtil.marshall(mrpaRecallXml, M4dRecallXml.class);
         //-------------------------------------------------
-//        if(!Arrays.equals(resource.getByteArray(), xmlRecallString.getBytes())){
-//            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY), HttpStatus.BAD_REQUEST);
-//        }
-
+        if (!Arrays.equals(resource.getByteArray(), xmlRecallString.getBytes())) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY), HttpStatus.BAD_REQUEST);
+        }
         M4dFile m4dFile = new M4dFile();
         m4dFile.setContent(Arrays.toString(container.getBytes()));
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
@@ -790,18 +786,14 @@ public class M4dController {
         return mrpaRecall;
     }
 
-    private Timestamp convertStringToTimestamp(String date) {
+    private LocalDateTime convertStringToLocalDateTime(String date) {
         DateTimeFormatter formatter;
         if(date.length()>20){
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
         } else {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
         }
-        LocalDateTime localDateTime = LocalDateTime.from(formatter.parse(date));
-        return Timestamp.valueOf(localDateTime);
+        return LocalDateTime.from(formatter.parse(date));
     }
 
-    public static void main(String[] args) {
-
-    }
 }

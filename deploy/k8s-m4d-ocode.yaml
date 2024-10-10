@@ -11,15 +11,87 @@ metadata:
   name: m4d-back-cred
   namespace: ocode-dev
 data:
-  SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vcG9zdGdyZXMtbWFpbi5vY29kZS1kZXYuc3ZjOjU0MzIvbTRkX3NjaGVtZQ==
+  SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vcG9zdGdyZXMtbWFpbi1tNGQub2NvZGUtZGV2LnN2Yzo1NDMyL200ZF9zY2hlbWU=
   SPRING_DATASOURCE_USERNAME: cm9vdA==
   SPRING_DATASOURCE_PASSWORD: cm9vdA==
-  RPD_STATE_BASE64_SECRET_KEY: Vjc5UTVzb3lFb25BVTVMbitpVmdBZUoySFdGNDRUa2U0YjA2OEpMUUp3MD0=
   RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
   OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3Q=
   RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvdG9rZW4=
   KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
   SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
+  POSTGRES_DB: bTRkX3NjaGVtZQ==
+  POSTGRES_PASSWORD: cm9vdA==
+  POSTGRES_USER: cm9vdA==
+  M4D_HANDBOOK_URI: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjE=
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-main-m4d
+  namespace: ocode-dev
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres-main-m4d
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-main-m4d
+  namespace: ocode-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-main-m4d
+  template:
+    metadata:
+      labels:
+        app: postgres-main-m4d
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:14
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: POSTGRES_DB
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data2
+              name: postgres-main-m4d-data
+      volumes:
+        - name: postgres-main-m4d-data
+          persistentVolumeClaim:
+            claimName: postgres-main-m4d-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-main-m4d-pvc
+  namespace: ocode-dev
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
 ---
 
 apiVersion: v1
@@ -97,11 +169,6 @@ spec:
                 secretKeyRef:
                   name: m4d-back-cred
                   key: KAFKA_BROKERS_LIST_URL
-            - name: RPD_STATE_BASE64_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: m4d-back-cred
-                  key: RPD_STATE_BASE64_SECRET_KEY
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -117,6 +184,11 @@ spec:
                 secretKeyRef:
                   name: m4d-back-cred
                   key: SPRING_DATASOURCE_PASSWORD
+            - name: M4D_HANDBOOK_URI
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: M4D_HANDBOOK_URI
       imagePullSecrets:
         - name: registrypullsecret
 

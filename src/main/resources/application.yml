@@ -16,9 +16,6 @@ spring:
         provider:
           rpd:
             authorization-uri: ${RPD_AUTHORIZATION_URI:https://sso.rpd.zk.test.st/realms/test/protocol/openid-connect/auth}
-        registration:
-          rpd:
-            client-id: ${RPD_CLIENT_ID:sep}
       resourceserver:
         jwt:
          issuer-uri: ${OAUTH2_ISSUER_URL:https://sso.rpd.zk.test.st/realms/test}
@@ -110,8 +107,4 @@ springdoc:
 
 m4d:
   handbook:
-    uri: https://sp.essocode.ru/api/v1
-
-oauth:
-  hmac:
-    key: ${RPD_STATE_BASE64_SECRET_KEY:V79Q5soyEonAU5Ln+iVgAeJ2HWF44Tke4b068JLQJw0=}
+    uri: ${M4D_HANDBOOK_URI:https://sp.essocode.ru/api/v1}

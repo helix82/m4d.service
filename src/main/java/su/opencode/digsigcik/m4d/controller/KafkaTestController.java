@@ -17,7 +17,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getAuthenticationUsername;
 
 @RestController
-@RequestMapping("/api/v1/test-kafka")
+@RequestMapping("/api/v1/m4d/test-kafka")
 @RequiredArgsConstructor
 @Log4j2
 public class KafkaTestController {

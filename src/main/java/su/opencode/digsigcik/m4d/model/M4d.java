@@ -2,17 +2,21 @@ package su.opencode.digsigcik.m4d.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import su.opencode.digsigcik.m4d.audit.AllowAudit;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 @Data
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "m4d_registry")
 // Реестр МЧД
 public class M4d {
@@ -57,13 +61,13 @@ public class M4d {
     @Schema(example = "")
     @JsonProperty("startDate")
     @AllowAudit
-    private Timestamp startDate;
+    private LocalDateTime startDate;
 
     @Column(name = "end_date")
     @Schema(example = "")
     @JsonProperty("endDate")
     @AllowAudit
-    private Timestamp endDate;
+    private LocalDateTime endDate;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "sig_file_id", referencedColumnName = "id")
@@ -73,7 +77,7 @@ public class M4d {
     @Schema(example = "")
     @JsonProperty("createDate")
     @AllowAudit
-    private Timestamp createDate;
+    private LocalDateTime createDate;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "mrpa_recall_id", referencedColumnName = "id")

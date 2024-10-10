@@ -12,7 +12,7 @@ public class JwtTokenUtils {
         return (String) token.getClaims().get("preferred_username");
     }
 
-    public String getTokenValue(Authentication authentication) {
+    public static String getTokenValue(Authentication authentication) {
         return getJwt(authentication).getTokenValue();
     }
 

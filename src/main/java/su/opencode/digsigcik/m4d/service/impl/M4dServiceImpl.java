@@ -2,21 +2,24 @@ package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 import su.opencode.digsigcik.m4d.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.m4d.audit.AuditLogThis;
-import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.CredentialDto;
+import su.opencode.digsigcik.m4d.dto.M4dFullXML;
+import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.dto.response.M4dUsersResponseDto;
+import su.opencode.digsigcik.m4d.mapper.M4dMapper;
 import su.opencode.digsigcik.m4d.model.*;
-import su.opencode.digsigcik.m4d.repository.*;
-import su.opencode.digsigcik.m4d.dto.response.*;
+import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
+import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
 
 import javax.validation.ConstraintViolationException;
@@ -25,18 +28,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.Constants.MRPA_REGISTRY_NOT_FULL;
+import static su.opencode.digsigcik.m4d.util.Constants.NOT_FOUND;
 
 @Service
 @Primary
 @RequiredArgsConstructor
 @EnableTransactionManagement
 public class M4dServiceImpl implements M4dService {
-    @Value("${m4d.handbook.uri}")
-    private String HANDBOOK_URI;
     private final ModelMapper modelMapper;
     private final M4dRepository m4dRepository;
     private final M4dRecallService m4dRecallService;
@@ -47,7 +47,8 @@ public class M4dServiceImpl implements M4dService {
     private final PrincipalService principalService;
     private final RepresentativeService representativeService;
     private final RepresentativePassportService representativePassportService;
-    private final RestTemplate restTemplate;
+    private final UserCertificateService userCertificateService;
+    private final M4dMapper m4dMapper;
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistry() throws ParseException {
@@ -506,13 +507,11 @@ public class M4dServiceImpl implements M4dService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) throws ParseException {
-        List<M4dResponseDto> m4dResponseDtoList = findAllMrpaRegistry();
-        return Stream.of(Objects.requireNonNull((restTemplate.getForEntity(HANDBOOK_URI+"/user_certificate/me", PublicKeyUserCertificateResponse[].class)).getBody())).filter(Objects::nonNull)
-                .map(PublicKeyUserCertificateResponse::getInn)
-                .flatMap(inn -> m4dResponseDtoList.stream().filter(c -> Objects.equals(c.representative.getInn(), inn) && Objects.equals(c.principal.getInn(), inn)))
-                .distinct()
-                .collect(Collectors.toList());
+    public List<M4dUsersResponseDto> findAllM4dUsers(Authentication authentication) {
+        Set<String> setINNs = userCertificateService.getUserCertificateINNs(authentication);
+
+        // TODO: когда будут связи переделать запрос в части маппинга
+        return m4dRepository.findListM4dBySetInn(setINNs);
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {
@@ -531,11 +530,11 @@ public class M4dServiceImpl implements M4dService {
         }
         if (mrpaRegistry.getMrpaRecall() != null) {
             M4dRecall mrpaRecall = this.m4dRecallService.findById(mrpaRegistry.getMrpaRecall().getId());
-//            if (mrpaRecall.getSignature() != null) {
-//                return "WITHDRAWN";
-//            } else {
+            if (mrpaRecall.getM4dFile() != null) {
+                return "WITHDRAWN";
+            } else {
                 return "WITHDRAWAL";
-            //}
+            }
         } else {
             if (mrpaRegistry.getM4dFile() != null) {
                 return "VALID";

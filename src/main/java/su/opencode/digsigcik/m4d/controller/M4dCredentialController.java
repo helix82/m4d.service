@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -24,8 +25,9 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @RestController
 @M4dExceptionHandler
-@RequestMapping("/api/v1/m4d-credential")
+@RequestMapping("/api/v1/m4d/m4d-credential")
 @AllArgsConstructor
+@Tag(name = "M4d Credential Controller")
 public class M4dCredentialController {
     private final CredentialService service;
     private final ModelMapper modelMapper;
@@ -70,7 +72,7 @@ public class M4dCredentialController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<?> findByCredentialId(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_CREDENTIAL_ID_DESCRIPTION, example = "1" ) Long id) {
+            description = PARAMETER_CREDENTIAL_ID_DESCRIPTION, example = "1") Long id) {
         Credential response;
         try {
             response = service.findByCredentialId(id);
@@ -87,7 +89,7 @@ public class M4dCredentialController {
     })
     @GetMapping("find_by_code_or_name/{codeOrName}")
     public ResponseEntity<?> findCredentialByCodeOrName(@PathVariable @Parameter(name = "codeOrName",
-            description = PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION, example = "EMPOWER" ) String codeOrName) {
+            description = PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION, example = "EMPOWER") String codeOrName) {
         List<Credential> response;
         try {
             response = service.findCredentialByCodeOrName(codeOrName);
@@ -137,7 +139,7 @@ public class M4dCredentialController {
     })
     @DeleteMapping("delete/{id}")
     public ResponseEntity<?> deleteCredential(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_CREDENTIAL_ID_DESCRIPTION, example = "1" ) Long id) {
+            description = PARAMETER_CREDENTIAL_ID_DESCRIPTION, example = "1") Long id) {
         try {
             service.deleteCredential(id);
         } catch (ConstraintViolationException e) {
@@ -149,12 +151,12 @@ public class M4dCredentialController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    private CredentialDto convertToDto(Credential credential){
+    private CredentialDto convertToDto(Credential credential) {
         CredentialDto credentialDto = modelMapper.map(credential, CredentialDto.class);
         return credentialDto;
     }
 
-    private Credential convertToEntity(CredentialDto credentialDto){
+    private Credential convertToEntity(CredentialDto credentialDto) {
         Credential credential = modelMapper.map(credentialDto, Credential.class);
         return credential;
     }
