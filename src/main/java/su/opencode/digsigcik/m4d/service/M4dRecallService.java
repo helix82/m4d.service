@@ -12,10 +12,16 @@ import java.util.List;
 
 public interface M4dRecallService {
     List<M4dResponseDto> findAllMrpaRegistriesWithRecall() throws ParseException;
+
     M4d findMrpaRecallById(Long id);
+
     M4dRecall findById(Long id);
+
     void deleteMrpaRecallById(Long id);
+
     M4dRecall updateMrpaRecall(M4dRecall mrpaRecall);
-    List<M4dRevokeResponseDto> findAllM4dRevokeUsers(Authentication authentication, String refererHeader);
+
+    List<M4dRevokeResponseDto> findAllM4dRevokeUsers(Authentication authentication);
+
     M4dRecallXml ConvertMrpaRecallToXml(M4dResponseDto mrpaRegistryResponseDto);
 }

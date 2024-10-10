@@ -5,5 +5,5 @@ import org.springframework.security.core.Authentication;
 import java.util.Set;
 
 public interface UserCertificateService {
-    Set<String> getUserCertificateINNs(String refererHeader, Authentication authentication);
+    Set<String> getUserCertificateINNs(Authentication authentication);
 }
