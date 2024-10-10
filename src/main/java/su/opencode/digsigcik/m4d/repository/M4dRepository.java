@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import su.opencode.digsigcik.m4d.dto.response.M4dUsersResponseDto;
 import su.opencode.digsigcik.m4d.model.M4d;
 
 import java.util.List;
@@ -19,11 +20,14 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
 
     Integer countByGuid(String guid);
 
-    @Query(value = "SELECT m4d"
+    @Query(value = "SELECT new su.opencode.digsigcik.m4d.dto.response.M4dUsersResponseDto(m4d.id, m4d.guid, "
+            + " m4d.internalNumber, m4d.startDate, m4d.endDate, m4d.createDate, "
+            + " p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, "
+            + " r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic)"
             + " from M4d m4d"
             + " join Principal p on p.id=m4d.principalId"
             + " join Representative r on r.id=m4d.representativeId "
             + " where (p.inn IN (:innList) or r.inn IN (:innList))")
-    List<M4d> findListM4dBySetInn(@Param("innList") Set<String> innList);
+    List<M4dUsersResponseDto> findListM4dBySetInn(@Param("innList") Set<String> innList);
 
 }

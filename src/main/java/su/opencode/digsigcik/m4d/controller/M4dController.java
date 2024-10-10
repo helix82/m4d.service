@@ -50,7 +50,7 @@ import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
 @RestController
 @M4dExceptionHandler
-@RequestMapping("/api/v1/m4d-registry")
+@RequestMapping("/api/v1/m4d")
 @RequiredArgsConstructor
 @Tag(name = "M4d Controller")
 public class M4dController {
