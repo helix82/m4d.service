@@ -16,9 +16,6 @@ spring:
         provider:
           rpd:
             authorization-uri: ${RPD_AUTHORIZATION_URI:https://sso.rpd.zk.test.st/realms/test/protocol/openid-connect/auth}
-        registration:
-          rpd:
-            client-id: ${RPD_CLIENT_ID:sep}
       resourceserver:
         jwt:
          issuer-uri: ${OAUTH2_ISSUER_URL:https://sso.rpd.zk.test.st/realms/test}
