@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import su.opencode.digsigcik.m4d.dto.M4dRecallXml;
+import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseDto;
 import su.opencode.digsigcik.m4d.mapper.M4dRevokeMapper;
@@ -34,11 +34,12 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     private final UserCertificateService userCertificateService;
 
     public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository, M4dRevokeMapper m4dRevokeMapper,
-                                @Lazy M4dService m4dService, UserCertificateService userCertificateService) {
+                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, UserCertificateService userCertificateService1) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
         this.m4dRevokeMapper = m4dRevokeMapper;
         this.m4dService = m4dService;
+        this.userCertificateService = userCertificateService1;
     }
 
     @Override
@@ -84,39 +85,39 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
-    public M4dRecallXml ConvertMrpaRecallToXml(M4dResponseDto mrpaRegistryResponseDto) {
-        M4dRecallXml mrpaRecallXml = new M4dRecallXml();
+    public M4dRevokeXml ConvertMrpaRecallToXml(M4dResponseDto mrpaRegistryResponseDto) {
+        M4dRevokeXml mrpaRecallXml = new M4dRevokeXml();
         mrpaRecallXml.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
         mrpaRecallXml.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
         mrpaRecallXml.setVersionFormat("001");
 
-        M4dRecallXml.Document.RecallInfo recallInfo = new M4dRecallXml.Document.RecallInfo();
+        M4dRevokeXml.Document.RecallInfo recallInfo = new M4dRevokeXml.Document.RecallInfo();
         recallInfo.setGuid(mrpaRegistryResponseDto.getGuid());
         recallInfo.setArgument(mrpaRegistryResponseDto.getRecall().getArgument());
 
-        M4dRecallXml.Document document = new M4dRecallXml.Document();
+        M4dRevokeXml.Document document = new M4dRevokeXml.Document();
         mrpaRecallXml.setDocument(document);
         document.setRecallInfo(recallInfo);
 
-        M4dRecallXml.Document.RecallWho recallWho = new M4dRecallXml.Document.RecallWho();
+        M4dRevokeXml.Document.RecallWho recallWho = new M4dRevokeXml.Document.RecallWho();
         document.setRecallWho(recallWho);
 
         if (mrpaRegistryResponseDto.recall.getAuthor().equals("PRINCIPAL")) {
-            M4dRecallXml.Document.RecallWho.Principal principal = new M4dRecallXml.Document.RecallWho.Principal();
+            M4dRevokeXml.Document.RecallWho.Principal principal = new M4dRevokeXml.Document.RecallWho.Principal();
             recallWho.setPrincipal(principal);
-            M4dRecallXml.Document.RecallWho.Principal.LegalEntity legalEntity = new M4dRecallXml.Document.RecallWho.Principal.LegalEntity();
+            M4dRevokeXml.Document.RecallWho.Principal.LegalEntity legalEntity = new M4dRevokeXml.Document.RecallWho.Principal.LegalEntity();
             legalEntity.setName(mrpaRegistryResponseDto.organization.getName());
             legalEntity.setInn(mrpaRegistryResponseDto.organization.getInn());
             legalEntity.setKpp(mrpaRegistryResponseDto.organization.getKpp());
             legalEntity.setOgrn(mrpaRegistryResponseDto.organization.getOgrn());
             principal.setLegalEntity(legalEntity);
         } else if (mrpaRegistryResponseDto.recall.getAuthor().equals("REPRESENTATIVE")) {
-            M4dRecallXml.Document.RecallWho.Representative representative = new M4dRecallXml.Document.RecallWho.Representative();
+            M4dRevokeXml.Document.RecallWho.Representative representative = new M4dRevokeXml.Document.RecallWho.Representative();
             recallWho.setRepresentative(representative);
-            M4dRecallXml.Document.RecallWho.Representative.DetailRepresentative detailRepresentative = new M4dRecallXml.Document.RecallWho.Representative.DetailRepresentative();
+            M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative detailRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative();
             detailRepresentative.setInn(mrpaRegistryResponseDto.representative.getInn());
             detailRepresentative.setSnils(mrpaRegistryResponseDto.representative.getSnils());
-            M4dRecallXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative fioRepresentative = new M4dRecallXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative();
+            M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative fioRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative();
             fioRepresentative.setName(mrpaRegistryResponseDto.representative.getName());
             fioRepresentative.setSurname(mrpaRegistryResponseDto.representative.getSurname());
             fioRepresentative.setPatronymic(mrpaRegistryResponseDto.representative.getPatronymic());

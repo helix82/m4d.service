@@ -29,8 +29,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
 
-import static su.opencode.digsigcik.m4d.util.Constants.MRPA_REGISTRY_NOT_FULL;
-import static su.opencode.digsigcik.m4d.util.Constants.NOT_FOUND;
+import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Service
 @Primary
@@ -48,7 +47,6 @@ public class M4dServiceImpl implements M4dService {
     private final RepresentativeService representativeService;
     private final RepresentativePassportService representativePassportService;
     private final UserCertificateService userCertificateService;
-    private final M4dMapper m4dMapper;
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistry() throws ParseException {
@@ -191,6 +189,12 @@ public class M4dServiceImpl implements M4dService {
         }
 
         if (!credList.isEmpty()) {
+            for (Long x : credList) {
+                if (this.credentialService.findByCredentialId(x) == null) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(CREDENTIAL_NOT_FOUND), HttpStatus.BAD_REQUEST);
+                }
+            }
+
             for (Long x : credList) {
                 M4dCredential m4dCredential = new M4dCredential();
                 m4dCredential.setMrpaRegistryId(m4dSaved.getId());

@@ -5,7 +5,7 @@ import lombok.Data;
 import su.opencode.digsigcik.m4d.enums.AuthorTypeEnum;
 
 @Data
-public class M4dRecallRequestDto {
+public class M4dRevokeRequestDto {
     @JsonProperty("id")
     private Long id;
     @JsonProperty("mrpaRegistryId")

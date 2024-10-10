@@ -25,7 +25,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @RestController
 @M4dExceptionHandler
-@RequestMapping("/api/v1/m4d/m4d-credential")
+@RequestMapping("/api/v1/m4d-credential")
 @AllArgsConstructor
 @Tag(name = "M4d Credential Controller")
 public class M4dCredentialController {
@@ -87,7 +87,7 @@ public class M4dCredentialController {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @GetMapping("find_by_code_or_name/{codeOrName}")
+    @GetMapping("code-or-name/{codeOrName}")
     public ResponseEntity<?> findCredentialByCodeOrName(@PathVariable @Parameter(name = "codeOrName",
             description = PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION, example = "EMPOWER") String codeOrName) {
         List<Credential> response;
@@ -104,7 +104,7 @@ public class M4dCredentialController {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @GetMapping("mrpaId/{mrpaId}")
+    @GetMapping("mrpa-id/{mrpaId}")
     public ResponseEntity<?> findCredentialByMrpaId(@PathVariable @Parameter(name = "mrpaId") Long mrpaId) {
         List<Credential> response;
         try {
