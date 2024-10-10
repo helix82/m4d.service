@@ -4,10 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import su.opencode.digsigcik.m4d.audit.AllowAudit;
-import su.opencode.digsigcik.m4d.enums.StatusTypeEnum;
 
 import javax.persistence.*;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
@@ -67,11 +65,9 @@ public class M4d {
     @AllowAudit
     private Timestamp endDate;
 
-    @Column(name = "sig_path", columnDefinition = "TEXT")
-    @Schema(example = "")
-    @JsonProperty("sigPath")
-    @AllowAudit
-    private String sigPath;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "sig_file_id", referencedColumnName = "id")
+    private M4dFile m4dFile;
 
     @Column(name = "create_date")
     @Schema(example = "")

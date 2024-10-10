@@ -22,5 +22,5 @@ public interface M4dService {
     M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException;
     List<M4dResponseDto> findAllMrpaRegistryByLogin(String login) throws ParseException;
     String getStatusM4d(Long id) throws ParseException;
-    M4dResponseDto convertM4dToM4dResponseDto(M4d m4d) throws ParseException;
+    M4dResponseDto convertM4dToM4dResponseDto(M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile) throws ParseException;
 }

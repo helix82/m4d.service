@@ -53,7 +53,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         List<M4d> m4ds = m4dRepository.findAll().stream().filter(c->c.getMrpaRecall() != null).collect(Collectors.toList());
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
         for (M4d m4d: m4ds) {
-            m4dResponseDtoList.add(m4dService.convertM4dToM4dResponseDto(m4d));
+            m4dResponseDtoList.add(m4dService.convertM4dToM4dResponseDto(m4d, false, false));
         }
         return m4dResponseDtoList;
     }

@@ -21,18 +21,13 @@ import su.opencode.digsigcik.m4d.service.*;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
-import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.time.Instant.parse;
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Service
@@ -46,6 +41,7 @@ public class M4dServiceImpl implements M4dService {
     private final M4dRepository m4dRepository;
     private final M4dRecallService m4dRecallService;
     private final M4dCredentialRepository m4dCredentialRepository;
+    private final M4dFileService m4dFileService;
     private final CredentialService credentialService;
     private final OrganisationService organisationService;
     private final PrincipalService principalService;
@@ -58,7 +54,7 @@ public class M4dServiceImpl implements M4dService {
         List<M4d> m4ds = m4dRepository.findAll();
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
         for (M4d m4d: m4ds) {
-            m4dResponseDtoList.add(convertM4dToM4dResponseDto(m4d));
+            m4dResponseDtoList.add(convertM4dToM4dResponseDto(m4d, false, false));
         }
         return m4dResponseDtoList;
     }
@@ -535,13 +531,13 @@ public class M4dServiceImpl implements M4dService {
         }
         if (mrpaRegistry.getMrpaRecall() != null) {
             M4dRecall mrpaRecall = this.m4dRecallService.findById(mrpaRegistry.getMrpaRecall().getId());
-            if (mrpaRecall.getSignature() != null) {
-                return "WITHDRAWN";
-            } else {
+//            if (mrpaRecall.getSignature() != null) {
+//                return "WITHDRAWN";
+//            } else {
                 return "WITHDRAWAL";
-            }
+            //}
         } else {
-            if (mrpaRegistry.getSigPath() != null) {
+            if (mrpaRegistry.getM4dFile() != null) {
                 return "VALID";
             } else {
                 return "NOT_SIGNED";
@@ -549,8 +545,40 @@ public class M4dServiceImpl implements M4dService {
         }
     }
 
-    public M4dResponseDto convertM4dToM4dResponseDto(M4d m4d) throws ParseException {
+    public M4dResponseDto convertM4dToM4dResponseDto(M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile) throws ParseException {
         M4dResponseDto m4dResponseDto = modelMapper.map(m4d, M4dResponseDto.class);
+        M4dFile m4dFile;
+        try {
+            m4dFile = this.m4dFileService.findM4dFileById(m4d.getM4dFile().getId());
+            if(!withM4dSigFile) {
+                m4dFile.setContent(null);
+            }
+            if (m4dFile != null) {
+                M4dResponseDto.SigFileDTO sigFileDTO = convertSigFileToDto(m4dFile);
+                if(!withM4dSigFile){
+                    sigFileDTO.setContent(null);
+                }
+                m4dResponseDto.setSigFile(sigFileDTO);
+            }
+        } catch (NullPointerException e) {
+            //
+        }
+        M4dFile m4dFileRecall;
+        try {
+            m4dFileRecall = this.m4dFileService.findM4dFileById(m4d.getMrpaRecall().getM4dFile().getId());
+            if(!withRecallSigFile) {
+                m4dFileRecall.setContent(null);
+            }
+            if (m4dFileRecall != null) {
+                M4dResponseDto.RecallDTO.SigFileDTO sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
+                if(!withRecallSigFile){
+                    sigFileDTO.setContent(null);
+                }
+                m4dResponseDto.recall.setSigFile(sigFileDTO);
+            }
+        } catch (NullPointerException e) {
+            //
+        }
         Organisation organisation = this.organisationService.findByOrganisationId(m4d.getOrganisationId());
         if (organisation != null) {
             m4dResponseDto.setOrganization(convertOrganisationToDto(organisation));
@@ -568,6 +596,16 @@ public class M4dServiceImpl implements M4dService {
         m4dResponseDto.setCredentials(this.getCredentialByMrpaRegistryId(m4d.getId()));
         m4dResponseDto.setStatus(this.getStatusM4d(m4dResponseDto.getId()));
         return m4dResponseDto;
+    }
+
+    private M4dResponseDto.SigFileDTO convertSigFileToDto(M4dFile m4dFile){
+        M4dResponseDto.SigFileDTO sigFileDto = modelMapper.map(m4dFile, M4dResponseDto.SigFileDTO.class);
+        return sigFileDto;
+    }
+
+    private M4dResponseDto.RecallDTO.SigFileDTO convertSigFileRecallToDto(M4dFile m4dFile){
+        M4dResponseDto.RecallDTO.SigFileDTO sigFileDto = modelMapper.map(m4dFile, M4dResponseDto.RecallDTO.SigFileDTO.class);
+        return sigFileDto;
     }
 
     private M4dResponseDto.OrganizationDTO convertOrganisationToDto(Organisation organisation){
