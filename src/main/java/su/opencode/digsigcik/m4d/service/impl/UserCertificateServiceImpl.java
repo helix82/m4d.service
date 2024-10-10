@@ -26,10 +26,10 @@ public class UserCertificateServiceImpl implements UserCertificateService {
     public static final String USER_CERTIFICATE_ME = "/user_certificate/me";
 
     @Override
-    public Set<String> getUserCertificateINNs(String refererHeader, Authentication authentication) {
+    public Set<String> getUserCertificateINNs(Authentication authentication) {
         ResponseEntity<PublicKeyUserCertificateResponse[]> listUserCertificates =
                 restTemplateService.fetchServiceResponse(HANDBOOK_URI + USER_CERTIFICATE_ME, PublicKeyUserCertificateResponse[].class,
-                        refererHeader, getTokenValue(authentication), HttpMethod.GET);
+                        getTokenValue(authentication), HttpMethod.GET);
 
         return Stream.of(Objects.requireNonNull(listUserCertificates.getBody()))
                 .filter(Objects::nonNull)

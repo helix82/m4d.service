@@ -58,7 +58,3 @@ springdoc:
 m4d:
   handbook:
     uri: ${M4D_HANDBOOK_URI:http://localhost:8080/api/v1}
-
-oauth:
-  hmac:
-    key: ${RPD_STATE_BASE64_SECRET_KEY:V79Q5soyEonAU5Ln+iVgAeJ2HWF44Tke4b068JLQJw0=}

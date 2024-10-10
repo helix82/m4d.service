@@ -16,8 +16,8 @@ public class RestTemplateServiceImpl implements RestTemplateService {
     private final RestTemplate restTemplate;
 
     @Override
-    public <T> ResponseEntity<T> fetchServiceResponse(String url, Class<T> responseType, String referer, String bearerToken, HttpMethod method) {
-        HttpHeaders headers = createHttpHeaders(referer, bearerToken);
+    public <T> ResponseEntity<T> fetchServiceResponse(String url, Class<T> responseType, String bearerToken, HttpMethod method) {
+        HttpHeaders headers = createHttpHeaders(bearerToken);
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -29,9 +29,8 @@ public class RestTemplateServiceImpl implements RestTemplateService {
         );
     }
 
-    private static @NotNull HttpHeaders createHttpHeaders(String referer, String bearerToken) {
+    private static @NotNull HttpHeaders createHttpHeaders(String bearerToken) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Referer", referer);
         headers.setBearerAuth(bearerToken);
         return headers;
     }

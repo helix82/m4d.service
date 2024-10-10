@@ -77,8 +77,8 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<M4dRevokeResponseDto> findAllM4dRevokeUsers(Authentication authentication, String refererHeader) {
-        Set<String> setINNs = userCertificateService.getUserCertificateINNs(refererHeader, authentication);
+    public List<M4dRevokeResponseDto> findAllM4dRevokeUsers(Authentication authentication) {
+        Set<String> setINNs = userCertificateService.getUserCertificateINNs(authentication);
 
         return m4dRevokeRepository.findListM4dRevokeBySetInn(setINNs).stream()
                 .map(m4dRevokeMapper::mapToRevokeResponseDto)

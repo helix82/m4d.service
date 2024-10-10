@@ -506,8 +506,8 @@ public class M4dServiceImpl implements M4dService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<M4dUsersResponseDto> findAllM4dUsers(Authentication authentication, String refererHeader) {
-        Set<String> setINNs = userCertificateService.getUserCertificateINNs(refererHeader, authentication);
+    public List<M4dUsersResponseDto> findAllM4dUsers(Authentication authentication) {
+        Set<String> setINNs = userCertificateService.getUserCertificateINNs(authentication);
 
         // TODO: когда будут связи переделать запрос в части маппинга
         return m4dRepository.findListM4dBySetInn(setINNs);

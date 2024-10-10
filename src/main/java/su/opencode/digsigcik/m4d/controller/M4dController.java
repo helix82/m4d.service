@@ -32,7 +32,6 @@ import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 import su.opencode.digsigcik.m4d.util.XmlValidator;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.*;
@@ -45,7 +44,6 @@ import java.util.*;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
-import static su.opencode.digsigcik.m4d.util.RefererExtractor.extractDomainFromReferer;
 import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
 @RestController
@@ -201,11 +199,9 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping(value = "/{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> uploadSig(HttpServletRequest request,
-                                       Authentication authentication,
+    public ResponseEntity<?> uploadSig(Authentication authentication,
                                        @PathVariable @Parameter(name = "id",
                                                description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container) throws IOException, ParseException, JAXBException {
-        String referer = extractDomainFromReferer(request);
         String bearerToken = getTokenValue(authentication);
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
@@ -229,7 +225,7 @@ public class M4dController {
             fo.close();
             map.add("files", new FileSystemResource(tempFileName));
 
-            HttpHeaders headers = createHttpHeaders(referer, bearerToken);
+            HttpHeaders headers = createHttpHeaders(bearerToken);
 
             HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
             reportDto = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part-json", requestEntity, ReportDto.class);
@@ -284,10 +280,9 @@ public class M4dController {
         return findMrpaRegistryById(m4dSaved.getId());
     }
 
-    private static @NotNull HttpHeaders createHttpHeaders(String referer, String bearerToken) {
+    private static @NotNull HttpHeaders createHttpHeaders(String bearerToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.set("Referer", referer);
         headers.setBearerAuth(bearerToken);
         return headers;
     }
@@ -450,8 +445,8 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping(value = "/me", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> findAllMrpaRegistryForUser(HttpServletRequest request, Authentication authentication) throws ParseException {
-        return new ResponseEntity<>(m4dService.findAllM4dUsers(authentication, extractDomainFromReferer(request)), HttpStatus.OK);
+    public ResponseEntity<?> findAllMrpaRegistryForUser(Authentication authentication) throws ParseException {
+        return new ResponseEntity<>(m4dService.findAllM4dUsers(authentication), HttpStatus.OK);
     }
 
     private M4d convertMrpaRegistryToEntity(M4dRequestDto.MrpaRegistry mrpaRegistryDto) {
@@ -653,8 +648,8 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping(value = "revoke/me", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> findAllM4dRevokeForUser(HttpServletRequest request, Authentication authentication) {
-        return new ResponseEntity<>(m4dRecallService.findAllM4dRevokeUsers(authentication, extractDomainFromReferer(request)), HttpStatus.OK);
+    public ResponseEntity<?> findAllM4dRevokeForUser(Authentication authentication) {
+        return new ResponseEntity<>(m4dRecallService.findAllM4dRevokeUsers(authentication), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY, description = CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION)
@@ -663,10 +658,9 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "revoke/{id}/upload-dscp", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> uploadSigRecall(HttpServletRequest request, Authentication authentication, @PathVariable @Parameter(name = "id",
+    @PutMapping(value = "revoke/{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> uploadSigRecall(Authentication authentication, @PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container) throws IOException, JAXBException, ParseException {
-        String referer = extractDomainFromReferer(request);
         String bearerToken = getTokenValue(authentication);
         String extension = FilenameUtils.getExtension(container.getOriginalFilename());
         if (!Objects.equals(extension, "dscp")) {
@@ -694,7 +688,7 @@ public class M4dController {
             fo.close();
             map.add("files", new FileSystemResource(tempFileName));
 
-            HttpHeaders headers = createHttpHeaders(referer, bearerToken);
+            HttpHeaders headers = createHttpHeaders(bearerToken);
 
             HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
             reportDto = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part-json", requestEntity, ReportDto.class);
