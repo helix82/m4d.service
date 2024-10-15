@@ -47,7 +47,7 @@ import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 
 @RestController
 @M4dExceptionHandler
-@RequestMapping("/api/v1/m4d/m4d-revoke")
+@RequestMapping("/api/v1/m4d/revoke")
 @Tag(name = "M4d Revoke Controller")
 public class M4dRevokeController {
     @Value("${m4d.handbook.uri}")

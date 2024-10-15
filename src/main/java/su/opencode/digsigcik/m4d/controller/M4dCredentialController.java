@@ -25,7 +25,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @RestController
 @M4dExceptionHandler
-@RequestMapping("/api/v1/m4d/m4d-credential")
+@RequestMapping("/api/v1/m4d/credential")
 @AllArgsConstructor
 @Tag(name = "M4d Credential Controller")
 public class M4dCredentialController {
