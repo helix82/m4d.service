@@ -57,14 +57,12 @@ public class M4dController {
     private String HANDBOOK_URI;
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
-    private final M4dRecallService m4dRecallService;
     private final M4dFileService m4dFileService;
     private final RestTemplate restTemplate;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dFileService m4dFileService, RestTemplate restTemplate) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, RestTemplate restTemplate) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
-        this.m4dRecallService = m4dRecallService;
         this.m4dFileService = m4dFileService;
         this.restTemplate = restTemplate;
     }
