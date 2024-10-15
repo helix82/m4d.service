@@ -1,3 +1,25 @@
 databaseChangeLog:
   - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_credential.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_organisation.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_principal.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_representative.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_representative_passport.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_enum_file_logical_type.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_enum_file_mime_type.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_file.sql
+  - include:
       file: db/changelog/migrations/v1.0/create_enum_author_type.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_revoke.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_registry.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_registry_m4d_credential.sql
