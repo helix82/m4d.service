@@ -29,7 +29,6 @@ import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
-import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -40,8 +39,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
@@ -60,7 +57,7 @@ public class M4dRevokeController {
     private final M4dRecallService m4dRecallService;
     private final RestTemplate restTemplate;
 
-    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dFileService m4dFileService, RestTemplate restTemplate) {
+    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, RestTemplate restTemplate) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dRecallService = m4dRecallService;
