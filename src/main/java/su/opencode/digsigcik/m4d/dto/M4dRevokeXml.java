@@ -10,7 +10,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = XML_ELEMENT_RECALL_FILE)
 @Data
-public class M4dRecallXml {
+public class M4dRevokeXml {
     @XmlAttribute(name = XML_ATTRIBUTE_MCHD_XSI)
     private String xmlnsXsi; //"http://www.w3.org/2001/XMLSchema-instance"
     @XmlAttribute(name = XML_ATTRIBUTE_MCHD_XSD)

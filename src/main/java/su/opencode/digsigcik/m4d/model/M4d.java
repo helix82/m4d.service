@@ -69,11 +69,9 @@ public class M4d {
     @AllowAudit
     private LocalDateTime endDate;
 
-    @Column(name = "sig_path", columnDefinition = "TEXT")
-    @Schema(example = "")
-    @JsonProperty("sigPath")
-    @AllowAudit
-    private String sigPath;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "sig_file_id", referencedColumnName = "id")
+    private M4dFile m4dFile;
 
     @Column(name = "create_date")
     @Schema(example = "")

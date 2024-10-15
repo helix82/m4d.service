@@ -154,6 +154,7 @@ public interface Constants {
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
 
     String NULL = "null";
+    String NOT_FOUND = "not found!";
     String ID_IS_NULL = String.format("ID is %s", NULL);
     String MRPA_IS_NULL = String.format("MRPA is %s", NULL);
     String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
@@ -171,6 +172,5 @@ public interface Constants {
     String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
     String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);
     String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);
-
-    String NOT_FOUND = "not found!";
+    String CREDENTIAL_NOT_FOUND = String.format("Credential %s!", NOT_FOUND);
 }

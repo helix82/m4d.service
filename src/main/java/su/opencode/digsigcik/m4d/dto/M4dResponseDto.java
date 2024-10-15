@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
+import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
@@ -82,8 +84,22 @@ public class M4dResponseDto {
     @JsonProperty("status")
     private String status;
 
-    @JsonProperty("sigPath")
-    private String sigPath;
+    @JsonProperty("sigFile")
+    private SigFileDTO sigFile;
+
+    @Data
+    public static class SigFileDTO {
+        @JsonProperty("id")
+        private Long id;
+        @JsonProperty("fileLogicalType")
+        private FileLogicalTypeEnum fileLogicalType;
+        @JsonProperty("fileMimeType")
+        private FileMimeTypeEnum fileMimeType;
+        @JsonProperty("filename")
+        private String filename;
+        @JsonProperty("content")
+        private String content;
+    }
 
     @JsonProperty("mrpaXml")
     private String mrpaXml;
@@ -106,7 +122,21 @@ public class M4dResponseDto {
         @JsonProperty("argument")
         private String argument;
         @JsonProperty("signature")
-        private String signature;
+        private SigFileDTO sigFile;
+
+        @Data
+        public static class SigFileDTO {
+            @JsonProperty("id")
+            private Long id;
+            @JsonProperty("fileLogicalType")
+            private FileLogicalTypeEnum fileLogicalType;
+            @JsonProperty("fileMimeType")
+            private FileMimeTypeEnum fileMimeType;
+            @JsonProperty("filename")
+            private String filename;
+            @JsonProperty("content")
+            private String content;
+        }
     }
 
     public List<CredentialDTO> credentials;

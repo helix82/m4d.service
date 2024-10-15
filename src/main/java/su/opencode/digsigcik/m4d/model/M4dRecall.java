@@ -3,6 +3,7 @@ package su.opencode.digsigcik.m4d.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import su.opencode.digsigcik.m4d.audit.AllowAudit;
 import su.opencode.digsigcik.m4d.enums.AuthorTypeEnum;
 
 import javax.persistence.*;
@@ -28,8 +29,7 @@ public class M4dRecall {
     @JsonProperty("argument")
     private String argument;
 
-    @Column(name = "signature", columnDefinition = "TEXT")
-    @Schema(example = "")
-    @JsonProperty("signature")
-    private String signature;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "sig_file_id", referencedColumnName = "id")
+    private M4dFile m4dFile;
 }

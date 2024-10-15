@@ -36,9 +36,6 @@ public class CredentialServiceImpl implements CredentialService {
     @Override
     public Credential findByCredentialId(@NotNull Long id) {
         Credential credential = this.repository.findCredentialById(id);
-        if (credential == null) {
-            throw new M4dException(String.format("Credential %s", NOT_FOUND));
-        }
         return credential;
     }
 
