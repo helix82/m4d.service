@@ -15,8 +15,6 @@ import su.opencode.digsigcik.m4d.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.dto.M4dFullXML;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
-import su.opencode.digsigcik.m4d.dto.response.M4dUsersResponseDto;
-import su.opencode.digsigcik.m4d.mapper.M4dMapper;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
@@ -511,7 +509,7 @@ public class M4dServiceImpl implements M4dService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<M4dUsersResponseDto> findAllM4dUsers(Authentication authentication) {
+    public List<M4dResponseDto> findAllM4dUsers(Authentication authentication) {
         Set<String> setINNs = userCertificateService.getUserCertificateINNs(authentication);
 
         // TODO: когда будут связи переделать запрос в части маппинга

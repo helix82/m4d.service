@@ -5,7 +5,6 @@ import org.springframework.security.core.Authentication;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.dto.M4dFullXML;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
-import su.opencode.digsigcik.m4d.dto.response.M4dUsersResponseDto;
 import su.opencode.digsigcik.m4d.model.*;
 
 import javax.validation.constraints.NotNull;
@@ -23,7 +22,7 @@ public interface M4dService {
     void deleteMrpaRegistry(@NotNull Long id);
     List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId);
     M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException;
-    List<M4dUsersResponseDto> findAllM4dUsers(Authentication authentication) throws ParseException;
+    List<M4dResponseDto> findAllM4dUsers(Authentication authentication) throws ParseException;
     String getStatusM4d(Long id) throws ParseException;
     M4dResponseDto convertM4dToM4dResponseDto(M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile) throws ParseException;
 }
