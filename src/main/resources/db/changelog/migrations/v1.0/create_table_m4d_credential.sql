@@ -3,7 +3,8 @@
 CREATE TABLE IF NOT EXISTS m4d_credential (
     id bigserial PRIMARY KEY,
     code varchar(255) NOT NULL,
-    "name" varchar(255) NULL
+    "name" varchar(255) NULL,
+    UNIQUE (code)
 );
 CREATE INDEX idx_credential_code_name ON m4d_credential (code, name);
 --changeset Helix:2
