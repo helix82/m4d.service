@@ -10,6 +10,7 @@ public interface CredentialService {
     Credential saveCredential(@NotNull Credential credential);
     Credential findByCredentialId(@NotNull Long id);
     List<Credential> findCredentialByCodeOrName(@NotNull String codeOrName);
+    List<Credential> findCredentialByCode(@NotNull String code);
     List<Credential> findCredentialByMrpaId(@NotNull Long mrpaId);
     Credential updateCredential(@NotNull Credential credential);
     void deleteCredential(@NotNull Long id);
