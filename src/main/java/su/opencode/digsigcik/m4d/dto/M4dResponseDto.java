@@ -8,6 +8,7 @@ import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -150,4 +151,38 @@ public class M4dResponseDto {
         @JsonProperty("name")
         private String name;
     }
+
+    public M4dResponseDto(Long id, String guid, String internalNumber, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
+                          Long principal_id, String principal_inn, String principal_snils, String principal_jobTitle,
+                          String principal_name, String principal_surname, String principal_patronymic,
+                          Long representative_id, String representative_inn, String representative_snils, LocalDateTime representative_birthDate,
+                          String representative_name, String representative_surname, String representative_patronymic) {
+        this.id = id;
+        this.guid = guid;
+        this.internalNumber = internalNumber;
+        this.startDate = startDate.toString();
+        this.endDate = endDate.toString();
+        this.createDate = createDate.toString();
+
+        PrincipalDTO principalDTO = new PrincipalDTO();
+        principalDTO.id = principal_id;
+        principalDTO.inn = principal_inn;
+        principalDTO.snils = principal_snils;
+        principalDTO.jobTitle = principal_jobTitle;
+        principalDTO.name = principal_name;
+        principalDTO.surname = principal_surname;
+        principalDTO.patronymic = principal_patronymic;
+        this.principal = principalDTO;
+
+        RepresentativeDTO representativeDTO = new RepresentativeDTO();
+        representativeDTO.id = representative_id;
+        representativeDTO.inn = representative_inn;
+        representativeDTO.snils = representative_snils;
+        representativeDTO.birthDate = representative_birthDate.toString();
+        representativeDTO.name = representative_name;
+        representativeDTO.surname = representative_surname;
+        representativeDTO.patronymic = representative_patronymic;
+        this.representative = representativeDTO;
+    }
+
 }
