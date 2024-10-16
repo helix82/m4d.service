@@ -56,6 +56,14 @@ public class M4dCredentialController {
     @PostMapping("save")
     public ResponseEntity<?> saveCredential(@RequestBody CredentialDto credentialDTO) {
         Credential credential = convertToEntity(credentialDTO);
+        try {
+            List<Credential> credentials = service.findCredentialByCode(credential.getCode());
+            if (credentials != null && !credentials.isEmpty()) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(CREDENTIAL_CODE_EXISTS), HttpStatus.BAD_REQUEST);
+                }
+            } catch (ConstraintViolationException e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
         Credential response;
         try {
             response = service.saveCredential(credential);

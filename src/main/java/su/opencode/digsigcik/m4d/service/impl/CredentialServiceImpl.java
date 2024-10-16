@@ -53,6 +53,11 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
+    public List<Credential> findCredentialByCode(@NotNull String code) {
+        return this.repository.findCredentialByCodeIgnoreCase(code);
+    }
+
+    @Override
     public List<Credential> findCredentialByMrpaId(@NotNull Long mrpaId) {
         List<Credential> credential = this.repository.findCredentialByMrpaId(mrpaId);
         if (credential == null) {
