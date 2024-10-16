@@ -24,7 +24,7 @@ spring:
   jpa:
     hibernate:
 # TODO: убрать на none с update после добавления миграций
-      ddl-auto: update
+      ddl-auto: none
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
