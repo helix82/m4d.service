@@ -5,9 +5,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
-import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseDto;
+import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
+import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.mapper.M4dRevokeMapper;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
@@ -44,9 +44,9 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistriesWithRecall() throws ParseException {
-        List<M4d> m4ds = m4dRepository.findAll().stream().filter(c->c.getMrpaRecall() != null).collect(Collectors.toList());
+        List<M4d> m4ds = m4dRepository.findAll().stream().filter(c -> c.getMrpaRecall() != null).collect(Collectors.toList());
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
-        for (M4d m4d: m4ds) {
+        for (M4d m4d : m4ds) {
             m4dResponseDtoList.add(m4dService.convertM4dToM4dResponseDto(m4d, false, false));
         }
         return m4dResponseDtoList;
@@ -76,11 +76,19 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<M4dRevokeResponseDto> findAllM4dRevokeUsers(Authentication authentication) {
+    public List<M4dResponseDto> findAllM4dRevokeUsers(Authentication authentication) {
         Set<String> setINNs = userCertificateService.getUserCertificateINNs(authentication);
 
         return m4dRevokeRepository.findListM4dRevokeBySetInn(setINNs).stream()
-                .map(m4dRevokeMapper::mapToRevokeResponseDto)
+                .peek(m4d -> {
+                    try {
+                        Long id = m4d.getId();
+                        m4d.setStatus(m4dService.getStatusM4d(id));
+                        m4d.setCredentials(m4dService.getCredentialByMrpaRegistryId(id));
+                    } catch (ParseException e) {
+                        throw new M4dException(e.getMessage());
+                    }
+                })
                 .collect(Collectors.toList());
     }
 

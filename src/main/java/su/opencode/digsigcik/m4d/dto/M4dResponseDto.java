@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import su.opencode.digsigcik.m4d.enums.AuthorTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import lombok.NoArgsConstructor;
@@ -185,4 +186,44 @@ public class M4dResponseDto {
         this.representative = representativeDTO;
     }
 
+    public M4dResponseDto(Long id, String guid, String internalNumber,
+                          Long principalId, String principalInn, String principalSnils, String principalJobTitle,
+                          String principalName, String principalSurname, String principalPatronymic,
+                          Long representativeId, String representativeInn, String representativeSnils,
+                          LocalDateTime representative_birthDate, String representativeName, String representativeSurname,
+                          String representativePatronymic,
+                          LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
+                          Long recallId, AuthorTypeEnum recallAuthor, String recallArgument) {
+
+        this.id = id;
+        this.guid = guid;
+        this.internalNumber = internalNumber;
+        this.startDate = startDate.toString();
+        this.endDate = endDate.toString();
+        this.createDate = createDate.toString();
+
+
+        this.principal = new PrincipalDTO();
+        this.principal.setId(principalId);
+        this.principal.setInn(principalInn);
+        this.principal.setSnils(principalSnils);
+        this.principal.setJobTitle(principalJobTitle);
+        this.principal.setName(principalName);
+        this.principal.setSurname(principalSurname);
+        this.principal.setPatronymic(principalPatronymic);
+
+        this.representative = new RepresentativeDTO();
+        this.representative.setId(representativeId);
+        this.representative.setInn(representativeInn);
+        this.representative.setSnils(representativeSnils);
+        this.representative.setBirthDate(representative_birthDate.toString());
+        this.representative.setName(representativeName);
+        this.representative.setSurname(representativeSurname);
+        this.representative.setPatronymic(representativePatronymic);
+
+        this.recall = new RecallDTO();
+        this.recall.setId(recallId);
+        this.recall.setAuthor(recallAuthor.toString());
+        this.recall.setArgument(recallArgument);
+    }
 }
