@@ -15,6 +15,7 @@ import su.opencode.digsigcik.m4d.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.dto.M4dFullXML;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
@@ -26,6 +27,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 
@@ -513,7 +515,17 @@ public class M4dServiceImpl implements M4dService {
         Set<String> setINNs = userCertificateService.getUserCertificateINNs(authentication);
 
         // TODO: когда будут связи переделать запрос в части маппинга
-        return m4dRepository.findListM4dBySetInn(setINNs);
+        return m4dRepository.findListM4dBySetInn(setINNs).stream()
+                .peek(m4d->{
+                    try {
+                        Long id = m4d.getId();
+                        m4d.setStatus(getStatusM4d(id));
+                        m4d.setCredentials(getCredentialByMrpaRegistryId(id));
+                    } catch (ParseException e) {
+                        throw new M4dException(e.getMessage());
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {
