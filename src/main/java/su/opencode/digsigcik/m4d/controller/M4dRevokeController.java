@@ -14,6 +14,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +23,6 @@ import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeRequestDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.dto.ReportDto;
-import su.opencode.digsigcik.m4d.dto.response.ContainerPartResponse;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
@@ -252,22 +252,25 @@ public class M4dRevokeController {
         if (mrpaRecall==null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.BAD_REQUEST);
         }
-        LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
         List<String> tempFileNames = new ArrayList<>();
         String tempFileName;
         FileOutputStream fo;
         ReportDto reportDto;
-        ContainerPartResponse res = null;
-
+        M4d mrpaRegistryFind;
+        ByteArrayResource res = null;
         try {
             tempFileName = "/tmp/" + container.getOriginalFilename();
             tempFileNames.add(tempFileName);
             fo = new FileOutputStream(tempFileName);
             fo.write(container.getBytes());
             fo.close();
-            map.add("files", new FileSystemResource(tempFileName));
+
+            LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+            map.add("container", new FileSystemResource(tempFileName));
+            map.add("reverify",true);
 
             HttpHeaders headers = createHttpHeaders(bearerToken);
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
             reportDto = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part-json", requestEntity, ReportDto.class);
@@ -284,9 +287,11 @@ public class M4dRevokeController {
                         }
                     });
 
-            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map, headers);
-
-            res = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part", requestEntity1, ContainerPartResponse.class);
+            LinkedMultiValueMap<String, Object> map1 = new LinkedMultiValueMap<>();
+            map1.add("container", new FileSystemResource(tempFileName));
+            map1.add("selector","sourceFile");
+            HttpEntity<MultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map1, headers);
+            res = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part", requestEntity1, ByteArrayResource.class);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -297,8 +302,14 @@ public class M4dRevokeController {
             f.delete();
         }
         assert res != null;
-        var resource = new ByteArrayResource(res.getData());
-        M4d mrpaRegistryFind = this.m4dRecallService.findMrpaRecallById(id);
+        var resource = new ByteArrayResource(res.getByteArray());
+
+
+        try {
+            mrpaRegistryFind = this.m4dRecallService.findMrpaRecallById(id);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
         if (mrpaRegistryFind == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.BAD_REQUEST);
         }
