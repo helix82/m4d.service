@@ -26,9 +26,8 @@ import java.util.Collections;
                         email = "vereschagina@o-code.ru"
 
                 ),
-                description = "Tasks: [Google Sheets](https://docs.googlecom/spreadsheets/d/1Ar7tm0XzfUVps_dgAeHr3h2oxnoTOY88QKNwPBGYxxg/edit#gid=864053792)",
                 title = "API Documentation",
-                version = "1.0"
+                version = "3.0"
         ),
         security = {
                 @SecurityRequirement(

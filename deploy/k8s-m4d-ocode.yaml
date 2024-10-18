@@ -133,7 +133,6 @@ spec:
           command:
             - java
             - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-            - -Dspring.profiles.active=local
             - -Xms2G
             - -Xmx64G
             - -XX:+UseG1GC
