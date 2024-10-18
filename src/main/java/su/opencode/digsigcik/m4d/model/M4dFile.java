@@ -21,11 +21,13 @@ public class M4dFile {
     @Column(name = "file_logical_type")
     @Schema(example = "")
     @JsonProperty("fileLogicalType")
+    @Enumerated(EnumType.STRING)
     private FileLogicalTypeEnum fileLogicalType;
 
     @Column(name = "file_mime_type")
     @Schema(example = "")
     @JsonProperty("fileMimeType")
+    @Enumerated(EnumType.STRING)
     private FileMimeTypeEnum fileMimeType;
 
     @Column(name = "filename")
