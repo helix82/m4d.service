@@ -9,6 +9,8 @@ import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -94,8 +96,10 @@ public class M4dResponseDto {
         @JsonProperty("id")
         private Long id;
         @JsonProperty("fileLogicalType")
+        @Enumerated(EnumType.STRING)
         private FileLogicalTypeEnum fileLogicalType;
         @JsonProperty("fileMimeType")
+        @Enumerated(EnumType.STRING)
         private FileMimeTypeEnum fileMimeType;
         @JsonProperty("filename")
         private String filename;
@@ -131,8 +135,10 @@ public class M4dResponseDto {
             @JsonProperty("id")
             private Long id;
             @JsonProperty("fileLogicalType")
+            @Enumerated(EnumType.STRING)
             private FileLogicalTypeEnum fileLogicalType;
             @JsonProperty("fileMimeType")
+            @Enumerated(EnumType.STRING)
             private FileMimeTypeEnum fileMimeType;
             @JsonProperty("filename")
             private String filename;
