@@ -1,11 +1,6 @@
 server:
   port: 8051
 web:
-  cors:
-    allow-origin: "*"
-    allow-methods: OPTIONS, HEAD, POST, PUT, GET, DELETE
-    allow-headers: "*"
-    max-age: 5
   server:
     uri: http://localhost
 logging:
@@ -16,7 +11,6 @@ logging:
 spring:
   application:
     name: m4d-service
-  config.activate.on-profile: local
 #  hotfix for running swagger in spring boot 2
   mvc:
     pathmatch:
