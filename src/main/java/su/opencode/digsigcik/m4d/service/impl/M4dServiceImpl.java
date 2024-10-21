@@ -240,9 +240,6 @@ public class M4dServiceImpl implements M4dService {
         if (representative.getInn() == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString("The representative's INN is not specified"), HttpStatus.BAD_REQUEST);
         }
-        if (representativePassport.getSeriesNumber() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The passport's SeriesNumber is not specified"), HttpStatus.BAD_REQUEST);
-        }
         M4d existMrpaRegistry = this.findById(m4d.getId());
         if (existMrpaRegistry == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND)), HttpStatus.NOT_FOUND);
@@ -303,7 +300,7 @@ public class M4dServiceImpl implements M4dService {
             } catch (ConstraintViolationException e) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
-            RepresentativePassport existsRepresentativePassport = this.representativePassportService.findRepresentativePassportBySeriesNumber(representativePassport.getSeriesNumber());
+            RepresentativePassport existsRepresentativePassport = this.representativePassportService.findRepresentativePassportyByRepresentativeId(respRepresentative.getId());
             if (existsRepresentativePassport != null) {
                 representativePassport.setId(existsRepresentativePassport.getId());
             }
