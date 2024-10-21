@@ -204,6 +204,9 @@ public class M4dRevokeController {
     @DeleteMapping("delete/{id}")
     public ResponseEntity<?> deleteMrpaRecall(@PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id) {
+        if (id == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
         M4dRecall mrpaRecall = this.m4dRecallService.findById(id);
         if (mrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("M4d Recall %s", NOT_FOUND)), HttpStatus.NOT_FOUND);
@@ -240,13 +243,16 @@ public class M4dRevokeController {
     @PutMapping(value = "{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSigRecall(Authentication authentication, @PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container) throws IOException, JAXBException, ParseException {
+        if (id == null){
+            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        if (container == null || container.isEmpty()){
+            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
         String bearerToken = getTokenValue(authentication);
         String extension = FilenameUtils.getExtension(container.getOriginalFilename());
         if(!Objects.equals(extension, "dscp")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
-        }
-        if (id==null){
-            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         M4dRecall mrpaRecall = this.m4dRecallService.findById(id);
         if (mrpaRecall==null) {

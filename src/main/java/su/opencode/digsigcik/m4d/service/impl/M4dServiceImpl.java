@@ -75,6 +75,18 @@ public class M4dServiceImpl implements M4dService {
         Long orgId;
         Long principId;
         Long represId;
+        if (organisation.getInn() == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("The organization's INN is not specified"), HttpStatus.BAD_REQUEST);
+        }
+        if (principal.getInn() == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("The principal's INN is not specified"), HttpStatus.BAD_REQUEST);
+        }
+        if (representative.getInn() == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("The representative's INN is not specified"), HttpStatus.BAD_REQUEST);
+        }
+        if (representativePassport.getSeriesNumber() == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("The passport's SeriesNumber is not specified"), HttpStatus.BAD_REQUEST);
+        }
         //------------------- save organisation ----------------
         Organisation existsOrganisation;
         try {
@@ -217,7 +229,19 @@ public class M4dServiceImpl implements M4dService {
         Long principId;
         Long represId;
         if (m4d.getId() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Can`t update mrpa registry because id null!"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Can`t update mrpa registry because ID null!"), HttpStatus.BAD_REQUEST);
+        }
+        if (organisation.getInn() == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("The organization's INN is not specified"), HttpStatus.BAD_REQUEST);
+        }
+        if (principal.getInn() == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("The principal's INN is not specified"), HttpStatus.BAD_REQUEST);
+        }
+        if (representative.getInn() == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("The representative's INN is not specified"), HttpStatus.BAD_REQUEST);
+        }
+        if (representativePassport.getSeriesNumber() == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("The passport's SeriesNumber is not specified"), HttpStatus.BAD_REQUEST);
         }
         M4d existMrpaRegistry = this.findById(m4d.getId());
         if (existMrpaRegistry == null) {
