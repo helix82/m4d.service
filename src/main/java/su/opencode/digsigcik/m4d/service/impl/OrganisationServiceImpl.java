@@ -26,51 +26,26 @@ public class OrganisationServiceImpl implements OrganisationService {
 
     @Override
     public Organisation saveOrganisation(@NotNull Organisation organisation) {
-        String organisationInn = organisation.getInn();
-        if (organisationInn == null || organisationInn.isEmpty()){
-            throw new BadRequestException("Can`t create organisation because inn null or empty! ");
-        }
         return this.repository.save(organisation);
     }
 
     @Override
     public Organisation findByOrganisationId(@NotNull Long id) {
-        Organisation organisation = this.repository.findOrganisationById(id);
-        if (organisation == null) {
-            throw new M4dException("Organisation not found!");
-        }
-        return organisation;
+        return this.repository.findOrganisationById(id);
     }
 
     @Override
     public Organisation findByOrganisationInn(String inn) {
-        Organisation organisation = this.repository.findOrganisationByInn(inn);
-        if (organisation == null) {
-            return null;
-        }
-        return organisation;
+        return this.repository.findOrganisationByInn(inn);
     }
 
     @Override
     public Organisation updateOrganisation(@NotNull Organisation organisation) {
-        Long organisationId = organisation.getId();
-        if (organisationId == null) {
-            throw new BadRequestException("Can`t update organisation because id null!" );
-        }
-
-        Organisation existOrganisation = this.repository.findOrganisationById(organisationId);
-        if (existOrganisation == null) {
-            throw new M4dException(String.format("Can`t update. Organisation with id=%d not found!", organisationId));
-        }
         return this.repository.save(organisation);
     }
 
     @Override
     public void deleteOrganisation(@NotNull Long id) {
-        Organisation organisation = this.repository.findOrganisationById(id);
-        if (organisation == null) {
-            throw new M4dException("Can`t delete organisation, because organisation not found!");
-        }
         this.repository.deleteById(id);
     }
 }

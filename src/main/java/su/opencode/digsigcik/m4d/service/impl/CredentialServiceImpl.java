@@ -46,9 +46,6 @@ public class CredentialServiceImpl implements CredentialService {
         List<Credential> credential1 = this.repository.findCredentialByNameContainingIgnoreCase(codeOrName);
         if (credential != null){ credentialList.addAll(credential); }
         if (credential1 != null){ credentialList.addAll(credential1); }
-        if (credentialList == null) {
-            throw new M4dException(String.format("Credential %s", NOT_FOUND));
-        }
         return credentialList;
     }
 
@@ -59,35 +56,18 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public List<Credential> findCredentialByMrpaId(@NotNull Long mrpaId) {
-        List<Credential> credential = this.repository.findCredentialByMrpaId(mrpaId);
-        if (credential == null) {
-            throw new M4dException(String.format("Credential %s", NOT_FOUND));
-        }
-        return credential;
+        return this.repository.findCredentialByMrpaId(mrpaId);
     }
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREDENTIAL_UPDATE)
     public Credential updateCredential(@NotNull Credential credential) {
-        Long credentialId = credential.getId();
-        if (credentialId == null) {
-            throw new M4dException("Can`t update credential because id null!" );
-        }
-
-        Credential existCredential = this.repository.findCredentialById(credentialId);
-        if (existCredential == null) {
-            throw new M4dException(String.format("Can`t update. Credential with id=%d %s", credentialId, NOT_FOUND));
-        }
         return this.repository.save(credential);
     }
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREDENTIAL_DELETE, deleteByIdRepository = CredentialRepository.class)
     public void deleteCredential(@NotNull Long id) {
-        Credential credential = this.repository.findCredentialById(id);
-        if (credential == null) {
-            throw new M4dException(String.format("Can`t delete credential because credential %s", NOT_FOUND));
-        }
         this.repository.deleteById(id);
     }
 }

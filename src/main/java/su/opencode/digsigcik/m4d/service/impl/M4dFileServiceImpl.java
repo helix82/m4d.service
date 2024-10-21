@@ -25,10 +25,6 @@ public class M4dFileServiceImpl implements M4dFileService {
 
     @Override
     public void deleteM4dFile(@NotNull Long id) {
-        M4dFile m4dFile = this.repository.findM4dFileById(id);
-        if (m4dFile == null) {
-            throw new M4dException("Can`t delete file, because file not found!");
-        }
         this.repository.deleteById(id);
     }
 }

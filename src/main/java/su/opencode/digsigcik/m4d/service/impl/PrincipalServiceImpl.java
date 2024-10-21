@@ -25,51 +25,26 @@ public class PrincipalServiceImpl implements PrincipalService {
 
     @Override
     public Principal savePrincipal(@NotNull Principal principal) {
-        String principalSnils = principal.getSnils();
-        if (principalSnils == null || principalSnils.isEmpty()) {
-            throw new BadRequestException("Can`t create principal because snils  null or empty! ");
-        }
         return this.repository.save(principal);
     }
 
     @Override
     public Principal findByPrincipalId(@NotNull Long id) {
-        Principal principal = this.repository.findPrincipalById(id);
-        if (principal == null) {
-            throw new M4dException("Principal not found!");
-        }
-        return principal;
+        return this.repository.findPrincipalById(id);
     }
 
     @Override
     public Principal findPrincipalByInn(@NotNull String inn) {
-        Principal principal = this.repository.findPrincipalByInn(inn);
-        if (principal == null) {
-            return null;
-        }
-        return principal;
+        return this.repository.findPrincipalByInn(inn);
     }
 
     @Override
     public Principal updatePrincipal(@NotNull Principal principal) {
-        Long principalId = principal.getId();
-        if (principalId == null) {
-            throw new BadRequestException("Can`t update principal because id null!");
-        }
-
-        Principal existPrincipal = this.repository.findPrincipalById(principalId);
-        if (existPrincipal == null) {
-            throw new M4dException(String.format("Can`t update. Principal with id=%d not found!", principalId));
-        }
         return this.repository.save(principal);
     }
 
     @Override
     public void deletePrincipal(@NotNull Long id) {
-        Principal principal = this.repository.findPrincipalById(id);
-        if (principal == null) {
-            throw new M4dException("Can`t delete principal because principal not found!");
-        }
         this.repository.deleteById(id);
     }
 }

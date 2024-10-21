@@ -213,6 +213,9 @@ public class M4dController {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
+        if (container == null || container.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Container is null"), HttpStatus.BAD_REQUEST);
+        }
         String extension = FilenameUtils.getExtension(container.getOriginalFilename());
         if(!Objects.equals(extension, "dscp")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
