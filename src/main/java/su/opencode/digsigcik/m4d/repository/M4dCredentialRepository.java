@@ -11,6 +11,6 @@ import su.opencode.digsigcik.m4d.model.M4dCredential;
 public interface M4dCredentialRepository extends JpaRepository<M4dCredential, Long> {
     @Modifying
     @Transactional
-    @Query(value = "delete from mrpa_registry_credential mrc where mrc.mrpa_registry_id=?1", nativeQuery = true)
+    @Query(value = "delete from m4d_registry_m4d_credential mrc where mrc.mrpa_registry_id=?1", nativeQuery = true)
     void deleteAllByMrpaRegistryId(Long mrpaRegistryId);
 }
