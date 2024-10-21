@@ -240,9 +240,6 @@ public class M4dServiceImpl implements M4dService {
         if (representative.getInn() == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString("The representative's INN is not specified"), HttpStatus.BAD_REQUEST);
         }
-        if (representativePassport.getSeriesNumber() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The passport's SeriesNumber is not specified"), HttpStatus.BAD_REQUEST);
-        }
         M4d existMrpaRegistry = this.findById(m4d.getId());
         if (existMrpaRegistry == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND)), HttpStatus.NOT_FOUND);
@@ -254,6 +251,7 @@ public class M4dServiceImpl implements M4dService {
             if (existsOrganisation != null) {
                 organisation.setId(existsOrganisation.getId());
             }
+            assert existsOrganisation != null;
             if(!existsOrganisation.equals(organisation)){
                 Organisation respOrganisation;
                 try {
@@ -303,7 +301,7 @@ public class M4dServiceImpl implements M4dService {
             } catch (ConstraintViolationException e) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
-            RepresentativePassport existsRepresentativePassport = this.representativePassportService.findRepresentativePassportBySeriesNumber(representativePassport.getSeriesNumber());
+            RepresentativePassport existsRepresentativePassport = this.representativePassportService.findRepresentativePassportyByRepresentativeId(respRepresentative.getId());
             if (existsRepresentativePassport != null) {
                 representativePassport.setId(existsRepresentativePassport.getId());
             }
@@ -411,7 +409,7 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
-    public M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException {
+    public M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) {
         String idFile = "ON_EMCHD_" + m4dFullDTO.getCreateDate().substring(0,10).replace("-", "") + "_" + m4dFullDTO.getGuid();
         M4dFullXML m4dFullXML = new M4dFullXML();
         m4dFullXML.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
