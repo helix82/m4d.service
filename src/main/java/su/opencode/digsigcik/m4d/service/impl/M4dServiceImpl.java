@@ -100,6 +100,18 @@ public class M4dServiceImpl implements M4dService {
                 }
                 assert respOrganisation != null;
                 orgId = respOrganisation.getId();
+            } else if (!existsOrganisation.getInn().equals(organisation.getInn()) || !existsOrganisation.getKpp().equals(organisation.getKpp())
+                    || !existsOrganisation.getOgrn().equals(organisation.getOgrn()) || !existsOrganisation.getName().equals(organisation.getName())
+                    || !existsOrganisation.getLegalAddress().equals(organisation.getLegalAddress()) || !existsOrganisation.getRegionCode().equals(organisation.getRegionCode())) {
+                Organisation respOrganisation;
+                try {
+                    organisation.setId(existsOrganisation.getId());
+                    respOrganisation = this.organisationService.saveOrganisation(organisation);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+                assert respOrganisation != null;
+                orgId = respOrganisation.getId();
             } else {
                 orgId = existsOrganisation.getId();
             }
@@ -115,6 +127,18 @@ public class M4dServiceImpl implements M4dService {
             if (existsPrincipal == null) {
                 Principal respPrincipal;
                 try {
+                    respPrincipal = this.principalService.savePrincipal(principal);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+                assert respPrincipal != null;
+                principId = respPrincipal.getId();
+            } else if (!existsPrincipal.getInn().equals(principal.getInn()) || !existsPrincipal.getSnils().equals(principal.getSnils())
+                    || !existsPrincipal.getSurname().equals(principal.getSurname()) || !existsPrincipal.getName().equals(principal.getName())
+                    || !existsPrincipal.getPatronymic().equals(principal.getPatronymic()) || !existsPrincipal.getJobTitle().equals(principal.getJobTitle())) {
+                Principal respPrincipal;
+                try {
+                    principal.setId(existsPrincipal.getId());
                     respPrincipal = this.principalService.savePrincipal(principal);
                 } catch (ConstraintViolationException e) {
                     return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
@@ -149,7 +173,42 @@ public class M4dServiceImpl implements M4dService {
                         return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
                     }
                 }
-
+                represId = respRepresentative.getId();
+            } else if (!existsRepresentative.getInn().equals(representative.getInn()) || !existsRepresentative.getSnils().equals(representative.getSnils())
+                    || !existsRepresentative.getSurname().equals(representative.getSurname()) || !existsRepresentative.getName().equals(representative.getName())
+                    || !existsRepresentative.getPatronymic().equals(representative.getPatronymic()) || !existsRepresentative.getBirthDate().equals(representative.getBirthDate())){
+                Representative respRepresentative;
+                try {
+                    representative.setId(existsRepresentative.getId());
+                    respRepresentative = this.representativeService.saveRepresentative(representative);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+                if (respRepresentative.getId() != null) {
+                    RepresentativePassport existsRepresentativePassport;
+                    try {
+                        existsRepresentativePassport = this.representativePassportService.findRepresentativePassportyByRepresentativeId(respRepresentative.getId());
+                        if (existsRepresentativePassport == null) {
+                            representativePassport.setRepresentativeId(respRepresentative.getId());
+                            try {
+                                this.representativePassportService.saveRepresentativePassport(representativePassport);
+                            } catch (ConstraintViolationException e) {
+                                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                            }
+                        } else if (!existsRepresentativePassport.getSeriesNumber().equals(representativePassport.getSeriesNumber()) || !existsRepresentativePassport.getDateIssue().equals(representativePassport.getDateIssue())
+                                || !existsRepresentativePassport.getWhoIssue().equals(representativePassport.getWhoIssue()) || !existsRepresentativePassport.getDepartmentCode().equals(representativePassport.getDepartmentCode())) {
+                            representativePassport.setId(existsRepresentativePassport.getId());
+                            representativePassport.setRepresentativeId(respRepresentative.getId());
+                            try {
+                                this.representativePassportService.saveRepresentativePassport(representativePassport);
+                            } catch (ConstraintViolationException e) {
+                                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                            }
+                        }
+                    } catch (ConstraintViolationException e) {
+                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    }
+                }
                 represId = respRepresentative.getId();
             } else {
                 represId = existsRepresentative.getId();
@@ -157,8 +216,6 @@ public class M4dServiceImpl implements M4dService {
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-
-
         //------------------- end save representative and passport ----------------
 
         if (orgId == null || principId == null || represId == null) {
