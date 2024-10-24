@@ -92,6 +92,7 @@ public interface Constants {
     String XML_ATTRIBUTE_RECALL_FIO_PATRONYMIC = "Отчество";
 
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
+    String PARAMETER_REPRESENTATIVE_INN_DESCRIPTION = "ИНН представителя";
     String PARAMETER_MRPA_RECALL_ID_DESCRIPTION = "ИД заявления на отзыв МЧД";
     String PARAMETER_CREDENTIAL_ID_DESCRIPTION = "ИД полномочия";
     String PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION = "Код или наименование полномочия";
@@ -102,6 +103,8 @@ public interface Constants {
     String CONTROLLER_MRPA_SAVE_DESCRIPTION = "Возвращает созданную МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_BY_ID_SUMMARY = "Получить МЧД по ИД МЧД";
     String CONTROLLER_MRPA_FIND_BY_ID_DESCRIPTION = "Возвращает МЧД";
+    String CONTROLLER_MRPA_FIND_BY_REPRESENTATIVE_ID_SUMMARY = "Получить список МЧД по ИНН представителя";
+    String CONTROLLER_MRPA_FIND_BY_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
@@ -156,6 +159,7 @@ public interface Constants {
     String NULL = "null";
     String NOT_FOUND = "not found!";
     String ID_IS_NULL = String.format("ID is %s", NULL);
+    String INN_IS_NULL = String.format("INN is %s", NULL);
     String MRPA_IS_NULL = String.format("MRPA is %s", NULL);
     String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";

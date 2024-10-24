@@ -607,6 +607,12 @@ public class M4dServiceImpl implements M4dService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public List<M4d> findM4dByRepresentativeInn(String inn) {
+        return this.m4dRepository.findM4dByRepresentativeInn(inn);
+    }
+
     public Map<String, String> getCustomErrorJsonFromString(String text) {
         Map<String, String> body = new HashMap<>();
         body.put("error", text);

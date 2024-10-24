@@ -30,5 +30,6 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
             + " where (p.inn IN (:innList) or r.inn IN (:innList))")
     List<M4dResponseDto> findListM4dBySetInn(@Param("innList") Set<String> innList);
 
-
+    @Query(value = "SELECT mr from M4d mr left join Representative r on r.id=mr.representativeId where r.inn=?1 ")
+    List<M4d> findM4dByRepresentativeInn(String inn);
 }

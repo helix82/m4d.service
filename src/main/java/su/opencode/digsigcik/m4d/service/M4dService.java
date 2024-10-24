@@ -23,6 +23,7 @@ public interface M4dService {
     List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId);
     M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException;
     List<M4dResponseDto> findAllM4dUsers(Authentication authentication) throws ParseException;
+    List<M4d> findM4dByRepresentativeInn(String inn);
     String getStatusM4d(Long id) throws ParseException;
     M4dResponseDto convertM4dToM4dResponseDto(M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile) throws ParseException;
 }
