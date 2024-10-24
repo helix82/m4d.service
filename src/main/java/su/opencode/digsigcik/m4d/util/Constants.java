@@ -92,6 +92,7 @@ public interface Constants {
     String XML_ATTRIBUTE_RECALL_FIO_PATRONYMIC = "Отчество";
 
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
+    String PARAMETER_MRPA_GUID_DESCRIPTION = "GUID МЧД";
     String PARAMETER_REPRESENTATIVE_INN_DESCRIPTION = "ИНН представителя";
     String PARAMETER_MRPA_RECALL_ID_DESCRIPTION = "ИД заявления на отзыв МЧД";
     String PARAMETER_CREDENTIAL_ID_DESCRIPTION = "ИД полномочия";
@@ -103,8 +104,12 @@ public interface Constants {
     String CONTROLLER_MRPA_SAVE_DESCRIPTION = "Возвращает созданную МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_BY_ID_SUMMARY = "Получить МЧД по ИД МЧД";
     String CONTROLLER_MRPA_FIND_BY_ID_DESCRIPTION = "Возвращает МЧД";
+    String CONTROLLER_MRPA_FIND_BY_GUID_SUMMARY = "Получить МЧД по GUID МЧД";
+    String CONTROLLER_MRPA_FIND_BY_GUID_DESCRIPTION = "Возвращает МЧД";
     String CONTROLLER_MRPA_FIND_BY_REPRESENTATIVE_ID_SUMMARY = "Получить список МЧД по ИНН представителя";
     String CONTROLLER_MRPA_FIND_BY_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
+    String CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_SUMMARY = "Получить список МЧД по ИД МЧД и ИНН представителя";
+    String CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
