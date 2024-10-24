@@ -435,8 +435,13 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
-    public Integer findMrpaRegistryByGuid(@NotNull String guid) {
+    public Integer countM4dByGuid(@NotNull String guid) {
         return this.m4dRepository.countByGuid(guid);
+    }
+
+    @Override
+    public M4d findMrpaRegistryByGuid(@NotNull String guid) {
+        return this.m4dRepository.findByGuid(guid);
     }
 
     @Override
@@ -612,6 +617,13 @@ public class M4dServiceImpl implements M4dService {
     public List<M4d> findM4dByRepresentativeInn(String inn) {
         return this.m4dRepository.findM4dByRepresentativeInn(inn);
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<M4d> findM4dByIdAndRepresentativeInn(String inn, Long id) {
+        return this.m4dRepository.findValidMrpaRegistryIdAndRepresentativeInn(inn, id);
+    }
+
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {
         Map<String, String> body = new HashMap<>();

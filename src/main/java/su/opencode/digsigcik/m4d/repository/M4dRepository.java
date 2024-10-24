@@ -20,6 +20,8 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
 
     Integer countByGuid(String guid);
 
+    M4d findByGuid(String guid);
+
     @Query(value = "SELECT new su.opencode.digsigcik.m4d.dto.M4dResponseDto(m4d.id, m4d.guid, "
             + " m4d.internalNumber, m4d.startDate, m4d.endDate, m4d.createDate, "
             + " p.id, p.inn, p.snils, p.jobTitle, p.name, p.surname, p.patronymic, r.id, r.inn, r.snils, r.birthDate,"
@@ -32,4 +34,12 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
 
     @Query(value = "SELECT mr from M4d mr left join Representative r on r.id=mr.representativeId where r.inn=?1 ")
     List<M4d> findM4dByRepresentativeInn(String inn);
+
+    @Query("SELECT mr FROM M4d mr JOIN Representative r on r.id= mr.representativeId " +
+            "WHERE r.inn = :inn " +
+            "AND mr.id = :m4dId " +
+            "AND mr.m4dFile IS NOT NULL " +
+            "AND mr.mrpaRecall IS NULL " +
+            "AND CURRENT_TIMESTAMP BETWEEN mr.startDate AND mr.endDate")
+    List<M4d> findValidMrpaRegistryIdAndRepresentativeInn(@Param("inn") String inn, @Param("m4dId") Long m4dId);
 }
