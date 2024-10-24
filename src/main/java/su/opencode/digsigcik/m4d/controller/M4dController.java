@@ -143,6 +143,38 @@ public class M4dController {
         return new ResponseEntity<>(m4dResponseDto, HttpStatus.OK);
     }
 
+    @Operation(summary = CONTROLLER_MRPA_FIND_BY_REPRESENTATIVE_ID_SUMMARY,
+            description = CONTROLLER_MRPA_FIND_BY_REPRESENTATIVE_ID_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @GetMapping(value = "/representative/{inn}", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> findMrpaRegistryByRepresentativeInn(@PathVariable @Parameter(name = "inn",
+            description = PARAMETER_REPRESENTATIVE_INN_DESCRIPTION, example = "1") String inn) throws ParseException {
+        if (inn == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(INN_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        List<M4d> m4d;
+        try {
+            m4d = this.m4dService.findM4dByRepresentativeInn(inn);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if (m4d == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+        }
+        List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
+        for(M4d m : m4d){
+            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m, false, false);
+            m4dResponseDto.credentials = m4dService.getCredentialByMrpaRegistryId(m.getId());
+            m4dResponseDto.setStatus(this.m4dService.getStatusM4d(m.getId()));
+            m4dResponseDtoList.add(m4dResponseDto);
+        }
+        return new ResponseEntity<>(m4dResponseDtoList, HttpStatus.OK);
+    }
+
     @Operation(summary = CONTROLLER_MRPA_UPDATE_SUMMARY, description = CONTROLLER_MRPA_UPDATE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
