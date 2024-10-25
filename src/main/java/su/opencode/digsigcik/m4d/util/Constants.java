@@ -183,4 +183,6 @@ public interface Constants {
     String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);
     String CREDENTIAL_NOT_FOUND = String.format("Credential %s!", NOT_FOUND);
     String CREDENTIAL_CODE_EXISTS = "Запись полномочия с таким кодом уже существует в базе";
+
+    String M4D_EXCEPRION_NOT_FOUND = "МЧД с данным id = %s не найден";
 }

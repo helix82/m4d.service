@@ -8,6 +8,7 @@ import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
 import su.opencode.digsigcik.m4d.model.M4d;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -41,5 +42,5 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
             "AND mr.m4dFile IS NOT NULL " +
             "AND mr.mrpaRecall IS NULL " +
             "AND CURRENT_TIMESTAMP BETWEEN mr.startDate AND mr.endDate")
-    List<M4d> findValidMrpaRegistryIdAndRepresentativeInn(@Param("inn") String inn, @Param("m4dId") Long m4dId);
+    Optional<M4d> findValidM4dByIdAndRepresentativeInn(@Param("inn") String inn, @Param("m4dId") Long m4dId);
 }
