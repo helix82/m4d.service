@@ -15,6 +15,7 @@ import su.opencode.digsigcik.m4d.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.dto.M4dFullXML;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
@@ -52,7 +53,7 @@ public class M4dServiceImpl implements M4dService {
     public List<M4dResponseDto> findAllMrpaRegistry() throws ParseException {
         List<M4d> m4ds = m4dRepository.findAll();
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
-        for (M4d m4d: m4ds) {
+        for (M4d m4d : m4ds) {
             m4dResponseDtoList.add(convertM4dToM4dResponseDto(m4d, false, false));
         }
         return m4dResponseDtoList;
@@ -176,7 +177,7 @@ public class M4dServiceImpl implements M4dService {
                 represId = respRepresentative.getId();
             } else if (!existsRepresentative.getInn().equals(representative.getInn()) || !existsRepresentative.getSnils().equals(representative.getSnils())
                     || !existsRepresentative.getSurname().equals(representative.getSurname()) || !existsRepresentative.getName().equals(representative.getName())
-                    || !existsRepresentative.getPatronymic().equals(representative.getPatronymic()) || !existsRepresentative.getBirthDate().equals(representative.getBirthDate())){
+                    || !existsRepresentative.getPatronymic().equals(representative.getPatronymic()) || !existsRepresentative.getBirthDate().equals(representative.getBirthDate())) {
                 Representative respRepresentative;
                 try {
                     representative.setId(existsRepresentative.getId());
@@ -253,7 +254,7 @@ public class M4dServiceImpl implements M4dService {
                     }
                 }
             }
-        } else if(credentials != null) {
+        } else if (credentials != null) {
             credList = credentials;
         }
 
@@ -309,7 +310,7 @@ public class M4dServiceImpl implements M4dService {
                 organisation.setId(existsOrganisation.getId());
             }
             assert existsOrganisation != null;
-            if(!existsOrganisation.equals(organisation)){
+            if (!existsOrganisation.equals(organisation)) {
                 Organisation respOrganisation;
                 try {
                     respOrganisation = this.organisationService.saveOrganisation(organisation);
@@ -377,13 +378,13 @@ public class M4dServiceImpl implements M4dService {
         if (orgId == null || principId == null || represId == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_FULL), HttpStatus.BAD_REQUEST);
         }
-        if(!m4d.getOrganisationId().equals(orgId)){
+        if (!m4d.getOrganisationId().equals(orgId)) {
             m4d.setOrganisationId(orgId);
         }
-        if(!m4d.getPrincipalId().equals(principId)) {
+        if (!m4d.getPrincipalId().equals(principId)) {
             m4d.setPrincipalId(principId);
         }
-        if(!m4d.getRepresentativeId().equals(represId)) {
+        if (!m4d.getRepresentativeId().equals(represId)) {
             m4d.setRepresentativeId(represId);
         }
         M4d m4dUpdated;
@@ -418,7 +419,7 @@ public class M4dServiceImpl implements M4dService {
             credList = credentials;
         }
 
-        if(!credList.isEmpty()){
+        if (!credList.isEmpty()) {
             this.m4dCredentialRepository.deleteAllByMrpaRegistryId(m4dUpdated.getId());
             for (Long x : credList) {
                 M4dCredential m4dCredential = new M4dCredential();
@@ -472,7 +473,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     public M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) {
-        String idFile = "ON_EMCHD_" + m4dFullDTO.getCreateDate().substring(0,10).replace("-", "") + "_" + m4dFullDTO.getGuid();
+        String idFile = "ON_EMCHD_" + m4dFullDTO.getCreateDate().substring(0, 10).replace("-", "") + "_" + m4dFullDTO.getGuid();
         M4dFullXML m4dFullXML = new M4dFullXML();
         m4dFullXML.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
         m4dFullXML.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
@@ -493,10 +494,10 @@ public class M4dServiceImpl implements M4dService {
         mrpas.setGuid(m4dFullDTO.getGuid());
 
         if (m4dFullDTO.getStartDate() != null) {
-            mrpas.setStartDate(m4dFullDTO.getStartDate().substring(0,10));
+            mrpas.setStartDate(m4dFullDTO.getStartDate().substring(0, 10));
         }
         if (m4dFullDTO.getEndDate() != null) {
-            mrpas.setEndDate(m4dFullDTO.getEndDate().substring(0,10));
+            mrpas.setEndDate(m4dFullDTO.getEndDate().substring(0, 10));
         }
         mrpas.setInfoSystem("sep.cik");
 
@@ -553,7 +554,7 @@ public class M4dServiceImpl implements M4dService {
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual infoIndividual = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual();
         detailRepresentative.setInfoIndividual(infoIndividual);
         if (m4dFullDTO.representative.getBirthDate() != null) {
-            infoIndividual.setBirthDate(m4dFullDTO.representative.getBirthDate().substring(0,10));
+            infoIndividual.setBirthDate(m4dFullDTO.representative.getBirthDate().substring(0, 10));
         }
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative fioRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative();
         infoIndividual.setFioRepresentative(fioRepresentative);
@@ -565,7 +566,7 @@ public class M4dServiceImpl implements M4dService {
         representativePassport.setTypeDocument("21");
         representativePassport.setSeriesNumber(m4dFullDTO.representative.representativePassport.getSeriesNumber());
         if (m4dFullDTO.representative.representativePassport.getDateIssue() != null) {
-            representativePassport.setDateIssue(m4dFullDTO.representative.representativePassport.getDateIssue().substring(0,10));
+            representativePassport.setDateIssue(m4dFullDTO.representative.representativePassport.getDateIssue().substring(0, 10));
         }
         representativePassport.setWhoIssue(m4dFullDTO.representative.representativePassport.getWhoIssue());
         representativePassport.setDepartmentCode(m4dFullDTO.representative.representativePassport.getDepartmentCode());
@@ -600,7 +601,7 @@ public class M4dServiceImpl implements M4dService {
 
         // TODO: когда будут связи переделать запрос в части маппинга
         return m4dRepository.findListM4dBySetInn(setINNs).stream()
-                .peek(m4d->{
+                .peek(m4d -> {
                     try {
                         Long id = m4d.getId();
                         m4d.setStatus(getStatusM4d(id));
@@ -620,8 +621,19 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<M4d> findM4dByIdAndRepresentativeInn(String inn, Long id) {
-        return this.m4dRepository.findValidMrpaRegistryIdAndRepresentativeInn(inn, id);
+    public M4dResponseDto findM4dByIdAndRepresentativeInn(String inn, Long id) {
+        return m4dRepository.findValidM4dByIdAndRepresentativeInn(inn, id)
+                .map(m4d -> {
+                    try {
+                        M4dResponseDto m4dResponseDto = convertM4dToM4dResponseDto(m4d, true, false);
+                        m4dResponseDto.credentials = getCredentialByMrpaRegistryId(m4dResponseDto.getId());
+                        m4dResponseDto.setStatus(getStatusM4d(m4dResponseDto.getId()));
+                        return m4dResponseDto;
+                    } catch (ParseException e) {
+                        throw new BadRequestException(e.getMessage());
+                    }
+                })
+                .orElseThrow(() -> new BadRequestException(String.format(M4D_EXCEPRION_NOT_FOUND, id)));
     }
 
 
@@ -660,12 +672,12 @@ public class M4dServiceImpl implements M4dService {
         M4dFile m4dFile;
         try {
             m4dFile = this.m4dFileService.findM4dFileById(m4d.getM4dFile().getId());
-            if(!withM4dSigFile) {
+            if (!withM4dSigFile) {
                 m4dFile.setContent(null);
             }
             if (m4dFile != null) {
                 M4dResponseDto.SigFileDTO sigFileDTO = convertSigFileToDto(m4dFile);
-                if(!withM4dSigFile){
+                if (!withM4dSigFile) {
                     sigFileDTO.setContent(null);
                 }
                 m4dResponseDto.setSigFile(sigFileDTO);
@@ -676,12 +688,12 @@ public class M4dServiceImpl implements M4dService {
         M4dFile m4dFileRecall;
         try {
             m4dFileRecall = this.m4dFileService.findM4dFileById(m4d.getMrpaRecall().getM4dFile().getId());
-            if(!withRecallSigFile) {
+            if (!withRecallSigFile) {
                 m4dFileRecall.setContent(null);
             }
             if (m4dFileRecall != null) {
                 M4dResponseDto.RecallDTO.SigFileDTO sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
-                if(!withRecallSigFile){
+                if (!withRecallSigFile) {
                     sigFileDTO.setContent(null);
                 }
                 m4dResponseDto.recall.setSigFile(sigFileDTO);
@@ -708,33 +720,33 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-    private M4dResponseDto.SigFileDTO convertSigFileToDto(M4dFile m4dFile){
+    private M4dResponseDto.SigFileDTO convertSigFileToDto(M4dFile m4dFile) {
         M4dResponseDto.SigFileDTO sigFileDto = modelMapper.map(m4dFile, M4dResponseDto.SigFileDTO.class);
         return sigFileDto;
     }
 
-    private M4dResponseDto.RecallDTO.SigFileDTO convertSigFileRecallToDto(M4dFile m4dFile){
+    private M4dResponseDto.RecallDTO.SigFileDTO convertSigFileRecallToDto(M4dFile m4dFile) {
         M4dResponseDto.RecallDTO.SigFileDTO sigFileDto = modelMapper.map(m4dFile, M4dResponseDto.RecallDTO.SigFileDTO.class);
         return sigFileDto;
     }
 
-    private M4dResponseDto.OrganizationDTO convertOrganisationToDto(Organisation organisation){
+    private M4dResponseDto.OrganizationDTO convertOrganisationToDto(Organisation organisation) {
         M4dResponseDto.OrganizationDTO organisationDto = modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
         return organisationDto;
     }
 
-    private M4dResponseDto.PrincipalDTO convertPrincipalToDto(Principal principal){
+    private M4dResponseDto.PrincipalDTO convertPrincipalToDto(Principal principal) {
         M4dResponseDto.PrincipalDTO principalDto = modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
         return principalDto;
     }
 
-    private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(Representative representative){
+    private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(Representative representative) {
         M4dResponseDto.RepresentativeDTO representativeDto = modelMapper.map(representative, M4dResponseDto.RepresentativeDTO.class);
         representativeDto.representativePassport = modelMapper.map(representative.getRepresentativePassports(), M4dResponseDto.RepresentativePassportDTO.class);
         return representativeDto;
     }
 
-    private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassport representativePassport){
+    private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassport representativePassport) {
         M4dResponseDto.RepresentativePassportDTO representativePassportDto = modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDTO.class);
         return representativePassportDto;
     }
