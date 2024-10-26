@@ -42,7 +42,6 @@ import java.text.ParseException;
 import java.util.*;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
-import static su.opencode.digsigcik.m4d.util.Constants.MRPA_REGISTRY_NOT_VERIFY;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 
 @RestController
@@ -289,7 +288,7 @@ public class M4dRevokeController {
                         boolean isResultTrue = verificationResult.isResult();
                         System.out.println("Result value: " + isResultTrue);
                         if (!isResultTrue) {
-                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
+                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
                         }
                     });
 
@@ -325,7 +324,7 @@ public class M4dRevokeController {
         String xmlRecallString = XMLUtil.marshall(mrpaRecallXml, M4dRevokeXml.class);
         //-------------------------------------------------
         if (!Arrays.equals(resource.getByteArray(), xmlRecallString.getBytes())) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
         }
         M4dFile m4dFile = new M4dFile();
         m4dFile.setContent(Arrays.toString(container.getBytes()));

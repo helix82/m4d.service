@@ -177,7 +177,8 @@ public interface Constants {
     String MRPA_REGISTRY_WRONG_FORMAT = "Не верный формат ЭП";
     String MRPA_REGISTRY_WRONG_FORMAT_XML = "Не верный формат XML";
     String MRPA_REGISTRY_XML_NOT_VERIFY = "XML не прошел проверку";
-    String MRPA_REGISTRY_NOT_VERIFY = "Контейнер не прошел проверку";
+    String MRPA_REGISTRY_NOT_VERIFY_REPORT = "Контейнер не прошел проверку (по отчёту верификации)";
+    String MRPA_REGISTRY_NOT_VERIFY_CONTENT = "Контейнер не прошел проверку (данные МЧД и контент контейнера не совпадают)";
     String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
     String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);
     String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);
