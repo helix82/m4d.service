@@ -332,7 +332,7 @@ public class M4dController {
                         boolean isResultTrue = verificationResult.isResult();
                         System.out.println("Result value: " + isResultTrue);
                         if (!isResultTrue) {
-                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY);
+                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
                         }
                     });
 
@@ -366,7 +366,7 @@ public class M4dController {
         String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
         //-------------------------------------------------
         if (!Arrays.equals(resource.getByteArray(), xmlString.getBytes())) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
         }
         M4dFile m4dFile = new M4dFile();
         m4dFile.setContent(Arrays.toString(container.getBytes()));
