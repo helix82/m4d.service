@@ -52,3 +52,8 @@ springdoc:
 m4d:
   handbook:
     uri: ${M4D_HANDBOOK_URI:http://localhost:8080/api/v1}
+
+# Временное решение до полноценного внедрения kafka
+audit:
+  url: https://sp.essocode.ru/api/v1/audit/external
+  default-user: 'Администратор МЧД'

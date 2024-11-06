@@ -28,7 +28,7 @@
         <apache.commons.validator.version>1.8.0</apache.commons.validator.version>
         <maven.deploy.skip>true</maven.deploy.skip>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
-        <version.lombok>1.18.18</version.lombok>
+        <version.lombok>1.18.34</version.lombok>
         <version.mapstruct-lombok>0.2.0</version.mapstruct-lombok>
         <maven.test.skip>true</maven.test.skip>
         <liquibase.version>4.20.0</liquibase.version>
@@ -467,12 +467,6 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>su.opencode.digsigcik</groupId>
-            <artifactId>dtos</artifactId>
-            <version>1.0.3</version>
-        </dependency>
-
         <!-- KAFKA DEPENDENCIES -->
 
         <dependency>
@@ -490,6 +484,12 @@
             <groupId>su.opencode.digsigcik</groupId>
             <artifactId>common-security-starter</artifactId>
             <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>su.opencode.digsigcik</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0.8</version>
         </dependency>
     </dependencies>
 

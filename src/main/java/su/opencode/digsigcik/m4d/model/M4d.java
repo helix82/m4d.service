@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import su.opencode.digsigcik.m4d.audit.AllowAudit;
+import su.opencode.digsigcik.audit.AllowAudit;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;

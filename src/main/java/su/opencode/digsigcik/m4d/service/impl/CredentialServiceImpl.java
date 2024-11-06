@@ -4,17 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import su.opencode.digsigcik.m4d.audit.AuditLogEventEnum;
-import su.opencode.digsigcik.m4d.audit.AuditLogThis;
-import su.opencode.digsigcik.m4d.exception.M4dException;
+import su.opencode.digsigcik.audit.AuditLogEventEnum;
+import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.model.Credential;
 import su.opencode.digsigcik.m4d.repository.CredentialRepository;
 import su.opencode.digsigcik.m4d.service.CredentialService;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static su.opencode.digsigcik.m4d.util.Constants.NOT_FOUND;
 
 @Service
 @Primary
