@@ -26,16 +26,18 @@ RUN apt-get update && \
     && rm -rf /tmp/linux-amd64_deb.tgz /tmp/linux-amd64_deb \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && cd $JAVA_HOME/lib/security \
-    && keytool -cacerts -storepass changeit -noprompt -importcert -alias stepcarootca -file step_ca_root_ca.crt \
-    && keytool -cacerts -storepass changeit -noprompt -importcert -alias stepcaintermediateca -file step_ca_intermediate_ca.crt \
-    && keytool -cacerts -storepass changeit -noprompt -importcert -alias keylabtlsca -file keylab_tls_ca.crt \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias ssorpdroot -file _.test.st.crt \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias ssorpdintermediate -file sso.rpd.zk.test.st.crt \
-    && rm -rf  $JAVA_HOME/lib/security/step_ca_root_ca.crt \
-    && rm -rf  $JAVA_HOME/lib/security/step_ca_intermediate_ca.crt \
-    && rm -rf  $JAVA_HOME/lib/security/keylab_tls_ca.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias zkssorpdroot -file _.zk.test.st.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias zkssorpdapp -file _.app-sso01.rpd.zk.test.st.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias okssorpdroot -file _.ok.test.st.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias okssorpdapp -file _.app-sso01.rpd.ok.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/_.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/sso.rpd.zk.test.st.crt \
+    && rm -rf  $JAVA_HOME/lib/security/_.zk.test.st.crt \
+    && rm -rf  $JAVA_HOME/lib/security/_.app-sso01.rpd.zk.test.st.crt \
+    && rm -rf  $JAVA_HOME/lib/security/_.ok.test.st.crt \
+    && rm -rf  $JAVA_HOME/lib/security/_.app-sso01.rpd.ok.test.st.crt \
     && unzip -o /app/security.zip -d $JAVA_HOME/conf \
     && rm -rf  /app/security.zip \
     && mkdir -p /app \

@@ -392,7 +392,7 @@ image_pull_secrets:
   - dockerconfig
 
 node:
-  node: 188.120.226.58
+  node: 149.154.64.5
 
 trigger:
   event:

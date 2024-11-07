@@ -20,6 +20,8 @@ data:
   KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
   SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
   M4D_HANDBOOK_URI: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjE=
+  AUDIT_URL: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
+  SERVER_PORT: ODA1MQ==
 ---
 
 apiVersion: v1
@@ -116,6 +118,17 @@ spec:
                 secretKeyRef:
                   name: m4d-back-cred
                   key: M4D_HANDBOOK_URI
+            - name: AUDIT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: AUDIT_URL
+            - name: SERVER_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: SERVER_PORT
+
       imagePullSecrets:
         - name: registrypullsecret
 

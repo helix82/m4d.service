@@ -12,25 +12,25 @@ import org.springframework.kafka.core.KafkaAdmin;
 import java.util.HashMap;
 import java.util.Map;
 
-@EnableKafka
-@Configuration
-@RequiredArgsConstructor
-public class KafkaConfig {
-    private final KafkaProperties kafkaProperties;
-
-    @Bean
-    public KafkaAdmin kafkaAdmin() {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapAddresses());
-        return new KafkaAdmin(configs);
-    }
-
-    @Bean
-    public NewTopic topicTest() {
-        return TopicBuilder
-                .name(kafkaProperties.getTopicTest())
-                .partitions(2)
-                .replicas(2)
-                .build();
-    }
-}
+//@EnableKafka
+//@Configuration
+//@RequiredArgsConstructor
+//public class KafkaConfig {
+//    private final KafkaProperties kafkaProperties;
+//
+//    @Bean
+//    public KafkaAdmin kafkaAdmin() {
+//        Map<String, Object> configs = new HashMap<>();
+//        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapAddresses());
+//        return new KafkaAdmin(configs);
+//    }
+//
+//    @Bean
+//    public NewTopic topicTest() {
+//        return TopicBuilder
+//                .name(kafkaProperties.getTopicTest())
+//                .partitions(2)
+//                .replicas(2)
+//                .build();
+//    }
+//}
