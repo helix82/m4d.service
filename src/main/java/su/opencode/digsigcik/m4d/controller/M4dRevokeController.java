@@ -257,6 +257,9 @@ public class M4dRevokeController {
         if (mrpaRecall==null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.BAD_REQUEST);
         }
+        if (mrpaRecall.getM4dFile()!=null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Заявление на отзыв МЧД уже подписано"), HttpStatus.BAD_REQUEST);
+        }
         List<String> tempFileNames = new ArrayList<>();
         String tempFileName;
         FileOutputStream fo;
