@@ -27,21 +27,23 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  #Kafka settings
-  kafka:
-    bootstrap-servers: ${KAFKA_BROKERS_LIST_URL:localhost:29092,localhost:39092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: 1
-      batch-size: 32768
-      compression-type: lz4
-      properties:
-        linger.ms: 1000
-      retries: 3
-    #Здесь указываются топики, которые вы хотите использовать
-    topics:
-      test: TEST
+
+# TODO: отключена, поскольку в поставку заказчику на данный релиз не входит, позже включить
+#  #Kafka settings
+#  kafka:
+#    bootstrap-servers: ${KAFKA_BROKERS_LIST_URL:localhost:29092,localhost:39092}
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+#      acks: 1
+#      batch-size: 32768
+#      compression-type: lz4
+#      properties:
+#        linger.ms: 1000
+#      retries: 3
+#    #Здесь указываются топики, которые вы хотите использовать
+#    topics:
+#      test: TEST
 
 logging:
   level:
@@ -50,7 +52,7 @@ logging:
     org.apache.http.wire: TRACE
 
 server:
-  port: 8051
+  port: ${SERVER_PORT:8051}
 web:
   cors:
     allow-origin: "*"
@@ -68,8 +70,6 @@ web:
       - /webjars/**
       - /.well-known/acme-challenge/**
       - /favicon.ico
-  server:
-    uri: http://localhost
 ---
 
 spring:
@@ -83,26 +83,6 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
-
-tls:
-  ca:
-    uri: https://192.168.0.53:4433/acme/acme/directory
-  account:
-    name: acme.account.name
-    mail: acme@account.mail
-    key: acme.account.key
-  max_attempts: 50
-  external_acknowledge: false
-
-cryptopro:
-  svs:
-    uri: https://keylab/vs/api
-#    uri: https://dss.cryptopro.ru/verify/rest/api
-
-features:
-  show-ses-certificates: true
-  ses-certificates-age: 100
-  ses-certificates-issuer: "CN=SEP Self-Signed Certificate"
 
 #Swagger
 springdoc:
@@ -119,5 +99,5 @@ m4d:
 
 # Временное решение до полноценного внедрения kafka
 audit:
-  url: https://sp.essocode.ru/api/v1/audit/external
+  url: ${AUDIT_URL:https://sp.essocode.ru/api/v1/audit/external}
   default-user: 'Администратор МЧД'

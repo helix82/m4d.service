@@ -6,11 +6,11 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
-@Configuration
-@Data
-public class KafkaProperties {
-    @Value("${spring.kafka.topics.test}")
-    private String topicTest;
-    @Value("${spring.kafka.bootstrap-servers}")
-    private List<String> bootstrapAddresses;
-}
+//@Configuration
+//@Data
+//public class KafkaProperties {
+//    @Value("${spring.kafka.topics.test}")
+//    private String topicTest;
+//    @Value("${spring.kafka.bootstrap-servers}")
+//    private List<String> bootstrapAddresses;
+//}

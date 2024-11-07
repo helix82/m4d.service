@@ -1,8 +1,5 @@
 server:
-  port: 8051
-web:
-  server:
-    uri: http://localhost
+  port: ${SERVER_PORT:8051}
 logging:
   level:
     su.opencode.digsigcik.synapi: DEBUG
@@ -20,25 +17,6 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
-tls:
-  ca:
-    uri: https://192.168.0.53:4433/acme/acme/directory
-  account:
-    name: acme.account.name
-    mail: acme@account.mail
-    key: acme.account.key
-  max_attempts: 50
-  external_acknowledge: false
-
-cryptopro:
-  svs:
-    uri: https://keylab/vs/api
-#    uri: https://dss.cryptopro.ru/verify/rest/api
-
-features:
-  show-ses-certificates: false
-  ses-certificates-age: 100
-  ses-certificates-issuer: "CN=SEP Self-Signed Certificate"
 
 #Swagger
 springdoc:
@@ -55,5 +33,5 @@ m4d:
 
 # Временное решение до полноценного внедрения kafka
 audit:
-  url: https://sp.essocode.ru/api/v1/audit/external
+  url: ${AUDIT_URL:https://sp.essocode.ru/api/v1/audit/external}
   default-user: 'Администратор МЧД'
