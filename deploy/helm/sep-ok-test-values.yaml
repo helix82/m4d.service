@@ -1,0 +1,79 @@
+
+namespace: master
+
+image:
+  repository: 10.0.182.84:5000/sep/m4d.service
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8051
+  targetPort: 8051
+
+replicaCount: 1
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "51m"
+  tlsEnabled: false  # New parameter to control TLS
+  hosts:
+    - host: m4d.sep.ok.test.st
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: m4d-tls
+      hosts:
+        - m4d.sep.ok.test.st
+
+secret:
+  enabled: true
+  name: m4d-back-cred
+  data:
+    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMjE3Ljc5LjIyLjQ2OjU0MzIvbTRkX2Ri
+    SPRING_DATASOURCE_USERNAME: cm9vdA==
+    SPRING_DATASOURCE_PASSWORD: cm9vdA==
+    RPD_AUTHORIZATION_URI: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLm9rLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
+    OAUTH2_ISSUER_URL: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLm9rLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdA==
+    RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLm9rLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
+    KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
+    SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
+    M4D_HANDBOOK_URI: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjE=
+    AUDIT_URL: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
+    SERVER_PORT: ODA1MQ==
+
+hostAliases:
+  - ip: "10.0.180.213"
+    hostnames:
+      - "app-sso01.rpd.ok.test.st"
+
+jvmOptions:
+  xms: 2G
+  xmx: 64G
+  gc: "-XX:+UseG1GC"
+  minHeapFreeRatio: 10
+  maxHeapFreeRatio: 30
+
+jarFile: m4d-0.0.1-SNAPSHOT.jar
+
+env:
+  SPRING_DATASOURCE_URL: SPRING_DATASOURCE_URL
+  SPRING_DATASOURCE_USERNAME: SPRING_DATASOURCE_USERNAME
+  SPRING_DATASOURCE_PASSWORD: SPRING_DATASOURCE_PASSWORD
+  RPD_AUTHORIZATION_URI: RPD_AUTHORIZATION_URI
+  OAUTH2_ISSUER_URL: OAUTH2_ISSUER_URL
+  RPD_SWAGGER_TOKEN_URI: RPD_SWAGGER_TOKEN_URI
+  KAFKA_BROKERS_LIST_URL: KAFKA_BROKERS_LIST_URL
+  SWAGGER_URL: SWAGGER_URL
+  M4D_HANDBOOK_URI: M4D_HANDBOOK_URI
+  AUDIT_URL: AUDIT_URL
+  SERVER_PORT: SERVER_PORT
+
+appName: m4d
+
+imagePullSecrets:
+  - registrypullsecret
+
+resources: {}
