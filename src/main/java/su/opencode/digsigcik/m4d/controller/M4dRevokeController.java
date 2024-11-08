@@ -29,6 +29,7 @@ import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
+import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -54,12 +55,14 @@ public class M4dRevokeController {
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dRecallService m4dRecallService;
+    private final M4dFileService m4dFileService;
     private final RestTemplate restTemplate;
 
-    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, RestTemplate restTemplate) {
+    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dFileService m4dFileService, RestTemplate restTemplate) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dRecallService = m4dRecallService;
+        this.m4dFileService = m4dFileService;
         this.restTemplate = restTemplate;
     }
 
@@ -334,8 +337,14 @@ public class M4dRevokeController {
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
         m4dFile.setFilename(container.getOriginalFilename());
+        M4dFile m4dFileSaved;
+        try {
+            m4dFileSaved = this.m4dFileService.saveM4dFile(m4dFile);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
 
-        mrpaRegistryFind.getMrpaRecall().setM4dFile(m4dFile);
+        mrpaRegistryFind.getMrpaRecall().setM4dFile(m4dFileSaved);
         M4d mrpaRegistrySaved;
         try {
             mrpaRegistrySaved = this.m4dService.saveMrpaRegistry(mrpaRegistryFind);
