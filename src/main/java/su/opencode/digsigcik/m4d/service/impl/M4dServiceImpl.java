@@ -233,6 +233,7 @@ public class M4dServiceImpl implements M4dService {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         List<Long> credList = new ArrayList<>();
+        List<Long> credListNew;
         if (credentialList != null) {
             for (CredentialDto c : credentialList) {
                 List<Credential> existsCredentials = this.credentialService.findCredentialByCodeOrName(c.getCode());
@@ -265,7 +266,9 @@ public class M4dServiceImpl implements M4dService {
                 }
             }
 
-            for (Long x : credList) {
+            credListNew = credList.stream().distinct().collect(Collectors.toList());
+
+            for (Long x : credListNew) {
                 M4dCredential m4dCredential = new M4dCredential();
                 m4dCredential.setMrpaRegistryId(m4dSaved.getId());
                 m4dCredential.setCredentialId(x);
@@ -394,6 +397,7 @@ public class M4dServiceImpl implements M4dService {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         List<Long> credList = new ArrayList<>();
+        List<Long> credListNew;
         if (credentialList != null) {
             for (CredentialDto c : credentialList) {
                 List<Credential> existsCredentials = this.credentialService.findCredentialByCodeOrName(c.getCode());
@@ -419,9 +423,11 @@ public class M4dServiceImpl implements M4dService {
             credList = credentials;
         }
 
+        credListNew = credList.stream().distinct().collect(Collectors.toList());
+
         if (!credList.isEmpty()) {
             this.m4dCredentialRepository.deleteAllByMrpaRegistryId(m4dUpdated.getId());
-            for (Long x : credList) {
+            for (Long x : credListNew) {
                 M4dCredential m4dCredential = new M4dCredential();
                 m4dCredential.setMrpaRegistryId(m4dUpdated.getId());
                 m4dCredential.setCredentialId(x);
