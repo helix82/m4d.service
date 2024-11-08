@@ -335,13 +335,10 @@ public class M4dRevokeController {
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
         m4dFile.setFilename(container.getOriginalFilename());
 
-        mrpaRecall.setM4dFile(m4dFile);
-
-        M4d mrpaRegistry = this.m4dService.findById(mrpaRegistryFind.getId());
-        mrpaRegistry.setMrpaRecall(mrpaRecall);
+        mrpaRegistryFind.getMrpaRecall().setM4dFile(m4dFile);
         M4d mrpaRegistrySaved;
         try {
-            mrpaRegistrySaved = this.m4dService.saveMrpaRegistry(mrpaRegistry);
+            mrpaRegistrySaved = this.m4dService.saveMrpaRegistry(mrpaRegistryFind);
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
