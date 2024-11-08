@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+    spec:
+      hostAliases:
+        {{- range .Values.hostAliases }}
+        - ip: "{{ .ip }}"
+          hostnames:
+            {{- range .hostnames }}
+            - "{{ . }}"
+            {{- end }}
+        {{- end }}
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: {{ .Values.appName }}-dev
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          command:
+            - java
+            - "-Xms{{ .Values.jvmOptions.xms }}"
+            - "-Xmx{{ .Values.jvmOptions.xmx }}"
+            - "{{ .Values.jvmOptions.gc }}"
+            - "-XX:MinHeapFreeRatio={{ .Values.jvmOptions.minHeapFreeRatio }}"
+            - "-XX:MaxHeapFreeRatio={{ .Values.jvmOptions.maxHeapFreeRatio }}"
+            - -jar
+            - "{{ .Values.jarFile }}"
+          ports:
+            - containerPort: {{ .Values.service.port }}
+            - containerPort: {{ .Values.service.portDebug }}
+          env:
+            - name: OAUTH2_ISSUER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.OAUTH2_ISSUER_URL }}
+            - name: RPD_AUTHORIZATION_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.RPD_AUTHORIZATION_URI }}
+            - name: RPD_SWAGGER_TOKEN_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.RPD_SWAGGER_TOKEN_URI }}
+            - name: SWAGGER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SWAGGER_URL }}
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SPRING_DATASOURCE_URL }}
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SPRING_DATASOURCE_USERNAME }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SPRING_DATASOURCE_PASSWORD }}
+            - name: SERVER_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SERVER_PORT }}
+            - name: KAFKA_BROKERS_LIST_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.KAFKA_BROKERS_LIST_URL }}
+            - name: AUDIT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.AUDIT_URL }}
+            - name: M4D_HANDBOOK_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.M4D_HANDBOOK_URI }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}

@@ -62,7 +62,6 @@ spec:
           imagePullPolicy: IfNotPresent
           command:
             - java
-            - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
             - -Xms2G
             - -Xmx64G
             - -XX:+UseG1GC
