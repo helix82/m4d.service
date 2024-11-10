@@ -369,10 +369,21 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
         }
         M4dFile m4dFile = new M4dFile();
-        m4dFile.setContent(Arrays.toString(container.getBytes()));
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
         m4dFile.setFilename(container.getOriginalFilename());
+
+        try (InputStream inputStream = container.getInputStream();
+             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+            m4dFile.setContent(Arrays.toString(byteArrayOutputStream.toByteArray()));
+        }
 
         m4d.setM4dFile(m4dFile);
         M4d m4dSaved;
