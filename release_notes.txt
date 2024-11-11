@@ -1,4 +1,0 @@
-1. Первичная установка СПО СЕП
-2. test env 
-3. Update sep.json and release_notes.txt to version . 
-4. test env
