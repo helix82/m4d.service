@@ -39,7 +39,6 @@ spec:
             - "{{ .Values.jarFile }}"
           ports:
             - containerPort: {{ .Values.service.port }}
-            - containerPort: {{ .Values.service.portDebug }}
           env:
             - name: OAUTH2_ISSUER_URL
               valueFrom:
