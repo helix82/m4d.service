@@ -17,13 +17,7 @@ RUN apt-get update && \
     tar \
     gnupg2 \
     fontconfig \
-    && wget --no-check-certificate --user $NEXUS_RAW_USERNAME --password $NEXUS_RAW_PASSWORD https://nexus.essocode.ru/repository/ocode-raw/csp/linux-amd64_deb.tgz -O /tmp/linux-amd64_deb.tgz \
-    && ls -lh /tmp/linux-amd64_deb.tgz \
-    && mkdir -p /tmp/csp \
     && mkdir -p /xml/validation \
-    && tar -xvzf /tmp/linux-amd64_deb.tgz -C /tmp \
-    && /tmp/linux-amd64_deb/install.sh \
-    && rm -rf /tmp/linux-amd64_deb.tgz /tmp/linux-amd64_deb \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && cd $JAVA_HOME/lib/security \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias ssorpdroot -file _.test.st.crt \
@@ -39,10 +33,8 @@ RUN apt-get update && \
     && rm -rf  $JAVA_HOME/lib/security/_.ok.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/_.app-sso01.rpd.ok.test.st.crt \
     && unzip -o /app/security.zip -d $JAVA_HOME/conf \
-    && rm -rf  /app/security.zip \
-    && mkdir -p /app \
-    && mkdir -p /app/files/source \
-    && mkdir -p /app/files/dscp
+    && rm -rf  /app/security.zip
+
 COPY ./build/ON_EMCHD_1_928_00_01_01_01.xsd /app/xml/validation/
 
 ARG JAR_FILE=m4d-0.0.1-SNAPSHOT.jar

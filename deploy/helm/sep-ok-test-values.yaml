@@ -42,13 +42,13 @@ secret:
     KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
     SWAGGER_URL: aHR0cDovL200ZC5zZXAub2sudGVzdC5zdA==
     M4D_HANDBOOK_URI: aHR0cDovL3N5bmFwaS5zZXAub2sudGVzdC5zdC9hcGkvdjE=
-    AUDIT_URL: aHR0cHM6Ly9zeW5hcGkuc2VwLm9rLnRlc3Quc3QvYXBpL3YxL2F1ZGl0L2V4dGVybmFs
+    AUDIT_URL: aHR0cDovL3N5bmFwaS5zZXAub2sudGVzdC5zdC9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
     SERVER_PORT: ODA1MQ==
 
-hostAliases:
-  - ip: "10.0.180.213"
-    hostnames:
-      - "app-sso01.rpd.ok.test.st"
+#hostAliases:
+#  - ip: "10.0.180.213"
+#    hostnames:
+#      - "app-sso01.rpd.ok.test.st"
 
 jvmOptions:
   xms: 2G
