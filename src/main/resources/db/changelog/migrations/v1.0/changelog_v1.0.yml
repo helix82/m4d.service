@@ -23,3 +23,5 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/create_table_m4d_registry.sql
   - include:
       file: db/changelog/migrations/v1.0/create_table_m4d_registry_m4d_credential.sql
+  - include:
+      file: db/changelog/migrations/v1.0/delete_unique_from_table_m4d_revoke.sql
