@@ -22,6 +22,11 @@ data:
   M4D_HANDBOOK_URI: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjE=
   AUDIT_URL: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
   SERVER_PORT: ODA1MQ==
+  RESOURCE_ACCESS: c2Vw
+  RPD_LIFESPAN_CACHE: MTQ0MA==
+  RPD_REFRESH_TIME_CACHE: MTM1MA==
+  RPD_CONNECTION_TIMEOUT: MTAwMDA=
+  RPD_READ_TIMEOUT: MTAwMDA=
 ---
 
 apiVersion: v1
@@ -127,7 +132,31 @@ spec:
                 secretKeyRef:
                   name: m4d-back-cred
                   key: SERVER_PORT
-
+            - name: RESOURCE_ACCESS
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: RESOURCE_ACCESS
+            - name: RPD_LIFESPAN_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: RPD_LIFESPAN_CACHE
+            - name: RPD_REFRESH_TIME_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: RPD_REFRESH_TIME_CACHE
+            - name: RPD_CONNECTION_TIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: RPD_CONNECTION_TIMEOUT
+            - name: RPD_READ_TIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: m4d-back-cred
+                  key: RPD_READ_TIMEOUT
       imagePullSecrets:
         - name: registrypullsecret
 
