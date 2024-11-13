@@ -112,82 +112,6 @@ steps:
       branch:
         - master
 
-  - name: checkout
-    image: alpine/git
-    environment:
-      DRONE_DEBUG: true
-      GIT_REPO:
-        from_secret: git_repo
-      GIT_REPO_V2:
-        from_secret: git_repo_v2
-    commands:
-      - set -x
-      - echo "GIT_REPO=$GIT_REPO"
-      - echo "GIT_REPO_V2=$GIT_REPO_V2"
-
-      - git clone https://git.essocode.ru/o-code/$GIT_REPO
-      - cd $GIT_REPO_V2
-    depends_on:
-      - build
-    when:
-      branch:
-        - release-*
-
-  - name: update-sep-json
-    image: alpine
-    environment:
-      DRONE_DEBUG: true
-      SEP_JSON_INDEX:
-        from_secret: sep_json_index
-    commands:
-      - apk add --no-cache jq
-      - set -x
-      - |
-        echo "Updating sep.json version"
-        jq --arg new_date "$(date +%d.%m.%Y)" '.date = $new_date' sep.json > temp.json && mv temp.json sep.json
-     
-        current_version=$(jq -r '.version' sep.json)
-        
-        main_version=$(echo $current_version | awk -F. '{print $1}')
-        minor_version=$(echo $current_version | awk -F. '{print $2}')
-        patch_version=$(echo $current_version | awk -F. '{print $3}')
-
-        echo "Текущая версия: $current_version"
-        echo "Минорная версия: $minor_version"
-        echo "Патч версия: $patch_version"
-
-        new_patch_version=$(printf "%0${#patch_version}d" $((10#$patch_version + 1)))
-
-        new_version="$main_version.$minor_version.$new_patch_version"
-        echo "Новая версия: $new_version"
-
-        jq --arg new_version "$new_version" '.version = $new_version' sep.json > temp.json && mv temp.json sep.json
-
-        echo $new_version > version.txt
-
-        index_number=$((SEP_JSON_INDEX))
-        echo "JSON index: $index_number"
-        
-        current_rep_version=$(jq --argjson index "$index_number" -r '.microservices[$index].version' sep.json)
-        rep_main_version=$(echo $current_rep_version | awk -F. '{print $1}')
-        rep_minor_version=$(echo $current_rep_version | awk -F. '{print $2}')
-        rep_patch_version=$(echo $current_rep_version | awk -F. '{print $3}')
-
-        new_rep_patch_version=$(printf "%0${#rep_patch_version}d" $((10#$rep_patch_version + 1)))
-
-        new_rep_version="$rep_main_version.$rep_minor_version.$new_rep_patch_version"
-
-        jq --argjson index "$index_number" --arg new_rep_version "$new_rep_version" '.microservices[$index].version = $new_rep_version' sep.json > temp.json && mv temp.json sep.json
-
-        echo "Обновленная версия микросервиса: $new_rep_version"
-
-    depends_on:
-      - checkout
-    when:
-      branch:
-        - release-*
-
-
   - name: update-release-notes
     image: alpine
     environment:
@@ -196,143 +120,35 @@ steps:
       - apk add --no-cache jq git
       - set -x
       - |
-        commit_message=$(git log -1 --pretty=%B)
-
-        filtered_message=$(echo "$commit_message" | sed '/^\(Merge\|Rebase\|.*pull request.*\|.*from.*\)$/d')
-
-        if [[ -z "$filtered_message" ]]; then
-          echo "Filtered commit message is empty, skipping."
-          exit 0
+        START_COMMIT="0.0.0"
+        END_COMMIT="HEAD"
+        if ! git show $START_COMMIT &> /dev/null; then
+            START_COMMIT="$(git rev-list --max-parents=0 HEAD)"
         fi
-
-        filtered_message=$(echo "$filtered_message" | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')
-
-        if [[ -f release_notes.txt ]]; then
-          last_number=$(grep -o '^[0-9]\+' release_notes.txt | sort -n | tail -n 1)
-          if [[ -z "$last_number" ]]; then
-            next_number=1
-          else
-            next_number=$((last_number + 1))
-          fi
-        else
-          next_number=1
-        fi
-
-        new_entry="$next_number. $filtered_message"
-
-        if [ -s release_notes.txt ] && [ "$(tail -c1 release_notes.txt)" != "" ]; then
-          echo "" >> release_notes.txt
-        fi
-
-        echo "$new_entry" >> release_notes.txt
-    depends_on:
-      - checkout
-    when:
-      branch:
-        - release-*
-
-  - name: commit-and-push
-    image: alpine/git
-    environment:
-      DRONE_DEBUG: true
-      PAT_TOKEN:
-        from_secret: pat_token
-      GIT_EMAIL:
-        from_secret: git_email
-      GIT_NAME:
-        from_secret: git_name
-      GIT_REPO:
-        from_secret: git_repo
-    commands:
-      - set -x
-      - git config --global user.name "$GIT_NAME"
-      - git config --global user.email "$GIT_EMAIL"
-      - git add sep.json release_notes.txt
-      - new_version=$(cat version.txt)
-      - git commit -m "Update sep.json and release_notes.txt to version $new_version [ci skip]" || { echo "No changes to commit"; exit 0; }
-      - git push https://x-access-token:$PAT_TOKEN@git.essocode.ru/o-code/$GIT_REPO
-    depends_on:
-      - update-release-notes
-      - update-sep-json
-    when:
-      branch:
-        - release-*
-
-
-
-  - name: update-other-repos
-    image: alpine/git
-    environment:
-      DRONE_DEBUG: true
-      PAT_TOKEN:
-        from_secret: pat_token
-      GIT_EMAIL:
-        from_secret: git_email
-      GIT_NAME:
-        from_secret: git_name
-      REPO_LIST_SECRET:
-        from_secret: repo_list_secret
-    commands:
-      - set -x
-      - |
-        echo "$REPO_LIST_SECRET" | while IFS= read -r repo; do
-          
-          if [ -z "$repo" ]; then
-            continue
-          fi
-          echo "Текущая репа: $repo"
         
-          repo_url=$(echo "$repo" | sed 's#https://##')         
-          repo_url=$(echo "$repo_url" | sed 's#/$##')
-          echo "Текущая репа: $repo_url"
-          git clone https://x-access-token:$PAT_TOKEN@$repo_url temp_repo
+        commit_list=$(git log --pretty=format:'%s' $START_COMMIT..$END_COMMIT)
+        echo "Список коммитов:"
+        echo "$commit_list"
         
-          cd temp_repo
-          git checkout dev || git checkout -b dev
-          cp ../sep.json sep.json
-          cp ../release_notes.txt release_notes.txt
-          git add sep.json release_notes.txt
-          git config --global user.name "$GIT_NAME"
-          git config --global user.email "$GIT_EMAIL"
-          git commit -m "Update sep.json and release_notes.txt to version $new_version" || { echo "No changes to commit"; cd ..; rm -rf temp_repo; continue; }
-          git push https://x-access-token:$PAT_TOKEN@$repo_url dev
-          cd ..
-          rm -rf temp_repo
-        done
+        if [ -z "$commit_list" ]; then
+            echo "Нет коммитов в выбранном диапазоне."
+            exit 0
+        fi
+        
+        commit_list=$(git log --pretty=format:'%s' $START_COMMIT..$END_COMMIT)
+        release_notes=$(echo "$commit_list" | grep -vE "^(Merge|Revert|fixup!|squash!|docs\:|style\:|chore\:|build\:|test\:)")
+        release_notes=$(echo "$release_notes" | awk '!seen[$0]++')
+        echo "$release_notes" > release_notes.txt
+        
+        echo "Файл release_notes.txt создан."
+
     depends_on:
-      - commit-and-push
+      - rebuild-cache
     when:
       branch:
         - release-*
 
-
-  - name: save-image-archive
-    image: plugins/docker
-    environment:
-      DRONE_DEBUG: true
-      DOCKER_BUILDKIT: 1
-      GIT_REPO_V2:
-        from_secret: git_repo_v2
-    settings:
-      registry: nexus.essocode.ru:5001
-      repo: nexus.essocode.ru:5001/ess/$GIT_REPO_V2
-      tags:
-        - ${DRONE_SOURCE_BRANCH/\//-}
-    commands:
-      - docker save nexus.essocode.ru:5001/ess/$GIT_REPO_V2:${DRONE_SOURCE_BRANCH/\//-} > $GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-      - name: cache
-        path: /cache
-    depends_on:
-      - commit-and-push
-    when:
-      branch:
-        - release-*
-
-
-  - name: push-archive-to-gitlab
+  - name: push-src-to-git.cifro.tech
     image: alpine:3.12
     environment:
       DRONE_DEBUG: true
@@ -342,28 +158,26 @@ steps:
         from_secret: git_repo_v2
     commands:
       - set -x
-      - apk add --no-cache git
+      - apk add --no-cache git rsync
       - git config --global user.name "SEP CI"
       - git config --global user.email "sep_user@cifro.tech"
       - echo "$GITLAB_PAT_TOKEN"
-      - git clone https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/helm-charts.git
-      - cd helm-charts
-      - git checkout test-2
-      - mkdir -p image
-      - mv /drone/src/$GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar image/
-      - git add image/$GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar
-
-      - cp /drone/src/sep.json .
-      - cp /drone/src/release_notes.txt .
-      - git add sep.json release_notes.txt
-
-      - git commit -m "Add Docker image archive for synapi-${DRONE_SOURCE_BRANCH/\//-} in image folder"
-      - git push https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/helm-charts.git refs/heads/test-2
-      - rm -f /drone/src/$GIT_REPO_V2-${DRONE_SOURCE_BRANCH/\//-}.tar
+      - git clone https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/m4d.service.git repo
+      - cd repo
+      - echo "Создаем новую ветку"
+      - NEW_BRANCH_NAME=$(echo ${DRONE_SOURCE_BRANCH} | sed 's/^release-//')
+      - git checkout -b $NEW_BRANCH_NAME
+      - echo "Копируем содержимое, исключая папку repo"
+      - rsync -av --exclude='repo' ../* .
+      - echo "Добавляем изменения"
+      - git add .
+      - git commit -m "Релиз версии $NEW_BRANCH_NAME"
+      - echo "Пушим новую ветку на удаленный репозиторий"
+      - git push https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/m4d.service.git $NEW_BRANCH_NAME
       - cd ..
-      - rm -rf helm-charts
+      - rm -rf repo
     depends_on:
-      - save-image-archive
+      - update-release-notes
     when:
       branch:
         - release-*
