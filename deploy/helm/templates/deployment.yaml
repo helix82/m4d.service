@@ -15,14 +15,14 @@ spec:
       labels:
         app: {{ .Values.appName }}
     spec:
-      hostAliases:
-        {{- range .Values.hostAliases }}
-        - ip: "{{ .ip }}"
-          hostnames:
-            {{- range .hostnames }}
-            - "{{ . }}"
-            {{- end }}
-        {{- end }}
+#      hostAliases:
+#        {{- range .Values.hostAliases }}
+#        - ip: "{{ .ip }}"
+#          hostnames:
+#            {{- range .hostnames }}
+#            - "{{ . }}"
+#            {{- end }}
+#        {{- end }}
       terminationGracePeriodSeconds: 30
       containers:
         - name: {{ .Values.appName }}-dev
@@ -95,6 +95,31 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.M4D_HANDBOOK_URI }}
+            - name: RESOURCE_ACCESS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.RESOURCE_ACCESS }}
+            - name: RPD_LIFESPAN_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.RPD_LIFESPAN_CACHE }}
+            - name: RPD_REFRESH_TIME_CACHE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.RPD_REFRESH_TIME_CACHE }}
+            - name: RPD_CONNECTION_TIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.RPD_CONNECTION_TIMEOUT }}
+            - name: RPD_READ_TIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.RPD_READ_TIMEOUT }}
       imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
         - name: {{ . }}
