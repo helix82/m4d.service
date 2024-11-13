@@ -14,6 +14,7 @@ public interface M4dRecallService {
     M4d findMrpaRecallById(Long id);
     M4dRecall findById(Long id);
     void deleteMrpaRecallById(Long id);
+    void updateMrpaRecallById(Long id, Long fileId);
     M4dRecall updateMrpaRecall(M4dRecall mrpaRecall);
     List<M4dResponseDto> findAllM4dRevokeUsers(Authentication authentication);
     M4dRevokeXml ConvertMrpaRecallToXml(M4dResponseDto mrpaRegistryResponseDto);

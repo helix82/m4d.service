@@ -354,14 +354,13 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
 
-        mrpaRegistryFind.getMrpaRecall().setM4dFile(m4dFileSaved);
-        M4d mrpaRegistrySaved;
         try {
-            mrpaRegistrySaved = this.m4dService.saveMrpaRegistry(mrpaRegistryFind);
+            this.m4dRecallService.updateMrpaRecallById(id, m4dFileSaved.getId());
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        return findMrpaRecallById(mrpaRegistrySaved.getMrpaRecall().getId());
+
+        return findMrpaRecallById(mrpaRegistryFind.getMrpaRecall().getId());
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {

@@ -29,15 +29,13 @@ import java.util.stream.Collectors;
 public class M4dRecallServiceImpl implements M4dRecallService {
     private final M4dRecallRepository m4dRevokeRepository;
     private final M4dRepository m4dRepository;
-    private final M4dRevokeMapper m4dRevokeMapper;
     private final M4dService m4dService;
     private final UserCertificateService userCertificateService;
 
-    public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository, M4dRevokeMapper m4dRevokeMapper,
+    public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository,
                                 @Lazy M4dService m4dService, UserCertificateService userCertificateService, UserCertificateService userCertificateService1) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
-        this.m4dRevokeMapper = m4dRevokeMapper;
         this.m4dService = m4dService;
         this.userCertificateService = userCertificateService1;
     }
@@ -67,6 +65,11 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         mrpaRegistry.setMrpaRecall(null);
         this.m4dRepository.save(mrpaRegistry);
         this.m4dRevokeRepository.deleteById(id);
+    }
+
+    @Override
+    public void updateMrpaRecallById(Long id, Long fileId) {
+        this.m4dRevokeRepository.updateMrpaRecallById(id, fileId);
     }
 
     @Override
