@@ -26,6 +26,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/migrations/v1.0/delete_unique_from_table_m4d_revoke.sql
   - include:
-      file: db/changelog/migrations/v1.0/add_unique_field_table_m4d_revoke.sql
-  - include:
       file: db/changelog/migrations/v1.0/rename_field_content_in_table_m4d_file.sql
