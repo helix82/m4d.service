@@ -1,8 +1,10 @@
 package su.opencode.digsigcik.m4d.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 
@@ -24,4 +26,9 @@ public interface M4dRecallRepository extends JpaRepository<M4dRecall, Long> {
             + "join Representative r on r.id = m4d.representativeId "
             + "where (p.inn IN (:innList) or r.inn IN (:innList))")
     List<M4dResponseDto> findListM4dRevokeBySetInn(@Param("innList") Set<String> innList);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE m4d_revoke SET sig_file_id = :fileId WHERE id = :id", nativeQuery = true)
+    void updateMrpaRecallById(@Param("id") Long id, @Param("fileId") Long fileId);
 }
