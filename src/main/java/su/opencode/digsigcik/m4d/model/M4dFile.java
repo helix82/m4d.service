@@ -35,7 +35,7 @@ public class M4dFile {
     @JsonProperty("filename")
     private String filename;
 
-    @Column(name = "content", columnDefinition = "TEXT")
+    @Column(name = "file_content", columnDefinition = "TEXT")
     @Schema(example = "")
     @JsonProperty("content")
     private String content;
