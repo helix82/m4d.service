@@ -154,8 +154,6 @@ steps:
       DRONE_DEBUG: true
       GITLAB_PAT_TOKEN:
         from_secret: gitlab_pat_token
-      GIT_REPO_V2:
-        from_secret: git_repo_v2
     commands:
       - set -x
       - apk add --no-cache git rsync
