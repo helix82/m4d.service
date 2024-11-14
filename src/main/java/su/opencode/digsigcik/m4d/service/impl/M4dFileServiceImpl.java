@@ -20,8 +20,7 @@ public class M4dFileServiceImpl implements M4dFileService {
 
     @Override
     public M4dFile findM4dFileById(@NotNull Long id) {
-        M4dFile m4dFile = this.repository.findM4dFileById(id);
-        return m4dFile;
+        return this.repository.findM4dFileById(id);
     }
 
     @Override
@@ -32,5 +31,10 @@ public class M4dFileServiceImpl implements M4dFileService {
     @Override
     public M4dFile saveM4dFile(@NotNull M4dFile m4dFile) {
         return this.repository.save(m4dFile);
+    }
+
+    @Override
+    public M4dFile findM4dFileByContent(@NotNull String content) {
+        return this.repository.findFirstByContent(content);
     }
 }

@@ -385,7 +385,14 @@ public class M4dController {
             m4dFile.setContent(Arrays.toString(byteArrayOutputStream.toByteArray()));
         }
 
-        m4d.setM4dFile(m4dFile);
+        M4dFile existsM4dFile;
+        try {
+            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        m4d.setM4dFile(Objects.requireNonNullElse(existsM4dFile, m4dFile));
+
         M4d m4dSaved;
         try {
             m4dSaved = this.m4dService.saveMrpaRegistry(m4d);

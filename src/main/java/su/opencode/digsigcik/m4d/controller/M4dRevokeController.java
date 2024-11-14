@@ -312,8 +312,6 @@ public class M4dRevokeController {
         }
         assert res != null;
         var resource = new ByteArrayResource(res.getByteArray());
-
-
         try {
             mrpaRegistryFind = this.m4dRecallService.findMrpaRecallById(id);
         } catch (ConstraintViolationException e) {
@@ -346,16 +344,26 @@ public class M4dRevokeController {
             }
             m4dFile.setContent(Arrays.toString(byteArrayOutputStream.toByteArray()));
         }
-
+        M4dFile existsM4dFile;
         M4dFile m4dFileSaved;
+        Long fileId;
         try {
-            m4dFileSaved = this.m4dFileService.saveM4dFile(m4dFile);
+            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-
+        if (existsM4dFile == null){
+            try {
+                m4dFileSaved = this.m4dFileService.saveM4dFile(m4dFile);
+            } catch (ConstraintViolationException e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+            fileId = m4dFileSaved.getId();
+        } else {
+            fileId = existsM4dFile.getId();
+        }
         try {
-            this.m4dRecallService.updateMrpaRecallById(id, m4dFileSaved.getId());
+            this.m4dRecallService.updateMrpaRecallById(id, fileId);
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }

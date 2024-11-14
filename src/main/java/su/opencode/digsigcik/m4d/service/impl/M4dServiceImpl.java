@@ -678,9 +678,6 @@ public class M4dServiceImpl implements M4dService {
         M4dFile m4dFile;
         try {
             m4dFile = this.m4dFileService.findM4dFileById(m4d.getM4dFile().getId());
-            if (!withM4dSigFile) {
-                m4dFile.setContent(null);
-            }
             if (m4dFile != null) {
                 M4dResponseDto.SigFileDTO sigFileDTO = convertSigFileToDto(m4dFile);
                 if (!withM4dSigFile) {
@@ -694,9 +691,6 @@ public class M4dServiceImpl implements M4dService {
         M4dFile m4dFileRecall;
         try {
             m4dFileRecall = this.m4dFileService.findM4dFileById(m4d.getMrpaRecall().getM4dFile().getId());
-            if (!withRecallSigFile) {
-                m4dFileRecall.setContent(null);
-            }
             if (m4dFileRecall != null) {
                 M4dResponseDto.RecallDTO.SigFileDTO sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
                 if (!withRecallSigFile) {

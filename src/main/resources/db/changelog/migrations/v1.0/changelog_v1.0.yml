@@ -29,3 +29,5 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/rename_field_content_in_table_m4d_file.sql
   - include:
       file: db/changelog/migrations/v1.0/change_m4d_file_content.sql
+  - include:
+      file: db/changelog/migrations/v1.0/return_not_null_content_and_unique_file_id.sql
