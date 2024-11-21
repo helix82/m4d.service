@@ -10,3 +10,6 @@ spec:
     - name: http
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
+    - name: TCP
+      port: {{ .Values.service.portJMX }}
+      targetPort: {{ .Values.service.targetPortJMX }}

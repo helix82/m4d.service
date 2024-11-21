@@ -38,6 +38,10 @@ spec:
   ports:
     - port: 8051
       targetPort: 8051
+    - protocol: TCP
+      name: "jmx"
+      port: 9010
+      targetPort: 9010
   selector:
     app: m4d
 ---
@@ -67,6 +71,12 @@ spec:
           imagePullPolicy: IfNotPresent
           command:
             - java
+            - -Dcom.sun.management.jmxremote
+            - -Dcom.sun.management.jmxremote.port=9010
+            - -Dcom.sun.management.jmxremote.authenticate=false
+            - -Dcom.sun.management.jmxremote.ssl=false
+            - -Djava.rmi.server.hostname=localhost
+            - -Dcom.sun.management.jmxremote.local.only=false
             - -Xms2G
             - -Xmx64G
             - -XX:+UseG1GC
@@ -76,6 +86,7 @@ spec:
             - m4d-0.0.1-SNAPSHOT.jar
           ports:
             - containerPort: 8051
+            - containerPort: 9010
           env:
             - name: OAUTH2_ISSUER_URL
               valueFrom:

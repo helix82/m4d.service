@@ -33,12 +33,19 @@ spec:
             - "-Xms{{ .Values.jvmOptions.xms }}"
             - "-Xmx{{ .Values.jvmOptions.xmx }}"
             - "{{ .Values.jvmOptions.gc }}"
+            - "-Dcom.sun.management.jmxremote"
+            - "-Dcom.sun.management.jmxremote.port={{ .Values.jvmOptions.portJMX }}"
+            - "-Dcom.sun.management.jmxremote.authenticate={{ .Values.jvmOptions.authenticateJMX }}"
+            - "-Dcom.sun.management.jmxremote.ssl={{ .Values.jvmOptions.sslJMX }}"
+            - "-Djava.rmi.server.hostname={{ .Values.jvmOptions.hostnameJMX }}"
+            - "-Dcom.sun.management.jmxremote.local.only={{ .Values.jvmOptions.localOnlyJMX }}"
             - "-XX:MinHeapFreeRatio={{ .Values.jvmOptions.minHeapFreeRatio }}"
             - "-XX:MaxHeapFreeRatio={{ .Values.jvmOptions.maxHeapFreeRatio }}"
             - -jar
             - "{{ .Values.jarFile }}"
           ports:
             - containerPort: {{ .Values.service.port }}
+            - containerPort: {{ .Values.service.portJMX }}
           env:
             - name: OAUTH2_ISSUER_URL
               valueFrom:

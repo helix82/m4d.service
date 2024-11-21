@@ -10,6 +10,8 @@ service:
   type: ClusterIP
   port: 8051
   targetPort: 8051
+  portJMX: 9010
+  targetPortJMX: 9010
 
 replicaCount: 1
 
@@ -62,6 +64,11 @@ jvmOptions:
   gc: "-XX:+UseG1GC"
   minHeapFreeRatio: 10
   maxHeapFreeRatio: 30
+  portJMX: 9010
+  authenticateJMX: false
+  sslJMX: false
+  hostnameJMX: localhost
+  localOnlyJMX: false
 
 jarFile: m4d-0.0.1-SNAPSHOT.jar
 
