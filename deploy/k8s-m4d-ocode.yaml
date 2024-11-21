@@ -36,7 +36,8 @@ metadata:
   namespace: ocode-dev
 spec:
   ports:
-    - port: 8051
+    - name: "8051"
+      port: 8051
       targetPort: 8051
     - protocol: TCP
       name: "jmx"
