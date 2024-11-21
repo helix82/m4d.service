@@ -27,7 +27,7 @@ import java.util.Collections;
 
                 ),
                 title = "API Documentation",
-                version = "3.0"
+                version = "2.4"
         ),
         security = {
                 @SecurityRequirement(

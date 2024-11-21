@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    password: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/m4d_scheme}
-    username: ${SPRING_DATASOURCE_PASSWORD:root}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
     driver-class-name: org.postgresql.Driver
   liquibase:
     change-log: classpath:db/changelog/db.changelog_master.yml
