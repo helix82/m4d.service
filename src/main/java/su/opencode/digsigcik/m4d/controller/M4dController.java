@@ -37,8 +37,8 @@ import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.text.ParseException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -498,6 +498,7 @@ public class M4dController {
             M4d m4d = new M4d();
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             m4d.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
+            m4d.setCreateDate(LocalDateTime.now());
             m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
             m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
@@ -522,21 +523,26 @@ public class M4dController {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(PRINCIPAL_IS_NULL), HttpStatus.BAD_REQUEST);
             }
             Representative representative = new Representative();
-            representative.setInn(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.getInn());
-            representative.setSnils(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.getSnils());
-            representative.setBirthDate(Timestamp.valueOf(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString()).toLocalDateTime());
-            representative.setName(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
-            representative.setSurname(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
-            representative.setPatronymic(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
-            if (representative.getInn() == null || representative.getInn().isEmpty()) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(REPRESENTATIVE_IS_NULL), HttpStatus.BAD_REQUEST);
-            }
             RepresentativePassport represPassport = new RepresentativePassport();
-            represPassport.setSeriesNumber(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-            represPassport.setDateIssue(Timestamp.valueOf(DateUtils.parse(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()).toLocalDateTime());
-            represPassport.setWhoIssue(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
-            represPassport.setDepartmentCode(m4dXml.document.powerAttorneys.infoRepresentative.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
-
+            for (M4dXml.Document.PowerAttorneys.InfoRepresentative c: m4dXml.document.powerAttorneys.infoRepresentative) {
+                if (Objects.equals(c.getTypeRepresentative(), "3")) {
+                    if (c.representative.detailRepresentative != null) {
+                        representative.setInn(c.representative.detailRepresentative.getInn());
+                        representative.setSnils(c.representative.detailRepresentative.getSnils());
+                        representative.setBirthDate(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString()));
+                        representative.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
+                        representative.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
+                        representative.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
+                        if (representative.getInn() == null || representative.getInn().isEmpty()) {
+                            return new ResponseEntity<>(getCustomErrorJsonFromString(REPRESENTATIVE_IS_NULL), HttpStatus.BAD_REQUEST);
+                        }
+                        represPassport.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
+                        represPassport.setDateIssue(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()));
+                        represPassport.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
+                        represPassport.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
+                    }
+                }
+            }
             List<CredentialDto> credentialList = new ArrayList<>();
             if (m4dXml.document.powerAttorneys.credential.credentials != null) {
                 for (M4dXml.Document.PowerAttorneys.Credentials.Credential c : m4dXml.document.powerAttorneys.credential.credentials) {
@@ -627,14 +633,22 @@ public class M4dController {
 
     private LocalDateTime convertStringToLocalDateTime(String date) {
         DateTimeFormatter formatter;
-        if (date.length() > 20) {
+        LocalDateTime localDateTime;
+        if (date.length() == 10) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate localDate = LocalDate.parse(date, formatter);
+            localDateTime = localDate.atStartOfDay();
+        } else if (date.length() > 20) {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
         } else if (date.length() == 16) {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
         } else {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
         }
-        return LocalDateTime.from(formatter.parse(date));
+        return localDateTime;
     }
 
 }

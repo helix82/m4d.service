@@ -103,7 +103,7 @@ public class M4dServiceImpl implements M4dService {
                 orgId = respOrganisation.getId();
             } else if (!existsOrganisation.getInn().equals(organisation.getInn()) || !existsOrganisation.getKpp().equals(organisation.getKpp())
                     || !existsOrganisation.getOgrn().equals(organisation.getOgrn()) || !existsOrganisation.getName().equals(organisation.getName())
-                    || !existsOrganisation.getLegalAddress().equals(organisation.getLegalAddress()) || !existsOrganisation.getRegionCode().equals(organisation.getRegionCode())) {
+                    || !existsOrganisation.getRegionCode().equals(organisation.getRegionCode())) { //|| !existsOrganisation.getLegalAddress().equals(organisation.getLegalAddress())
                 Organisation respOrganisation;
                 try {
                     organisation.setId(existsOrganisation.getId());
