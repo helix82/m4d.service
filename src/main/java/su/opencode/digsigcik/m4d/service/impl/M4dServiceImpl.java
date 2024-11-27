@@ -720,6 +720,136 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
+//    public PublicKeyUserCertificate parseSigSerializingContent(MultipartFile sigFile) throws IOException, CertificateEncodingException, URISyntaxException {
+//
+//        PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
+//        X509Certificate certificate = new CertificateContentWrapper(sourceFile.getBytes())
+//                .decodeToX509();
+//
+//        publicKeyUserCertificate.setDeleted(false);
+//        publicKeyUserCertificate.setSerialNumber(HashUtils.bytesToHex(certificate.getSerialNumber().toByteArray()));
+//        publicKeyUserCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
+//        publicKeyUserCertificate.setDateEnd(convertRFC1123ToIsoInstant(certificate.getNotAfter().toString()));
+//        var substr1 = certificate.getIssuerDN().getName().split(", ");
+//
+//        String ogrnIssuer, innIssuer, streetIssuer, cIssuer, sIssuer, lIssuer, oIssuer, cnIssuer;
+//        ogrnIssuer = innIssuer = streetIssuer = cIssuer = sIssuer = lIssuer = oIssuer = cnIssuer = "";
+//        for (String s : substr1) {
+//            if (s.length() > 2) {
+//                if (s.startsWith("CN=")) {
+//                    cnIssuer = s.substring(3);
+//                }
+//                if (s.startsWith("O=")) {
+//                    oIssuer = s.substring(2);
+//                }
+//                if (s.startsWith("STREET=")) {
+//                    streetIssuer = s.substring(7);
+//                }
+//                if (s.startsWith("L=")) {
+//                    lIssuer = s.substring(2);
+//                }
+//                if (s.startsWith("ST=")) {
+//                    sIssuer = s.substring(3);
+//                }
+//                if (s.startsWith("C=")) {
+//                    cIssuer = s.substring(2);
+//                }
+//                if (s.startsWith("OID.1.2.643.100.1=")) {
+//                    String hexStr = s.substring(23);
+//                    StringBuilder output = new StringBuilder();
+//                    for (int i = 0; i < hexStr.length(); i += 2) {
+//                        String str1 = hexStr.substring(i, i + 2);
+//                        output.append((char) Integer.parseInt(str1, 16));
+//                    }
+//                    ogrnIssuer = output.toString();
+//                }
+//                if (s.startsWith("OID.1.2.643.100.4=")) {
+//                    String hexStr = s.substring(23);
+//                    StringBuilder output = new StringBuilder();
+//                    for (int i = 0; i < hexStr.length(); i += 2) {
+//                        String str1 = hexStr.substring(i, i + 2);
+//                        output.append((char) Integer.parseInt(str1, 16));
+//                    }
+//                    innIssuer = output.toString();
+//                }
+//            }
+//        }
+//        publicKeyUserCertificate.setIssuerWho("ОГРН=" + ogrnIssuer + ", ИНН=" + innIssuer + ", STREET=" + streetIssuer + ", C=" + cIssuer + ", S=" + sIssuer + ", L=" + lIssuer + ", O=" + oIssuer + ", CN=" + cnIssuer);
+//
+//        String oid1 = Extension.authorityKeyIdentifier.getId();
+//        byte[] extValue1 = certificate.getExtensionValue(oid1);
+//        if (extValue1 == null) {
+//            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NOT);
+//        }
+//        if (isCertificateQualified(certificate)) {
+//            publicKeyUserCertificate.setType(TypeUserCertificateEnum.QUALIFIED);
+//        } else {
+//            publicKeyUserCertificate.setType(TypeUserCertificateEnum.NOT_QUALIFIED);
+//        }
+//
+//        String surname = "";
+//        String givenname = "";
+//        String fio = "";
+//        String inn = "";
+//        var substrSubject = certificate.getSubjectDN().getName().split(", ");
+//        for (String s : substrSubject) {
+//            if (s.length() > 2) {
+//                if (s.startsWith("O=")) {
+//                    publicKeyUserCertificate.setOrganization(s.substring(2));
+//                }
+//                if (s.startsWith("CN=")) {
+//                    fio = s.substring(3);
+//                }
+//                if (s.startsWith("SURNAME=")) {
+//                    surname = s.substring(8);
+//                }
+//                if (s.startsWith("GIVENNAME=")) {
+//                    givenname = s.substring(10);
+//                }
+//                if (s.startsWith("OID.1.2.643.3.131.1.1=")) {
+//                    String hexStr = s.substring(27);
+//                    StringBuilder output = new StringBuilder();
+//                    for (int i = 0; i < hexStr.length(); i += 2) {
+//                        String str1 = hexStr.substring(i, i + 2);
+//                        output.append((char) Integer.parseInt(str1, 16));
+//                    }
+//                    inn = output.toString();
+//                }
+//            }
+//        }
+//        if (inn != "") {
+//            publicKeyUserCertificate.setInn(inn);
+//        }
+//        if (surname != "" && givenname != "") {
+//            publicKeyUserCertificate.setFio(surname + ' ' + givenname);
+//        } else if (fio != "") {
+//            publicKeyUserCertificate.setFio(fio);
+//        }
+//        String dateStartPrivateKey = "";
+//        String dateEndPrivateKey = "";
+//        String oid = Extension.privateKeyUsagePeriod.getId();
+//        byte[] extValue = certificate.getExtensionValue(oid);
+//        if (extValue != null) {
+//            ASN1OctetString akiOc = ASN1OctetString.getInstance(extValue);
+//            PrivateKeyUsagePeriod aki = PrivateKeyUsagePeriod.getInstance(akiOc.getOctets());
+//            dateStartPrivateKey = convertDateCertificateToIsoInstant(aki.getNotBefore().getTime());
+//            dateEndPrivateKey = convertDateCertificateToIsoInstant(aki.getNotAfter().getTime());
+//        } else {
+//            dateStartPrivateKey = convertRFC1123ToIsoInstant(certificate.getNotBefore().toString());
+//            dateEndPrivateKey = convertRFC1123ToIsoInstant(certificate.getNotAfter().toString());
+//        }
+//        publicKeyUserCertificate.setDateStartPrivateKey(dateStartPrivateKey); //2.5.29.16
+//        publicKeyUserCertificate.setDateEndPrivateKey(dateEndPrivateKey);
+//
+//        publicKeyUserCertificate.setCertificate(sourceFile.getBytes());
+//        publicKeyUserCertificate.setOriginalFilename(sourceFile.getOriginalFilename());
+//        publicKeyUserCertificate.setRevocationStatus(UserCertificateRevocationStatus.INTERRUPTED);
+//        publicKeyUserCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
+//        publicKeyUserCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
+//
+//        return publicKeyUserCertificate;
+//    }
+
     private M4dResponseDto.SigFileDTO convertSigFileToDto(M4dFile m4dFile) {
         M4dResponseDto.SigFileDTO sigFileDto = modelMapper.map(m4dFile, M4dResponseDto.SigFileDTO.class);
         return sigFileDto;

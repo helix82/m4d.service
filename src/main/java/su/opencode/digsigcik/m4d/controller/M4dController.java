@@ -16,6 +16,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
@@ -23,6 +25,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
 import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.response.AuthResponse;
+import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
@@ -36,6 +40,7 @@ import su.opencode.digsigcik.m4d.util.XmlValidator;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.*;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -55,6 +60,8 @@ import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 public class M4dController {
     @Value("${m4d.handbook.uri}")
     private String HANDBOOK_URI;
+    @Value("${m4d.api_rr_fns.uri}")
+    private String API_RR_FNS_URI;
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
@@ -451,7 +458,7 @@ public class M4dController {
     public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException, ParseException, SAXException, JAXBException {
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
-            return new ResponseEntity<>(MRPA_REGISTRY_WRONG_FORMAT_XML, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
         }
 
         List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
@@ -555,6 +562,157 @@ public class M4dController {
             }
 
             return findMrpaRegistryById((Long) m4dSaved.getBody());
+        }
+        Map<String, String> body = new HashMap<>();
+        List<String> errs = new ArrayList<>();
+        res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
+        body.put("details", String.join(System.lineSeparator(), errs));
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> verifyInFns(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile, @RequestPart("sigFile") MultipartFile sigFile) throws IOException, SAXException {
+        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
+        if (!Objects.equals(extension, "xml")) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+        }
+
+        //List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
+        List<SAXParseException> res = new XmlValidator("xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
+        System.out.println(res.size());
+        String content;
+        if (res.isEmpty()) {
+            try (InputStream is = sourceFile.getInputStream()) {
+                byte[] bom = new byte[3];
+                int n = is.read(bom, 0, bom.length);
+                Reader reader;
+                if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
+                    reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+                } else {
+                    reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
+                }
+                StringBuilder cont = new StringBuilder();
+                char[] buffer = new char[1024];
+                int numRead;
+                while ((numRead = reader.read(buffer)) != -1) {
+                    cont.append(buffer, 0, numRead);
+                }
+                content = cont.toString();
+            }
+
+            M4dXml m4dXml;
+            try {
+                Document document = convertStringToDocument(content);
+                assert document != null;
+                m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
+            } catch (Exception e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+            }
+
+            if (m4dXml == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
+            }
+
+            String guidXml;
+            guidXml = m4dXml.document.powerAttorneys.getMrpa().getGuid();
+            System.out.println(guidXml);
+
+            AuthResponse authResponse = null;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(Collections.singletonList(MediaType.ALL));
+            String username = "demo-client";
+            String password = "secret";
+            String auth = username + ":" + password;
+            byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+            String authHeader = "Basic " + new String(encodedAuth);
+            headers.set("Authorization", authHeader);
+            String requestBody = "{ \"username\": \"operator\", \"password\": \"operator\", \"grant_type\": \"password\" }";
+            HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+
+
+            try {
+                ResponseEntity<AuthResponse> response = restTemplate.exchange(
+                    API_RR_FNS_URI + "/vst-oauth2/oauth/token",
+                    HttpMethod.POST,
+                    requestEntity,
+                    AuthResponse.class
+                );
+                authResponse = response.getBody();
+            } catch (HttpClientErrorException e) {
+                // Обработка ошибок клиента, включая 404
+                if (e.getStatusCode().value() == 404) {
+                    System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдено МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
+                } else {
+                    System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                }
+            } catch (ResourceAccessException e) {
+                // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
+                System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
+                if (e.getCause() instanceof UnknownHostException) {
+                    System.out.println("Неизвестный хост: " + e.getCause().getMessage());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/vst-oauth2/oauth/token недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
+                }
+            } catch (Exception e) {
+                // Обработка других исключений
+                System.out.println("Произошла ошибка: " + e.getMessage());
+            }
+
+            if (authResponse == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка авторизации"), HttpStatus.BAD_REQUEST);
+            }
+
+            M4dFnsDataResponse m4dFnsDataResponse = null;
+            HttpHeaders headers1 = new HttpHeaders();
+            headers1.setAccept(Collections.singletonList(MediaType.ALL));
+            headers1.set("Authorization", "Bearer " + authResponse.getAccessToken());
+            HttpEntity<String> requestEntity1 = new HttpEntity<>(headers1);
+
+            try {
+                ResponseEntity<M4dFnsDataResponse> response1 = restTemplate.exchange(
+                        API_RR_FNS_URI + "/poar-webapp/integration/poa/" + guidXml + "/public",
+                        HttpMethod.GET,
+                        requestEntity1,
+                        M4dFnsDataResponse.class
+                );
+                m4dFnsDataResponse = response1.getBody();
+            } catch (HttpClientErrorException e) {
+                // Обработка ошибок клиента, включая 404
+                if (e.getStatusCode().value() == 404) {
+                    System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдено МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
+                } else {
+                    System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                }
+            } catch (ResourceAccessException e) {
+                // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
+                System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
+                if (e.getCause() instanceof UnknownHostException) {
+                    System.out.println("Неизвестный хост: " + e.getCause().getMessage());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/poar-webapp/integration/poa/ недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
+                }
+            } catch (Exception e) {
+                // Обработка других исключений
+                System.out.println("Произошла ошибка: " + e.getMessage());
+            }
+            if (m4dFnsDataResponse == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка получения данных по МЧД с сайта РР МЧД ФНС"), HttpStatus.BAD_REQUEST);
+            }
+
+// сверка данных PublicKey, SnilsHash, OgrnHash из m4dFnsDataResponse с соответствующими данными из подписи sig-файла
+
+            String status = "ACTIVE";
+            return new ResponseEntity<>(status, HttpStatus.OK);
         }
         Map<String, String> body = new HashMap<>();
         List<String> errs = new ArrayList<>();

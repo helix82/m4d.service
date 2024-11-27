@@ -118,6 +118,8 @@ public interface Constants {
     String CONTROLLER_MRPA_UPLOAD_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_UPLOAD_XML_SUMMARY = "Импорт МЧД";
     String CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_VERIFY_XML_SUMMARY = "Проверка МЧД через РР ФНС";
+    String CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION = "Возвращает результат проверки";
     String CONTROLLER_MRPA_CLEAR_SIG_SUMMARY = "Удалить ЭП МЧД";
     String CONTROLLER_MRPA_CLEAR_SIG_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY = "Получить список МЧД пользователя";
