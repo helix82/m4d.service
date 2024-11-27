@@ -176,7 +176,7 @@ public class M4dXml {
             }
 
             @XmlElement(name = XML_ELEMENT_INFO_REPRESENTATIVE)
-            public InfoRepresentative infoRepresentative;
+            public List<InfoRepresentative> infoRepresentative;
 
             @XmlRootElement
             @XmlAccessorType(XmlAccessType.FIELD)
