@@ -42,6 +42,9 @@ import javax.xml.bind.JAXBException;
 import java.io.*;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -584,7 +587,7 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> verifyInFns(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile, @RequestPart("sigFile") MultipartFile sigFile) throws IOException, SAXException {
+    public ResponseEntity<?> verifyInFns(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile, @RequestPart("sigFile") MultipartFile sigFile) throws IOException, SAXException, CertificateException {
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
@@ -716,6 +719,80 @@ public class M4dController {
             }
 
 // сверка данных PublicKey, SnilsHash, OgrnHash из m4dFnsDataResponse с соответствующими данными из подписи sig-файла
+            String sigPublicKey;
+            String sigSnils;
+            String sigOgrn;
+
+            String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----";
+            String END_CERTIFICATE = "-----END CERTIFICATE-----";
+            StringBuilder updatedContent = new StringBuilder();
+
+            try {
+                String originalContent = new String(sigFile.getBytes());
+                boolean hasBegin = originalContent.contains(BEGIN_CERTIFICATE);
+                boolean hasEnd = originalContent.contains(END_CERTIFICATE);
+                if (!hasBegin) {
+                    updatedContent.append(BEGIN_CERTIFICATE).append(System.lineSeparator());
+                }
+                updatedContent.append(originalContent);
+                if (!hasEnd) {
+                    updatedContent.append(System.lineSeparator()).append(END_CERTIFICATE);
+                }
+
+//                // Создаем временный файл для нового сертификата
+//                File tempFile = File.createTempFile("updated_certificate", ".crt");
+//                try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
+//                    writer.write(updatedContent.toString());
+//                }
+//
+//                // Теперь у вас есть файл с добавленными строками
+//                System.out.println("Обновленный сертификат сохранен в: " + tempFile.getAbsolutePath());
+
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+//            X509Certificate certificate = new CertificateContentWrapper(updatedContent.toString())
+//                    .decodeToX509();
+
+            String tempFileName;
+            FileOutputStream fo;
+            tempFileName = "/tmp/" + sigFile.getOriginalFilename();
+            fo = new FileOutputStream(tempFileName);
+            fo.write(updatedContent.toString().getBytes());
+            fo.close();
+            FileInputStream fis = new FileInputStream(tempFileName);
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate certificate = (X509Certificate) cf.generateCertificate(fis);
+
+            sigPublicKey = certificate.getPublicKey().toString();
+            var substrSubject = certificate.getSubjectDN().getName().split(", ");
+            for (String s : substrSubject) {
+                if (s.length() > 2) {
+                    if (s.startsWith("OID.1.2.643.100.3=")) {
+                        String hexStr = s.substring(23);
+                        StringBuilder output = new StringBuilder();
+                        for (int i = 0; i < hexStr.length(); i += 2) {
+                            String str1 = hexStr.substring(i, i + 2);
+                            output.append((char) Integer.parseInt(str1, 16));
+                        }
+                        sigSnils = output.toString();
+                    }
+                    if (s.startsWith("OID.1.2.643.3.131.1.1=")) {
+                        String hexStr = s.substring(27);
+                        StringBuilder output = new StringBuilder();
+                        for (int i = 0; i < hexStr.length(); i += 2) {
+                            String str1 = hexStr.substring(i, i + 2);
+                            output.append((char) Integer.parseInt(str1, 16));
+                        }
+                        sigOgrn = output.toString();
+                    }
+
+                }
+            }
+
 
             String status = "ACTIVE";
             return new ResponseEntity<>(status, HttpStatus.OK);
