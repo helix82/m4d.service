@@ -23,7 +23,9 @@ public class UserCertificateServiceImpl implements UserCertificateService {
     @Value("${m4d.handbook.uri}")
     private String HANDBOOK_URI;
     private final RestTemplateService restTemplateService;
-    public static final String USER_CERTIFICATE_ME = "/user-certificate/me";
+
+    // TODO: вынести в вальюсы, потом поменять обратно на user-certificate
+    public static final String USER_CERTIFICATE_ME = "/user_certificate/me";
 
     @Override
     public Set<String> getUserCertificateINNs(Authentication authentication) {
