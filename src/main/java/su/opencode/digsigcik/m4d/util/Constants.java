@@ -118,6 +118,10 @@ public interface Constants {
     String CONTROLLER_MRPA_UPLOAD_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_UPLOAD_XML_SUMMARY = "Импорт МЧД";
     String CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_VERIFY_XML_SUMMARY = "Проверка МЧД через РР ФНС";
+    String CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION = "Возвращает результат проверки";
+    String CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY = "Получить статус проверки МЧД через РР ФНС";
+    String CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION = "Возвращает запись статуса проверки МЧД";
     String CONTROLLER_MRPA_CLEAR_SIG_SUMMARY = "Удалить ЭП МЧД";
     String CONTROLLER_MRPA_CLEAR_SIG_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY = "Получить список МЧД пользователя";
@@ -164,6 +168,7 @@ public interface Constants {
     String NULL = "null";
     String NOT_FOUND = "not found!";
     String ID_IS_NULL = String.format("ID is %s", NULL);
+    String GUID_IS_NULL = String.format("GUID is %s", NULL);
     String INN_IS_NULL = String.format("INN is %s", NULL);
     String MRPA_IS_NULL = String.format("MRPA is %s", NULL);
     String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
@@ -179,6 +184,7 @@ public interface Constants {
     String MRPA_REGISTRY_XML_NOT_VERIFY = "XML не прошел проверку";
     String MRPA_REGISTRY_NOT_VERIFY_REPORT = "Контейнер не прошел проверку (по отчёту верификации)";
     String MRPA_REGISTRY_NOT_VERIFY_CONTENT = "Контейнер не прошел проверку (данные МЧД и контент контейнера не совпадают)";
+    String MRPA_VERIFY_STATUS_IS_NULL = String.format("Mrpa verify status is %s!", NULL);
     String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
     String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);
     String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);

@@ -102,6 +102,8 @@ springdoc:
 m4d:
   handbook:
     uri: ${M4D_HANDBOOK_URI:https://sp.essocode.ru/api/v1}
+  api_rr_fns:
+    uri: ${M4D_API_RR_FNS_URI:https://operator.cprr-it.weintegrator.com/api/v0}
 
 # Временное решение до полноценного внедрения kafka
 audit:
