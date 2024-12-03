@@ -16,8 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
@@ -25,8 +23,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
 import su.opencode.digsigcik.m4d.dto.*;
-import su.opencode.digsigcik.m4d.dto.response.AuthResponse;
-import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
@@ -40,11 +36,8 @@ import su.opencode.digsigcik.m4d.util.XmlValidator;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.*;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -63,8 +56,6 @@ import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 public class M4dController {
     @Value("${m4d.handbook.uri}")
     private String HANDBOOK_URI;
-    @Value("${m4d.api_rr_fns.uri}")
-    private String API_RR_FNS_URI;
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
@@ -165,7 +156,7 @@ public class M4dController {
     public ResponseEntity<?> findMrpaRegistryByGuid(@PathVariable @Parameter(name = "guid",
             description = PARAMETER_MRPA_GUID_DESCRIPTION, example = "1") String guid) throws ParseException, JAXBException {
         if (guid == null || guid.isEmpty()) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(GUID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         M4d m4d;
         try {
@@ -588,221 +579,31 @@ public class M4dController {
     })
     @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> verifyInFns(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile, @RequestPart("sigFile") MultipartFile sigFile) throws IOException, SAXException, CertificateException {
-        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
-        if (!Objects.equals(extension, "xml")) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+        return m4dService.verifyInFns(authentication, sourceFile, sigFile);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PostMapping(value = "/verify/{guid}", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> getStatusVerifyInFns(@PathVariable @Parameter(name = "guid",
+            description = PARAMETER_MRPA_GUID_DESCRIPTION, example = "1") String guid) {
+        if (guid == null || guid.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(GUID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
-
-        //List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
-        List<SAXParseException> res = new XmlValidator("xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
-        System.out.println(res.size());
-        String content;
-        if (res.isEmpty()) {
-            try (InputStream is = sourceFile.getInputStream()) {
-                byte[] bom = new byte[3];
-                int n = is.read(bom, 0, bom.length);
-                Reader reader;
-                if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
-                    reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                } else {
-                    reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
-                }
-                StringBuilder cont = new StringBuilder();
-                char[] buffer = new char[1024];
-                int numRead;
-                while ((numRead = reader.read(buffer)) != -1) {
-                    cont.append(buffer, 0, numRead);
-                }
-                content = cont.toString();
-            }
-
-            M4dXml m4dXml;
-            try {
-                Document document = convertStringToDocument(content);
-                assert document != null;
-                m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
-            } catch (Exception e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
-            }
-
-            if (m4dXml == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
-            }
-
-            String guidXml;
-            guidXml = m4dXml.document.powerAttorneys.getMrpa().getGuid();
-            System.out.println(guidXml);
-
-            AuthResponse authResponse = null;
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(Collections.singletonList(MediaType.ALL));
-            String username = "demo-client";
-            String password = "secret";
-            String auth = username + ":" + password;
-            byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
-            String authHeader = "Basic " + new String(encodedAuth);
-            headers.set("Authorization", authHeader);
-            String requestBody = "{ \"username\": \"operator\", \"password\": \"operator\", \"grant_type\": \"password\" }";
-            HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
-
-
-            try {
-                ResponseEntity<AuthResponse> response = restTemplate.exchange(
-                    API_RR_FNS_URI + "/vst-oauth2/oauth/token",
-                    HttpMethod.POST,
-                    requestEntity,
-                    AuthResponse.class
-                );
-                authResponse = response.getBody();
-            } catch (HttpClientErrorException e) {
-                // Обработка ошибок клиента, включая 404
-                if (e.getStatusCode().value() == 404) {
-                    System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдено МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
-                } else {
-                    System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
-                }
-            } catch (ResourceAccessException e) {
-                // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
-                System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
-                if (e.getCause() instanceof UnknownHostException) {
-                    System.out.println("Неизвестный хост: " + e.getCause().getMessage());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/vst-oauth2/oauth/token недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
-                }
-            } catch (Exception e) {
-                // Обработка других исключений
-                System.out.println("Произошла ошибка: " + e.getMessage());
-            }
-
-            if (authResponse == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка авторизации"), HttpStatus.BAD_REQUEST);
-            }
-
-            M4dFnsDataResponse m4dFnsDataResponse = null;
-            HttpHeaders headers1 = new HttpHeaders();
-            headers1.setAccept(Collections.singletonList(MediaType.ALL));
-            headers1.set("Authorization", "Bearer " + authResponse.getAccessToken());
-            HttpEntity<String> requestEntity1 = new HttpEntity<>(headers1);
-
-            try {
-                ResponseEntity<M4dFnsDataResponse> response1 = restTemplate.exchange(
-                        API_RR_FNS_URI + "/poar-webapp/integration/poa/" + guidXml + "/public",
-                        HttpMethod.GET,
-                        requestEntity1,
-                        M4dFnsDataResponse.class
-                );
-                m4dFnsDataResponse = response1.getBody();
-            } catch (HttpClientErrorException e) {
-                // Обработка ошибок клиента, включая 404
-                if (e.getStatusCode().value() == 404) {
-                    System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдено МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
-                } else {
-                    System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
-                }
-            } catch (ResourceAccessException e) {
-                // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
-                System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
-                if (e.getCause() instanceof UnknownHostException) {
-                    System.out.println("Неизвестный хост: " + e.getCause().getMessage());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/poar-webapp/integration/poa/ недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
-                }
-            } catch (Exception e) {
-                // Обработка других исключений
-                System.out.println("Произошла ошибка: " + e.getMessage());
-            }
-            if (m4dFnsDataResponse == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка получения данных по МЧД с сайта РР МЧД ФНС"), HttpStatus.BAD_REQUEST);
-            }
-
-// сверка данных PublicKey, SnilsHash, OgrnHash из m4dFnsDataResponse с соответствующими данными из подписи sig-файла
-            String sigPublicKey;
-            String sigSnils;
-            String sigOgrn;
-
-            String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----";
-            String END_CERTIFICATE = "-----END CERTIFICATE-----";
-            StringBuilder updatedContent = new StringBuilder();
-
-            try {
-                String originalContent = new String(sigFile.getBytes());
-                boolean hasBegin = originalContent.contains(BEGIN_CERTIFICATE);
-                boolean hasEnd = originalContent.contains(END_CERTIFICATE);
-                if (!hasBegin) {
-                    updatedContent.append(BEGIN_CERTIFICATE).append(System.lineSeparator());
-                }
-                updatedContent.append(originalContent);
-                if (!hasEnd) {
-                    updatedContent.append(System.lineSeparator()).append(END_CERTIFICATE);
-                }
-
-//                // Создаем временный файл для нового сертификата
-//                File tempFile = File.createTempFile("updated_certificate", ".crt");
-//                try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
-//                    writer.write(updatedContent.toString());
-//                }
-//
-//                // Теперь у вас есть файл с добавленными строками
-//                System.out.println("Обновленный сертификат сохранен в: " + tempFile.getAbsolutePath());
-
-
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-//            X509Certificate certificate = new CertificateContentWrapper(updatedContent.toString())
-//                    .decodeToX509();
-
-            String tempFileName;
-            FileOutputStream fo;
-            tempFileName = "/tmp/" + sigFile.getOriginalFilename();
-            fo = new FileOutputStream(tempFileName);
-            fo.write(updatedContent.toString().getBytes());
-            fo.close();
-            FileInputStream fis = new FileInputStream(tempFileName);
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            X509Certificate certificate = (X509Certificate) cf.generateCertificate(fis);
-
-            sigPublicKey = certificate.getPublicKey().toString();
-            var substrSubject = certificate.getSubjectDN().getName().split(", ");
-            for (String s : substrSubject) {
-                if (s.length() > 2) {
-                    if (s.startsWith("OID.1.2.643.100.3=")) {
-                        String hexStr = s.substring(23);
-                        StringBuilder output = new StringBuilder();
-                        for (int i = 0; i < hexStr.length(); i += 2) {
-                            String str1 = hexStr.substring(i, i + 2);
-                            output.append((char) Integer.parseInt(str1, 16));
-                        }
-                        sigSnils = output.toString();
-                    }
-                    if (s.startsWith("OID.1.2.643.3.131.1.1=")) {
-                        String hexStr = s.substring(27);
-                        StringBuilder output = new StringBuilder();
-                        for (int i = 0; i < hexStr.length(); i += 2) {
-                            String str1 = hexStr.substring(i, i + 2);
-                            output.append((char) Integer.parseInt(str1, 16));
-                        }
-                        sigOgrn = output.toString();
-                    }
-
-                }
-            }
-
-
-            String status = "ACTIVE";
-            return new ResponseEntity<>(status, HttpStatus.OK);
+        M4dVerifyStatus m4dVerifyStatus;
+        try {
+            m4dVerifyStatus = this.m4dService.getStatusVerifyInFns(guid);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        Map<String, String> body = new HashMap<>();
-        List<String> errs = new ArrayList<>();
-        res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
-        body.put("details", String.join(System.lineSeparator(), errs));
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        if (m4dVerifyStatus == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_VERIFY_STATUS_IS_NULL), HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(m4dVerifyStatus, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY,
@@ -828,13 +629,11 @@ public class M4dController {
     }
 
     private Organisation convertOrganisationToEntity(M4dRequestDto.Organisation organisationDto) {
-        Organisation organisation = modelMapper.map(organisationDto, Organisation.class);
-        return organisation;
+        return modelMapper.map(organisationDto, Organisation.class);
     }
 
     private Principal convertPrincipalToEntity(M4dRequestDto.Principal principalDto) {
-        Principal principal = modelMapper.map(principalDto, Principal.class);
-        return principal;
+        return modelMapper.map(principalDto, Principal.class);
     }
 
     private Representative convertRepresentativeToEntity(M4dRequestDto.Representative representativeDto) {

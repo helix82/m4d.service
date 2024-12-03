@@ -1,44 +1,68 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.dto.M4dFullXML;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.dto.response.AuthResponse;
+import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
+import su.opencode.digsigcik.m4d.repository.M4dVerifyStatusRepository;
 import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.XMLUtil;
+import su.opencode.digsigcik.m4d.util.XmlValidator;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
+import java.io.*;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
 @Service
 @Primary
 @RequiredArgsConstructor
 @EnableTransactionManagement
 public class M4dServiceImpl implements M4dService {
+    @Value("${m4d.api_rr_fns.uri}")
+    private String API_RR_FNS_URI;
     private final ModelMapper modelMapper;
     private final M4dRepository m4dRepository;
+    private final M4dVerifyStatusRepository m4dVerifyStatusRepository;
     private final M4dRecallService m4dRecallService;
     private final M4dCredentialRepository m4dCredentialRepository;
     private final M4dFileService m4dFileService;
@@ -48,6 +72,7 @@ public class M4dServiceImpl implements M4dService {
     private final RepresentativeService representativeService;
     private final RepresentativePassportService representativePassportService;
     private final UserCertificateService userCertificateService;
+    private final RestTemplate restTemplate;
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistry() throws ParseException {
@@ -720,154 +745,262 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-//    public PublicKeyUserCertificate parseSigSerializingContent(MultipartFile sigFile) throws IOException, CertificateEncodingException, URISyntaxException {
-//
-//        PublicKeyUserCertificate publicKeyUserCertificate = new PublicKeyUserCertificate();
-//        X509Certificate certificate = new CertificateContentWrapper(sourceFile.getBytes())
-//                .decodeToX509();
-//
-//        publicKeyUserCertificate.setDeleted(false);
-//        publicKeyUserCertificate.setSerialNumber(HashUtils.bytesToHex(certificate.getSerialNumber().toByteArray()));
-//        publicKeyUserCertificate.setDateStart(convertRFC1123ToIsoInstant(certificate.getNotBefore().toString()));
-//        publicKeyUserCertificate.setDateEnd(convertRFC1123ToIsoInstant(certificate.getNotAfter().toString()));
-//        var substr1 = certificate.getIssuerDN().getName().split(", ");
-//
-//        String ogrnIssuer, innIssuer, streetIssuer, cIssuer, sIssuer, lIssuer, oIssuer, cnIssuer;
-//        ogrnIssuer = innIssuer = streetIssuer = cIssuer = sIssuer = lIssuer = oIssuer = cnIssuer = "";
-//        for (String s : substr1) {
-//            if (s.length() > 2) {
-//                if (s.startsWith("CN=")) {
-//                    cnIssuer = s.substring(3);
-//                }
-//                if (s.startsWith("O=")) {
-//                    oIssuer = s.substring(2);
-//                }
-//                if (s.startsWith("STREET=")) {
-//                    streetIssuer = s.substring(7);
-//                }
-//                if (s.startsWith("L=")) {
-//                    lIssuer = s.substring(2);
-//                }
-//                if (s.startsWith("ST=")) {
-//                    sIssuer = s.substring(3);
-//                }
-//                if (s.startsWith("C=")) {
-//                    cIssuer = s.substring(2);
-//                }
-//                if (s.startsWith("OID.1.2.643.100.1=")) {
-//                    String hexStr = s.substring(23);
-//                    StringBuilder output = new StringBuilder();
-//                    for (int i = 0; i < hexStr.length(); i += 2) {
-//                        String str1 = hexStr.substring(i, i + 2);
-//                        output.append((char) Integer.parseInt(str1, 16));
-//                    }
-//                    ogrnIssuer = output.toString();
-//                }
-//                if (s.startsWith("OID.1.2.643.100.4=")) {
-//                    String hexStr = s.substring(23);
-//                    StringBuilder output = new StringBuilder();
-//                    for (int i = 0; i < hexStr.length(); i += 2) {
-//                        String str1 = hexStr.substring(i, i + 2);
-//                        output.append((char) Integer.parseInt(str1, 16));
-//                    }
-//                    innIssuer = output.toString();
-//                }
-//            }
-//        }
-//        publicKeyUserCertificate.setIssuerWho("ОГРН=" + ogrnIssuer + ", ИНН=" + innIssuer + ", STREET=" + streetIssuer + ", C=" + cIssuer + ", S=" + sIssuer + ", L=" + lIssuer + ", O=" + oIssuer + ", CN=" + cnIssuer);
-//
-//        String oid1 = Extension.authorityKeyIdentifier.getId();
-//        byte[] extValue1 = certificate.getExtensionValue(oid1);
-//        if (extValue1 == null) {
-//            throw new BadRequestException(PUBLIC_KEY_USER_CERTIFICATE_IS_NOT);
-//        }
-//        if (isCertificateQualified(certificate)) {
-//            publicKeyUserCertificate.setType(TypeUserCertificateEnum.QUALIFIED);
-//        } else {
-//            publicKeyUserCertificate.setType(TypeUserCertificateEnum.NOT_QUALIFIED);
-//        }
-//
-//        String surname = "";
-//        String givenname = "";
-//        String fio = "";
-//        String inn = "";
-//        var substrSubject = certificate.getSubjectDN().getName().split(", ");
-//        for (String s : substrSubject) {
-//            if (s.length() > 2) {
-//                if (s.startsWith("O=")) {
-//                    publicKeyUserCertificate.setOrganization(s.substring(2));
-//                }
-//                if (s.startsWith("CN=")) {
-//                    fio = s.substring(3);
-//                }
-//                if (s.startsWith("SURNAME=")) {
-//                    surname = s.substring(8);
-//                }
-//                if (s.startsWith("GIVENNAME=")) {
-//                    givenname = s.substring(10);
-//                }
-//                if (s.startsWith("OID.1.2.643.3.131.1.1=")) {
-//                    String hexStr = s.substring(27);
-//                    StringBuilder output = new StringBuilder();
-//                    for (int i = 0; i < hexStr.length(); i += 2) {
-//                        String str1 = hexStr.substring(i, i + 2);
-//                        output.append((char) Integer.parseInt(str1, 16));
-//                    }
-//                    inn = output.toString();
-//                }
-//            }
-//        }
-//        if (inn != "") {
-//            publicKeyUserCertificate.setInn(inn);
-//        }
-//        if (surname != "" && givenname != "") {
-//            publicKeyUserCertificate.setFio(surname + ' ' + givenname);
-//        } else if (fio != "") {
-//            publicKeyUserCertificate.setFio(fio);
-//        }
-//        String dateStartPrivateKey = "";
-//        String dateEndPrivateKey = "";
-//        String oid = Extension.privateKeyUsagePeriod.getId();
-//        byte[] extValue = certificate.getExtensionValue(oid);
-//        if (extValue != null) {
-//            ASN1OctetString akiOc = ASN1OctetString.getInstance(extValue);
-//            PrivateKeyUsagePeriod aki = PrivateKeyUsagePeriod.getInstance(akiOc.getOctets());
-//            dateStartPrivateKey = convertDateCertificateToIsoInstant(aki.getNotBefore().getTime());
-//            dateEndPrivateKey = convertDateCertificateToIsoInstant(aki.getNotAfter().getTime());
-//        } else {
-//            dateStartPrivateKey = convertRFC1123ToIsoInstant(certificate.getNotBefore().toString());
-//            dateEndPrivateKey = convertRFC1123ToIsoInstant(certificate.getNotAfter().toString());
-//        }
-//        publicKeyUserCertificate.setDateStartPrivateKey(dateStartPrivateKey); //2.5.29.16
-//        publicKeyUserCertificate.setDateEndPrivateKey(dateEndPrivateKey);
-//
-//        publicKeyUserCertificate.setCertificate(sourceFile.getBytes());
-//        publicKeyUserCertificate.setOriginalFilename(sourceFile.getOriginalFilename());
-//        publicKeyUserCertificate.setRevocationStatus(UserCertificateRevocationStatus.INTERRUPTED);
-//        publicKeyUserCertificate.setImprint(DigestUtils.sha1Hex(certificate.getEncoded()));
-//        publicKeyUserCertificate.setKeyId(CertUtil.subjectKeyId(certificate).replace(":", ""));
-//
-//        return publicKeyUserCertificate;
-//    }
+    public ResponseEntity<?> verifyInFns(Authentication authentication, MultipartFile sourceFile, MultipartFile sigFile) throws IOException, SAXException, CertificateException {
+
+        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
+        if (!Objects.equals(extension, "xml")) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+        }
+
+        List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
+        System.out.println(res.size());
+        String content;
+        if (res.isEmpty()) {
+            try (InputStream is = sourceFile.getInputStream()) {
+                byte[] bom = new byte[3];
+                int n = is.read(bom, 0, bom.length);
+                Reader reader;
+                if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
+                    reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+                } else {
+                    reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
+                }
+                StringBuilder cont = new StringBuilder();
+                char[] buffer = new char[1024];
+                int numRead;
+                while ((numRead = reader.read(buffer)) != -1) {
+                    cont.append(buffer, 0, numRead);
+                }
+                content = cont.toString();
+            }
+
+            M4dXml m4dXml;
+            try {
+                Document document = convertStringToDocument(content);
+                assert document != null;
+                m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
+            } catch (Exception e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+            }
+
+            if (m4dXml == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
+            }
+
+            String guidXml;
+            guidXml = m4dXml.document.powerAttorneys.getMrpa().getGuid();
+            System.out.println(guidXml);
+
+            AuthResponse authResponse = null;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setAccept(Collections.singletonList(MediaType.ALL));
+            String username = "demo-client";
+            String password = "secret";
+            String auth = username + ":" + password;
+            byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+            String authHeader = "Basic " + new String(encodedAuth);
+            headers.set("Authorization", authHeader);
+            String requestBody = "{ \"username\": \"operator\", \"password\": \"operator\", \"grant_type\": \"password\" }";
+            HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
+
+
+            try {
+                ResponseEntity<AuthResponse> response = restTemplate.exchange(
+                        API_RR_FNS_URI + "/vst-oauth2/oauth/token",
+                        HttpMethod.POST,
+                        requestEntity,
+                        AuthResponse.class
+                );
+                authResponse = response.getBody();
+            } catch (HttpClientErrorException e) {
+                // Обработка ошибок клиента, включая 404
+                if (e.getStatusCode().value() == 404) {
+                    System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдено МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
+                } else {
+                    System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                }
+            } catch (ResourceAccessException e) {
+                // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
+                System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
+                if (e.getCause() instanceof UnknownHostException) {
+                    System.out.println("Неизвестный хост: " + e.getCause().getMessage());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/vst-oauth2/oauth/token недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
+                }
+            } catch (Exception e) {
+                // Обработка других исключений
+                System.out.println("Произошла ошибка: " + e.getMessage());
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+
+            if (authResponse == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка авторизации"), HttpStatus.BAD_REQUEST);
+            }
+
+            M4dFnsDataResponse m4dFnsDataResponse = null;
+            HttpHeaders headers1 = new HttpHeaders();
+            headers1.setAccept(Collections.singletonList(MediaType.ALL));
+            headers1.set("Authorization", "Bearer " + authResponse.getAccessToken());
+            HttpEntity<String> requestEntity1 = new HttpEntity<>(headers1);
+
+            try {
+                ResponseEntity<M4dFnsDataResponse> response1 = restTemplate.exchange(
+                        API_RR_FNS_URI + "/poar-webapp/integration/poa/" + guidXml + "/public",
+                        HttpMethod.GET,
+                        requestEntity1,
+                        M4dFnsDataResponse.class
+                );
+                m4dFnsDataResponse = response1.getBody();
+            } catch (HttpClientErrorException e) {
+                // Обработка ошибок клиента, включая 404
+                if (e.getStatusCode().value() == 404) {
+                    System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдено МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
+                } else {
+                    System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                }
+            } catch (ResourceAccessException e) {
+                // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
+                System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
+                if (e.getCause() instanceof UnknownHostException) {
+                    System.out.println("Неизвестный хост: " + e.getCause().getMessage());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/poar-webapp/integration/poa/ недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
+                }
+            } catch (Exception e) {
+                // Обработка других исключений
+                System.out.println("Произошла ошибка: " + e.getMessage());
+            }
+            if (m4dFnsDataResponse == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка получения данных по МЧД с сайта РР МЧД ФНС"), HttpStatus.BAD_REQUEST);
+            }
+
+            // сверка данных PublicKey, SnilsHash, OgrnHash из m4dFnsDataResponse с соответствующими данными из подписи sig-файла
+//            Map<String, String> result = readSig(sigFile);
+//            result.get("sigSnils");
+
+            String status = m4dFnsDataResponse.getStatus();
+
+            M4dVerifyStatus m4dVerifyStatusSaved;
+            M4dVerifyStatus existsM4dVerifyStatus = this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guidXml);
+            if (existsM4dVerifyStatus == null) {
+                M4dVerifyStatus m4dVerifyStatus = new M4dVerifyStatus();
+                m4dVerifyStatus.setGuid(guidXml);
+                m4dVerifyStatus.setStatus(status);
+                m4dVerifyStatus.setVerifyDate(LocalDateTime.now());
+                try {
+                    m4dVerifyStatusSaved = this.m4dVerifyStatusRepository.save(m4dVerifyStatus);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+            } else {
+                existsM4dVerifyStatus.setVerifyDate(LocalDateTime.now());
+                existsM4dVerifyStatus.setStatus(status);
+                try {
+                    m4dVerifyStatusSaved = this.m4dVerifyStatusRepository.save(existsM4dVerifyStatus);
+                } catch (ConstraintViolationException e) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+            }
+            return new ResponseEntity<>(m4dVerifyStatusSaved, HttpStatus.OK);
+        }
+        Map<String, String> body = new HashMap<>();
+        List<String> errs = new ArrayList<>();
+        res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
+        body.put("details", String.join(System.lineSeparator(), errs));
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Override
+    public M4dVerifyStatus getStatusVerifyInFns(@NotNull String guid) {
+        return this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guid);
+    }
+
+    private Map<String, String> readSig(MultipartFile sigFile) throws IOException, CertificateException {
+        String sigPublicKey;
+        String sigSnils = "";
+        String sigOgrn = "";
+
+        String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----";
+        String END_CERTIFICATE = "-----END CERTIFICATE-----";
+        StringBuilder updatedContent = new StringBuilder();
+
+        try {
+            String originalContent = new String(sigFile.getBytes());
+            boolean hasBegin = originalContent.contains(BEGIN_CERTIFICATE);
+            boolean hasEnd = originalContent.contains(END_CERTIFICATE);
+            if (!hasBegin) {
+                updatedContent.append(BEGIN_CERTIFICATE).append(System.lineSeparator());
+            }
+            updatedContent.append(originalContent);
+            if (!hasEnd) {
+                updatedContent.append(System.lineSeparator()).append(END_CERTIFICATE);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//            X509Certificate certificate = new CertificateContentWrapper(updatedContent.toString())
+//                    .decodeToX509();
+
+        String tempFileName;
+        FileOutputStream fo;
+        tempFileName = "/tmp/" + sigFile.getOriginalFilename();
+        fo = new FileOutputStream(tempFileName);
+        fo.write(updatedContent.toString().getBytes());
+        fo.close();
+        FileInputStream fis = new FileInputStream(tempFileName);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate certificate = (X509Certificate) cf.generateCertificate(fis);
+
+        sigPublicKey = certificate.getPublicKey().toString();
+        var substrSubject = certificate.getSubjectDN().getName().split(", ");
+        for (String s : substrSubject) {
+            if (s.length() > 2) {
+                if (s.startsWith("OID.1.2.643.100.3=")) {
+                    String hexStr = s.substring(23);
+                    StringBuilder output = new StringBuilder();
+                    for (int i = 0; i < hexStr.length(); i += 2) {
+                        String str1 = hexStr.substring(i, i + 2);
+                        output.append((char) Integer.parseInt(str1, 16));
+                    }
+                    sigSnils = output.toString();
+                }
+                if (s.startsWith("OID.1.2.643.3.131.1.1=")) {
+                    String hexStr = s.substring(27);
+                    StringBuilder output = new StringBuilder();
+                    for (int i = 0; i < hexStr.length(); i += 2) {
+                        String str1 = hexStr.substring(i, i + 2);
+                        output.append((char) Integer.parseInt(str1, 16));
+                    }
+                    sigOgrn = output.toString();
+                }
+
+            }
+        }
+        Map<String, String> result = new HashMap<>();
+        result.put("sigSnils", sigSnils);
+        result.put("sigOgrn", sigOgrn);
+        result.put("sigPublicKey", sigPublicKey);
+        return result;
+    }
 
     private M4dResponseDto.SigFileDTO convertSigFileToDto(M4dFile m4dFile) {
-        M4dResponseDto.SigFileDTO sigFileDto = modelMapper.map(m4dFile, M4dResponseDto.SigFileDTO.class);
-        return sigFileDto;
+        return modelMapper.map(m4dFile, M4dResponseDto.SigFileDTO.class);
     }
 
     private M4dResponseDto.RecallDTO.SigFileDTO convertSigFileRecallToDto(M4dFile m4dFile) {
-        M4dResponseDto.RecallDTO.SigFileDTO sigFileDto = modelMapper.map(m4dFile, M4dResponseDto.RecallDTO.SigFileDTO.class);
-        return sigFileDto;
+        return modelMapper.map(m4dFile, M4dResponseDto.RecallDTO.SigFileDTO.class);
     }
 
     private M4dResponseDto.OrganizationDTO convertOrganisationToDto(Organisation organisation) {
-        M4dResponseDto.OrganizationDTO organisationDto = modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
-        return organisationDto;
+        return modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
     }
 
     private M4dResponseDto.PrincipalDTO convertPrincipalToDto(Principal principal) {
-        M4dResponseDto.PrincipalDTO principalDto = modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
-        return principalDto;
+        return modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
     }
 
     private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(Representative representative) {
@@ -877,8 +1010,7 @@ public class M4dServiceImpl implements M4dService {
     }
 
     private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassport representativePassport) {
-        M4dResponseDto.RepresentativePassportDTO representativePassportDto = modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDTO.class);
-        return representativePassportDto;
+        return modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDTO.class);
     }
 }
 
