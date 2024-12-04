@@ -285,6 +285,11 @@
             <artifactId>bcpkix-jdk18on</artifactId>
             <version>1.79</version> <!-- Проверьте последнюю версию -->
         </dependency>
+        <dependency>
+            <groupId>org.bitcoinj</groupId>
+            <artifactId>bitcoinj-core</artifactId>
+            <version>0.15.10</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.pdfbox/fontbox -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
