@@ -16,7 +16,6 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
@@ -32,17 +31,17 @@ import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.repository.M4dVerifyStatusRepository;
 import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.HashUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 import su.opencode.digsigcik.m4d.util.XmlValidator;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
-import java.io.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -745,7 +744,7 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-    public ResponseEntity<?> verifyInFns(Authentication authentication, MultipartFile sourceFile, MultipartFile sigFile) throws IOException, SAXException, CertificateException {
+    public ResponseEntity<?> verifyInFns(Authentication authentication, MultipartFile sourceFile) throws Exception {
 
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
@@ -857,7 +856,7 @@ public class M4dServiceImpl implements M4dService {
                 // Обработка ошибок клиента, включая 404
                 if (e.getStatusCode().value() == 404) {
                     System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдено МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдена МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
                 } else {
                     System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
                     return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
@@ -877,11 +876,14 @@ public class M4dServiceImpl implements M4dService {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка получения данных по МЧД с сайта РР МЧД ФНС"), HttpStatus.BAD_REQUEST);
             }
 
-            // сверка данных PublicKey, SnilsHash, OgrnHash из m4dFnsDataResponse с соответствующими данными из подписи sig-файла
-//            Map<String, String> result = readSig(sigFile);
-//            result.get("sigSnils");
-
+            // сверка данных Хэш доверенности из m4dFnsDataResponse с соответствующим хэшем образуемым из xml-файла
+            String hashM4dFns = m4dFnsDataResponse.getId();
+            String hashM4dFile = HashUtils.getHash(sourceFile.getBytes());
+            if (!hashM4dFns.equals(hashM4dFile)){
+                return new ResponseEntity<>(getCustomErrorJsonFromString("xml-файлы МЧД не совпадают"), HttpStatus.BAD_REQUEST);
+            }
             String status = m4dFnsDataResponse.getStatus();
+
 
             M4dVerifyStatus m4dVerifyStatusSaved;
             M4dVerifyStatus existsM4dVerifyStatus = this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guidXml);
@@ -917,74 +919,6 @@ public class M4dServiceImpl implements M4dService {
     @Override
     public M4dVerifyStatus getStatusVerifyInFns(@NotNull String guid) {
         return this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guid);
-    }
-
-    private Map<String, String> readSig(MultipartFile sigFile) throws IOException, CertificateException {
-        String sigPublicKey;
-        String sigSnils = "";
-        String sigOgrn = "";
-
-        String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----";
-        String END_CERTIFICATE = "-----END CERTIFICATE-----";
-        StringBuilder updatedContent = new StringBuilder();
-
-        try {
-            String originalContent = new String(sigFile.getBytes());
-            boolean hasBegin = originalContent.contains(BEGIN_CERTIFICATE);
-            boolean hasEnd = originalContent.contains(END_CERTIFICATE);
-            if (!hasBegin) {
-                updatedContent.append(BEGIN_CERTIFICATE).append(System.lineSeparator());
-            }
-            updatedContent.append(originalContent);
-            if (!hasEnd) {
-                updatedContent.append(System.lineSeparator()).append(END_CERTIFICATE);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-//            X509Certificate certificate = new CertificateContentWrapper(updatedContent.toString())
-//                    .decodeToX509();
-
-        String tempFileName;
-        FileOutputStream fo;
-        tempFileName = "/tmp/" + sigFile.getOriginalFilename();
-        fo = new FileOutputStream(tempFileName);
-        fo.write(updatedContent.toString().getBytes());
-        fo.close();
-        FileInputStream fis = new FileInputStream(tempFileName);
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        X509Certificate certificate = (X509Certificate) cf.generateCertificate(fis);
-
-        sigPublicKey = certificate.getPublicKey().toString();
-        var substrSubject = certificate.getSubjectDN().getName().split(", ");
-        for (String s : substrSubject) {
-            if (s.length() > 2) {
-                if (s.startsWith("OID.1.2.643.100.3=")) {
-                    String hexStr = s.substring(23);
-                    StringBuilder output = new StringBuilder();
-                    for (int i = 0; i < hexStr.length(); i += 2) {
-                        String str1 = hexStr.substring(i, i + 2);
-                        output.append((char) Integer.parseInt(str1, 16));
-                    }
-                    sigSnils = output.toString();
-                }
-                if (s.startsWith("OID.1.2.643.3.131.1.1=")) {
-                    String hexStr = s.substring(27);
-                    StringBuilder output = new StringBuilder();
-                    for (int i = 0; i < hexStr.length(); i += 2) {
-                        String str1 = hexStr.substring(i, i + 2);
-                        output.append((char) Integer.parseInt(str1, 16));
-                    }
-                    sigOgrn = output.toString();
-                }
-
-            }
-        }
-        Map<String, String> result = new HashMap<>();
-        result.put("sigSnils", sigSnils);
-        result.put("sigOgrn", sigOgrn);
-        result.put("sigPublicKey", sigPublicKey);
-        return result;
     }
 
     private M4dResponseDto.SigFileDTO convertSigFileToDto(M4dFile m4dFile) {
