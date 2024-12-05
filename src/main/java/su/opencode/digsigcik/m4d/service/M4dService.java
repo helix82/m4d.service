@@ -30,6 +30,7 @@ public interface M4dService {
     M4dResponseDto findM4dByIdAndRepresentativeInn(String inn, Long id);
     String getStatusM4d(Long id) throws ParseException;
     M4dResponseDto convertM4dToM4dResponseDto(M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile) throws ParseException;
-    ResponseEntity<?> verifyInFns(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws Exception;
+    ResponseEntity<?> verify(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws Exception;
     M4dVerifyStatus getStatusVerifyInFns(@NotNull String guid);
+    M4dResponseDto parseM4dXml(@NotNull M4dXml m4dXml) throws ParseException;
 }
