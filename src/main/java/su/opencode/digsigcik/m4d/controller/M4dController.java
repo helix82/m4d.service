@@ -496,6 +496,7 @@ public class M4dController {
             }
 
             M4d m4d = new M4d();
+            //парсинг МЧД из xml
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             m4d.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
             m4d.setCreateDate(LocalDateTime.now());
@@ -552,7 +553,6 @@ public class M4dController {
                     credentialList.add(newCredential);
                 }
             }
-
             ResponseEntity<?> m4dSaved;
             try {
                 m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, representative, represPassport, credentialList, null);
@@ -577,8 +577,8 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> verifyInFns(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws Exception {
-        return m4dService.verifyInFns(authentication, sourceFile);
+    public ResponseEntity<?> verify(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws Exception {
+        return m4dService.verify(authentication, sourceFile);
     }
 
     @Operation(summary = CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION)

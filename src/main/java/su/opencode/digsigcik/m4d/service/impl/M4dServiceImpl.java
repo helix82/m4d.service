@@ -22,6 +22,7 @@ import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.dto.M4dFullXML;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.dto.M4dVerifyStatusDto;
 import su.opencode.digsigcik.m4d.dto.response.AuthResponse;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
@@ -31,6 +32,7 @@ import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.repository.M4dVerifyStatusRepository;
 import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.HashUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 import su.opencode.digsigcik.m4d.util.XmlValidator;
@@ -45,7 +47,9 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -744,7 +748,7 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-    public ResponseEntity<?> verifyInFns(Authentication authentication, MultipartFile sourceFile) throws Exception {
+    public ResponseEntity<?> verify(Authentication authentication, MultipartFile sourceFile) throws Exception {
 
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
@@ -790,123 +794,149 @@ public class M4dServiceImpl implements M4dService {
             guidXml = m4dXml.document.powerAttorneys.getMrpa().getGuid();
             System.out.println(guidXml);
 
-            AuthResponse authResponse = null;
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setAccept(Collections.singletonList(MediaType.ALL));
-            String username = "demo-client";
-            String password = "secret";
-            String auth = username + ":" + password;
-            byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
-            String authHeader = "Basic " + new String(encodedAuth);
-            headers.set("Authorization", authHeader);
-            String requestBody = "{ \"username\": \"operator\", \"password\": \"operator\", \"grant_type\": \"password\" }";
-            HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
-
-
+            M4d m4d;
             try {
-                ResponseEntity<AuthResponse> response = restTemplate.exchange(
-                        API_RR_FNS_URI + "/vst-oauth2/oauth/token",
-                        HttpMethod.POST,
-                        requestEntity,
-                        AuthResponse.class
-                );
-                authResponse = response.getBody();
-            } catch (HttpClientErrorException e) {
-                // Обработка ошибок клиента, включая 404
-                if (e.getStatusCode().value() == 404) {
-                    System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдено МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
-                } else {
-                    System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
-                }
-            } catch (ResourceAccessException e) {
-                // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
-                System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
-                if (e.getCause() instanceof UnknownHostException) {
-                    System.out.println("Неизвестный хост: " + e.getCause().getMessage());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/vst-oauth2/oauth/token недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
-                }
-            } catch (Exception e) {
-                // Обработка других исключений
-                System.out.println("Произошла ошибка: " + e.getMessage());
+                m4d = this.m4dRepository.findByGuid(guidXml);
+            } catch (ConstraintViolationException e) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
+            if (m4d != null) { // МЧД из ПЭП
+                M4dResponseDto m4dResponseDto = this.convertM4dToM4dResponseDto(m4d, false, false);
+                M4dVerifyStatusDto m4dVerifyStatusDto = new M4dVerifyStatusDto();
+                m4dVerifyStatusDto.setGuid(guidXml);
+                m4dVerifyStatusDto.setStatus(m4dResponseDto.getStatus());
+                m4dVerifyStatusDto.setVerifyDate(LocalDateTime.now());
+                m4dVerifyStatusDto.setSource("Источник ПЭП");
+                m4dVerifyStatusDto.setM4d(m4dResponseDto);
 
-            if (authResponse == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка авторизации"), HttpStatus.BAD_REQUEST);
-            }
+                return new ResponseEntity<>(m4dVerifyStatusDto, HttpStatus.OK);
+            } else { // МЧД в ПЭП нету, лезем в РР ФНС
+                AuthResponse authResponse = null;
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.setAccept(Collections.singletonList(MediaType.ALL));
+                String username = "demo-client";
+                String password = "secret";
+                String auth = username + ":" + password;
+                byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+                String authHeader = "Basic " + new String(encodedAuth);
+                headers.set("Authorization", authHeader);
+                String requestBody = "{ \"username\": \"operator\", \"password\": \"operator\", \"grant_type\": \"password\" }";
+                HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
 
-            M4dFnsDataResponse m4dFnsDataResponse = null;
-            HttpHeaders headers1 = new HttpHeaders();
-            headers1.setAccept(Collections.singletonList(MediaType.ALL));
-            headers1.set("Authorization", "Bearer " + authResponse.getAccessToken());
-            HttpEntity<String> requestEntity1 = new HttpEntity<>(headers1);
 
-            try {
-                ResponseEntity<M4dFnsDataResponse> response1 = restTemplate.exchange(
-                        API_RR_FNS_URI + "/poar-webapp/integration/poa/" + guidXml + "/public",
-                        HttpMethod.GET,
-                        requestEntity1,
-                        M4dFnsDataResponse.class
-                );
-                m4dFnsDataResponse = response1.getBody();
-            } catch (HttpClientErrorException e) {
-                // Обработка ошибок клиента, включая 404
-                if (e.getStatusCode().value() == 404) {
-                    System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Не найдена МЧД с GUID=" + guidXml + " на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
+                try {
+                    ResponseEntity<AuthResponse> response = restTemplate.exchange(
+                            API_RR_FNS_URI + "/vst-oauth2/oauth/token",
+                            HttpMethod.POST,
+                            requestEntity,
+                            AuthResponse.class
+                    );
+                    authResponse = response.getBody();
+                } catch (HttpClientErrorException e) {
+                    // Обработка ошибок клиента, включая 404
+                    if (e.getStatusCode().value() == 404) {
+                        System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
+                        return new ResponseEntity<>(getCustomErrorJsonFromString("Ресурс не найден (404): " + e.getResponseBodyAsString()), HttpStatus.NOT_FOUND);
+                    } else {
+                        System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                        return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                    }
+                } catch (ResourceAccessException e) {
+                    // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
+                    System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
+                    if (e.getCause() instanceof UnknownHostException) {
+                        System.out.println("Неизвестный хост: " + e.getCause().getMessage());
+                        return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/vst-oauth2/oauth/token недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
+                    }
+                } catch (Exception e) {
+                    // Обработка других исключений
+                    System.out.println("Произошла ошибка: " + e.getMessage());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+
+                if (authResponse == null) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка авторизации"), HttpStatus.BAD_REQUEST);
+                }
+
+                M4dFnsDataResponse m4dFnsDataResponse = null;
+                HttpHeaders headers1 = new HttpHeaders();
+                headers1.setAccept(Collections.singletonList(MediaType.ALL));
+                headers1.set("Authorization", "Bearer " + authResponse.getAccessToken());
+                HttpEntity<String> requestEntity1 = new HttpEntity<>(headers1);
+
+                try {
+                    ResponseEntity<M4dFnsDataResponse> response1 = restTemplate.exchange(
+                            API_RR_FNS_URI + "/poar-webapp/integration/poa/" + guidXml + "/public",
+                            HttpMethod.GET,
+                            requestEntity1,
+                            M4dFnsDataResponse.class
+                    );
+                    m4dFnsDataResponse = response1.getBody();
+                } catch (HttpClientErrorException e) {
+                    // Обработка ошибок клиента, включая 404
+                    if (e.getStatusCode().value() == 404) {
+                        System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
+                        return new ResponseEntity<>(getCustomErrorJsonFromString("МЧД с GUID=" + guidXml + " не найдена ни в ПЭП ни на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
+                    } else {
+                        System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                        return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                    }
+                } catch (ResourceAccessException e) {
+                    // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
+                    System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
+                    if (e.getCause() instanceof UnknownHostException) {
+                        System.out.println("Неизвестный хост: " + e.getCause().getMessage());
+                        return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/poar-webapp/integration/poa/ недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
+                    }
+                } catch (Exception e) {
+                    // Обработка других исключений
+                    System.out.println("Произошла ошибка: " + e.getMessage());
+                }
+                if (m4dFnsDataResponse == null) {
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка получения данных по МЧД с сайта РР МЧД ФНС"), HttpStatus.BAD_REQUEST);
+                }
+
+                // сверка данных Хэш доверенности из m4dFnsDataResponse с соответствующим хэшем образуемым из xml-файла
+                String hashM4dFns = m4dFnsDataResponse.getId();
+                String hashM4dFile = HashUtils.getHash(sourceFile.getBytes());
+                if (!hashM4dFns.equals(hashM4dFile)){
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("xml-файлы МЧД не совпадают"), HttpStatus.BAD_REQUEST);
+                }
+                String status = "";
+                switch (m4dFnsDataResponse.getStatus()) {
+                    case "ACTIVE": status = "VALID"; break;
+                    case "CREATED": status = "NOT_SIGNED"; break;
+                    case "REVOKED": status = "WITHDRAWN"; break;
+                    default: break;
+                }
+                M4dVerifyStatus m4dVerifyStatusSaved;
+                M4dVerifyStatus existsM4dVerifyStatus = this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guidXml);
+                if (existsM4dVerifyStatus == null) {
+                    M4dVerifyStatus m4dVerifyStatus = new M4dVerifyStatus();
+                    m4dVerifyStatus.setGuid(guidXml);
+                    m4dVerifyStatus.setStatus(status);
+                    m4dVerifyStatus.setVerifyDate(LocalDateTime.now());
+                    try {
+                        m4dVerifyStatusSaved = this.m4dVerifyStatusRepository.save(m4dVerifyStatus);
+                    } catch (ConstraintViolationException e) {
+                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    }
                 } else {
-                    System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                    existsM4dVerifyStatus.setVerifyDate(LocalDateTime.now());
+                    existsM4dVerifyStatus.setStatus(status);
+                    try {
+                        m4dVerifyStatusSaved = this.m4dVerifyStatusRepository.save(existsM4dVerifyStatus);
+                    } catch (ConstraintViolationException e) {
+                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    }
                 }
-            } catch (ResourceAccessException e) {
-                // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
-                System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
-                if (e.getCause() instanceof UnknownHostException) {
-                    System.out.println("Неизвестный хост: " + e.getCause().getMessage());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/poar-webapp/integration/poa/ недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
-                }
-            } catch (Exception e) {
-                // Обработка других исключений
-                System.out.println("Произошла ошибка: " + e.getMessage());
+                M4dVerifyStatusDto m4dVerifyStatusDto = modelMapper.map(m4dVerifyStatusSaved, M4dVerifyStatusDto.class);
+                m4dVerifyStatusDto.setSource("Источник РР МЧД ФНС");
+                M4dResponseDto m4dResponseDto = this.parseM4dXml(m4dXml);
+                m4dVerifyStatusDto.setM4d(m4dResponseDto);
+                return new ResponseEntity<>(m4dVerifyStatusDto, HttpStatus.OK);
             }
-            if (m4dFnsDataResponse == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка получения данных по МЧД с сайта РР МЧД ФНС"), HttpStatus.BAD_REQUEST);
-            }
-
-            // сверка данных Хэш доверенности из m4dFnsDataResponse с соответствующим хэшем образуемым из xml-файла
-            String hashM4dFns = m4dFnsDataResponse.getId();
-            String hashM4dFile = HashUtils.getHash(sourceFile.getBytes());
-            if (!hashM4dFns.equals(hashM4dFile)){
-                return new ResponseEntity<>(getCustomErrorJsonFromString("xml-файлы МЧД не совпадают"), HttpStatus.BAD_REQUEST);
-            }
-            String status = m4dFnsDataResponse.getStatus();
-
-
-            M4dVerifyStatus m4dVerifyStatusSaved;
-            M4dVerifyStatus existsM4dVerifyStatus = this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guidXml);
-            if (existsM4dVerifyStatus == null) {
-                M4dVerifyStatus m4dVerifyStatus = new M4dVerifyStatus();
-                m4dVerifyStatus.setGuid(guidXml);
-                m4dVerifyStatus.setStatus(status);
-                m4dVerifyStatus.setVerifyDate(LocalDateTime.now());
-                try {
-                    m4dVerifyStatusSaved = this.m4dVerifyStatusRepository.save(m4dVerifyStatus);
-                } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-                }
-            } else {
-                existsM4dVerifyStatus.setVerifyDate(LocalDateTime.now());
-                existsM4dVerifyStatus.setStatus(status);
-                try {
-                    m4dVerifyStatusSaved = this.m4dVerifyStatusRepository.save(existsM4dVerifyStatus);
-                } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-                }
-            }
-            return new ResponseEntity<>(m4dVerifyStatusSaved, HttpStatus.OK);
         }
         Map<String, String> body = new HashMap<>();
         List<String> errs = new ArrayList<>();
@@ -919,6 +949,91 @@ public class M4dServiceImpl implements M4dService {
     @Override
     public M4dVerifyStatus getStatusVerifyInFns(@NotNull String guid) {
         return this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guid);
+    }
+
+    public M4dResponseDto parseM4dXml(@NotNull M4dXml m4dXml) throws ParseException {
+        M4d m4d = new M4d();
+        m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
+        m4d.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
+        m4d.setCreateDate(LocalDateTime.now());
+        m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
+        m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
+
+        Organisation organisation = new Organisation();
+        organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
+        organisation.setKpp(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getKpp());
+        organisation.setOgrn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getOgrn());
+        organisation.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getName());
+        organisation.setRegionCode(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getRegionCode());
+        organisation.setLegalAddress(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getLegalAddress());
+
+        Principal principal = new Principal();
+        principal.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getInn());
+        principal.setSnils(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getSnils());
+        principal.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
+        principal.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
+        principal.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
+        principal.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
+
+        Representative representative = new Representative();
+        RepresentativePassport represPassport = new RepresentativePassport();
+        for (M4dXml.Document.PowerAttorneys.InfoRepresentative c: m4dXml.document.powerAttorneys.infoRepresentative) {
+            if (Objects.equals(c.getTypeRepresentative(), "3")) {
+                if (c.representative.detailRepresentative != null) {
+                    representative.setInn(c.representative.detailRepresentative.getInn());
+                    representative.setSnils(c.representative.detailRepresentative.getSnils());
+                    representative.setBirthDate(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString()));
+                    representative.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
+                    representative.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
+                    representative.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
+
+                    represPassport.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
+                    represPassport.setDateIssue(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()));
+                    represPassport.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
+                    represPassport.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
+                }
+            }
+        }
+        List<M4dResponseDto.CredentialDTO> credentialList = new ArrayList<>();
+        if (m4dXml.document.powerAttorneys.credential.credentials != null) {
+            for (M4dXml.Document.PowerAttorneys.Credentials.Credential c : m4dXml.document.powerAttorneys.credential.credentials) {
+                M4dResponseDto.CredentialDTO newCredential = new M4dResponseDto.CredentialDTO();
+                newCredential.setCode(c.getCode());
+                newCredential.setName(c.getName());
+                credentialList.add(newCredential);
+            }
+        }
+        M4dResponseDto m4dResponseDto = modelMapper.map(m4d, M4dResponseDto.class);
+        M4dResponseDto.OrganizationDTO organizationDTO = modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
+        M4dResponseDto.PrincipalDTO principalDTO = modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
+        M4dResponseDto.RepresentativeDTO representativeDTO = modelMapper.map(representative, M4dResponseDto.RepresentativeDTO.class);
+        M4dResponseDto.RepresentativePassportDTO representativePassportDTO = modelMapper.map(represPassport, M4dResponseDto.RepresentativePassportDTO.class);
+        m4dResponseDto.setOrganization(organizationDTO);
+        m4dResponseDto.setPrincipal(principalDTO);
+        m4dResponseDto.setRepresentative(representativeDTO);
+        m4dResponseDto.representative.setRepresentativePassport(representativePassportDTO);
+        m4dResponseDto.setCredentials(credentialList);
+        return m4dResponseDto;
+    }
+
+    private LocalDateTime convertStringToLocalDateTime(String date) {
+        DateTimeFormatter formatter;
+        LocalDateTime localDateTime;
+        if (date.length() == 10) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate localDate = LocalDate.parse(date, formatter);
+            localDateTime = localDate.atStartOfDay();
+        } else if (date.length() > 20) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
+        } else if (date.length() == 16) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
+        } else {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
+        }
+        return localDateTime;
     }
 
     private M4dResponseDto.SigFileDTO convertSigFileToDto(M4dFile m4dFile) {
