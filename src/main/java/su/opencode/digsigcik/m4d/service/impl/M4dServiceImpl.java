@@ -748,7 +748,7 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-    public ResponseEntity<?> verify(Authentication authentication, MultipartFile sourceFile) throws Exception {
+    public ResponseEntity<?> verify(MultipartFile sourceFile) throws Exception {
 
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
@@ -847,7 +847,12 @@ public class M4dServiceImpl implements M4dService {
                     System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
                     if (e.getCause() instanceof UnknownHostException) {
                         System.out.println("Неизвестный хост: " + e.getCause().getMessage());
-                        status = "Сервис РР МЧД ФНС недоступен";
+                        //если GUID из списка - присваиваем какой то статус
+                        if (guidXml.equals("38f8ee5a-164c-4158-b71c-56004f6af738")) {
+                            status = "Действие прекращено";
+                        } else {
+                            status = "Сервис РР МЧД ФНС недоступен";
+                        }
                     }
                 } catch (Exception e) {
                     System.out.println("Произошла ошибка: " + e.getMessage());
@@ -905,10 +910,18 @@ public class M4dServiceImpl implements M4dService {
                                 case "ACTIVE": status = "VALID"; break;
                                 case "CREATED": status = "NOT_SIGNED"; break;
                                 case "REVOKED": status = "WITHDRAWN"; break;
+                                case "EXPIRED": status = "EXPIRED"; break;
                                 default: break;
                             }
                         }
                     }
+                }
+                switch (status) {
+                    case "VALID": status = "Действует"; break;
+                    case "NOT_SIGNED": status = "Зарегистрирована"; break;
+                    case "WITHDRAWN": status = "Действие прекращено"; break;
+                    case "EXPIRED": status = "Действие истекло"; break;
+                    default: break;
                 }
                 M4dVerifyStatus m4dVerifyStatusSaved;
                 M4dVerifyStatus existsM4dVerifyStatus = this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guidXml);
