@@ -752,7 +752,7 @@ public class M4dServiceImpl implements M4dService {
 
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: Формат файла не XML"), HttpStatus.BAD_REQUEST);
         }
 
         List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
@@ -783,7 +783,7 @@ public class M4dServiceImpl implements M4dService {
                 assert document != null;
                 m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
             } catch (Exception e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
             }
 
             if (m4dXml == null) {
@@ -800,7 +800,7 @@ public class M4dServiceImpl implements M4dService {
             } catch (ConstraintViolationException e) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
             }
-            if (m4d != null) { // МЧД из ПЭП
+            if (m4d != null) {
                 M4dResponseDto m4dResponseDto = this.convertM4dToM4dResponseDto(m4d, false, false);
                 M4dVerifyStatusDto m4dVerifyStatusDto = new M4dVerifyStatusDto();
                 m4dVerifyStatusDto.setGuid(guidXml);
@@ -810,7 +810,9 @@ public class M4dServiceImpl implements M4dService {
                 m4dVerifyStatusDto.setM4d(m4dResponseDto);
 
                 return new ResponseEntity<>(m4dVerifyStatusDto, HttpStatus.OK);
-            } else { // МЧД в ПЭП нету, лезем в РР ФНС
+            } else {
+                M4dResponseDto m4dResponseDto = this.parseM4dXml(m4dXml);
+                String status = "";
                 AuthResponse authResponse = null;
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -834,81 +836,79 @@ public class M4dServiceImpl implements M4dService {
                     );
                     authResponse = response.getBody();
                 } catch (HttpClientErrorException e) {
-                    // Обработка ошибок клиента, включая 404
                     if (e.getStatusCode().value() == 404) {
                         System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                        return new ResponseEntity<>(getCustomErrorJsonFromString("Ресурс не найден (404): " + e.getResponseBodyAsString()), HttpStatus.NOT_FOUND);
+                        status = "Ресурс не найден (404): " + e.getResponseBodyAsString();
                     } else {
                         System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                        return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                        status = "Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
                     }
                 } catch (ResourceAccessException e) {
-                    // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
                     System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
                     if (e.getCause() instanceof UnknownHostException) {
                         System.out.println("Неизвестный хост: " + e.getCause().getMessage());
-                        return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/vst-oauth2/oauth/token недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
+                        status = "Сервис РР МЧД ФНС недоступен";
                     }
                 } catch (Exception e) {
-                    // Обработка других исключений
                     System.out.println("Произошла ошибка: " + e.getMessage());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    status = "Произошла ошибка: " + e.getMessage();
                 }
 
                 if (authResponse == null) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка авторизации"), HttpStatus.BAD_REQUEST);
-                }
+                    if (status.isEmpty()){
+                        status = "Ошибка авторизации";
+                    }
+                } else {
+                    M4dFnsDataResponse m4dFnsDataResponse = null;
+                    HttpHeaders headers1 = new HttpHeaders();
+                    headers1.setAccept(Collections.singletonList(MediaType.ALL));
+                    headers1.set("Authorization", "Bearer " + authResponse.getAccessToken());
+                    HttpEntity<String> requestEntity1 = new HttpEntity<>(headers1);
 
-                M4dFnsDataResponse m4dFnsDataResponse = null;
-                HttpHeaders headers1 = new HttpHeaders();
-                headers1.setAccept(Collections.singletonList(MediaType.ALL));
-                headers1.set("Authorization", "Bearer " + authResponse.getAccessToken());
-                HttpEntity<String> requestEntity1 = new HttpEntity<>(headers1);
-
-                try {
-                    ResponseEntity<M4dFnsDataResponse> response1 = restTemplate.exchange(
-                            API_RR_FNS_URI + "/poar-webapp/integration/poa/" + guidXml + "/public",
-                            HttpMethod.GET,
-                            requestEntity1,
-                            M4dFnsDataResponse.class
-                    );
-                    m4dFnsDataResponse = response1.getBody();
-                } catch (HttpClientErrorException e) {
-                    // Обработка ошибок клиента, включая 404
-                    if (e.getStatusCode().value() == 404) {
-                        System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                        return new ResponseEntity<>(getCustomErrorJsonFromString("МЧД с GUID=" + guidXml + " не найдена ни в ПЭП ни на РР МЧД ФНС"), HttpStatus.NOT_FOUND);
+                    try {
+                        ResponseEntity<M4dFnsDataResponse> response1 = restTemplate.exchange(
+                                API_RR_FNS_URI + "/poar-webapp/integration/poa/" + guidXml + "/public",
+                                HttpMethod.GET,
+                                requestEntity1,
+                                M4dFnsDataResponse.class
+                        );
+                        m4dFnsDataResponse = response1.getBody();
+                    } catch (HttpClientErrorException e) {
+                        if (e.getStatusCode().value() == 404) {
+                            System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
+                            status = "МЧД с GUID=" + guidXml + " не найдена ни в ПЭП ни на РР МЧД ФНС";
+                        } else {
+                            System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                            status = "Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
+                        }
+                    } catch (ResourceAccessException e) {
+                        System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
+                        if (e.getCause() instanceof UnknownHostException) {
+                            System.out.println("Неизвестный хост: " + e.getCause().getMessage());
+                            status = "Сервис РР МЧД ФНС недоступен";
+                        }
+                    } catch (Exception e) {
+                        System.out.println("Произошла ошибка: " + e.getMessage());
+                        status = "Произошла ошибка: " + e.getMessage();
+                    }
+                    if (m4dFnsDataResponse == null) {
+                        if (status.isEmpty()) {
+                            status = "Ошибка получения данных по МЧД с сайта РР МЧД ФНС";
+                        }
                     } else {
-                        System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                        return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString()), HttpStatus.BAD_REQUEST);
+                        String hashM4dFns = m4dFnsDataResponse.getId();
+                        String hashM4dFile = HashUtils.getHash(sourceFile.getBytes());
+                        if (!hashM4dFns.equals(hashM4dFile)){
+                            status = "xml-файлы МЧД не совпадают";
+                        } else {
+                            switch (m4dFnsDataResponse.getStatus()) {
+                                case "ACTIVE": status = "VALID"; break;
+                                case "CREATED": status = "NOT_SIGNED"; break;
+                                case "REVOKED": status = "WITHDRAWN"; break;
+                                default: break;
+                            }
+                        }
                     }
-                } catch (ResourceAccessException e) {
-                    // Обработка ошибок доступа к ресурсу (например, UnknownHostException)
-                    System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
-                    if (e.getCause() instanceof UnknownHostException) {
-                        System.out.println("Неизвестный хост: " + e.getCause().getMessage());
-                        return new ResponseEntity<>(getCustomErrorJsonFromString("Сервис " + API_RR_FNS_URI + "/poar-webapp/integration/poa/ недоступен"), HttpStatus.SERVICE_UNAVAILABLE);
-                    }
-                } catch (Exception e) {
-                    // Обработка других исключений
-                    System.out.println("Произошла ошибка: " + e.getMessage());
-                }
-                if (m4dFnsDataResponse == null) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка получения данных по МЧД с сайта РР МЧД ФНС"), HttpStatus.BAD_REQUEST);
-                }
-
-                // сверка данных Хэш доверенности из m4dFnsDataResponse с соответствующим хэшем образуемым из xml-файла
-                String hashM4dFns = m4dFnsDataResponse.getId();
-                String hashM4dFile = HashUtils.getHash(sourceFile.getBytes());
-                if (!hashM4dFns.equals(hashM4dFile)){
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("xml-файлы МЧД не совпадают"), HttpStatus.BAD_REQUEST);
-                }
-                String status = "";
-                switch (m4dFnsDataResponse.getStatus()) {
-                    case "ACTIVE": status = "VALID"; break;
-                    case "CREATED": status = "NOT_SIGNED"; break;
-                    case "REVOKED": status = "WITHDRAWN"; break;
-                    default: break;
                 }
                 M4dVerifyStatus m4dVerifyStatusSaved;
                 M4dVerifyStatus existsM4dVerifyStatus = this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guidXml);
@@ -933,7 +933,6 @@ public class M4dServiceImpl implements M4dService {
                 }
                 M4dVerifyStatusDto m4dVerifyStatusDto = modelMapper.map(m4dVerifyStatusSaved, M4dVerifyStatusDto.class);
                 m4dVerifyStatusDto.setSource("Источник РР МЧД ФНС");
-                M4dResponseDto m4dResponseDto = this.parseM4dXml(m4dXml);
                 m4dVerifyStatusDto.setM4d(m4dResponseDto);
                 return new ResponseEntity<>(m4dVerifyStatusDto, HttpStatus.OK);
             }

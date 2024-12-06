@@ -170,7 +170,7 @@ public interface Constants {
     String ID_IS_NULL = String.format("ID is %s", NULL);
     String GUID_IS_NULL = String.format("GUID is %s", NULL);
     String INN_IS_NULL = String.format("INN is %s", NULL);
-    String MRPA_IS_NULL = String.format("MRPA is %s", NULL);
+    String MRPA_IS_NULL = "МЧД не найдена";
     String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
     String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);
