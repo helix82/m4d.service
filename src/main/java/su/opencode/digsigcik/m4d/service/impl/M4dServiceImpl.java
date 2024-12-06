@@ -748,7 +748,7 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-    public ResponseEntity<?> verify(MultipartFile sourceFile) throws Exception {
+    public ResponseEntity<?> verify(Authentication authentication, MultipartFile sourceFile) throws Exception {
 
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {

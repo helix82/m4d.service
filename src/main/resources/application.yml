@@ -72,6 +72,7 @@ web:
       - /webjars/**
       - /.well-known/acme-challenge/**
       - /favicon.ico
+      - /api/v1/m4d/verify
     lifespan-cache: ${RPD_LIFESPAN_CACHE:1440}
     refresh-time-cache: ${RPD_REFRESH_TIME_CACHE:1350}
     connection-timeout: ${RPD_CONNECTION_TIMEOUT:10000}
