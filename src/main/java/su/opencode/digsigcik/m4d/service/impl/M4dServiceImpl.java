@@ -748,7 +748,7 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-    public ResponseEntity<?> verify(Authentication authentication, MultipartFile sourceFile) throws Exception {
+    public ResponseEntity<?> verify(MultipartFile sourceFile) throws Exception {
 
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
@@ -804,7 +804,13 @@ public class M4dServiceImpl implements M4dService {
                 M4dResponseDto m4dResponseDto = this.convertM4dToM4dResponseDto(m4d, false, false);
                 M4dVerifyStatusDto m4dVerifyStatusDto = new M4dVerifyStatusDto();
                 m4dVerifyStatusDto.setGuid(guidXml);
-                m4dVerifyStatusDto.setStatus(m4dResponseDto.getStatus());
+                switch (m4dResponseDto.getStatus()) {
+                    case "VALID": m4dVerifyStatusDto.setStatus("Действует"); break;
+                    case "NOT_SIGNED": m4dVerifyStatusDto.setStatus("Зарегистрирована"); break;
+                    case "WITHDRAWN": m4dVerifyStatusDto.setStatus("Действие прекращено"); break;
+                    case "EXPIRED": m4dVerifyStatusDto.setStatus("Действие истекло"); break;
+                    default: m4dVerifyStatusDto.setStatus(m4dResponseDto.getStatus()); break;
+                }
                 m4dVerifyStatusDto.setVerifyDate(LocalDateTime.now());
                 m4dVerifyStatusDto.setSource("Источник ПЭП");
                 m4dVerifyStatusDto.setM4d(m4dResponseDto);
