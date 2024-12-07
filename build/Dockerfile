@@ -26,12 +26,18 @@ RUN apt-get update && \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias zkssorpdapp -file _.app-sso01.rpd.zk.test.st.crt \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias okssorpdroot -file _.ok.test.st.crt \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias okssorpdapp -file _.app-sso01.rpd.ok.test.st.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias zkssorpdpak -file cik_san.pem \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias zkssorpdpak2 -file cikrf_selfsign_CA.crt \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias okssorpdpak -file cikcp.ru \
     && rm -rf  $JAVA_HOME/lib/security/_.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/sso.rpd.zk.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/_.zk.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/_.app-sso01.rpd.zk.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/_.ok.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/_.app-sso01.rpd.ok.test.st.crt \
+    && rm -rf  $JAVA_HOME/lib/security/cik_san.pem \
+    && rm -rf  $JAVA_HOME/lib/security/cikrf_selfsign_CA.crt \
+    && rm -rf  $JAVA_HOME/lib/security/cikcp.ru \
     && unzip -o /app/security.zip -d $JAVA_HOME/conf \
     && rm -rf  /app/security.zip
 

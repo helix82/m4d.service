@@ -3,7 +3,7 @@ namespace: master
 
 image:
   repository: 10.0.182.116:5000/sep/m4d.service
-  tag: latest
+  tag:
   pullPolicy: Always
 
 service:
