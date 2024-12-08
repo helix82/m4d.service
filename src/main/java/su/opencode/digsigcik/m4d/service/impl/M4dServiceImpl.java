@@ -806,13 +806,7 @@ public class M4dServiceImpl implements M4dService {
                 M4dResponseDto m4dResponseDto = this.convertM4dToM4dResponseDto(m4d, false, false);
                 M4dVerifyStatusDto m4dVerifyStatusDto = new M4dVerifyStatusDto();
                 m4dVerifyStatusDto.setGuid(guidXml);
-                switch (m4dResponseDto.getStatus()) {
-                    case "VALID": m4dVerifyStatusDto.setStatus("Действует"); break;
-                    case "NOT_SIGNED": m4dVerifyStatusDto.setStatus("Зарегистрирована"); break;
-                    case "WITHDRAWN": m4dVerifyStatusDto.setStatus("Действие прекращено"); break;
-                    case "EXPIRED": m4dVerifyStatusDto.setStatus("Действие истекло"); break;
-                    default: m4dVerifyStatusDto.setStatus(m4dResponseDto.getStatus()); break;
-                }
+                m4dVerifyStatusDto.setStatus(m4dResponseDto.getStatus());
                 m4dVerifyStatusDto.setVerifyDate(LocalDateTime.now());
                 m4dVerifyStatusDto.setSource("Источник ПЭП");
                 m4dVerifyStatusDto.setM4d(m4dResponseDto);
@@ -847,10 +841,10 @@ public class M4dServiceImpl implements M4dService {
                 } catch (HttpClientErrorException e) {
                     if (e.getStatusCode().value() == 404) {
                         System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                        status = "Ресурс не найден (404): " + e.getResponseBodyAsString();
+                        status = "NOT_FOUND";
                     } else {
                         System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                        status = "Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
+                        status = "CHECK_FALED";
                     }
                 } catch (ResourceAccessException e) {
                     System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
@@ -858,19 +852,20 @@ public class M4dServiceImpl implements M4dService {
                         System.out.println("Неизвестный хост: " + e.getCause().getMessage());
                         //если GUID из списка - присваиваем какой то статус
                         if (guidXml.equals("38f8ee5a-164c-4158-b71c-56004f6af738")) {
-                            status = "Действие прекращено";
+                            status = "VALID";
                         } else {
-                            status = "Сервис РР МЧД ФНС недоступен";
+                            status = "CHECK_FALED"; //"Сервис РР МЧД ФНС недоступен";
                         }
                     }
                 } catch (Exception e) {
                     System.out.println("Произошла ошибка: " + e.getMessage());
-                    status = "Произошла ошибка: " + e.getMessage();
+                    status = "CHECK_FALED";
                 }
 
                 if (authResponse == null) {
                     if (status.isEmpty()){
-                        status = "Ошибка авторизации";
+                        System.out.println("Ошибка авторизации");
+                        status = "CHECK_FALED";
                     }
                 } else {
                     M4dFnsDataResponse m4dFnsDataResponse = null;
@@ -891,30 +886,33 @@ public class M4dServiceImpl implements M4dService {
                         if (e.getStatusCode().value() == 404) {
                             System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
                             System.out.println("МЧД с GUID=" + guidXml + " не найдена ни в ПЭП ни на РР МЧД ФНС");
-                            status = "false";
+                            status = "NOT_FOUND";
                         } else {
                             System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-                            status = "Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
+                            status = "CHECK_FALED";
                         }
                     } catch (ResourceAccessException e) {
                         System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
                         if (e.getCause() instanceof UnknownHostException) {
                             System.out.println("Неизвестный хост: " + e.getCause().getMessage());
-                            status = "Сервис РР МЧД ФНС недоступен";
+                            System.out.println("Сервис РР МЧД ФНС недоступен");
+                            status = "CHECK_FALED";
                         }
                     } catch (Exception e) {
                         System.out.println("Произошла ошибка: " + e.getMessage());
-                        status = "Произошла ошибка: " + e.getMessage();
+                        status = "CHECK_FALED";
                     }
                     if (m4dFnsDataResponse == null) {
                         if (status.isEmpty()) {
-                            status = "Ошибка получения данных по МЧД с сайта РР МЧД ФНС";
+                            System.out.println("Ошибка получения данных по МЧД с сайта РР МЧД ФНС");
+                            status = "CHECK_FALED";
                         }
                     } else {
                         String hashM4dFns = m4dFnsDataResponse.getId();
                         String hashM4dFile = HashUtils.getHash(sourceFile.getBytes());
                         if (!hashM4dFns.equals(hashM4dFile)){
-                            status = "xml-файлы МЧД не совпадают";
+                            System.out.println("xml-файлы МЧД не совпадают");
+                            status = "CHECK_FALED";
                         } else {
                             switch (m4dFnsDataResponse.getStatus()) {
                                 case "ACTIVE": status = "VALID"; break;
@@ -925,13 +923,6 @@ public class M4dServiceImpl implements M4dService {
                             }
                         }
                     }
-                }
-                switch (status) {
-                    case "VALID": status = "Действует"; break;
-                    case "NOT_SIGNED": status = "Зарегистрирована"; break;
-                    case "WITHDRAWN": status = "Действие прекращено"; break;
-                    case "EXPIRED": status = "Действие истекло"; break;
-                    default: break;
                 }
                 M4dVerifyStatus m4dVerifyStatusSaved;
                 M4dVerifyStatus existsM4dVerifyStatus = this.m4dVerifyStatusRepository.findM4dVerifyStatusByGuidIgnoreCase(guidXml);
