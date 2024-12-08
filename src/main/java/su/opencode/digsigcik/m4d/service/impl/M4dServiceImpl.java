@@ -789,7 +789,9 @@ public class M4dServiceImpl implements M4dService {
             if (m4dXml == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
             }
-
+            if (m4dXml.document.powerAttorneys.getMrpa().getGuid() == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+            }
             String guidXml;
             guidXml = m4dXml.document.powerAttorneys.getMrpa().getGuid();
             System.out.println(guidXml);
@@ -819,6 +821,7 @@ public class M4dServiceImpl implements M4dService {
             } else {
                 M4dResponseDto m4dResponseDto = this.parseM4dXml(m4dXml);
                 String status = "";
+                String source = "Источник РР МЧД ФНС";
                 AuthResponse authResponse = null;
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -887,7 +890,8 @@ public class M4dServiceImpl implements M4dService {
                     } catch (HttpClientErrorException e) {
                         if (e.getStatusCode().value() == 404) {
                             System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
-                            status = "МЧД с GUID=" + guidXml + " не найдена ни в ПЭП ни на РР МЧД ФНС";
+                            System.out.println("МЧД с GUID=" + guidXml + " не найдена ни в ПЭП ни на РР МЧД ФНС");
+                            status = "false";
                         } else {
                             System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
                             status = "Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
@@ -951,7 +955,7 @@ public class M4dServiceImpl implements M4dService {
                     }
                 }
                 M4dVerifyStatusDto m4dVerifyStatusDto = modelMapper.map(m4dVerifyStatusSaved, M4dVerifyStatusDto.class);
-                m4dVerifyStatusDto.setSource("Источник РР МЧД ФНС");
+                m4dVerifyStatusDto.setSource(source);
                 m4dVerifyStatusDto.setM4d(m4dResponseDto);
                 return new ResponseEntity<>(m4dVerifyStatusDto, HttpStatus.OK);
             }
