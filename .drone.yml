@@ -98,16 +98,25 @@ steps:
 #      - run
 
 
+  - name: create-helm-template
+    image: alpine/helm:3.12.3
+    commands:
+      - helm template m4d ./deploy/helm --namespace ocode-dev --values ./deploy/helm/ocode-dev-values.yaml --set image.tag=${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT} > ./deploy/helm/k8s-m4d.yaml
+    depends_on:
+      - rebuild-cache
+    when:
+      branch:
+        - master
 
   - name: deploy
     image: ghcr.io/bh90210/dron8s:latest
     settings:
-      yaml: ./deploy/k8s-m4d-ocode.yaml
+      yaml: ./deploy/helm/k8s-m4d.yaml
       tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
       kubeconfig:
         from_secret: kubeconfig
     depends_on:
-      - build
+      - create-helm-template
     when:
       branch:
         - master

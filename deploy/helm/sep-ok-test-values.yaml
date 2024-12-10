@@ -52,11 +52,6 @@ secret:
     RPD_CONNECTION_TIMEOUT: MTAwMDA=
     RPD_READ_TIMEOUT: MTAwMDA=
 
-#hostAliases:
-#  - ip: "10.0.180.213"
-#    hostnames:
-#      - "app-sso01.rpd.ok.test.st"
-
 jvmOptions:
   xms: 2G
   xmx: 64G
