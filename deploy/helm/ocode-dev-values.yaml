@@ -1,9 +1,9 @@
 
-namespace: master
+namespace: ocode-dev
 
 image:
-  repository: 10.0.182.84:5000/sep/m4d.service
-  tag: latest
+  repository: nexus.essocode.ru/ess/m4d
+  tag: "{{.tag}}"
   pullPolicy: Always
 
 service:
@@ -24,16 +24,16 @@ ingress:
     cert-manager.io/issue-temporary-certificate: "true"
     acme.cert-manager.io/http01-edit-in-place: "true"
     ingress.kubernetes.io/ssl-redirect: "true"
-  tlsEnabled: false  # New parameter to control TLS
+  tlsEnabled: true  # New parameter to control TLS
   hosts:
-    - host: m4d.sep.ok.test.st
+    - host: m4d.essocode.ru
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
-    - secretName: m4d-tls
+    - secretName: m4d-dev-tls
       hosts:
-        - m4d.sep.ok.test.st
+        - m4d.essocode.ru
 
 secret:
   enabled: true
@@ -47,12 +47,12 @@ secret:
     RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvdG9rZW4=
     KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
     SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
-    M4D_HANDBOOK_URI: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjE=
-    AUDIT_URL: aHR0cHM6Ly9zcC5lc3NvY29kZS5ydS9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
+    M4D_HANDBOOK_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm9jb2RlLWRldi5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjE=
+    AUDIT_URL: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm9jb2RlLWRldi5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
     SERVER_PORT: ODA1MQ==
-    RESOURCE_ACCESS: cGVw
-    RPD_LIFESPAN_CACHE: MzA=
-    RPD_REFRESH_TIME_CACHE: MjU=
+    RESOURCE_ACCESS: c2Vw
+    RPD_LIFESPAN_CACHE: MTQ0MA==
+    RPD_REFRESH_TIME_CACHE: MTM1MA==
     RPD_CONNECTION_TIMEOUT: MTAwMDA=
     RPD_READ_TIMEOUT: MTAwMDA=
 

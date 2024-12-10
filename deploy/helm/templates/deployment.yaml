@@ -15,14 +15,16 @@ spec:
       labels:
         app: {{ .Values.appName }}
     spec:
-#      hostAliases:
-#        {{- range .Values.hostAliases }}
-#        - ip: "{{ .ip }}"
-#          hostnames:
-#            {{- range .hostnames }}
-#            - "{{ . }}"
-#            {{- end }}
-#        {{- end }}
+      {{- if .Values.hostAliases }}
+      hostAliases:
+        {{- range .Values.hostAliases }}
+        - ip: "{{ .ip }}"
+          hostnames:
+            {{- range .hostnames }}
+            - "{{ . }}"
+            {{- end }}
+        {{- end }}
+      {{- end }}
       terminationGracePeriodSeconds: 30
       containers:
         - name: {{ .Values.appName }}-dev

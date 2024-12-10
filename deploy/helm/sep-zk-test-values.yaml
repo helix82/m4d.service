@@ -53,11 +53,6 @@ secret:
     RPD_CONNECTION_TIMEOUT: MTAwMDA=
     RPD_READ_TIMEOUT: MTAwMDA=
 
-#hostAliases:
-#  - ip: "10.0.176.204"
-#    hostnames:
-#      - "app-sso01.rpd.zk.test.st"
-
 jvmOptions:
   xms: 2G
   xmx: 64G
