@@ -10,7 +10,7 @@ import java.net.URLConnection;
 
 public enum FileMimeTypeEnum {
     DSCP("application/octet-stream"),
-    XML("application/xml"),
+    XML("text/xml"),
     PDF("application/pdf"),
 // Microsoft Office
     DOC("application/msword"),
