@@ -101,7 +101,7 @@ steps:
   - name: create-helm-template
     image: alpine/helm:3.12.3
     commands:
-      - helm template m4d ./deploy/helm --namespace ocode-dev --values ./deploy/helm/ocode-dev-values.yaml --set image.tag=${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT} > ./deploy/helm/k8s-m4d.yaml
+      - helm template m4d ./deploy/helm --namespace dev --values ./deploy/helm/ocode-dev-values.yaml --set image.tag=${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT} > ./deploy/helm/k8s-m4d.yaml
     depends_on:
       - rebuild-cache
     when:

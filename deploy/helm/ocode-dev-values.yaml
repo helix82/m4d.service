@@ -1,5 +1,5 @@
 
-namespace: ocode-dev
+namespace: dev
 
 image:
   repository: nexus.essocode.ru/ess/m4d
@@ -26,40 +26,43 @@ ingress:
     ingress.kubernetes.io/ssl-redirect: "true"
   tlsEnabled: true  # New parameter to control TLS
   hosts:
-    - host: m4d.essocode.ru
+    - host: m4d.dev.essocode.ru
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
     - secretName: m4d-dev-tls
       hosts:
-        - m4d.essocode.ru
+        - m4d.dev.essocode.ru
 
 secret:
   enabled: true
-  name: m4d-back-cred
+  name: dev-m4d-back-cred
   data:
-    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMjE3Ljc5LjIyLjQ2OjU0MzIvbTRkX2Ri
+    #jdbc:postgresql://217.79.22.46:5432/dev_m4d_db
+    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMjE3Ljc5LjIyLjQ2OjU0MzIvZGV2X200ZF9kYg==
     SPRING_DATASOURCE_USERNAME: cm9vdA==
     SPRING_DATASOURCE_PASSWORD: cm9vdA==
-    RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
-    OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3Q=
-    RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvdG9rZW4=
+    #https://sso.dev.essocode.ru/auth/realms/pep/protocol/openid-connect/auth
+    RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
+    #https://sso.dev.essocode.ru/auth/realms/pep/protocol/openid-connect/token
+    RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
+    #https://sso.dev.essocode.ru/auth/realms/pep
+    OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcA==
     KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
-    SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
-    M4D_HANDBOOK_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm9jb2RlLWRldi5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjE=
-    AUDIT_URL: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm9jb2RlLWRldi5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
+    #https://m4d.dev.essocode.ru
+    SWAGGER_URL: aHR0cHM6Ly9tNGQuZGV2LmVzc29jb2RlLnJ1
+    #http://synapi-service.dev.svc.cluster.local/api/v1
+    M4D_HANDBOOK_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjE=
+    #http://synapi-service.dev.svc.cluster.local/api/v1/audit/external
+    AUDIT_URL: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
     SERVER_PORT: ODA1MQ==
-    RESOURCE_ACCESS: c2Vw
+    #pep
+    RESOURCE_ACCESS: cGVw
     RPD_LIFESPAN_CACHE: MTQ0MA==
     RPD_REFRESH_TIME_CACHE: MTM1MA==
     RPD_CONNECTION_TIMEOUT: MTAwMDA=
     RPD_READ_TIMEOUT: MTAwMDA=
-
-hostAliases:
-  - ip: "10.1.176.210"
-    hostnames:
-      - "sso.rpd.zk.test.st"
 
 jvmOptions:
   xms: 2G
