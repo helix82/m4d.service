@@ -1,0 +1,101 @@
+
+namespace: release
+
+image:
+  repository: nexus.essocode.ru/ess/m4d
+  tag: "{{.tag}}"
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8051
+  targetPort: 8051
+  portJMX: 9010
+  targetPortJMX: 9010
+
+replicaCount: 1
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "51m"
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/issue-temporary-certificate: "true"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    ingress.kubernetes.io/ssl-redirect: "true"
+  tlsEnabled: true  # New parameter to control TLS
+  hosts:
+    - host: m4d.essocode.ru
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: m4d-dev-tls
+      hosts:
+        - m4d.essocode.ru
+
+secret:
+  enabled: true
+  name: m4d-back-cred
+  data:
+    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMjE3Ljc5LjIyLjQ2OjU0MzIvbTRkX2Ri
+    SPRING_DATASOURCE_USERNAME: cm9vdA==
+    SPRING_DATASOURCE_PASSWORD: cm9vdA==
+    RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
+    OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3Q=
+    RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28ucnBkLnprLnRlc3Quc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvdG9rZW4=
+    KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
+    SWAGGER_URL: aHR0cHM6Ly9tNGQuZXNzb2NvZGUucnU=
+    M4D_HANDBOOK_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm9jb2RlLWRldi5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjE=
+    AUDIT_URL: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm9jb2RlLWRldi5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
+    SERVER_PORT: ODA1MQ==
+    RESOURCE_ACCESS: c2Vw
+    RPD_LIFESPAN_CACHE: MTQ0MA==
+    RPD_REFRESH_TIME_CACHE: MTM1MA==
+    RPD_CONNECTION_TIMEOUT: MTAwMDA=
+    RPD_READ_TIMEOUT: MTAwMDA=
+
+hostAliases:
+  - ip: "10.1.176.210"
+    hostnames:
+      - "sso.rpd.zk.test.st"
+
+jvmOptions:
+  xms: 2G
+  xmx: 64G
+  gc: "-XX:+UseG1GC"
+  minHeapFreeRatio: 10
+  maxHeapFreeRatio: 30
+  portJMX: 9010
+  authenticateJMX: false
+  sslJMX: false
+  hostnameJMX: localhost
+  localOnlyJMX: false
+
+jarFile: m4d-0.0.1-SNAPSHOT.jar
+
+env:
+  SPRING_DATASOURCE_URL: SPRING_DATASOURCE_URL
+  SPRING_DATASOURCE_USERNAME: SPRING_DATASOURCE_USERNAME
+  SPRING_DATASOURCE_PASSWORD: SPRING_DATASOURCE_PASSWORD
+  RPD_AUTHORIZATION_URI: RPD_AUTHORIZATION_URI
+  OAUTH2_ISSUER_URL: OAUTH2_ISSUER_URL
+  RPD_SWAGGER_TOKEN_URI: RPD_SWAGGER_TOKEN_URI
+  KAFKA_BROKERS_LIST_URL: KAFKA_BROKERS_LIST_URL
+  SWAGGER_URL: SWAGGER_URL
+  M4D_HANDBOOK_URI: M4D_HANDBOOK_URI
+  AUDIT_URL: AUDIT_URL
+  SERVER_PORT: SERVER_PORT
+  RESOURCE_ACCESS: RESOURCE_ACCESS
+  RPD_LIFESPAN_CACHE: RPD_LIFESPAN_CACHE
+  RPD_REFRESH_TIME_CACHE: RPD_REFRESH_TIME_CACHE
+  RPD_CONNECTION_TIMEOUT: RPD_CONNECTION_TIMEOUT
+  RPD_READ_TIMEOUT: RPD_READ_TIMEOUT
+
+appName: m4d
+
+imagePullSecrets:
+  - registrypullsecret
+
+resources: {}
