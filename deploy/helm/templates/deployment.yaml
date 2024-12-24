@@ -134,6 +134,21 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.DISABLE_TLS_CHECK }}
+            - name: USER_CERTS_ME_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.USER_CERTS_ME_URI }}
+            - name: CONTAINER_PART_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONTAINER_PART_URI }}
+            - name: CONTAINER_PART_JSON_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONTAINER_PART_JSON_URI }}
       imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
         - name: {{ . }}
