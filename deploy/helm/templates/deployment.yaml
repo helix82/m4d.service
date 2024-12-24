@@ -129,6 +129,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.RPD_READ_TIMEOUT }}
+            - name: DISABLE_TLS_CHECK
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.DISABLE_TLS_CHECK }}
       imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
         - name: {{ . }}
