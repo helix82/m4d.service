@@ -100,13 +100,23 @@ springdoc:
     url: ${SWAGGER_URL:http://localhost:8051}
     token-uri: ${RPD_SWAGGER_TOKEN_URI:https://sso.rpd.zk.test.st/realms/test/protocol/openid-connect/token}
 
+synapi:
+  user-certs-me:
+    uri: ${USER_CERTS_ME_URI:https://sp.dev.essocode.ru/api/v1/user-certificate/me}
+
+  container:
+    get-part:
+      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
+    get-part-json:
+      uri: ${CONTAINER_PART_JSON_URI:https://sp.dev.essocode.ru/api/v1/container/get-part-json}
+
 m4d:
   handbook:
-    uri: ${M4D_HANDBOOK_URI:https://sp.essocode.ru/api/v1}
+    uri: ${M4D_HANDBOOK_URI:https://sp.dev.essocode.ru/api/v1}
   api_rr_fns:
     uri: ${M4D_API_RR_FNS_URI:https://operator.cprr-it.weintegrator.com/api/v0}
 
 # Временное решение до полноценного внедрения kafka
 audit:
-  url: ${AUDIT_URL:https://sp.essocode.ru/api/v1/audit/external}
+  url: ${AUDIT_URL:https://sp.dev.essocode.ru/api/v1/audit/external}
   default-user: 'Администратор МЧД'

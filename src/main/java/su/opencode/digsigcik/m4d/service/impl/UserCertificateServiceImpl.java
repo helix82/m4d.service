@@ -20,17 +20,14 @@ import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 @Service
 @RequiredArgsConstructor
 public class UserCertificateServiceImpl implements UserCertificateService {
-    @Value("${m4d.handbook.uri}")
-    private String HANDBOOK_URI;
+    @Value("${synapi.user-certs-me.uri}")
+    private String USER_CERTIFICATE_ME_URI;
     private final RestTemplateService restTemplateService;
-
-    // TODO: вынести в вальюсы, потом поменять обратно на user-certificate
-    public static final String USER_CERTIFICATE_ME = "/user_certificate/me";
 
     @Override
     public Set<String> getUserCertificateINNs(Authentication authentication) {
         ResponseEntity<PublicKeyUserCertificateResponse[]> listUserCertificates =
-                restTemplateService.fetchServiceResponse(HANDBOOK_URI + USER_CERTIFICATE_ME, PublicKeyUserCertificateResponse[].class,
+                restTemplateService.fetchServiceResponse(USER_CERTIFICATE_ME_URI, PublicKeyUserCertificateResponse[].class,
                         getTokenValue(authentication), HttpMethod.GET);
 
         return Stream.of(Objects.requireNonNull(listUserCertificates.getBody()))

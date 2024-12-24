@@ -48,8 +48,12 @@ import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 @RequestMapping("/api/v1/m4d/revoke")
 @Tag(name = "M4d Revoke Controller")
 public class M4dRevokeController {
-    @Value("${m4d.handbook.uri}")
-    private String HANDBOOK_URI;
+
+    @Value("${synapi.container.get-part.uri}")
+    private String CONTAINER_PART_URI;
+    @Value("${synapi.container.get-part-json.uri}")
+    private String CONTAINER_PART_JSON_URI;
+
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dRecallService m4dRecallService;
@@ -282,7 +286,7 @@ public class M4dRevokeController {
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-            reportDto = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part-json", requestEntity, ReportDto.class);
+            reportDto = restTemplate.postForObject(CONTAINER_PART_JSON_URI, requestEntity, ReportDto.class);
 
             assert reportDto != null;
             reportDto.getResults().stream()
@@ -300,7 +304,7 @@ public class M4dRevokeController {
             map1.add("container", new FileSystemResource(tempFileName));
             map1.add("selector","sourceFile");
             HttpEntity<MultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map1, headers);
-            res = restTemplate.postForObject(HANDBOOK_URI + "/get-container-part", requestEntity1, ByteArrayResource.class);
+            res = restTemplate.postForObject(CONTAINER_PART_URI, requestEntity1, ByteArrayResource.class);
 
         } catch (IOException e) {
             e.printStackTrace();
