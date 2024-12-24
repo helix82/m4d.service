@@ -62,7 +62,11 @@ web:
     max-age: 5
   security:
     resource-access: ${RESOURCE_ACCESS:sep}
-    white-list:
+    lifespan-cache: ${RPD_LIFESPAN_CACHE:1440}
+    refresh-time-cache: ${RPD_REFRESH_TIME_CACHE:1350}
+    connection-timeout: ${RPD_CONNECTION_TIMEOUT:10000}
+    read-timeout: ${RPD_READ_TIMEOUT:10000}
+    white-list-all-methods:
       - /v3/api-docs/**
       - /configuration/ui
       - /swagger-resources/**
@@ -73,10 +77,7 @@ web:
       - /.well-known/acme-challenge/**
       - /favicon.ico
       - /api/v1/m4d/verify
-    lifespan-cache: ${RPD_LIFESPAN_CACHE:1440}
-    refresh-time-cache: ${RPD_REFRESH_TIME_CACHE:1350}
-    connection-timeout: ${RPD_CONNECTION_TIMEOUT:10000}
-    read-timeout: ${RPD_READ_TIMEOUT:10000}
+    trust-all: {DISABLE_TLS_CHECK:false}
 ---
 
 spring:
