@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.m4d.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @SuperBuilder
@@ -26,7 +28,11 @@ public class ReportDto {
     @AllArgsConstructor
     @Builder
     @NoArgsConstructor
+    @JsonIgnoreProperties
     public static class Result {
+
+        private String signature;
+        private boolean attached;
         @JsonProperty("SignedDocumentName")
         private String signedDocumentName;
         @JsonProperty("OriginalDocumentName")
@@ -61,7 +67,22 @@ public class ReportDto {
             @JsonProperty("SignatureInfo")
             private VerificationResult.SignatureInfo signatureInfo;
             @JsonProperty("AdditionalCertificateResult")
-            private Object additionalCertificateResult;
+            private List<AdditionalCertificateResult> additionalCertificateResult;
+
+            @Data
+            @AllArgsConstructor
+            @NoArgsConstructor
+            @Builder
+            public static class AdditionalCertificateResult {
+                @JsonProperty("AssemblyName")
+                private String assemblyName;
+                @JsonProperty("PluginDescription")
+                private String pluginDescription;
+                @JsonProperty("bResult")
+                private boolean bResult;
+                @JsonProperty("ErrorsList")
+                private List<String> errorsList;
+            }
 
             @Data
             @AllArgsConstructor
@@ -102,6 +123,7 @@ public class ReportDto {
                 @JsonProperty("CertificateType")
                 private String certificateType;
             }
+
             @Data
             @AllArgsConstructor
             @Builder
@@ -132,6 +154,7 @@ public class ReportDto {
                 @JsonProperty("KeyIdentifier")
                 private String keyIdentifier;
             }
+
             @Data
             @AllArgsConstructor
             @Builder
@@ -165,4 +188,11 @@ public class ReportDto {
     private String error;
     @JsonProperty("ErrorDescription")
     private String errorDescription;
+    @JsonProperty("M4dVerificationReport")
+    private ReportDto m4dVerificationReport;
+
+    @JsonProperty("M4dFileVerificationReport")
+    private ReportDto m4dFileVerificationReport;
+    @JsonProperty("M4dServiceReport")
+    private Map<String, Object> m4dServiceReport;
 }
