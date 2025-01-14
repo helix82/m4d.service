@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
@@ -48,6 +49,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
+@Slf4j
 @RestController
 @M4dExceptionHandler
 @RequestMapping("/api/v1/m4d")
@@ -328,16 +330,22 @@ public class M4dController {
             reportDto = restTemplate.postForObject(CONTAINER_PART_JSON_URI, requestEntity, ReportDto.class);
 
             assert reportDto != null;
-            reportDto.getResults().stream()
-                    .flatMap(result -> result.getVerificationResults().stream())
-                    .findFirst()
-                    .ifPresent(verificationResult -> {
-                        boolean isResultTrue = verificationResult.isResult();
-                        System.out.println("Result value: " + isResultTrue);
-                        if (!isResultTrue) {
-                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
-                        }
-                    });
+            if(reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
+                reportDto.getResults().stream()
+                        .flatMap(result -> result.getVerificationResults().stream())
+                        .findFirst()
+                        .ifPresent(verificationResult -> {
+                            boolean isResultTrue = verificationResult.isResult();
+                            System.out.println("Result value: " + isResultTrue);
+                            if (!isResultTrue) {
+                                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
+                            }
+                        });
+            } else {
+                log.error(reportDto.getError()+": {}", reportDto.getErrorDescription());
+                return new ResponseEntity<>(getCustomErrorJsonFromString(reportDto.getError()), HttpStatus.BAD_REQUEST);
+            }
+
 
             LinkedMultiValueMap<String, Object> map1 = new LinkedMultiValueMap<>();
             map1.add("container", new FileSystemResource(tempFileName));
