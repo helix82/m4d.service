@@ -17,6 +17,7 @@ import java.util.Map;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ReportDto {
     @JsonProperty("Results")
@@ -28,7 +29,7 @@ public class ReportDto {
     @AllArgsConstructor
     @Builder
     @NoArgsConstructor
-    @JsonIgnoreProperties
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Result {
 
         private String signature;
@@ -53,11 +54,14 @@ public class ReportDto {
         @Builder
         @NoArgsConstructor
         @JsonInclude(JsonInclude.Include.NON_NULL)
+        @JsonIgnoreProperties(ignoreUnknown = true)
         public static class VerificationResult {
             @JsonProperty("Message")
             private String message;
             @JsonProperty("Result")
             private boolean result;
+            @JsonProperty("Details")
+            private Details details;
             @JsonProperty("SignerCertificate")
             private String signerCertificate;
             @JsonProperty("SignerCertificateInfo")
@@ -68,11 +72,62 @@ public class ReportDto {
             private VerificationResult.SignatureInfo signatureInfo;
             @JsonProperty("AdditionalCertificateResult")
             private List<AdditionalCertificateResult> additionalCertificateResult;
+            @JsonProperty("AdditionalInfo")
+            private String additionalInfo;
 
             @Data
             @AllArgsConstructor
             @NoArgsConstructor
             @Builder
+            @JsonIgnoreProperties(ignoreUnknown = true)
+            public static class Details {
+                @JsonProperty("SignatureResult")
+                private SignatureResult signatureResult;
+                @JsonProperty("CertificateResult")
+                private CertificateResult certificateResult;
+
+                @Data
+                @AllArgsConstructor
+                @NoArgsConstructor
+                @Builder
+                @JsonIgnoreProperties(ignoreUnknown = true)
+                public static class SignatureResult {
+                    @JsonProperty("Result")
+                    private boolean result;
+                    @JsonProperty("Error")
+                    private String error;
+                }
+
+                @Data
+                @AllArgsConstructor
+                @NoArgsConstructor
+                @Builder
+                @JsonIgnoreProperties(ignoreUnknown = true)
+                public static class CertificateResult {
+                    @JsonProperty("Result")
+                    private boolean result;
+                    @JsonProperty("Errors")
+                    private List<CertificateResultError> errors;
+
+                    @Data
+                    @AllArgsConstructor
+                    @NoArgsConstructor
+                    @Builder
+                    @JsonIgnoreProperties(ignoreUnknown = true)
+                    public static class CertificateResultError {
+                        @JsonProperty("ErrorCode")
+                        private String errorCode;
+                        @JsonProperty("ErrorMessage")
+                        private String errorMessage;
+                    }
+                }
+            }
+
+            @Data
+            @AllArgsConstructor
+            @NoArgsConstructor
+            @Builder
+            @JsonIgnoreProperties(ignoreUnknown = true)
             public static class AdditionalCertificateResult {
                 @JsonProperty("AssemblyName")
                 private String assemblyName;
@@ -82,12 +137,27 @@ public class ReportDto {
                 private boolean bResult;
                 @JsonProperty("ErrorsList")
                 private List<String> errorsList;
+                @JsonProperty("AdditionalInfo")
+                private List<String> additionalInfo;
+                @JsonProperty("CertificateInfo")
+                private CertificateInfo certificateInfo;
+
+                @Data
+                @AllArgsConstructor
+                @NoArgsConstructor
+                @Builder
+                @JsonIgnoreProperties(ignoreUnknown = true)
+                public static class CertificateInfo {
+                    @JsonProperty("OwnerType")
+                    private String ownerType;
+                }
             }
 
             @Data
             @AllArgsConstructor
             @Builder
             @NoArgsConstructor
+            @JsonIgnoreProperties(ignoreUnknown = true)
             public static class AdditionalCertificatesInfo {
                 @JsonProperty("SubjectName")
                 private String subjectName;
@@ -128,6 +198,7 @@ public class ReportDto {
             @AllArgsConstructor
             @Builder
             @NoArgsConstructor
+            @JsonIgnoreProperties(ignoreUnknown = true)
             public static class SignerCertificateInfo {
                 @JsonProperty("SubjectName")
                 private String subjectName;
@@ -159,6 +230,7 @@ public class ReportDto {
             @AllArgsConstructor
             @Builder
             @NoArgsConstructor
+            @JsonIgnoreProperties(ignoreUnknown = true)
             public static class SignatureInfo {
                 @JsonProperty("CAdESType")
                 private String cAdESType;

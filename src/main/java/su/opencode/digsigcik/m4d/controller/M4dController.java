@@ -292,8 +292,9 @@ public class M4dController {
     })
     @PutMapping(value = "/{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSig(Authentication authentication,
-                                       @PathVariable @Parameter(name = "id",
-                                               description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container) throws IOException, ParseException, JAXBException {
+                                       @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id,
+                                       @RequestPart("container") MultipartFile container,
+                                       @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws IOException, ParseException, JAXBException {
         String bearerToken = getTokenValue(authentication);
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
@@ -305,64 +306,7 @@ public class M4dController {
         if (!Objects.equals(extension, "dscp")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
-        List<String> tempFileNames = new ArrayList<>();
-        String tempFileName;
-        FileOutputStream fo;
-        ReportDto reportDto;
         M4d m4d;
-        ByteArrayResource res = null;
-        try {
-            tempFileName = "/tmp/" + container.getOriginalFilename();
-
-            tempFileNames.add(tempFileName);
-            fo = new FileOutputStream(tempFileName);
-            fo.write(container.getBytes());
-            fo.close();
-
-            LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
-            map.add("container", new FileSystemResource(tempFileName));
-            map.add("reverify", true);
-
-            HttpHeaders headers = createHttpHeaders(bearerToken);
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-            reportDto = restTemplate.postForObject(CONTAINER_PART_JSON_URI, requestEntity, ReportDto.class);
-
-            assert reportDto != null;
-            if(reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
-                reportDto.getResults().stream()
-                        .flatMap(result -> result.getVerificationResults().stream())
-                        .findFirst()
-                        .ifPresent(verificationResult -> {
-                            boolean isResultTrue = verificationResult.isResult();
-                            System.out.println("Result value: " + isResultTrue);
-                            if (!isResultTrue) {
-                                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
-                            }
-                        });
-            } else {
-                log.error(reportDto.getError()+": {}", reportDto.getErrorDescription());
-                return new ResponseEntity<>(getCustomErrorJsonFromString(reportDto.getError()), HttpStatus.BAD_REQUEST);
-            }
-
-
-            LinkedMultiValueMap<String, Object> map1 = new LinkedMultiValueMap<>();
-            map1.add("container", new FileSystemResource(tempFileName));
-            map1.add("selector", "sourceFile");
-            HttpEntity<MultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map1, headers);
-            res = restTemplate.postForObject(CONTAINER_PART_URI, requestEntity1, ByteArrayResource.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        for (String fileName : tempFileNames) {
-            File f = new File(fileName);
-            f.delete();
-        }
-
-        assert res != null;
-        var resource = new ByteArrayResource(res.getByteArray());
         try {
             m4d = this.m4dService.findById(id);
         } catch (ConstraintViolationException e) {
@@ -376,8 +320,67 @@ public class M4dController {
         M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
         String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
         //-------------------------------------------------
-        if (!Arrays.equals(resource.getByteArray(), xmlString.getBytes())) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
+        List<String> tempFileNames = new ArrayList<>();
+        String tempFileName;
+        FileOutputStream fo;
+        ReportDto reportDto;
+        ByteArrayResource res = null;
+        if (verify) {
+            try {
+                tempFileName = "/tmp/" + container.getOriginalFilename();
+
+                tempFileNames.add(tempFileName);
+                fo = new FileOutputStream(tempFileName);
+                fo.write(container.getBytes());
+                fo.close();
+
+                LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+                map.add("container", new FileSystemResource(tempFileName));
+                map.add("reverify", true);
+
+                HttpHeaders headers = createHttpHeaders(bearerToken);
+                headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+                HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
+                reportDto = restTemplate.postForObject(CONTAINER_PART_JSON_URI, requestEntity, ReportDto.class);
+
+                assert reportDto != null;
+                if (reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
+                    reportDto.getResults().stream()
+                            .flatMap(result -> result.getVerificationResults().stream())
+                            .findFirst()
+                            .ifPresent(verificationResult -> {
+                                boolean isResultTrue = verificationResult.isResult();
+                                System.out.println("Result value: " + isResultTrue);
+                                if (!isResultTrue) {
+                                    throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
+                                }
+                            });
+                } else {
+                    log.error(reportDto.getError() + ": {}", reportDto.getErrorDescription());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(reportDto.getError()), HttpStatus.BAD_REQUEST);
+                }
+
+
+                LinkedMultiValueMap<String, Object> map1 = new LinkedMultiValueMap<>();
+                map1.add("container", new FileSystemResource(tempFileName));
+                map1.add("selector", "sourceFile");
+                HttpEntity<MultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map1, headers);
+                res = restTemplate.postForObject(CONTAINER_PART_URI, requestEntity1, ByteArrayResource.class);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            for (String fileName : tempFileNames) {
+                File f = new File(fileName);
+                f.delete();
+            }
+
+            assert res != null;
+            var resource = new ByteArrayResource(res.getByteArray());
+            if (!Arrays.equals(resource.getByteArray(), xmlString.getBytes())) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
+            }
         }
         M4dFile m4dFile = new M4dFile();
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
