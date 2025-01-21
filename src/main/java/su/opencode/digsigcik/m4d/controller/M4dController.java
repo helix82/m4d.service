@@ -302,8 +302,7 @@ public class M4dController {
         if (container == null || container.isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString("Container is null"), HttpStatus.BAD_REQUEST);
         }
-        String extension = FilenameUtils.getExtension(container.getOriginalFilename());
-        if (!Objects.equals(extension, "dscp")) {
+        if (!Objects.equals(container.getContentType(), FileMimeTypeEnum.ZIP.toString()) && !Objects.equals(container.getContentType(), FileMimeTypeEnum.DSCP.toString())) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
         M4d m4d;
