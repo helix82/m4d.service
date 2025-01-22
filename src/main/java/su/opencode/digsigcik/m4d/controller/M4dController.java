@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.codehaus.plexus.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,7 +31,6 @@ import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dService;
-import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 import su.opencode.digsigcik.m4d.util.XmlValidator;
 
@@ -41,6 +41,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -376,8 +377,10 @@ public class M4dController {
             }
 
             assert res != null;
-            var resource = new ByteArrayResource(res.getByteArray());
-            if (!Arrays.equals(resource.getByteArray(), xmlString.getBytes())) {
+            byte[] resource = res.getByteArray();
+            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
+            String normalizedXmlString = xmlString.replaceAll("\\s+", "");
+            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
             }
         }
@@ -512,7 +515,8 @@ public class M4dController {
             //парсинг МЧД из xml
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             m4d.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
-            m4d.setCreateDate(LocalDateTime.now());
+            String dateCreate = m4dXml.getIdFile().substring(9, 17);
+            m4d.setCreateDate(convertStringToLocalDateTime(dateCreate));
             m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
             m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
@@ -543,7 +547,7 @@ public class M4dController {
                     if (c.representative.detailRepresentative != null) {
                         representative.setInn(c.representative.detailRepresentative.getInn());
                         representative.setSnils(c.representative.detailRepresentative.getSnils());
-                        representative.setBirthDate(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString()));
+                        representative.setBirthDate(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.getBirthDate()));
                         representative.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
                         representative.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
                         representative.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
@@ -551,7 +555,7 @@ public class M4dController {
                             return new ResponseEntity<>(getCustomErrorJsonFromString(REPRESENTATIVE_IS_NULL), HttpStatus.BAD_REQUEST);
                         }
                         represPassport.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-                        represPassport.setDateIssue(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()));
+                        represPassport.setDateIssue(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
                         represPassport.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
                         represPassport.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
                     }
@@ -680,10 +684,14 @@ public class M4dController {
     private LocalDateTime convertStringToLocalDateTime(String date) {
         DateTimeFormatter formatter;
         LocalDateTime localDateTime;
-        if (date.length() == 10) {
+        if (date.length() == 8) {
+            formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            LocalDate localDate = LocalDate.parse(date, formatter);
+            localDateTime = localDate.atStartOfDay().atZone(ZoneOffset.UTC).toLocalDateTime();
+        } else if (date.length() == 10) {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDate localDate = LocalDate.parse(date, formatter);
-            localDateTime = localDate.atStartOfDay();
+            localDateTime = localDate.atStartOfDay().atZone(ZoneOffset.UTC).toLocalDateTime();
         } else if (date.length() > 20) {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
             localDateTime = LocalDateTime.from(formatter.parse(date));
