@@ -126,6 +126,8 @@ public interface Constants {
     String CONTROLLER_MRPA_CLEAR_SIG_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY = "Получить список МЧД пользователя";
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список МЧД пользователя";
+    String CONTROLLER_MRPA_IMPORT_SUMMARY = "Импорт МЧД с подписью";
+    String CONTROLLER_MRPA_IMPORT_DESCRIPTION = "Возвращает загруженную МЧД";
     String CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY = "Получить список заявлений на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_FIND_ALL_DESCRIPTION = "Возвращает список заявлений на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_FIND_BY_ID_SUMMARY = "Получить заявление на отзыв МЧД по ИД";

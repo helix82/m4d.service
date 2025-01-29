@@ -1,10 +1,13 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.codehaus.plexus.util.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -16,15 +19,16 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
-import su.opencode.digsigcik.m4d.dto.CredentialDto;
-import su.opencode.digsigcik.m4d.dto.M4dFullXML;
-import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
-import su.opencode.digsigcik.m4d.dto.M4dVerifyStatusDto;
+import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.AuthResponse;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
+import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
+import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
+import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
@@ -39,9 +43,8 @@ import su.opencode.digsigcik.m4d.util.XmlValidator;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import javax.xml.bind.JAXBException;
+import java.io.*;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
@@ -54,8 +57,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
+@Slf4j
 @Service
 @Primary
 @RequiredArgsConstructor
@@ -76,6 +81,7 @@ public class M4dServiceImpl implements M4dService {
     private final RepresentativePassportService representativePassportService;
     private final UserCertificateService userCertificateService;
     private final RestTemplate restTemplate;
+    private final SynapiClientService synapiClientService;
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistry() throws ParseException {
@@ -100,21 +106,21 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public ResponseEntity<?> saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
+    public Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long represId;
         if (organisation.getInn() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The organization's INN is not specified"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("The organization's INN is not specified");
         }
         if (principal.getInn() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The principal's INN is not specified"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("The principal's INN is not specified");
         }
         if (representative.getInn() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The representative's INN is not specified"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("The representative's INN is not specified");
         }
         if (representativePassport.getSeriesNumber() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The passport's SeriesNumber is not specified"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("The passport's SeriesNumber is not specified");
         }
         //------------------- save organisation ----------------
         Organisation existsOrganisation;
@@ -125,7 +131,7 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     respOrganisation = this.organisationService.saveOrganisation(organisation);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
                 assert respOrganisation != null;
                 orgId = respOrganisation.getId();
@@ -137,7 +143,7 @@ public class M4dServiceImpl implements M4dService {
                     organisation.setId(existsOrganisation.getId());
                     respOrganisation = this.organisationService.saveOrganisation(organisation);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
                 assert respOrganisation != null;
                 orgId = respOrganisation.getId();
@@ -145,7 +151,7 @@ public class M4dServiceImpl implements M4dService {
                 orgId = existsOrganisation.getId();
             }
         } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(e.getMessage());
         }
         //------------------- end save organisation ----------------
 
@@ -158,7 +164,7 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     respPrincipal = this.principalService.savePrincipal(principal);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
                 assert respPrincipal != null;
                 principId = respPrincipal.getId();
@@ -170,7 +176,7 @@ public class M4dServiceImpl implements M4dService {
                     principal.setId(existsPrincipal.getId());
                     respPrincipal = this.principalService.savePrincipal(principal);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
                 assert respPrincipal != null;
                 principId = respPrincipal.getId();
@@ -178,7 +184,7 @@ public class M4dServiceImpl implements M4dService {
                 principId = existsPrincipal.getId();
             }
         } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(e.getMessage());
         }
 
         //------------------- end save principal ----------------
@@ -192,14 +198,14 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     respRepresentative = this.representativeService.saveRepresentative(representative);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
                 if (respRepresentative.getId() != null) {
                     representativePassport.setRepresentativeId(respRepresentative.getId());
                     try {
                         this.representativePassportService.saveRepresentativePassport(representativePassport);
                     } catch (ConstraintViolationException e) {
-                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                        throw new BadRequestException(e.getMessage());
                     }
                 }
                 represId = respRepresentative.getId();
@@ -211,7 +217,7 @@ public class M4dServiceImpl implements M4dService {
                     representative.setId(existsRepresentative.getId());
                     respRepresentative = this.representativeService.saveRepresentative(representative);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
                 if (respRepresentative.getId() != null) {
                     RepresentativePassport existsRepresentativePassport;
@@ -222,7 +228,7 @@ public class M4dServiceImpl implements M4dService {
                             try {
                                 this.representativePassportService.saveRepresentativePassport(representativePassport);
                             } catch (ConstraintViolationException e) {
-                                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                                throw new BadRequestException(e.getMessage());
                             }
                         } else if (!existsRepresentativePassport.getSeriesNumber().equals(representativePassport.getSeriesNumber()) || !existsRepresentativePassport.getDateIssue().equals(representativePassport.getDateIssue())
                                 || !existsRepresentativePassport.getWhoIssue().equals(representativePassport.getWhoIssue()) || !existsRepresentativePassport.getDepartmentCode().equals(representativePassport.getDepartmentCode())) {
@@ -231,11 +237,11 @@ public class M4dServiceImpl implements M4dService {
                             try {
                                 this.representativePassportService.saveRepresentativePassport(representativePassport);
                             } catch (ConstraintViolationException e) {
-                                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                                throw new BadRequestException(e.getMessage());
                             }
                         }
                     } catch (ConstraintViolationException e) {
-                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                        throw new BadRequestException(e.getMessage());
                     }
                 }
                 represId = respRepresentative.getId();
@@ -243,12 +249,12 @@ public class M4dServiceImpl implements M4dService {
                 represId = existsRepresentative.getId();
             }
         } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(e.getMessage());
         }
         //------------------- end save representative and passport ----------------
 
         if (orgId == null || principId == null || represId == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_FULL), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
         }
         m4d.setOrganisationId(orgId);
         m4d.setPrincipalId(principId);
@@ -258,7 +264,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             m4dSaved = this.m4dRepository.save(m4d);
         } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(e.getMessage());
         }
         List<Long> credList = new ArrayList<>();
         List<Long> credListNew;
@@ -274,7 +280,7 @@ public class M4dServiceImpl implements M4dService {
                     try {
                         credentialSave = this.credentialService.saveCredential(newCredential);
                     } catch (ConstraintViolationException e) {
-                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                        throw new BadRequestException(e.getMessage());
                     }
                     credList.add(credentialSave.getId());
                 } else {
@@ -290,7 +296,7 @@ public class M4dServiceImpl implements M4dService {
         if (!credList.isEmpty()) {
             for (Long x : credList) {
                 if (this.credentialService.findByCredentialId(x) == null) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(CREDENTIAL_NOT_FOUND), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(CREDENTIAL_NOT_FOUND);
                 }
             }
 
@@ -303,35 +309,35 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     this.m4dCredentialRepository.save(m4dCredential);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
             }
         }
 
-        return new ResponseEntity<>(m4dSaved.getId(), HttpStatus.OK);
+        return m4dSaved.getId();
     }
 
     @AuditLogThis(event = AuditLogEventEnum.M4D_UPDATE)
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
-    public ResponseEntity<?> updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
+    public Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long represId;
         if (m4d.getId() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Can`t update mrpa registry because ID null!"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("Can`t update mrpa registry because ID null!");
         }
         if (organisation.getInn() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The organization's INN is not specified"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("The organization's INN is not specified");
         }
         if (principal.getInn() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The principal's INN is not specified"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("The principal's INN is not specified");
         }
         if (representative.getInn() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("The representative's INN is not specified"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("The representative's INN is not specified");
         }
         M4d existMrpaRegistry = this.findById(m4d.getId());
         if (existMrpaRegistry == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND)), HttpStatus.NOT_FOUND);
+            throw new BadRequestException(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND));
         }
         //------------------- save organisation ----------------
         Organisation existsOrganisation;
@@ -346,14 +352,14 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     respOrganisation = this.organisationService.saveOrganisation(organisation);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
                 orgId = respOrganisation.getId();
             } else {
                 orgId = existsOrganisation.getId();
             }
         } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(e.getMessage());
         }
         //------------------- end save organisation ----------------
 
@@ -368,11 +374,11 @@ public class M4dServiceImpl implements M4dService {
             try {
                 respPrincipal = this.principalService.savePrincipal(principal);
             } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                throw new BadRequestException(e.getMessage());
             }
             principId = respPrincipal.getId();
         } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(e.getMessage());
         }
         //------------------- end save principal ----------------
 
@@ -388,7 +394,7 @@ public class M4dServiceImpl implements M4dService {
             try {
                 respRepresentative = this.representativeService.saveRepresentative(representative);
             } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                throw new BadRequestException(e.getMessage());
             }
             RepresentativePassport existsRepresentativePassport = this.representativePassportService.findRepresentativePassportyByRepresentativeId(respRepresentative.getId());
             if (existsRepresentativePassport != null) {
@@ -398,16 +404,16 @@ public class M4dServiceImpl implements M4dService {
                 representativePassport.setRepresentativeId(respRepresentative.getId());
                 this.representativePassportService.saveRepresentativePassport(representativePassport);
             } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                throw new BadRequestException(e.getMessage());
             }
             represId = respRepresentative.getId();
         } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(e.getMessage());
         }
         //------------------- end save representative and passport ----------------
 
         if (orgId == null || principId == null || represId == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_FULL), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
         }
         if (!m4d.getOrganisationId().equals(orgId)) {
             m4d.setOrganisationId(orgId);
@@ -422,7 +428,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             m4dUpdated = this.m4dRepository.save(m4d);
         } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException(e.getMessage());
         }
         List<Long> credList = new ArrayList<>();
         List<Long> credListNew;
@@ -438,7 +444,7 @@ public class M4dServiceImpl implements M4dService {
                     try {
                         credentialSave = this.credentialService.saveCredential(newCredential);
                     } catch (ConstraintViolationException e) {
-                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                        throw new BadRequestException(e.getMessage());
                     }
                     credList.add(credentialSave.getId());
                 } else {
@@ -462,11 +468,11 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     this.m4dCredentialRepository.save(m4dCredential);
                 } catch (ConstraintViolationException e) {
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                    throw new BadRequestException(e.getMessage());
                 }
             }
         }
-        return new ResponseEntity<>(m4dUpdated.getId(), HttpStatus.OK);
+        return m4dUpdated.getId();
     }
 
     @Override
@@ -670,13 +676,6 @@ public class M4dServiceImpl implements M4dService {
                 .orElseThrow(() -> new BadRequestException(String.format(M4D_EXCEPRION_NOT_FOUND, id)));
     }
 
-
-    public Map<String, String> getCustomErrorJsonFromString(String text) {
-        Map<String, String> body = new HashMap<>();
-        body.put("error", text);
-        return body;
-    }
-
     public String getStatusM4d(Long id) throws ParseException {
         M4d mrpaRegistry = this.m4dRepository.findM4dById(id);
         Date currentDT = Date.from(Instant.now());
@@ -748,15 +747,14 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
-    public ResponseEntity<?> verify(MultipartFile sourceFile) throws Exception {
+    public M4dVerifyStatusDto verify(MultipartFile sourceFile) throws Exception {
 
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: Формат файла не XML"), HttpStatus.BAD_REQUEST);
+            throw new BadRequestException("Ошибка: Формат файла не XML");
         }
 
         List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
-        System.out.println(res.size());
         String content;
         if (res.isEmpty()) {
             try (InputStream is = sourceFile.getInputStream()) {
@@ -783,24 +781,23 @@ public class M4dServiceImpl implements M4dService {
                 assert document != null;
                 m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
             } catch (Exception e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+                throw new BadRequestException("Ошибка: " + MRPA_REGISTRY_WRONG_FORMAT_XML);
             }
 
             if (m4dXml == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
+                throw new BadRequestException(MRPA_IS_NULL);
             }
             if (m4dXml.document.powerAttorneys.getMrpa().getGuid() == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка: " + MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
+                throw new BadRequestException("Ошибка: " + MRPA_REGISTRY_WRONG_FORMAT_XML);
             }
             String guidXml;
             guidXml = m4dXml.document.powerAttorneys.getMrpa().getGuid();
-            System.out.println(guidXml);
 
             M4d m4d;
             try {
                 m4d = this.m4dRepository.findByGuid(guidXml);
             } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                throw new BadRequestException(e.getMessage());
             }
             if (m4d != null) {
                 M4dResponseDto m4dResponseDto = this.convertM4dToM4dResponseDto(m4d, false, false);
@@ -811,7 +808,7 @@ public class M4dServiceImpl implements M4dService {
                 m4dVerifyStatusDto.setSource("Источник ПЭП");
                 m4dVerifyStatusDto.setM4d(m4dResponseDto);
 
-                return new ResponseEntity<>(m4dVerifyStatusDto, HttpStatus.OK);
+                return m4dVerifyStatusDto;
             } else {
                 M4dResponseDto m4dResponseDto = this.parseM4dXml(m4dXml);
                 String status = "";
@@ -840,14 +837,14 @@ public class M4dServiceImpl implements M4dService {
                     authResponse = response.getBody();
                 } catch (HttpClientErrorException e) {
                     if (e.getStatusCode().value() == 404) {
-                        System.out.println("Ресурс не найден (404): " + e.getResponseBodyAsString());
+                        log.error("Ресурс не найден (404): " + e.getResponseBodyAsString());
                         status = "NOT_FOUND";
                     } else {
-                        System.out.println("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+                        log.error("Ошибка: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
                         status = "CHECK_FALED";
                     }
                 } catch (ResourceAccessException e) {
-                    System.out.println("Ошибка доступа к ресурсу: " + e.getMessage());
+                    log.error("Ошибка доступа к ресурсу: " + e.getMessage());
                     if (e.getCause() instanceof UnknownHostException) {
                         System.out.println("Неизвестный хост: " + e.getCause().getMessage());
                         //если GUID из списка - присваиваем какой то статус
@@ -934,7 +931,7 @@ public class M4dServiceImpl implements M4dService {
                     try {
                         m4dVerifyStatusSaved = this.m4dVerifyStatusRepository.save(m4dVerifyStatus);
                     } catch (ConstraintViolationException e) {
-                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                        throw new BadRequestException(e.getMessage());
                     }
                 } else {
                     existsM4dVerifyStatus.setVerifyDate(LocalDateTime.now());
@@ -942,13 +939,13 @@ public class M4dServiceImpl implements M4dService {
                     try {
                         m4dVerifyStatusSaved = this.m4dVerifyStatusRepository.save(existsM4dVerifyStatus);
                     } catch (ConstraintViolationException e) {
-                        return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+                        throw new BadRequestException(e.getMessage());
                     }
                 }
                 M4dVerifyStatusDto m4dVerifyStatusDto = modelMapper.map(m4dVerifyStatusSaved, M4dVerifyStatusDto.class);
                 m4dVerifyStatusDto.setSource(source);
                 m4dVerifyStatusDto.setM4d(m4dResponseDto);
-                return new ResponseEntity<>(m4dVerifyStatusDto, HttpStatus.OK);
+                return m4dVerifyStatusDto;
             }
         }
         Map<String, String> body = new HashMap<>();
@@ -956,7 +953,7 @@ public class M4dServiceImpl implements M4dService {
         res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
         body.put("details", String.join(System.lineSeparator(), errs));
 
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        throw new BadRequestException(body.toString());
     }
 
     @Override
@@ -1029,10 +1026,257 @@ public class M4dServiceImpl implements M4dService {
         return m4dResponseDto;
     }
 
+    public ByteArrayResource createContainer(Authentication authentication,MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException {
+        String bearerToken = getTokenValue(authentication);
+        String tempFileSource;
+        String tempFileSig;
+        FileOutputStream foSource;
+        FileOutputStream foSig;
+        ByteArrayResource res;
+
+        tempFileSource = "/tmp/" + sourceFile.getOriginalFilename();
+        foSource = new FileOutputStream(tempFileSource);
+        foSource.write(sourceFile.getBytes());
+        foSource.close();
+
+        tempFileSig = "/tmp/" + sourceSig.getOriginalFilename();
+        foSig = new FileOutputStream(tempFileSig);
+        foSig.write(sourceSig.getBytes());
+        foSig.close();
+
+        res = synapiClientService.createContainer(tempFileSource, tempFileSig, hashAlgorithm, bearerToken);
+        File f1 = new File(tempFileSource);
+        f1.delete();
+        File f2 = new File(tempFileSig);
+        f2.delete();
+        return res;
+    }
+
+    public Long uploadMrpaRegistry(MultipartFile sourceFile) throws IOException, SAXException {
+        List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
+        String content;
+        if (res.isEmpty()) {
+            try (InputStream is = sourceFile.getInputStream()) {
+                byte[] bom = new byte[3];
+                int n = is.read(bom, 0, bom.length);
+                Reader reader;
+                if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
+                    reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+                } else {
+                    reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
+                }
+                StringBuilder cont = new StringBuilder();
+                char[] buffer = new char[1024];
+                int numRead;
+                while ((numRead = reader.read(buffer)) != -1) {
+                    cont.append(buffer, 0, numRead);
+                }
+                content = cont.toString();
+            }
+
+            M4dXml m4dXml;
+            try {
+                Document document = convertStringToDocument(content);
+                assert document != null;
+                m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
+            } catch (Exception e) {
+                throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
+            }
+
+            if (m4dXml == null) {
+                throw new BadRequestException(MRPA_IS_NULL);
+            }
+
+            int guid;
+            guid = this.countM4dByGuid(m4dXml.document.powerAttorneys.getMrpa().getGuid());
+            if (guid > 0) {
+                throw new BadRequestException(MRPA_REGISTRY_IS_EXISTS);
+            }
+
+            M4d m4d = new M4d();
+            //парсинг МЧД из xml
+            m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
+            m4d.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
+            String dateCreate = m4dXml.getIdFile().substring(9, 17);
+            m4d.setCreateDate(convertStringToLocalDateTime(dateCreate));
+            m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
+            m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
+
+            Organisation organisation = new Organisation();
+            organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
+            organisation.setKpp(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getKpp());
+            organisation.setOgrn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getOgrn());
+            organisation.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getName());
+            organisation.setRegionCode(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getRegionCode());
+            organisation.setLegalAddress(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getLegalAddress());
+            if (organisation.getInn() == null || organisation.getInn().isEmpty()) {
+                throw new BadRequestException(ORGANISATION_IS_NULL);
+            }
+            Principal principal = new Principal();
+            principal.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getInn());
+            principal.setSnils(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getSnils());
+            principal.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
+            principal.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
+            principal.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
+            principal.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
+            if (principal.getInn() == null || principal.getInn().isEmpty()) {
+                throw new BadRequestException(PRINCIPAL_IS_NULL);
+            }
+            Representative representative = new Representative();
+            RepresentativePassport represPassport = new RepresentativePassport();
+            for (M4dXml.Document.PowerAttorneys.InfoRepresentative c: m4dXml.document.powerAttorneys.infoRepresentative) {
+                if (Objects.equals(c.getTypeRepresentative(), "3")) {
+                    if (c.representative.detailRepresentative != null) {
+                        representative.setInn(c.representative.detailRepresentative.getInn());
+                        representative.setSnils(c.representative.detailRepresentative.getSnils());
+                        representative.setBirthDate(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.getBirthDate()));
+                        representative.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
+                        representative.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
+                        representative.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
+                        if (representative.getInn() == null || representative.getInn().isEmpty()) {
+                            throw new BadRequestException(REPRESENTATIVE_IS_NULL);
+                        }
+                        represPassport.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
+                        represPassport.setDateIssue(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
+                        represPassport.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
+                        represPassport.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
+                    }
+                }
+            }
+            List<CredentialDto> credentialList = new ArrayList<>();
+            if (m4dXml.document.powerAttorneys.credential.credentials != null) {
+                for (M4dXml.Document.PowerAttorneys.Credentials.Credential c : m4dXml.document.powerAttorneys.credential.credentials) {
+                    CredentialDto newCredential = new CredentialDto();
+                    newCredential.setCode(c.getCode());
+                    newCredential.setName(c.getName());
+                    credentialList.add(newCredential);
+                }
+            }
+            Long m4dSaved;
+            try {
+                m4dSaved = this.saveAllDataMrpaRegistry(m4d, organisation, principal, representative, represPassport, credentialList, null);
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(e.getMessage());
+            }
+
+            return m4dSaved;
+        }
+        Map<String, String> body = new HashMap<>();
+        List<String> errs = new ArrayList<>();
+        res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
+        body.put("details", String.join(System.lineSeparator(), errs));
+        throw new BadRequestException(body.toString());
+    }
+
+    public Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException, JAXBException {
+        String bearerToken = getTokenValue(authentication);
+        M4d m4d;
+        try {
+            m4d = this.findById(mrpaId);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        if (m4d == null) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        //----------------- XML M4D ----------------------
+        M4dResponseDto m4dResponseDto = this.convertM4dToM4dResponseDto(m4d, false, false);
+        M4dFullXML mrpaRegistryFullXML = this.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
+        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
+        //-------------------------------------------------
+        List<String> tempFileNames = new ArrayList<>();
+        String tempFileName;
+        FileOutputStream fo;
+        ReportDto reportDto;
+        ByteArrayResource res = null;
+        if (verify) {
+            try {
+                tempFileName = "/tmp/" + container.getOriginalFilename();
+
+                tempFileNames.add(tempFileName);
+                fo = new FileOutputStream(tempFileName);
+                fo.write(container.getBytes());
+                fo.close();
+
+                reportDto = this.synapiClientService.getReportContainer(tempFileName, true, bearerToken);
+
+                assert reportDto != null;
+                if (reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
+                    reportDto.getResults().stream()
+                            .flatMap(result -> result.getVerificationResults().stream())
+                            .findFirst()
+                            .ifPresent(verificationResult -> {
+                                boolean isResultTrue = verificationResult.isResult();
+                                System.out.println("Result value: " + isResultTrue);
+                                if (!isResultTrue) {
+                                    throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
+                                }
+                            });
+                } else {
+                    log.error(reportDto.getError() + ": {}", reportDto.getErrorDescription());
+                    throw new BadRequestException(reportDto.getError());
+                }
+
+                res = this.synapiClientService.getSourceFileContainer(tempFileName, "sourceFile", bearerToken);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            for (String fileName : tempFileNames) {
+                File f = new File(fileName);
+                f.delete();
+            }
+
+            assert res != null;
+            byte[] resource = res.getByteArray();
+            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
+            String normalizedXmlString = xmlString.replaceAll("\\s+", "");
+            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
+                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_CONTENT);
+            }
+        }
+        M4dFile m4dFile = new M4dFile();
+        m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
+        m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
+        m4dFile.setFilename(container.getOriginalFilename());
+
+        try (InputStream inputStream = container.getInputStream();
+             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+            m4dFile.setContent(Arrays.toString(byteArrayOutputStream.toByteArray()));
+        }
+
+        M4dFile existsM4dFile;
+        try {
+            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        m4d.setM4dFile(Objects.requireNonNullElse(existsM4dFile, m4dFile));
+
+        M4d m4dSaved;
+        try {
+            m4dSaved = this.saveMrpaRegistry(m4d);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        return m4dSaved.getId();
+    }
+
     private LocalDateTime convertStringToLocalDateTime(String date) {
         DateTimeFormatter formatter;
         LocalDateTime localDateTime;
-        if (date.length() == 10) {
+        if (date.length() == 8) {
+            formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            LocalDate localDate = LocalDate.parse(date, formatter);
+            localDateTime = localDate.atStartOfDay();
+        } else if (date.length() == 10) {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDate localDate = LocalDate.parse(date, formatter);
             localDateTime = localDate.atStartOfDay();
