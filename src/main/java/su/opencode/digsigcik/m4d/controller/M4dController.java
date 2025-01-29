@@ -7,38 +7,36 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
-import org.codehaus.plexus.util.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
-import su.opencode.digsigcik.m4d.dto.*;
-import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
+import su.opencode.digsigcik.m4d.dto.M4dFullXML;
+import su.opencode.digsigcik.m4d.dto.M4dRequestDto;
+import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
+import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dService;
+import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
-import su.opencode.digsigcik.m4d.util.XmlValidator;
 
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -47,8 +45,6 @@ import java.util.*;
 
 import static java.util.Objects.isNull;
 import static su.opencode.digsigcik.m4d.util.Constants.*;
-import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
-import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
 @Slf4j
 @RestController
@@ -56,21 +52,14 @@ import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 @RequestMapping("/api/v1/m4d")
 @Tag(name = "M4d Controller")
 public class M4dController {
-    @Value("${synapi.container.get-part.uri}")
-    private String CONTAINER_PART_URI;
-    @Value("${synapi.container.get-part-json.uri}")
-    private String CONTAINER_PART_JSON_URI;
-
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
-    private final RestTemplate restTemplate;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, RestTemplate restTemplate) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
-        this.restTemplate = restTemplate;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
@@ -106,19 +95,13 @@ public class M4dController {
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
         RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
-        ResponseEntity<?> m4dSaved;
+        Long m4dSaved;
         try {
             m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        Long m4dSavedId;
-        try {
-            m4dSavedId = Long.valueOf(Objects.requireNonNull(m4dSaved.getBody()).toString());
-        } catch (NumberFormatException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        return findMrpaRegistryById(m4dSavedId);
+        return findMrpaRegistryById(m4dSaved);
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_BY_ID_SUMMARY,
@@ -248,13 +231,13 @@ public class M4dController {
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
         RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
-        ResponseEntity<?> m4dUpdated;
+        Long m4dUpdated;
         try {
             m4dUpdated = m4dService.updateAllDataMrpaRegistry(m4d, organisation, principal, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        return findMrpaRegistryById((Long) m4dUpdated.getBody());
+        return findMrpaRegistryById(m4dUpdated);
     }
 
     //TODO: @helix82 При удалении физически не удаляем а ставим пометку об удалении
@@ -296,7 +279,6 @@ public class M4dController {
                                        @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id,
                                        @RequestPart("container") MultipartFile container,
                                        @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws IOException, ParseException, JAXBException {
-        String bearerToken = getTokenValue(authentication);
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -304,125 +286,11 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString("Container is null"), HttpStatus.BAD_REQUEST);
         }
         if (!Objects.equals(container.getContentType(), FileMimeTypeEnum.ZIP.toString()) && !Objects.equals(container.getContentType(), FileMimeTypeEnum.DSCP.toString())) {
+            System.out.println(container.getContentType());
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
-        M4d m4d;
-        try {
-            m4d = this.m4dService.findById(id);
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        if (m4d == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
-        }
-        //----------------- XML M4D ----------------------
-        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, false, false);
-        M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
-        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
-        //-------------------------------------------------
-        List<String> tempFileNames = new ArrayList<>();
-        String tempFileName;
-        FileOutputStream fo;
-        ReportDto reportDto;
-        ByteArrayResource res = null;
-        if (verify) {
-            try {
-                tempFileName = "/tmp/" + container.getOriginalFilename();
-
-                tempFileNames.add(tempFileName);
-                fo = new FileOutputStream(tempFileName);
-                fo.write(container.getBytes());
-                fo.close();
-
-                LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
-                map.add("container", new FileSystemResource(tempFileName));
-                map.add("reverify", true);
-
-                HttpHeaders headers = createHttpHeaders(bearerToken);
-                headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-                HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-                reportDto = restTemplate.postForObject(CONTAINER_PART_JSON_URI, requestEntity, ReportDto.class);
-
-                assert reportDto != null;
-                if (reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
-                    reportDto.getResults().stream()
-                            .flatMap(result -> result.getVerificationResults().stream())
-                            .findFirst()
-                            .ifPresent(verificationResult -> {
-                                boolean isResultTrue = verificationResult.isResult();
-                                System.out.println("Result value: " + isResultTrue);
-                                if (!isResultTrue) {
-                                    throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
-                                }
-                            });
-                } else {
-                    log.error(reportDto.getError() + ": {}", reportDto.getErrorDescription());
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(reportDto.getError()), HttpStatus.BAD_REQUEST);
-                }
-
-
-                LinkedMultiValueMap<String, Object> map1 = new LinkedMultiValueMap<>();
-                map1.add("container", new FileSystemResource(tempFileName));
-                map1.add("selector", "sourceFile");
-                HttpEntity<MultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map1, headers);
-                res = restTemplate.postForObject(CONTAINER_PART_URI, requestEntity1, ByteArrayResource.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            for (String fileName : tempFileNames) {
-                File f = new File(fileName);
-                f.delete();
-            }
-
-            assert res != null;
-            byte[] resource = res.getByteArray();
-            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
-            String normalizedXmlString = xmlString.replaceAll("\\s+", "");
-            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
-            }
-        }
-        M4dFile m4dFile = new M4dFile();
-        m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
-        m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
-        m4dFile.setFilename(container.getOriginalFilename());
-
-        try (InputStream inputStream = container.getInputStream();
-             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byteArrayOutputStream.write(buffer, 0, bytesRead);
-            }
-            m4dFile.setContent(Arrays.toString(byteArrayOutputStream.toByteArray()));
-        }
-
-        M4dFile existsM4dFile;
-        try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        m4d.setM4dFile(Objects.requireNonNullElse(existsM4dFile, m4dFile));
-
-        M4d m4dSaved;
-        try {
-            m4dSaved = this.m4dService.saveMrpaRegistry(m4d);
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        return findMrpaRegistryById(m4dSaved.getId());
-    }
-
-    private static @NotNull HttpHeaders createHttpHeaders(String bearerToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.setBearerAuth(bearerToken);
-        return headers;
+        Long mrpaId = this.m4dService.uploadSig(authentication, id, container, verify);
+        return findMrpaRegistryById(mrpaId);
     }
 
     //TODO: @helix82 Временный эндпоинт для Дениса
@@ -457,6 +325,7 @@ public class M4dController {
         return new ResponseEntity<>(getCustomErrorJsonFromString("Signature not found"), HttpStatus.BAD_REQUEST);
     }
 
+    @Deprecated()
     @Operation(summary = CONTROLLER_MRPA_UPLOAD_XML_SUMMARY, description = CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
@@ -469,122 +338,8 @@ public class M4dController {
         if (!Objects.equals(extension, "xml")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
         }
-
-        List<SAXParseException> res = new XmlValidator("/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd", sourceFile.getInputStream()).listParsingExceptions();
-        System.out.println(res.size());
-        String content;
-        if (res.isEmpty()) {
-            try (InputStream is = sourceFile.getInputStream()) {
-                byte[] bom = new byte[3];
-                int n = is.read(bom, 0, bom.length);
-                Reader reader;
-                if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
-                    reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                } else {
-                    reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
-                }
-                StringBuilder cont = new StringBuilder();
-                char[] buffer = new char[1024];
-                int numRead;
-                while ((numRead = reader.read(buffer)) != -1) {
-                    cont.append(buffer, 0, numRead);
-                }
-                content = cont.toString();
-            }
-
-            M4dXml m4dXml;
-            try {
-                Document document = convertStringToDocument(content);
-                assert document != null;
-                m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
-            } catch (Exception e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
-            }
-
-            if (m4dXml == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
-            }
-
-            int guid;
-            guid = this.m4dService.countM4dByGuid(m4dXml.document.powerAttorneys.getMrpa().getGuid());
-            if (guid > 0) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_EXISTS), HttpStatus.BAD_REQUEST);
-            }
-
-            M4d m4d = new M4d();
-            //парсинг МЧД из xml
-            m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
-            m4d.setInternalNumber(m4dXml.document.powerAttorneys.mrpa.getInternalNumber());
-            String dateCreate = m4dXml.getIdFile().substring(9, 17);
-            m4d.setCreateDate(convertStringToLocalDateTime(dateCreate));
-            m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
-            m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
-
-            Organisation organisation = new Organisation();
-            organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
-            organisation.setKpp(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getKpp());
-            organisation.setOgrn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getOgrn());
-            organisation.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getName());
-            organisation.setRegionCode(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getRegionCode());
-            organisation.setLegalAddress(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getLegalAddress());
-            if (organisation.getInn() == null || organisation.getInn().isEmpty()) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(ORGANISATION_IS_NULL), HttpStatus.BAD_REQUEST);
-            }
-            Principal principal = new Principal();
-            principal.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getInn());
-            principal.setSnils(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getSnils());
-            principal.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
-            principal.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
-            principal.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
-            principal.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
-            if (principal.getInn() == null || principal.getInn().isEmpty()) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(PRINCIPAL_IS_NULL), HttpStatus.BAD_REQUEST);
-            }
-            Representative representative = new Representative();
-            RepresentativePassport represPassport = new RepresentativePassport();
-            for (M4dXml.Document.PowerAttorneys.InfoRepresentative c: m4dXml.document.powerAttorneys.infoRepresentative) {
-                if (Objects.equals(c.getTypeRepresentative(), "3")) {
-                    if (c.representative.detailRepresentative != null) {
-                        representative.setInn(c.representative.detailRepresentative.getInn());
-                        representative.setSnils(c.representative.detailRepresentative.getSnils());
-                        representative.setBirthDate(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.getBirthDate()));
-                        representative.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
-                        representative.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
-                        representative.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
-                        if (representative.getInn() == null || representative.getInn().isEmpty()) {
-                            return new ResponseEntity<>(getCustomErrorJsonFromString(REPRESENTATIVE_IS_NULL), HttpStatus.BAD_REQUEST);
-                        }
-                        represPassport.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-                        represPassport.setDateIssue(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
-                        represPassport.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
-                        represPassport.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
-                    }
-                }
-            }
-            List<CredentialDto> credentialList = new ArrayList<>();
-            if (m4dXml.document.powerAttorneys.credential.credentials != null) {
-                for (M4dXml.Document.PowerAttorneys.Credentials.Credential c : m4dXml.document.powerAttorneys.credential.credentials) {
-                    CredentialDto newCredential = new CredentialDto();
-                    newCredential.setCode(c.getCode());
-                    newCredential.setName(c.getName());
-                    credentialList.add(newCredential);
-                }
-            }
-            ResponseEntity<?> m4dSaved;
-            try {
-                m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, representative, represPassport, credentialList, null);
-            } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-            }
-
-            return findMrpaRegistryById((Long) m4dSaved.getBody());
-        }
-        Map<String, String> body = new HashMap<>();
-        List<String> errs = new ArrayList<>();
-        res.forEach(e -> errs.add(String.format("Line number: %s, Column number: %s. %s", e.getLineNumber(), e.getColumnNumber(), e.getMessage())));
-        body.put("details", String.join(System.lineSeparator(), errs));
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+        Long m4dId = this.m4dService.uploadMrpaRegistry(sourceFile);
+        return new ResponseEntity<>(findMrpaRegistryById(m4dId), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION)
@@ -595,7 +350,7 @@ public class M4dController {
     })
     @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> verify(@RequestPart("srcFile") MultipartFile sourceFile) throws Exception {
-        return m4dService.verify(sourceFile);
+        return new ResponseEntity<>(m4dService.verify(sourceFile), HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION)
@@ -632,6 +387,72 @@ public class M4dController {
     @GetMapping(value = "/me", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistryForUser(Authentication authentication) throws ParseException {
         return new ResponseEntity<>(m4dService.findAllM4dUsers(authentication), HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_IMPORT_SUMMARY, description = CONTROLLER_MRPA_IMPORT_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE),
+    })
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> importMrpa(
+            Authentication authentication,
+            @Parameter(description = "Файл", required = true) @RequestPart("srcFile") MultipartFile sourceFile,
+            @Parameter(description = "Подпись", required = true) @RequestPart("sigFile") MultipartFile sourceSig,
+            HashAlgorithm hashAlgorithm) throws IOException {
+        Long m4dId;
+        //upload m4d !!!!!!!!!!!!!!!!!!!!!!!!
+        try {
+            m4dId = this.m4dService.uploadMrpaRegistry(sourceFile);
+        } catch (Exception e) {
+            // Обработка ошибок, которые могут возникнуть при вызове upload
+            log.error("Ошибка импорта МЧД: " + e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка импорта МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if (m4dId == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка импорта МЧД"), HttpStatus.BAD_REQUEST);
+        }
+        //create and save container !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        String tempFileName;
+        MultipartFile container = null;
+
+        String originalFilename = sourceFile.getOriginalFilename();
+        if (originalFilename != null) {
+            String filenameWithoutExtension = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
+            tempFileName = "/tmp/" + filenameWithoutExtension + ".dscp";
+        } else {
+            String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+            tempFileName = "/tmp/container_" + timestamp + ".dscp";
+        }
+        ByteArrayResource response = this.m4dService.createContainer(authentication, sourceFile, sourceSig, hashAlgorithm);
+        if(response != null) {
+            try (OutputStream outputStream = new FileOutputStream(tempFileName)) {
+                outputStream.write(response.getByteArray());
+                log.error("Контейнер успешно сохранен: " + tempFileName);
+                container = new CustomMultipartFile(tempFileName);
+            } catch (IOException e) {
+                log.error("Ошибка при сохранении контейнера: " + e.getMessage());
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при сохранении контейнера: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+        }
+        //upload sig for m4d !!!!!!!!!!!!!!!!!!!!!!
+        try {
+            var result = this.m4dService.uploadSig(authentication, m4dId, container, false);
+
+            if (result != null) {
+                    File f = new File(tempFileName);
+                    f.delete();
+                    return new ResponseEntity<>(findMrpaRegistryById(result), HttpStatus.OK);
+            } else {
+                log.error("Загрузка подписи МЧД не вернула результат");
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Загрузка подписи МЧД не вернула результат"), HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            log.error("Ошибка при загрузке подписи МЧД: " + e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 
     private M4d convertMrpaRegistryToEntity(M4dRequestDto.MrpaRegistry mrpaRegistryDto) {
@@ -704,5 +525,4 @@ public class M4dController {
         }
         return localDateTime;
     }
-
 }

@@ -6,4 +6,5 @@ import org.springframework.http.ResponseEntity;
 public interface RestTemplateService {
 
     <T> ResponseEntity<T> fetchServiceResponse(String url, Class<T> responseType, String bearerToken, HttpMethod method);
+    <T, R> ResponseEntity<T> fetchServiceResponse(String url, Class<T> responseType, String bearerToken, HttpMethod method, R requestBody);
 }

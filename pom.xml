@@ -22,7 +22,7 @@
         <spring.profiles.active>local</spring.profiles.active>
         <java.version>11</java.version>
         <openapi-generator-version>7.4.0</openapi-generator-version>
-        <jackson-version>2.17.0</jackson-version>
+        <jackson-version>2.18.1</jackson-version>
         <jackson-databind-nullable-version>0.2.6</jackson-databind-nullable-version>
         <jsonwebtoken-version>0.9.1</jsonwebtoken-version>
         <apache.commons.validator.version>1.8.0</apache.commons.validator.version>

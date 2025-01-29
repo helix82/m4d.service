@@ -110,6 +110,8 @@ synapi:
       uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
     get-part-json:
       uri: ${CONTAINER_PART_JSON_URI:https://sp.dev.essocode.ru/api/v1/container/get-part-json}
+    create:
+      uri: ${CONTAINER_CREATE_URI:https://sp.dev.essocode.ru/api/v1/container/create}
 
 m4d:
   handbook:

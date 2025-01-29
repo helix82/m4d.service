@@ -29,6 +29,17 @@ public class RestTemplateServiceImpl implements RestTemplateService {
         );
     }
 
+    @Override
+    public <T, R> ResponseEntity<T> fetchServiceResponse(String url, Class<T> responseType, String bearerToken, HttpMethod method, R requestBody) {
+        return restTemplate.exchange(
+                url,
+                method,
+                new HttpEntity<>(requestBody, createHttpHeaders(bearerToken)),
+                responseType
+        );
+    }
+
+
     private static @NotNull HttpHeaders createHttpHeaders(String bearerToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(bearerToken);
