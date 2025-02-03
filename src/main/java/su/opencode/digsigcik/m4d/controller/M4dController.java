@@ -29,6 +29,8 @@ import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
+import javax.persistence.EntityNotFoundException;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.File;
@@ -394,18 +396,20 @@ public class M4dController {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE),
     })
-    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> importMrpa(
             Authentication authentication,
-            @Parameter(description = "Файл", required = true) @RequestPart("srcFile") MultipartFile sourceFile,
-            @Parameter(description = "Подпись", required = true) @RequestPart("sigFile") MultipartFile sourceSig,
-            HashAlgorithm hashAlgorithm) throws IOException {
+            @RequestPart("srcFile") MultipartFile sourceFile,
+            @RequestPart(value="sigFile", required = false) MultipartFile sourceSig,
+            @RequestParam(value="hashAlgorithm", required = false, defaultValue = "GOST3411_2012_256") HashAlgorithm hashAlgorithm) throws IOException, JAXBException, ParseException {
+        if (sourceFile.isEmpty()){
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Обязательный xml-файл МЧД не указан"), HttpStatus.BAD_REQUEST);
+        }
         Long m4dId;
         //upload m4d !!!!!!!!!!!!!!!!!!!!!!!!
         try {
             m4dId = this.m4dService.uploadMrpaRegistry(sourceFile);
         } catch (Exception e) {
-            // Обработка ошибок, которые могут возникнуть при вызове upload
             log.error("Ошибка импорта МЧД: " + e.getMessage());
             e.printStackTrace();
             return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка импорта МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
@@ -413,45 +417,82 @@ public class M4dController {
         if (m4dId == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка импорта МЧД"), HttpStatus.BAD_REQUEST);
         }
-        //create and save container !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        String tempFileName;
-        MultipartFile container = null;
+        if (sourceSig != null){
+            //create and save container !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            String tempFileName;
+            MultipartFile container = null;
 
-        String originalFilename = sourceFile.getOriginalFilename();
-        if (originalFilename != null) {
-            String filenameWithoutExtension = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
-            tempFileName = "/tmp/" + filenameWithoutExtension + ".dscp";
-        } else {
-            String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-            tempFileName = "/tmp/container_" + timestamp + ".dscp";
-        }
-        ByteArrayResource response = this.m4dService.createContainer(authentication, sourceFile, sourceSig, hashAlgorithm);
-        if(response != null) {
-            try (OutputStream outputStream = new FileOutputStream(tempFileName)) {
-                outputStream.write(response.getByteArray());
-                log.error("Контейнер успешно сохранен: " + tempFileName);
-                container = new CustomMultipartFile(tempFileName);
-            } catch (IOException e) {
-                log.error("Ошибка при сохранении контейнера: " + e.getMessage());
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при сохранении контейнера: " + e.getMessage()), HttpStatus.BAD_REQUEST);
-            }
-        }
-        //upload sig for m4d !!!!!!!!!!!!!!!!!!!!!!
-        try {
-            var result = this.m4dService.uploadSig(authentication, m4dId, container, false);
-
-            if (result != null) {
-                    File f = new File(tempFileName);
-                    f.delete();
-                    return new ResponseEntity<>(findMrpaRegistryById(result), HttpStatus.OK);
+            String originalFilename = sourceFile.getOriginalFilename();
+            if (originalFilename != null) {
+                String filenameWithoutExtension = originalFilename.substring(0, originalFilename.lastIndexOf('.'));
+                tempFileName = "/tmp/" + filenameWithoutExtension + ".dscp";
             } else {
-                log.error("Загрузка подписи МЧД не вернула результат");
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Загрузка подписи МЧД не вернула результат"), HttpStatus.BAD_REQUEST);
+                String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+                tempFileName = "/tmp/container_" + timestamp + ".dscp";
             }
-        } catch (Exception e) {
-            log.error("Ошибка при загрузке подписи МЧД: " + e.getMessage());
-            e.printStackTrace();
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+            ByteArrayResource response = this.m4dService.createContainer(authentication, sourceFile, sourceSig, hashAlgorithm);
+            if(response != null) {
+                try (OutputStream outputStream = new FileOutputStream(tempFileName)) {
+                    outputStream.write(response.getByteArray());
+                    log.error("Контейнер успешно сохранен: " + tempFileName);
+                    container = new CustomMultipartFile(new File(tempFileName));
+                } catch (IOException e) {
+                    log.error("Ошибка при сохранении контейнера: " + e.getMessage());
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при сохранении контейнера: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+                }
+            }
+            //upload sig for m4d !!!!!!!!!!!!!!!!!!!!!!
+            try {
+                var result = this.m4dService.uploadSig(authentication, m4dId, container, false);
+
+                if (result == null) {
+                    log.error("Загрузка подписи МЧД не вернула результат");
+                    return new ResponseEntity<>(getCustomErrorJsonFromString("Загрузка подписи МЧД не вернула результат"), HttpStatus.BAD_REQUEST);
+                }
+            } catch (Exception e) {
+                log.error("Ошибка при загрузке подписи МЧД: " + e.getMessage());
+                e.printStackTrace();
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+        }
+        return findMrpaRegistryById(m4dId);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_AS_ARCHIVE_SUMMARY, description = CONTROLLER_MRPA_AS_ARCHIVE_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @GetMapping(value = "/{id}/archive", produces = "application/zip")
+    public ResponseEntity<?> archive(Authentication authentication, HttpServletResponse response,
+                                     @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws IOException {
+        if (id == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        M4d m4d;
+        try {
+            m4d = this.m4dService.findById(id);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if (m4d == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+        }
+        String filename = "ON_EMCHD_"+m4d.getCreateDate().toString().replace("-","").substring(0,8)+"_"+m4d.getGuid();
+        ByteArrayResource resp = this.m4dService.createArchiveM4dSig(authentication, m4d.getM4dFile().getId(), filename);
+        if (resp == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
+        }
+        try {
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".zip\"");
+
+            return new ResponseEntity<>(
+                    resp,
+                    HttpStatus.OK
+            );
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.noContent().build();
         }
     }
 

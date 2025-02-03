@@ -69,7 +69,7 @@ public class SynapiClientServiceImpl implements SynapiClientService {
                             CONTAINER_PART_JSON_URI,
                             ReportDto.class,
                             bearerToken,
-                            HttpMethod.GET,
+                            HttpMethod.POST,
                             map
                     );
 
@@ -84,8 +84,8 @@ public class SynapiClientServiceImpl implements SynapiClientService {
     }
 
     @Override
-    public ByteArrayResource getSourceFileContainer(String tempFileContainer, String selector, String bearerToken) {
-        log.info("Отправка запроса на получение исходного файла из контейнера");
+    public ByteArrayResource getPartContainer(String tempFileContainer, String selector, String bearerToken) {
+        log.info("Отправка запроса на получение данных из контейнера");
         LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
         map.add("container", new FileSystemResource(tempFileContainer));
         map.add("selector", selector);
@@ -95,17 +95,17 @@ public class SynapiClientServiceImpl implements SynapiClientService {
                             CONTAINER_PART_URI,
                             ByteArrayResource.class,
                             bearerToken,
-                            HttpMethod.GET,
+                            HttpMethod.POST,
                             map
                     );
 
             return Optional.of(responseEntity)
                     .filter(ResponseEntity::hasBody)
                     .map(ResponseEntity::getBody)
-                    .orElseThrow(() -> new BadRequestException("Ошибка получения исходного файла"));
+                    .orElseThrow(() -> new BadRequestException("Ошибка получения данных"));
 
         } catch (HttpClientErrorException ex) {
-            throw new BadRequestException("Ошибка получения исходного файла");
+            throw new BadRequestException("Ошибка получения данных");
         }
     }
 }

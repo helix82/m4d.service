@@ -41,4 +41,5 @@ public interface M4dService {
     ByteArrayResource createContainer(Authentication authentication, MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException;
     Long uploadMrpaRegistry(MultipartFile sourceFile) throws IOException, ParseException, SAXException, JAXBException;
     Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException, JAXBException;
+    ByteArrayResource createArchiveM4dSig(Authentication authentication, Long fileId, String filename) throws IOException;
 }
