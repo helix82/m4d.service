@@ -47,6 +47,7 @@ import javax.xml.bind.JAXBException;
 import java.io.*;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -55,6 +56,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
@@ -1217,7 +1220,7 @@ public class M4dServiceImpl implements M4dService {
                     throw new BadRequestException(reportDto.getError());
                 }
 
-                res = this.synapiClientService.getSourceFileContainer(tempFileName, "sourceFile", bearerToken);
+                res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -1239,19 +1242,8 @@ public class M4dServiceImpl implements M4dService {
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
         m4dFile.setFilename(container.getOriginalFilename());
-
-        try (InputStream inputStream = container.getInputStream();
-             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byteArrayOutputStream.write(buffer, 0, bytesRead);
-            }
-            m4dFile.setContent(Arrays.toString(byteArrayOutputStream.toByteArray()));
-        }
-
+        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
+        m4dFile.setContent(base64Content);
         M4dFile existsM4dFile;
         try {
             existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
@@ -1267,6 +1259,86 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(e.getMessage());
         }
         return m4dSaved.getId();
+    }
+
+    public ByteArrayResource createArchiveM4dSig(Authentication authentication, Long fileId, String filename) throws IOException {
+        String bearerToken = getTokenValue(authentication);
+        M4dFile m4dFile;
+        try {
+            m4dFile = this.m4dFileService.findM4dFileById(fileId);
+        } catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        List<String> tempFileNames = new ArrayList<>();
+        String tempContainerFile;
+        String tempSourceFile;
+        String tempSigFile;
+        String tempZipFile = "";
+        FileOutputStream fo;
+        ByteArrayResource resSource;
+        ByteArrayResource resSig;
+        try {
+            tempContainerFile = "/tmp/" + m4dFile.getFilename();
+            tempFileNames.add(tempContainerFile);
+            fo = new FileOutputStream(tempContainerFile);
+            byte[] bytes = Base64.getDecoder().decode(m4dFile.getContent());
+            fo.write(bytes);
+            fo.close();
+
+            resSource = this.synapiClientService.getPartContainer(tempContainerFile, "sourceFile", bearerToken);
+            tempSourceFile = "/tmp/" + filename + ".xml";
+            tempFileNames.add(tempSourceFile);
+            fo = new FileOutputStream(tempSourceFile);
+            fo.write(resSource.getByteArray());
+            fo.close();
+
+            resSig = this.synapiClientService.getPartContainer(tempContainerFile, "detachedSign", bearerToken);
+            tempSigFile = "/tmp/" + filename + "_detached.sig";
+            tempFileNames.add(tempSigFile);
+            fo = new FileOutputStream(tempSigFile);
+            fo.write(resSig.getByteArray());
+            fo.close();
+
+            tempZipFile = "/tmp" + filename + ".zip";
+            createZip(tempZipFile, tempSourceFile, tempSigFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (String fileName : tempFileNames) {
+            File f = new File(fileName);
+            f.delete();
+        }
+
+
+        return new ByteArrayResource(Files.readAllBytes((new File(tempZipFile)).toPath()));
+    }
+
+    private static void createZip(String zipFilePath, String... files) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(zipFilePath);
+             ZipOutputStream zos = new ZipOutputStream(fos)) {
+
+            for (String filePath : files) {
+                File file = new File(filePath);
+                if (!file.exists()) {
+                    System.err.println("Файл не найден: " + filePath);
+                    continue;
+                }
+
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    ZipEntry zipEntry = new ZipEntry(file.getName());
+                    zos.putNextEntry(zipEntry);
+
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = fis.read(buffer)) >= 0) {
+                        zos.write(buffer, 0, length);
+                    }
+
+                    zos.closeEntry();
+                }
+            }
+        }
     }
 
     private LocalDateTime convertStringToLocalDateTime(String date) {

@@ -1,7 +1,5 @@
 package su.opencode.digsigcik.m4d.util;
 
-import lombok.SneakyThrows;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -12,28 +10,28 @@ import java.nio.file.Files;
 
 public class CustomMultipartFile implements MultipartFile {
 
-    private final FileSystemResource fileSystemResource;
+    private final File file;
 
-    public CustomMultipartFile(String filePath) {
-        this.fileSystemResource = new FileSystemResource(filePath);
+    public CustomMultipartFile(File file) {
+        this.file = file;
     }
 
     @Override
     public String getName() {
-        return fileSystemResource.getFilename();
+        return file.getName();
     }
 
     @Override
     public String getOriginalFilename() {
-        return fileSystemResource.getFilename();
+        return file.getName();
     }
 
     @Override
     public String getContentType() {
 //        try {
-//            return Files.probeContentType(fileSystemResource.getFile().toPath());
+//            return Files.probeContentType(file.toPath());
 //        } catch (IOException e) {
-//            return null; // или выбросьте исключение
+//            return null;
 //        }
         String filename = getOriginalFilename();
         if (filename != null) {
@@ -62,31 +60,26 @@ public class CustomMultipartFile implements MultipartFile {
 
     @Override
     public boolean isEmpty() {
-        try {
-            return fileSystemResource.contentLength() == 0;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return file.length() == 0;
     }
 
-    @SneakyThrows
     @Override
     public long getSize() {
-        return fileSystemResource.contentLength();
+        return file.length();
     }
 
     @Override
     public byte[] getBytes() throws IOException {
-        return Files.readAllBytes(fileSystemResource.getFile().toPath());
+        return Files.readAllBytes(file.toPath());
     }
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return new FileInputStream(fileSystemResource.getFile());
+        return new FileInputStream(file);
     }
 
     @Override
     public void transferTo(File dest) throws IOException, IllegalStateException {
-        Files.copy(fileSystemResource.getFile().toPath(), dest.toPath());
+        Files.copy(file.toPath(), dest.toPath());
     }
 }

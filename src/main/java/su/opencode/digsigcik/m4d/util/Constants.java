@@ -128,6 +128,8 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список МЧД пользователя";
     String CONTROLLER_MRPA_IMPORT_SUMMARY = "Импорт МЧД с подписью";
     String CONTROLLER_MRPA_IMPORT_DESCRIPTION = "Возвращает загруженную МЧД";
+    String CONTROLLER_MRPA_AS_ARCHIVE_SUMMARY = "Получить XML МЧД и открепленную подпись в zip-архиве";
+    String CONTROLLER_MRPA_AS_ARCHIVE_DESCRIPTION = "Возвращает zip-архив с МЧД и подписью";
     String CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY = "Получить список заявлений на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_FIND_ALL_DESCRIPTION = "Возвращает список заявлений на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_FIND_BY_ID_SUMMARY = "Получить заявление на отзыв МЧД по ИД";
