@@ -466,7 +466,7 @@ public class M4dController {
     })
     @GetMapping(value = "/{id}/archive", produces = "application/zip")
     public ResponseEntity<?> archive(Authentication authentication, HttpServletResponse response,
-                                     @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws IOException {
+                                     @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws IOException, ParseException, JAXBException {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -480,20 +480,37 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
         String filename = "ON_EMCHD_"+m4d.getCreateDate().toString().replace("-","").substring(0,8)+"_"+m4d.getGuid();
-        ByteArrayResource resp = this.m4dService.createArchiveM4dSig(authentication, m4d.getM4dFile().getId(), filename);
-        if (resp == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
-        }
-        try {
-            response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".zip\"");
+        if (m4d.getM4dFile().getId()==null){
+            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false);
+            M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
+            String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
+            try {
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".xml\"");
 
-            return new ResponseEntity<>(
-                    resp,
-                    HttpStatus.OK
-            );
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.noContent().build();
+                return new ResponseEntity<>(
+                        xmlString,
+                        HttpStatus.OK
+                );
+            } catch (EntityNotFoundException e) {
+                return ResponseEntity.noContent().build();
+            }
+        } else {
+            ByteArrayResource resp = this.m4dService.createArchiveM4dSig(authentication, m4d.getM4dFile().getId(), filename);
+            if (resp == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
+            }
+            try {
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".zip\"");
+
+                return new ResponseEntity<>(
+                        resp,
+                        HttpStatus.OK
+                );
+            } catch (EntityNotFoundException e) {
+                return ResponseEntity.noContent().build();
+            }
         }
+
     }
 
     private M4d convertMrpaRegistryToEntity(M4dRequestDto.MrpaRegistry mrpaRegistryDto) {
