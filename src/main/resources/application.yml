@@ -77,7 +77,7 @@ web:
       - /.well-known/acme-challenge/**
       - /favicon.ico
       - /api/v1/m4d/verify
-    trust-all: {DISABLE_TLS_CHECK:false}
+    trust-all: ${DISABLE_TLS_CHECK:false}
 ---
 
 spring:
