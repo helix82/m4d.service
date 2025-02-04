@@ -1,0 +1,113 @@
+
+namespace: master
+
+image:
+  repository: dockerhub.cifro.tech/sep/m4d.service
+  tag:
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8051
+  targetPort: 8051
+  portJMX: 9010
+  targetPortJMX: 9010
+
+replicaCount: 1
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  tlsEnabled: false  # New parameter to control TLS
+  hosts:
+    - host: m4d.pep.ok.dev.cit.st
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: m4d-tls
+      hosts:
+        - m4d.pep.ok.dev.cit.st
+
+secret:
+  enabled: true
+  name: m4d-back-cred
+  data:
+    #jdbc:postgresql://db-pgsql-n01.sep.ok.dev.cit.st:5432/m4d_db
+    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vZGItcGdzcWwtbjAxLnNlcC5vay5kZXYuY2l0LnN0OjU0MzIvbTRkX2Ri
+    #pep
+    SPRING_DATASOURCE_USERNAME: cGVw
+    #jwjljrrjy
+    SPRING_DATASOURCE_PASSWORD: andqbGpycmp5
+    #https://sso.rpd.ok.dev.cit.st/realms/test/protocol/openid-connect/auth
+    RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucnBkLm9rLmRldi5jaXQuc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
+    #https://sso.rpd.ok.dev.cit.st/realms/test/protocol/openid-connect/token
+    RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28ucnBkLm9rLmRldi5jaXQuc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvdG9rZW4=
+    #https://sso.rpd.ok.dev.cit.st/realms/test
+    OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28ucnBkLm9rLmRldi5jaXQuc3QvcmVhbG1zL3Rlc3Q=
+    KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
+    #http://m4d.pep.ok.dev.cit.st
+    SWAGGER_URL: aHR0cDovL200ZC5wZXAub2suZGV2LmNpdC5zdA==
+    #http://synapi-service.master.svc.cluster.local/api/v1
+    M4D_HANDBOOK_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjE=
+    #http://synapi-service.master.svc.cluster.local/api/v1/user-certificate/me
+    USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9tZQo=
+    #http://synapi-service.master.svc.cluster.local/api/v1/container/get-part
+    CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2dldC1wYXJ0Cg==
+    #http://synapi-service.master.svc.cluster.local/api/v1/container/get-part-json
+    CONTAINER_PART_JSON_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2dldC1wYXJ0LWpzb24K
+    #http://synapi-service.master.svc.cluster.local/api/v1/audit/external
+    AUDIT_URL: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
+    SERVER_PORT: ODA1MQ==
+    #sep
+    RESOURCE_ACCESS: c2Vw
+    RPD_LIFESPAN_CACHE: MzA=
+    RPD_REFRESH_TIME_CACHE: MjU=
+    RPD_CONNECTION_TIMEOUT: MTAwMDA=
+    RPD_READ_TIMEOUT: MTAwMDA=
+    #true
+    DISABLE_TLS_CHECK: dHJ1ZQ==
+
+jvmOptions:
+  xms: 2G
+  xmx: 64G
+  gc: "-XX:+UseG1GC"
+  minHeapFreeRatio: 10
+  maxHeapFreeRatio: 30
+  portJMX: 9010
+  authenticateJMX: false
+  sslJMX: false
+  hostnameJMX: localhost
+  localOnlyJMX: false
+
+jarFile: m4d-0.0.1-SNAPSHOT.jar
+
+env:
+  SPRING_DATASOURCE_URL: SPRING_DATASOURCE_URL
+  SPRING_DATASOURCE_USERNAME: SPRING_DATASOURCE_USERNAME
+  SPRING_DATASOURCE_PASSWORD: SPRING_DATASOURCE_PASSWORD
+  RPD_AUTHORIZATION_URI: RPD_AUTHORIZATION_URI
+  OAUTH2_ISSUER_URL: OAUTH2_ISSUER_URL
+  RPD_SWAGGER_TOKEN_URI: RPD_SWAGGER_TOKEN_URI
+  KAFKA_BROKERS_LIST_URL: KAFKA_BROKERS_LIST_URL
+  SWAGGER_URL: SWAGGER_URL
+  M4D_HANDBOOK_URI: M4D_HANDBOOK_URI
+  USER_CERTS_ME_URI: USER_CERTS_ME_URI
+  CONTAINER_PART_URI: CONTAINER_PART_URI
+  CONTAINER_PART_JSON_URI: CONTAINER_PART_JSON_URI
+  AUDIT_URL: AUDIT_URL
+  SERVER_PORT: SERVER_PORT
+  RESOURCE_ACCESS: RESOURCE_ACCESS
+  RPD_LIFESPAN_CACHE: RPD_LIFESPAN_CACHE
+  RPD_REFRESH_TIME_CACHE: RPD_REFRESH_TIME_CACHE
+  RPD_CONNECTION_TIMEOUT: RPD_CONNECTION_TIMEOUT
+  RPD_READ_TIMEOUT: RPD_READ_TIMEOUT
+  DISABLE_TLS_CHECK: DISABLE_TLS_CHECK
+
+appName: m4d
+
+imagePullSecrets:
+  - registrypullsecret
+
+resources: {}
