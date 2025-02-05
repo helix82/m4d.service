@@ -189,6 +189,40 @@ steps:
       branch:
         - release-*
 
+  - name: prerelease-push-src-to-git.cifro.tech
+    image: alpine:3.12
+    environment:
+      DRONE_DEBUG: true
+      GITLAB_PAT_TOKEN:
+        from_secret: gitlab_pat_token
+      GIT_REPO_V2:
+        from_secret: git_repo_v2
+    commands:
+      - set -x
+      - apk add --no-cache git rsync
+      - git config --global user.name "SEP CI"
+      - git config --global user.email "sep_user@cifro.tech"
+      - echo "$GITLAB_PAT_TOKEN"
+      - git clone https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/m4d.service.git repo
+      - cd repo
+      - echo "Создаем новую ветку"
+      - VERSION=$(echo ${DRONE_SOURCE_BRANCH} | sed 's/^prerelease-//')
+      - git checkout -B $DRONE_SOURCE_BRANCH
+      - echo "Копируем содержимое, исключая папку repo"
+      - rsync -av --exclude='repo' ../* .
+      - echo "Добавляем изменения"
+      - git add .
+      - git commit -m "Пререлиз версии $VERSION"
+      - echo "Пушим новую ветку на удаленный репозиторий"
+      - git push https://x-access-token:$GITLAB_PAT_TOKEN@git.cifro.tech/sep/m4d.service.git $DRONE_SOURCE_BRANCH
+      - cd ..
+      - rm -rf repo
+    depends_on:
+      - rebuild-cache
+    when:
+      branch:
+        - prerelease-*
+
   - name: notify-deploy-success
     image: appleboy/drone-telegram
     settings:
