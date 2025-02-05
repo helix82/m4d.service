@@ -38,8 +38,7 @@ secret:
     SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vZGItcGdzcWwtbjAxLnNlcC5vay5kZXYuY2l0LnN0OjU0MzIvbTRkX2Ri
     #pep
     SPRING_DATASOURCE_USERNAME: cGVw
-    #jwjljrrjy
-    SPRING_DATASOURCE_PASSWORD: andqbGpycmp5
+    SPRING_DATASOURCE_PASSWORD: Y0VGQ2JsU1QyazcxZHJWTQ==
     #https://sso.rpd.ok.dev.cit.st/realms/test/protocol/openid-connect/auth
     RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucnBkLm9rLmRldi5jaXQuc3QvcmVhbG1zL3Rlc3QvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
     #https://sso.rpd.ok.dev.cit.st/realms/test/protocol/openid-connect/token
