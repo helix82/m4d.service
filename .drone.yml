@@ -121,6 +121,39 @@ steps:
       branch:
         - master
 
+  - name: create-helm-template-release
+    image: alpine/helm:3.12.3
+    environment:
+      HELM_PATH: ./deploy/helm
+      HELM_NAMESPACE_ZK: release-zk
+      HELM_NAMESPACE_OK: release-ok
+    commands:
+      - helm template m4d-ok $HELM_PATH --namespace $HELM_NAMESPACE_OK --values $HELM_PATH/ocode-rel-ok-values.yaml --set image.tag=${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT} > $HELM_PATH/k8s-m4d-ok.yaml
+      - helm template m4d-zk $HELM_PATH --namespace $HELM_NAMESPACE_ZK --values $HELM_PATH/ocode-rel-zk-values.yaml --set image.tag=${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT} > $HELM_PATH/k8s-m4d-zk.yaml
+      - test -s $HELM_PATH/k8s-m4d-ok.yaml
+      - test -s $HELM_PATH/k8s-m4d-zk.yaml
+      - cat $HELM_PATH/k8s-m4d-ok.yaml > $HELM_PATH/k8s-m4d-combined.yaml
+      - cat $HELM_PATH/k8s-m4d-zk.yaml >> $HELM_PATH/k8s-m4d-combined.yaml
+      - cat $HELM_PATH/k8s-m4d-combined.yaml
+    depends_on:
+      - rebuild-cache
+    when:
+      branch:
+        - rel
+
+  - name: deploy-release
+    image: ghcr.io/bh90210/dron8s:latest
+    settings:
+      yaml: ./deploy/helm/k8s-m4d-combined.yaml
+      tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
+      kubeconfig:
+        from_secret: kubeconfig
+    depends_on:
+      - create-helm-template-release
+    when:
+      branch:
+        - rel
+
   - name: update-release-notes
     image: alpine
     environment:
