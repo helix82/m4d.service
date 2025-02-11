@@ -51,6 +51,12 @@ public class M4d {
     @AllowAudit
     private Long principalId;
 
+    @Column(name = "principal_detail_id")
+    @Schema(example = "1")
+    @JsonProperty("principalDetailId")
+    @AllowAudit
+    private Long principalDetailId;
+
     @Column(name = "representative_id")
     @Schema(example = "1")
     @JsonProperty("representativeId")

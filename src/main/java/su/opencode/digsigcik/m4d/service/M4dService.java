@@ -22,13 +22,13 @@ public interface M4dService {
     List<M4dResponseDto> findAllMrpaRegistry() throws ParseException;
     M4d saveMrpaRegistry(@NotNull M4d m4d);
     M4d updateMrpaRegistry(@NotNull M4d m4d);
-    Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
-    Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
+    Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
+    Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
     Integer countM4dByGuid(@NotNull String guid);
     M4d findMrpaRegistryByGuid(@NotNull String guid);
     M4d findById(@NotNull Long id);
     void deleteMrpaRegistry(@NotNull Long id);
-    List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId);
+    List<M4dResponseDto.CredentialDto> getCredentialByMrpaRegistryId(Long mrpaId);
     M4dFullXML ConvertMrpaRegistryFullDtoToFullXml(M4dResponseDto m4dFullDTO) throws ParseException;
     List<M4dResponseDto> findAllM4dUsers(Authentication authentication) throws ParseException;
     List<M4d> findM4dByRepresentativeInn(String inn);

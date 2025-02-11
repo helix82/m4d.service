@@ -80,6 +80,7 @@ public class M4dServiceImpl implements M4dService {
     private final CredentialService credentialService;
     private final OrganisationService organisationService;
     private final PrincipalService principalService;
+    private final PrincipalDetailService principalDetailService;
     private final RepresentativeService representativeService;
     private final RepresentativePassportService representativePassportService;
     private final UserCertificateService userCertificateService;
@@ -109,7 +110,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
+    public Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long represId;
@@ -172,8 +173,10 @@ public class M4dServiceImpl implements M4dService {
                 assert respPrincipal != null;
                 principId = respPrincipal.getId();
             } else if (!existsPrincipal.getInn().equals(principal.getInn()) || !existsPrincipal.getSnils().equals(principal.getSnils())
-                    || !existsPrincipal.getSurname().equals(principal.getSurname()) || !existsPrincipal.getName().equals(principal.getName())
-                    || !existsPrincipal.getPatronymic().equals(principal.getPatronymic()) || !existsPrincipal.getJobTitle().equals(principal.getJobTitle())) {
+                    // обработать PrincipalDetail !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                    || !existsPrincipal.getSurname().equals(principal.getSurname()) || !existsPrincipal.getName().equals(principal.getName())
+//                    || !existsPrincipal.getPatronymic().equals(principal.getPatronymic()) || !existsPrincipal.getJobTitle().equals(principal.getJobTitle())
+            ) {
                 Principal respPrincipal;
                 try {
                     principal.setId(existsPrincipal.getId());
@@ -322,7 +325,7 @@ public class M4dServiceImpl implements M4dService {
 
     @AuditLogThis(event = AuditLogEventEnum.M4D_UPDATE)
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
-    public Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
+    public Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long represId;
@@ -384,6 +387,8 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(e.getMessage());
         }
         //------------------- end save principal ----------------
+
+        // Обработать PrincipalDetail !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
         //------------------- save representative and passport ----------------
 
@@ -500,12 +505,12 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
-    public List<M4dResponseDto.CredentialDTO> getCredentialByMrpaRegistryId(Long mrpaId) {
+    public List<M4dResponseDto.CredentialDto> getCredentialByMrpaRegistryId(Long mrpaId) {
         List<Credential> credentials = this.credentialService.findCredentialByMrpaId(mrpaId);
-        List<M4dResponseDto.CredentialDTO> credentialDTOList = new ArrayList<>();
+        List<M4dResponseDto.CredentialDto> credentialDTOList = new ArrayList<>();
         assert credentials != null;
         for (Credential c : credentials) {
-            M4dResponseDto.CredentialDTO credentialDTO = new M4dResponseDto.CredentialDTO();
+            M4dResponseDto.CredentialDto credentialDTO = new M4dResponseDto.CredentialDto();
             credentialDTO.setId(c.getId());
             credentialDTO.setName(c.getName());
             credentialDTO.setCode(c.getCode());
@@ -576,14 +581,14 @@ public class M4dServiceImpl implements M4dService {
         M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal principal = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal();
         principal.setInn(m4dFullDTO.principal.getInn());
         principal.setSnils(m4dFullDTO.principal.getSnils());
-        principal.setJobTitle(m4dFullDTO.principal.getJobTitle());
+        principal.setJobTitle(m4dFullDTO.principalDetail.getJobTitle());
         personPrincipal.setPrincipal(principal);
         M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal.FioPrincipal fioPrincipal = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal.FioPrincipal();
         principal.setFioPrincipal(fioPrincipal);
         M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal.FioPrincipal.Fio fio = new M4dFullXML.Document.PowerAttorneys.InfoPrincipals.InfoPrincipal.LegalEntity.PersonPrincipal.Principal.FioPrincipal.Fio();
-        fio.setName(m4dFullDTO.principal.getName());
-        fio.setPatronymic(m4dFullDTO.principal.getPatronymic());
-        fio.setSurname(m4dFullDTO.principal.getSurname());
+        fio.setName(m4dFullDTO.principalDetail.getName());
+        fio.setPatronymic(m4dFullDTO.principalDetail.getPatronymic());
+        fio.setSurname(m4dFullDTO.principalDetail.getSurname());
         fioPrincipal.setFio(fio);
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative infoRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative();
         infoRepresentative.setTypeRepresentative("3");
@@ -618,7 +623,7 @@ public class M4dServiceImpl implements M4dService {
         credentials.setImplCredential("1");
         credentials.setLossCredential("1");
         ArrayList<M4dFullXML.Document.PowerAttorneys.Credentials.Credential> credentialList = new ArrayList<>();
-        for (M4dResponseDto.CredentialDTO credentialDTO : m4dFullDTO.credentials) {
+        for (M4dResponseDto.CredentialDto credentialDTO : m4dFullDTO.credentials) {
             M4dFullXML.Document.PowerAttorneys.Credentials.Credential credential = new M4dFullXML.Document.PowerAttorneys.Credentials.Credential();
             credential.setCode(credentialDTO.getCode());
             credential.setName(credentialDTO.getName());
@@ -709,7 +714,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             m4dFile = this.m4dFileService.findM4dFileById(m4d.getM4dFile().getId());
             if (m4dFile != null) {
-                M4dResponseDto.SigFileDTO sigFileDTO = convertSigFileToDto(m4dFile);
+                M4dResponseDto.SigFileDto sigFileDTO = convertSigFileToDto(m4dFile);
                 if (!withM4dSigFile) {
                     sigFileDTO.setContent(null);
                 }
@@ -722,7 +727,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             m4dFileRecall = this.m4dFileService.findM4dFileById(m4d.getMrpaRecall().getM4dFile().getId());
             if (m4dFileRecall != null) {
-                M4dResponseDto.RecallDTO.SigFileDTO sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
+                M4dResponseDto.RecallDto.SigFileDto sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
                 if (!withRecallSigFile) {
                     sigFileDTO.setContent(null);
                 }
@@ -738,6 +743,10 @@ public class M4dServiceImpl implements M4dService {
         Principal principal = this.principalService.findByPrincipalId(m4d.getPrincipalId());
         if (principal != null) {
             m4dResponseDto.setPrincipal(convertPrincipalToDto(principal));
+        }
+        PrincipalDetail principalDetail = this.principalDetailService.findByPrincipalDetailId(m4d.getPrincipalDetailId());
+        if (principalDetail != null) {
+            m4dResponseDto.setPrincipalDetail(convertPrincipalDetailToDto(principalDetail));
         }
         Representative representative = this.representativeService.findByRepresentativeId(m4d.getRepresentativeId());
         if (representative != null) {
@@ -981,12 +990,13 @@ public class M4dServiceImpl implements M4dService {
         organisation.setLegalAddress(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.addressRegion.getLegalAddress());
 
         Principal principal = new Principal();
+        PrincipalDetail principalDetail = new PrincipalDetail();
         principal.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getInn());
         principal.setSnils(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getSnils());
-        principal.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
-        principal.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
-        principal.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
-        principal.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
+        principalDetail.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
+        principalDetail.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
+        principalDetail.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
+        principalDetail.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
 
         Representative representative = new Representative();
         RepresentativePassport represPassport = new RepresentativePassport();
@@ -1007,22 +1017,24 @@ public class M4dServiceImpl implements M4dService {
                 }
             }
         }
-        List<M4dResponseDto.CredentialDTO> credentialList = new ArrayList<>();
+        List<M4dResponseDto.CredentialDto> credentialList = new ArrayList<>();
         if (m4dXml.document.powerAttorneys.credential.credentials != null) {
             for (M4dXml.Document.PowerAttorneys.Credentials.Credential c : m4dXml.document.powerAttorneys.credential.credentials) {
-                M4dResponseDto.CredentialDTO newCredential = new M4dResponseDto.CredentialDTO();
+                M4dResponseDto.CredentialDto newCredential = new M4dResponseDto.CredentialDto();
                 newCredential.setCode(c.getCode());
                 newCredential.setName(c.getName());
                 credentialList.add(newCredential);
             }
         }
         M4dResponseDto m4dResponseDto = modelMapper.map(m4d, M4dResponseDto.class);
-        M4dResponseDto.OrganizationDTO organizationDTO = modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
-        M4dResponseDto.PrincipalDTO principalDTO = modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
-        M4dResponseDto.RepresentativeDTO representativeDTO = modelMapper.map(representative, M4dResponseDto.RepresentativeDTO.class);
-        M4dResponseDto.RepresentativePassportDTO representativePassportDTO = modelMapper.map(represPassport, M4dResponseDto.RepresentativePassportDTO.class);
+        M4dResponseDto.OrganizationDto organizationDTO = modelMapper.map(organisation, M4dResponseDto.OrganizationDto.class);
+        M4dResponseDto.PrincipalDto principalDTO = modelMapper.map(principal, M4dResponseDto.PrincipalDto.class);
+        M4dResponseDto.PrincipalDetailDto principalDetailDto = modelMapper.map(principalDetail, M4dResponseDto.PrincipalDetailDto.class);
+        M4dResponseDto.RepresentativeDto representativeDTO = modelMapper.map(representative, M4dResponseDto.RepresentativeDto.class);
+        M4dResponseDto.RepresentativePassportDto representativePassportDTO = modelMapper.map(represPassport, M4dResponseDto.RepresentativePassportDto.class);
         m4dResponseDto.setOrganization(organizationDTO);
         m4dResponseDto.setPrincipal(principalDTO);
+        m4dResponseDto.setPrincipalDetail(principalDetailDto);
         m4dResponseDto.setRepresentative(representativeDTO);
         m4dResponseDto.representative.setRepresentativePassport(representativePassportDTO);
         m4dResponseDto.setCredentials(credentialList);
@@ -1118,10 +1130,11 @@ public class M4dServiceImpl implements M4dService {
             Principal principal = new Principal();
             principal.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getInn());
             principal.setSnils(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getSnils());
-            principal.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
-            principal.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
-            principal.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
-            principal.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
+            PrincipalDetail principalDetail = new PrincipalDetail();
+            principalDetail.setJobTitle(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.getJobTitle());
+            principalDetail.setName(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getName());
+            principalDetail.setSurname(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname());
+            principalDetail.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
             if (principal.getInn() == null || principal.getInn().isEmpty()) {
                 throw new BadRequestException(PRINCIPAL_IS_NULL);
             }
@@ -1157,7 +1170,7 @@ public class M4dServiceImpl implements M4dService {
             }
             Long m4dSaved;
             try {
-                m4dSaved = this.saveAllDataMrpaRegistry(m4d, organisation, principal, representative, represPassport, credentialList, null);
+                m4dSaved = this.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, represPassport, credentialList, null);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(e.getMessage());
             }
@@ -1365,30 +1378,34 @@ public class M4dServiceImpl implements M4dService {
         return localDateTime;
     }
 
-    private M4dResponseDto.SigFileDTO convertSigFileToDto(M4dFile m4dFile) {
-        return modelMapper.map(m4dFile, M4dResponseDto.SigFileDTO.class);
+    private M4dResponseDto.SigFileDto convertSigFileToDto(M4dFile m4dFile) {
+        return modelMapper.map(m4dFile, M4dResponseDto.SigFileDto.class);
     }
 
-    private M4dResponseDto.RecallDTO.SigFileDTO convertSigFileRecallToDto(M4dFile m4dFile) {
-        return modelMapper.map(m4dFile, M4dResponseDto.RecallDTO.SigFileDTO.class);
+    private M4dResponseDto.RecallDto.SigFileDto convertSigFileRecallToDto(M4dFile m4dFile) {
+        return modelMapper.map(m4dFile, M4dResponseDto.RecallDto.SigFileDto.class);
     }
 
-    private M4dResponseDto.OrganizationDTO convertOrganisationToDto(Organisation organisation) {
-        return modelMapper.map(organisation, M4dResponseDto.OrganizationDTO.class);
+    private M4dResponseDto.OrganizationDto convertOrganisationToDto(Organisation organisation) {
+        return modelMapper.map(organisation, M4dResponseDto.OrganizationDto.class);
     }
 
-    private M4dResponseDto.PrincipalDTO convertPrincipalToDto(Principal principal) {
-        return modelMapper.map(principal, M4dResponseDto.PrincipalDTO.class);
+    private M4dResponseDto.PrincipalDto convertPrincipalToDto(Principal principal) {
+        return modelMapper.map(principal, M4dResponseDto.PrincipalDto.class);
     }
 
-    private M4dResponseDto.RepresentativeDTO convertRepresentativeToDto(Representative representative) {
-        M4dResponseDto.RepresentativeDTO representativeDto = modelMapper.map(representative, M4dResponseDto.RepresentativeDTO.class);
-        representativeDto.representativePassport = modelMapper.map(representative.getRepresentativePassports(), M4dResponseDto.RepresentativePassportDTO.class);
+    private M4dResponseDto.PrincipalDetailDto convertPrincipalDetailToDto(PrincipalDetail principalDetail) {
+        return modelMapper.map(principalDetail, M4dResponseDto.PrincipalDetailDto.class);
+    }
+
+    private M4dResponseDto.RepresentativeDto convertRepresentativeToDto(Representative representative) {
+        M4dResponseDto.RepresentativeDto representativeDto = modelMapper.map(representative, M4dResponseDto.RepresentativeDto.class);
+        representativeDto.representativePassport = modelMapper.map(representative.getRepresentativePassports(), M4dResponseDto.RepresentativePassportDto.class);
         return representativeDto;
     }
 
-    private M4dResponseDto.RepresentativePassportDTO convertRepresentativePassportToDto(RepresentativePassport representativePassport) {
-        return modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDTO.class);
+    private M4dResponseDto.RepresentativePassportDto convertRepresentativePassportToDto(RepresentativePassport representativePassport) {
+        return modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDto.class);
     }
 }
 

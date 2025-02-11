@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import su.opencode.digsigcik.m4d.enums.AuthorTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -28,10 +28,10 @@ public class M4dResponseDto {
     @JsonProperty("internalNumber")
     private String internalNumber;
 
-    public OrganizationDTO organization;
+    public OrganizationDto organization;
 
     @Data
-    public static class OrganizationDTO {
+    public static class OrganizationDto {
         private Long id;
         private String inn;
         private String kpp;
@@ -42,23 +42,30 @@ public class M4dResponseDto {
 
     }
 
-    public PrincipalDTO principal;
+    public PrincipalDto principal;
 
     @Data
-    public static class PrincipalDTO {
+    public static class PrincipalDto {
         private Long id;
         private String inn;
         private String snils;
+    }
+
+    public PrincipalDetailDto principalDetail;
+
+    @Data
+    public static class PrincipalDetailDto {
+        private Long id;
         private String jobTitle;
         private String surname;
         private String patronymic;
         private String name;
     }
 
-    public RepresentativeDTO representative;
+    public RepresentativeDto representative;
 
     @Data
-    public static class RepresentativeDTO {
+    public static class RepresentativeDto {
         private Long id;
         private String inn;
         private String snils;
@@ -67,11 +74,11 @@ public class M4dResponseDto {
         private String patronymic;
         private String name;
 
-        public RepresentativePassportDTO representativePassport;
+        public RepresentativePassportDto representativePassport;
     }
 
     @Data
-    public static  class RepresentativePassportDTO {
+    public static  class RepresentativePassportDto {
         private Long id;
         private String seriesNumber;
         private String dateIssue;
@@ -89,10 +96,10 @@ public class M4dResponseDto {
     private String status;
 
     @JsonProperty("sigFile")
-    private SigFileDTO sigFile;
+    private SigFileDto sigFile;
 
     @Data
-    public static class SigFileDTO {
+    public static class SigFileDto {
         @JsonProperty("id")
         private Long id;
         @JsonProperty("fileLogicalType")
@@ -117,10 +124,10 @@ public class M4dResponseDto {
     private String recallXml;
 
     @JsonProperty("recall")
-    public RecallDTO recall;
+    public RecallDto recall;
 
     @Data
-    public static class RecallDTO {
+    public static class RecallDto {
         @JsonProperty("id")
         private Long id;
         @JsonProperty("author")
@@ -128,10 +135,10 @@ public class M4dResponseDto {
         @JsonProperty("argument")
         private String argument;
         @JsonProperty("signature")
-        private SigFileDTO sigFile;
+        private SigFileDto sigFile;
 
         @Data
-        public static class SigFileDTO {
+        public static class SigFileDto {
             @JsonProperty("id")
             private Long id;
             @JsonProperty("fileLogicalType")
@@ -147,10 +154,10 @@ public class M4dResponseDto {
         }
     }
 
-    public List<CredentialDTO> credentials;
+    public List<CredentialDto> credentials;
 
     @Data
-    public static class CredentialDTO {
+    public static class CredentialDto {
         @JsonProperty("id")
         private Long id;
         @JsonProperty("code")
@@ -160,8 +167,8 @@ public class M4dResponseDto {
     }
 
     public M4dResponseDto(Long id, String guid, String internalNumber, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
-                          Long principal_id, String principal_inn, String principal_snils, String principal_jobTitle,
-                          String principal_name, String principal_surname, String principal_patronymic,
+                          Long principal_id, String principal_inn, String principal_snils, Long principal_detail_id, String principal_detail_jobTitle,
+                          String principal_detail_name, String principal_detail_surname, String principal_detail_patronymic,
                           Long representative_id, String representative_inn, String representative_snils, LocalDateTime representative_birthDate,
                           String representative_name, String representative_surname, String representative_patronymic) {
         this.id = id;
@@ -171,17 +178,21 @@ public class M4dResponseDto {
         this.endDate = endDate.toString();
         this.createDate = createDate.toString();
 
-        PrincipalDTO principalDTO = new PrincipalDTO();
+        PrincipalDto principalDTO = new PrincipalDto();
         principalDTO.id = principal_id;
         principalDTO.inn = principal_inn;
         principalDTO.snils = principal_snils;
-        principalDTO.jobTitle = principal_jobTitle;
-        principalDTO.name = principal_name;
-        principalDTO.surname = principal_surname;
-        principalDTO.patronymic = principal_patronymic;
         this.principal = principalDTO;
 
-        RepresentativeDTO representativeDTO = new RepresentativeDTO();
+        PrincipalDetailDto principalDetailDto = new PrincipalDetailDto();
+        principalDetailDto.id = principal_detail_id;
+        principalDetailDto.jobTitle = principal_detail_jobTitle;
+        principalDetailDto.name = principal_detail_name;
+        principalDetailDto.surname = principal_detail_surname;
+        principalDetailDto.patronymic = principal_detail_patronymic;
+        this.principalDetail = principalDetailDto;
+
+        RepresentativeDto representativeDTO = new RepresentativeDto();
         representativeDTO.id = representative_id;
         representativeDTO.inn = representative_inn;
         representativeDTO.snils = representative_snils;
@@ -193,8 +204,8 @@ public class M4dResponseDto {
     }
 
     public M4dResponseDto(Long id, String guid, String internalNumber,
-                          Long principalId, String principalInn, String principalSnils, String principalJobTitle,
-                          String principalName, String principalSurname, String principalPatronymic,
+                          Long principalId, String principalInn, String principalSnils, Long principalDetailId, String principalDetailJobTitle,
+                          String principalDetailName, String principalDetailSurname, String principalDetailPatronymic,
                           Long representativeId, String representativeInn, String representativeSnils,
                           LocalDateTime representative_birthDate, String representativeName, String representativeSurname,
                           String representativePatronymic,
@@ -209,16 +220,19 @@ public class M4dResponseDto {
         this.createDate = createDate.toString();
 
 
-        this.principal = new PrincipalDTO();
+        this.principal = new PrincipalDto();
         this.principal.setId(principalId);
         this.principal.setInn(principalInn);
         this.principal.setSnils(principalSnils);
-        this.principal.setJobTitle(principalJobTitle);
-        this.principal.setName(principalName);
-        this.principal.setSurname(principalSurname);
-        this.principal.setPatronymic(principalPatronymic);
 
-        this.representative = new RepresentativeDTO();
+        this.principalDetail = new PrincipalDetailDto();
+        this.principalDetail.setId(principalDetailId);
+        this.principalDetail.setJobTitle(principalDetailJobTitle);
+        this.principalDetail.setName(principalDetailName);
+        this.principalDetail.setSurname(principalDetailSurname);
+        this.principalDetail.setPatronymic(principalDetailPatronymic);
+
+        this.representative = new RepresentativeDto();
         this.representative.setId(representativeId);
         this.representative.setInn(representativeInn);
         this.representative.setSnils(representativeSnils);
@@ -227,7 +241,7 @@ public class M4dResponseDto {
         this.representative.setSurname(representativeSurname);
         this.representative.setPatronymic(representativePatronymic);
 
-        this.recall = new RecallDTO();
+        this.recall = new RecallDto();
         this.recall.setId(recallId);
         this.recall.setAuthor(recallAuthor.toString());
         this.recall.setArgument(recallArgument);

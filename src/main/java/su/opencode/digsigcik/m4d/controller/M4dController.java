@@ -95,11 +95,12 @@ public class M4dController {
         m4d.setCreateDate(LocalDateTime.now());
         Organisation organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
+        PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
         RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
         Long m4dSaved;
         try {
-            m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
+            m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
@@ -231,11 +232,12 @@ public class M4dController {
 
         Organisation organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
+        PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
         RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
         Long m4dUpdated;
         try {
-            m4dUpdated = m4dService.updateAllDataMrpaRegistry(m4d, organisation, principal, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
+            m4dUpdated = m4dService.updateAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
@@ -529,6 +531,10 @@ public class M4dController {
 
     private Principal convertPrincipalToEntity(M4dRequestDto.Principal principalDto) {
         return modelMapper.map(principalDto, Principal.class);
+    }
+
+    private PrincipalDetail convertPrincipalDetailToEntity(M4dRequestDto.PrincipalDetail principalDetailDto) {
+        return modelMapper.map(principalDetailDto, PrincipalDetail.class);
     }
 
     private Representative convertRepresentativeToEntity(M4dRequestDto.Representative representativeDto) {

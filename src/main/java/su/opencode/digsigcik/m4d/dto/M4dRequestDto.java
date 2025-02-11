@@ -45,6 +45,13 @@ public class M4dRequestDto {
         private Long id;
         private String inn;
         private String snils;
+    }
+
+    public PrincipalDetail principalDetail;
+
+    @Data
+    public static class PrincipalDetail {
+        private Long id;
         private String jobTitle;
         private String surname;
         private String patronymic;
