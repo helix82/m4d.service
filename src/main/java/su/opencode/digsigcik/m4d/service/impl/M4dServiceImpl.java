@@ -113,6 +113,7 @@ public class M4dServiceImpl implements M4dService {
     public Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
+        Long principDetailId;
         Long represId;
         if (organisation.getInn() == null) {
             throw new BadRequestException("The organization's INN is not specified");
@@ -160,40 +161,29 @@ public class M4dServiceImpl implements M4dService {
         //------------------- end save organisation ----------------
 
         //------------------- save principal ----------------
-        Principal existsPrincipal;
+        Principal respPrincipal;
         try {
-            existsPrincipal = this.principalService.findPrincipalByInn(principal.getInn());
-            if (existsPrincipal == null) {
-                Principal respPrincipal;
-                try {
-                    respPrincipal = this.principalService.savePrincipal(principal);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(e.getMessage());
-                }
-                assert respPrincipal != null;
-                principId = respPrincipal.getId();
-            } else if (!existsPrincipal.getInn().equals(principal.getInn()) || !existsPrincipal.getSnils().equals(principal.getSnils())
-                    // обработать PrincipalDetail !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//                    || !existsPrincipal.getSurname().equals(principal.getSurname()) || !existsPrincipal.getName().equals(principal.getName())
-//                    || !existsPrincipal.getPatronymic().equals(principal.getPatronymic()) || !existsPrincipal.getJobTitle().equals(principal.getJobTitle())
-            ) {
-                Principal respPrincipal;
-                try {
-                    principal.setId(existsPrincipal.getId());
-                    respPrincipal = this.principalService.savePrincipal(principal);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(e.getMessage());
-                }
-                assert respPrincipal != null;
-                principId = respPrincipal.getId();
-            } else {
-                principId = existsPrincipal.getId();
-            }
+            respPrincipal = this.principalService.savePrincipal(principal);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-
+        assert respPrincipal != null;
+        principId = respPrincipal.getId();
         //------------------- end save principal ----------------
+
+        //------------------- save principal detail ----------------
+        PrincipalDetail respPrincipalDetail;
+        try {
+            principalDetail.setVersion(1L);
+            principalDetail.setActive(true);
+            respPrincipalDetail = this.principalDetailService.savePrincipalDetail(principalDetail);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        assert respPrincipalDetail != null;
+        principDetailId = respPrincipalDetail.getId();
+        //------------------- end save principal detail ----------------
+
 
         //------------------- save representative and passport ----------------
         Representative existsRepresentative;
@@ -259,11 +249,12 @@ public class M4dServiceImpl implements M4dService {
         }
         //------------------- end save representative and passport ----------------
 
-        if (orgId == null || principId == null || represId == null) {
+        if (orgId == null || principId == null || principDetailId == null || represId == null) {
             throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
         }
         m4d.setOrganisationId(orgId);
         m4d.setPrincipalId(principId);
+        m4d.setPrincipalDetailId(principDetailId);
         m4d.setRepresentativeId(represId);
 
         M4d m4dSaved;
@@ -328,6 +319,7 @@ public class M4dServiceImpl implements M4dService {
     public Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
+        Long principDetailId;
         Long represId;
         if (m4d.getId() == null) {
             throw new BadRequestException("Can`t update mrpa registry because ID null!");
@@ -372,8 +364,11 @@ public class M4dServiceImpl implements M4dService {
         //------------------- save principal ----------------
         Principal existsPrincipal;
         try {
-            existsPrincipal = this.principalService.findPrincipalByInn(principal.getInn());
+            existsPrincipal = this.principalService.findByPrincipalId(m4d.getPrincipalId());
             if (existsPrincipal != null) {
+                if (!existsPrincipal.getInn().equals(principal.getInn())) {
+                    throw new BadRequestException("Переданная ИНН доверителя не соответствует хранящейся в ПЭП. Добавьте МЧД по новой.");
+                }
                 principal.setId(existsPrincipal.getId());
             }
             Principal respPrincipal;
@@ -388,7 +383,45 @@ public class M4dServiceImpl implements M4dService {
         }
         //------------------- end save principal ----------------
 
-        // Обработать PrincipalDetail !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+        //------------------- save principal detail ----------------
+        PrincipalDetail existsPrincipalDetail;
+        try {
+            existsPrincipalDetail = this.principalDetailService.findByPrincipalDetailId(m4d.getPrincipalDetailId());
+            if (existsPrincipalDetail != null && existsPrincipalDetail.isActive()) {
+                if (!existsPrincipalDetail.getJobTitle().equals(principalDetail.getJobTitle()) || !existsPrincipalDetail.getName().equals(principalDetail.getName()) ||
+                !existsPrincipalDetail.getSurname().equals(principalDetail.getSurname()) || !existsPrincipalDetail.getPatronymic().equals(principalDetail.getPatronymic())) {
+                    PrincipalDetail respPrincipalDetail;
+                    try {
+                        principalDetail.setVersion(existsPrincipalDetail.getVersion()+1);
+                        principalDetail.setActive(true);
+                        respPrincipalDetail = this.principalDetailService.savePrincipalDetail(principalDetail);
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(e.getMessage());
+                    }
+                    // set Active=false for old principal detail
+                    try {
+                        existsPrincipalDetail.setActive(false);
+                        this.principalDetailService.savePrincipalDetail(existsPrincipalDetail);
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(e.getMessage());
+                    }
+                    principDetailId = respPrincipalDetail.getId();
+                } else principDetailId = existsPrincipalDetail.getId();
+            } else {
+                PrincipalDetail respPrincipalDetail;
+                try {
+                    principalDetail.setVersion(1L);
+                    principalDetail.setActive(true);
+                    respPrincipalDetail = this.principalDetailService.savePrincipalDetail(principalDetail);
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(e.getMessage());
+                }
+                principDetailId = respPrincipalDetail.getId();
+            }
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        //------------------- end save principal detail ----------------
 
         //------------------- save representative and passport ----------------
 
@@ -420,7 +453,7 @@ public class M4dServiceImpl implements M4dService {
         }
         //------------------- end save representative and passport ----------------
 
-        if (orgId == null || principId == null || represId == null) {
+        if (orgId == null || principId == null || principDetailId == null || represId == null) {
             throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
         }
         if (!m4d.getOrganisationId().equals(orgId)) {
@@ -428,6 +461,9 @@ public class M4dServiceImpl implements M4dService {
         }
         if (!m4d.getPrincipalId().equals(principId)) {
             m4d.setPrincipalId(principId);
+        }
+        if (!m4d.getPrincipalDetailId().equals(principDetailId)) {
+            m4d.setPrincipalDetailId(principDetailId);
         }
         if (!m4d.getRepresentativeId().equals(represId)) {
             m4d.setRepresentativeId(represId);
