@@ -70,16 +70,16 @@ public class M4dResponseDto {
         private String inn;
         private String snils;
         private String birthDate;
+    }
+
+    public RepresentativeDetailDto representativeDetail;
+
+    @Data
+    public static  class RepresentativeDetailDto {
+        private Long id;
         private String surname;
         private String patronymic;
         private String name;
-
-        public RepresentativePassportDto representativePassport;
-    }
-
-    @Data
-    public static  class RepresentativePassportDto {
-        private Long id;
         private String seriesNumber;
         private String dateIssue;
         private String whoIssue;
@@ -197,10 +197,13 @@ public class M4dResponseDto {
         representativeDTO.inn = representative_inn;
         representativeDTO.snils = representative_snils;
         representativeDTO.birthDate = representative_birthDate.toString();
-        representativeDTO.name = representative_name;
-        representativeDTO.surname = representative_surname;
-        representativeDTO.patronymic = representative_patronymic;
         this.representative = representativeDTO;
+
+        RepresentativeDetailDto representativeDetailDto = new RepresentativeDetailDto();
+        representativeDetailDto.name = representative_name;
+        representativeDetailDto.surname = representative_surname;
+        representativeDetailDto.patronymic = representative_patronymic;
+        this.representativeDetail = representativeDetailDto;
     }
 
     public M4dResponseDto(Long id, String guid, String internalNumber,
@@ -237,9 +240,11 @@ public class M4dResponseDto {
         this.representative.setInn(representativeInn);
         this.representative.setSnils(representativeSnils);
         this.representative.setBirthDate(representative_birthDate.toString());
-        this.representative.setName(representativeName);
-        this.representative.setSurname(representativeSurname);
-        this.representative.setPatronymic(representativePatronymic);
+
+        this.representativeDetail = new RepresentativeDetailDto();
+        this.representativeDetail.setName(representativeName);
+        this.representativeDetail.setSurname(representativeSurname);
+        this.representativeDetail.setPatronymic(representativePatronymic);
 
         this.recall = new RecallDto();
         this.recall.setId(recallId);

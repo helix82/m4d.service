@@ -26,11 +26,12 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
     @Query(value = "SELECT new su.opencode.digsigcik.m4d.dto.M4dResponseDto(m4d.id, m4d.guid, "
             + " m4d.internalNumber, m4d.startDate, m4d.endDate, m4d.createDate, "
             + " p.id, p.inn, p.snils, pd.id, pd.jobTitle, pd.name, pd.surname, pd.patronymic, r.id, r.inn, r.snils, r.birthDate,"
-            + " r.name, r.surname, r.patronymic)"
+            + " rd.name, rd.surname, rd.patronymic)"
             + " from M4d m4d"
             + " join Principal p on p.id = m4d.principalId"
             + " join PrincipalDetail pd on pd.id = m4d.principalDetailId"
             + " join Representative r on r.id = m4d.representativeId "
+            + " join RepresentativeDetail rd on rd.id = m4d.representativeDetailId"
             + " where (p.inn IN (:innList) or r.inn IN (:innList))")
     List<M4dResponseDto> findListM4dBySetInn(@Param("innList") Set<String> innList);
 

@@ -82,7 +82,7 @@ public class M4dServiceImpl implements M4dService {
     private final PrincipalService principalService;
     private final PrincipalDetailService principalDetailService;
     private final RepresentativeService representativeService;
-    private final RepresentativePassportService representativePassportService;
+    private final RepresentativeDetailService representativeDetailService;
     private final UserCertificateService userCertificateService;
     private final RestTemplate restTemplate;
     private final SynapiClientService synapiClientService;
@@ -110,11 +110,12 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
+    public Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long principDetailId;
         Long represId;
+        Long represDetailId;
         if (organisation.getInn() == null) {
             throw new BadRequestException("The organization's INN is not specified");
         }
@@ -124,7 +125,7 @@ public class M4dServiceImpl implements M4dService {
         if (representative.getInn() == null) {
             throw new BadRequestException("The representative's INN is not specified");
         }
-        if (representativePassport.getSeriesNumber() == null) {
+        if (representativeDetail.getSeriesNumber() == null) {
             throw new BadRequestException("The passport's SeriesNumber is not specified");
         }
         //------------------- save organisation ----------------
@@ -184,70 +185,29 @@ public class M4dServiceImpl implements M4dService {
         principDetailId = respPrincipalDetail.getId();
         //------------------- end save principal detail ----------------
 
-
-        //------------------- save representative and passport ----------------
-        Representative existsRepresentative;
+        //------------------- save representative ----------------
+        Representative respRepresentative;
         try {
-            existsRepresentative = this.representativeService.findRepresentativeByInn(representative.getInn());
-            if (existsRepresentative == null) {
-                Representative respRepresentative;
-                try {
-                    respRepresentative = this.representativeService.saveRepresentative(representative);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(e.getMessage());
-                }
-                if (respRepresentative.getId() != null) {
-                    representativePassport.setRepresentativeId(respRepresentative.getId());
-                    try {
-                        this.representativePassportService.saveRepresentativePassport(representativePassport);
-                    } catch (ConstraintViolationException e) {
-                        throw new BadRequestException(e.getMessage());
-                    }
-                }
-                represId = respRepresentative.getId();
-            } else if (!existsRepresentative.getInn().equals(representative.getInn()) || !existsRepresentative.getSnils().equals(representative.getSnils())
-                    || !existsRepresentative.getSurname().equals(representative.getSurname()) || !existsRepresentative.getName().equals(representative.getName())
-                    || !existsRepresentative.getPatronymic().equals(representative.getPatronymic()) || !existsRepresentative.getBirthDate().equals(representative.getBirthDate())) {
-                Representative respRepresentative;
-                try {
-                    representative.setId(existsRepresentative.getId());
-                    respRepresentative = this.representativeService.saveRepresentative(representative);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(e.getMessage());
-                }
-                if (respRepresentative.getId() != null) {
-                    RepresentativePassport existsRepresentativePassport;
-                    try {
-                        existsRepresentativePassport = this.representativePassportService.findRepresentativePassportyByRepresentativeId(respRepresentative.getId());
-                        if (existsRepresentativePassport == null) {
-                            representativePassport.setRepresentativeId(respRepresentative.getId());
-                            try {
-                                this.representativePassportService.saveRepresentativePassport(representativePassport);
-                            } catch (ConstraintViolationException e) {
-                                throw new BadRequestException(e.getMessage());
-                            }
-                        } else if (!existsRepresentativePassport.getSeriesNumber().equals(representativePassport.getSeriesNumber()) || !existsRepresentativePassport.getDateIssue().equals(representativePassport.getDateIssue())
-                                || !existsRepresentativePassport.getWhoIssue().equals(representativePassport.getWhoIssue()) || !existsRepresentativePassport.getDepartmentCode().equals(representativePassport.getDepartmentCode())) {
-                            representativePassport.setId(existsRepresentativePassport.getId());
-                            representativePassport.setRepresentativeId(respRepresentative.getId());
-                            try {
-                                this.representativePassportService.saveRepresentativePassport(representativePassport);
-                            } catch (ConstraintViolationException e) {
-                                throw new BadRequestException(e.getMessage());
-                            }
-                        }
-                    } catch (ConstraintViolationException e) {
-                        throw new BadRequestException(e.getMessage());
-                    }
-                }
-                represId = respRepresentative.getId();
-            } else {
-                represId = existsRepresentative.getId();
-            }
+            respRepresentative = this.representativeService.saveRepresentative(representative);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        //------------------- end save representative and passport ----------------
+        assert respRepresentative != null;
+        represId = respRepresentative.getId();
+        //------------------- end save representative ----------------
+
+        //------------------- save representative detail ----------------
+        RepresentativeDetail respRepresDetail;
+        try {
+            representativeDetail.setVersion(1L);
+            representativeDetail.setActive(true);
+            respRepresDetail = this.representativeDetailService.saveRepresentativeDetail(representativeDetail);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        assert respRepresDetail != null;
+        represDetailId = respRepresDetail.getId();
+        //------------------- end save representative detail ----------------
 
         if (orgId == null || principId == null || principDetailId == null || represId == null) {
             throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
@@ -256,6 +216,7 @@ public class M4dServiceImpl implements M4dService {
         m4d.setPrincipalId(principId);
         m4d.setPrincipalDetailId(principDetailId);
         m4d.setRepresentativeId(represId);
+        m4d.setRepresentativeDetailId(represDetailId);
 
         M4d m4dSaved;
         try {
@@ -316,11 +277,12 @@ public class M4dServiceImpl implements M4dService {
 
     @AuditLogThis(event = AuditLogEventEnum.M4D_UPDATE)
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
-    public Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials) {
+    public Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials) {
         Long orgId;
         Long principId;
         Long principDetailId;
         Long represId;
+        Long represDetailId;
         if (m4d.getId() == null) {
             throw new BadRequestException("Can`t update mrpa registry because ID null!");
         }
@@ -423,12 +385,14 @@ public class M4dServiceImpl implements M4dService {
         }
         //------------------- end save principal detail ----------------
 
-        //------------------- save representative and passport ----------------
-
+        //------------------- save representative ----------------
         Representative existsRepresentative;
         try {
-            existsRepresentative = this.representativeService.findRepresentativeByInn(representative.getInn());
+            existsRepresentative = this.representativeService.findByRepresentativeId(m4d.getRepresentativeId());
             if (existsRepresentative != null) {
+                if (!existsRepresentative.getInn().equals(representative.getInn())) {
+                    throw new BadRequestException("Переданная ИНН представителя не соответствует хранящейся в ПЭП. Добавьте МЧД по новой.");
+                }
                 representative.setId(existsRepresentative.getId());
             }
             Representative respRepresentative;
@@ -437,23 +401,55 @@ public class M4dServiceImpl implements M4dService {
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(e.getMessage());
             }
-            RepresentativePassport existsRepresentativePassport = this.representativePassportService.findRepresentativePassportyByRepresentativeId(respRepresentative.getId());
-            if (existsRepresentativePassport != null) {
-                representativePassport.setId(existsRepresentativePassport.getId());
-            }
-            try {
-                representativePassport.setRepresentativeId(respRepresentative.getId());
-                this.representativePassportService.saveRepresentativePassport(representativePassport);
-            } catch (ConstraintViolationException e) {
-                throw new BadRequestException(e.getMessage());
-            }
             represId = respRepresentative.getId();
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        //------------------- end save representative and passport ----------------
+        //------------------- end save representative ----------------
 
-        if (orgId == null || principId == null || principDetailId == null || represId == null) {
+        //------------------- save representative detail ----------------
+        RepresentativeDetail existsRepresentativeDetail;
+        try {
+            existsRepresentativeDetail = this.representativeDetailService.findByRepresentativeDetailId(m4d.getRepresentativeDetailId());
+            if (existsRepresentativeDetail != null && existsRepresentativeDetail.isActive()) {
+                if (!existsRepresentativeDetail.getName().equals(representativeDetail.getName()) || !existsRepresentativeDetail.getSurname().equals(representativeDetail.getSurname())
+                        || !existsRepresentativeDetail.getPatronymic().equals(representativeDetail.getPatronymic()) || !existsRepresentativeDetail.getSeriesNumber().equals(representativeDetail.getSeriesNumber())
+                        || !existsRepresentativeDetail.getDateIssue().equals(representativeDetail.getDateIssue()) || !existsRepresentativeDetail.getWhoIssue().equals(representativeDetail.getWhoIssue())
+                        || !existsRepresentativeDetail.getDepartmentCode().equals(representativeDetail.getDepartmentCode())){
+                    RepresentativeDetail respRepresentativeDetail;
+                    try {
+                        representativeDetail.setVersion(existsRepresentativeDetail.getVersion()+1);
+                        representativeDetail.setActive(true);
+                        respRepresentativeDetail = this.representativeDetailService.saveRepresentativeDetail(representativeDetail);
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(e.getMessage());
+                    }
+                    // set Active=false for old representative detail
+                    try {
+                        existsRepresentativeDetail.setActive(false);
+                        this.representativeDetailService.saveRepresentativeDetail(existsRepresentativeDetail);
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(e.getMessage());
+                    }
+                    represDetailId = respRepresentativeDetail.getId();
+                } else represDetailId = existsRepresentativeDetail.getId();
+            } else {
+                RepresentativeDetail respRepresentativeDetail;
+                try {
+                    representativeDetail.setVersion(1L);
+                    representativeDetail.setActive(true);
+                    respRepresentativeDetail = this.representativeDetailService.saveRepresentativeDetail(representativeDetail);
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(e.getMessage());
+                }
+                represDetailId = respRepresentativeDetail.getId();
+            }
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        //------------------- end save representative detail ----------------
+
+        if (orgId == null || principId == null || principDetailId == null || represId == null || represDetailId == null) {
             throw new BadRequestException(MRPA_REGISTRY_NOT_FULL);
         }
         if (!m4d.getOrganisationId().equals(orgId)) {
@@ -467,6 +463,9 @@ public class M4dServiceImpl implements M4dService {
         }
         if (!m4d.getRepresentativeId().equals(represId)) {
             m4d.setRepresentativeId(represId);
+        }
+        if (!m4d.getRepresentativeDetailId().equals(represDetailId)) {
+            m4d.setRepresentativeDetailId(represDetailId);
         }
         M4d m4dUpdated;
         try {
@@ -642,18 +641,18 @@ public class M4dServiceImpl implements M4dService {
         }
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative fioRepresentative = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.FioRepresentative();
         infoIndividual.setFioRepresentative(fioRepresentative);
-        fioRepresentative.setName(m4dFullDTO.representative.getName());
-        fioRepresentative.setSurname(m4dFullDTO.representative.getSurname());
-        fioRepresentative.setPatronymic(m4dFullDTO.representative.getPatronymic());
+        fioRepresentative.setName(m4dFullDTO.representativeDetail.getName());
+        fioRepresentative.setSurname(m4dFullDTO.representativeDetail.getSurname());
+        fioRepresentative.setPatronymic(m4dFullDTO.representativeDetail.getPatronymic());
         M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.RepresentativePassport representativePassport = new M4dFullXML.Document.PowerAttorneys.InfoRepresentative.Representative.DetailRepresentative.InfoIndividual.RepresentativePassport();
         infoIndividual.setRepresentativePassport(representativePassport);
         representativePassport.setTypeDocument("21");
-        representativePassport.setSeriesNumber(m4dFullDTO.representative.representativePassport.getSeriesNumber());
-        if (m4dFullDTO.representative.representativePassport.getDateIssue() != null) {
-            representativePassport.setDateIssue(m4dFullDTO.representative.representativePassport.getDateIssue().substring(0, 10));
+        representativePassport.setSeriesNumber(m4dFullDTO.representativeDetail.getSeriesNumber());
+        if (m4dFullDTO.representativeDetail.getDateIssue() != null) {
+            representativePassport.setDateIssue(m4dFullDTO.representativeDetail.getDateIssue().substring(0, 10));
         }
-        representativePassport.setWhoIssue(m4dFullDTO.representative.representativePassport.getWhoIssue());
-        representativePassport.setDepartmentCode(m4dFullDTO.representative.representativePassport.getDepartmentCode());
+        representativePassport.setWhoIssue(m4dFullDTO.representativeDetail.getWhoIssue());
+        representativePassport.setDepartmentCode(m4dFullDTO.representativeDetail.getDepartmentCode());
         M4dFullXML.Document.PowerAttorneys.Credentials credentials = new M4dFullXML.Document.PowerAttorneys.Credentials();
         credentials.setTypeCredential("1");
         credentials.setImplCredential("1");
@@ -787,8 +786,8 @@ public class M4dServiceImpl implements M4dService {
         Representative representative = this.representativeService.findByRepresentativeId(m4d.getRepresentativeId());
         if (representative != null) {
             m4dResponseDto.setRepresentative(convertRepresentativeToDto(representative));
-            RepresentativePassport representativePassport = this.representativePassportService.findRepresentativePassportyByRepresentativeId(representative.getId());
-            m4dResponseDto.representative.setRepresentativePassport(convertRepresentativePassportToDto(representativePassport));
+            RepresentativeDetail representativeDetail = this.representativeDetailService.findRepresentativeDetailByRepresentativeId(representative.getId());
+            m4dResponseDto.setRepresentativeDetail(convertRepresentativePassportToDto(representativeDetail));
         }
         m4dResponseDto.setCredentials(this.getCredentialByMrpaRegistryId(m4d.getId()));
         m4dResponseDto.setStatus(this.getStatusM4d(m4dResponseDto.getId()));
@@ -1035,21 +1034,21 @@ public class M4dServiceImpl implements M4dService {
         principalDetail.setPatronymic(m4dXml.document.powerAttorneys.principals.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic());
 
         Representative representative = new Representative();
-        RepresentativePassport represPassport = new RepresentativePassport();
+        RepresentativeDetail represDetail = new RepresentativeDetail();
         for (M4dXml.Document.PowerAttorneys.InfoRepresentative c: m4dXml.document.powerAttorneys.infoRepresentative) {
             if (Objects.equals(c.getTypeRepresentative(), "3")) {
                 if (c.representative.detailRepresentative != null) {
                     representative.setInn(c.representative.detailRepresentative.getInn());
                     representative.setSnils(c.representative.detailRepresentative.getSnils());
                     representative.setBirthDate(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.getBirthDate()).toInstant().toString()));
-                    representative.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
-                    representative.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
-                    representative.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
 
-                    represPassport.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-                    represPassport.setDateIssue(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()));
-                    represPassport.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
-                    represPassport.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
+                    represDetail.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
+                    represDetail.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
+                    represDetail.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
+                    represDetail.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
+                    represDetail.setDateIssue(this.convertStringToLocalDateTime(DateUtils.parse(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()).toInstant().toString()));
+                    represDetail.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
+                    represDetail.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
                 }
             }
         }
@@ -1067,12 +1066,12 @@ public class M4dServiceImpl implements M4dService {
         M4dResponseDto.PrincipalDto principalDTO = modelMapper.map(principal, M4dResponseDto.PrincipalDto.class);
         M4dResponseDto.PrincipalDetailDto principalDetailDto = modelMapper.map(principalDetail, M4dResponseDto.PrincipalDetailDto.class);
         M4dResponseDto.RepresentativeDto representativeDTO = modelMapper.map(representative, M4dResponseDto.RepresentativeDto.class);
-        M4dResponseDto.RepresentativePassportDto representativePassportDTO = modelMapper.map(represPassport, M4dResponseDto.RepresentativePassportDto.class);
+        M4dResponseDto.RepresentativeDetailDto representativeDetailDTO = modelMapper.map(represDetail, M4dResponseDto.RepresentativeDetailDto.class);
         m4dResponseDto.setOrganization(organizationDTO);
         m4dResponseDto.setPrincipal(principalDTO);
         m4dResponseDto.setPrincipalDetail(principalDetailDto);
         m4dResponseDto.setRepresentative(representativeDTO);
-        m4dResponseDto.representative.setRepresentativePassport(representativePassportDTO);
+        m4dResponseDto.setRepresentativeDetail(representativeDetailDTO);
         m4dResponseDto.setCredentials(credentialList);
         return m4dResponseDto;
     }
@@ -1175,23 +1174,23 @@ public class M4dServiceImpl implements M4dService {
                 throw new BadRequestException(PRINCIPAL_IS_NULL);
             }
             Representative representative = new Representative();
-            RepresentativePassport represPassport = new RepresentativePassport();
+            RepresentativeDetail represDetail = new RepresentativeDetail();
             for (M4dXml.Document.PowerAttorneys.InfoRepresentative c: m4dXml.document.powerAttorneys.infoRepresentative) {
                 if (Objects.equals(c.getTypeRepresentative(), "3")) {
                     if (c.representative.detailRepresentative != null) {
                         representative.setInn(c.representative.detailRepresentative.getInn());
                         representative.setSnils(c.representative.detailRepresentative.getSnils());
                         representative.setBirthDate(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.getBirthDate()));
-                        representative.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
-                        representative.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
-                        representative.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
+                        represDetail.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
+                        represDetail.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
+                        represDetail.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
                         if (representative.getInn() == null || representative.getInn().isEmpty()) {
                             throw new BadRequestException(REPRESENTATIVE_IS_NULL);
                         }
-                        represPassport.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-                        represPassport.setDateIssue(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
-                        represPassport.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
-                        represPassport.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
+                        represDetail.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
+                        represDetail.setDateIssue(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
+                        represDetail.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
+                        represDetail.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
                     }
                 }
             }
@@ -1206,7 +1205,7 @@ public class M4dServiceImpl implements M4dService {
             }
             Long m4dSaved;
             try {
-                m4dSaved = this.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, represPassport, credentialList, null);
+                m4dSaved = this.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, null);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(e.getMessage());
             }
@@ -1435,13 +1434,11 @@ public class M4dServiceImpl implements M4dService {
     }
 
     private M4dResponseDto.RepresentativeDto convertRepresentativeToDto(Representative representative) {
-        M4dResponseDto.RepresentativeDto representativeDto = modelMapper.map(representative, M4dResponseDto.RepresentativeDto.class);
-        representativeDto.representativePassport = modelMapper.map(representative.getRepresentativePassports(), M4dResponseDto.RepresentativePassportDto.class);
-        return representativeDto;
+        return modelMapper.map(representative, M4dResponseDto.RepresentativeDto.class);
     }
 
-    private M4dResponseDto.RepresentativePassportDto convertRepresentativePassportToDto(RepresentativePassport representativePassport) {
-        return modelMapper.map(representativePassport, M4dResponseDto.RepresentativePassportDto.class);
+    private M4dResponseDto.RepresentativeDetailDto convertRepresentativePassportToDto(RepresentativeDetail representativeDetail) {
+        return modelMapper.map(representativeDetail, M4dResponseDto.RepresentativeDetailDto.class);
     }
 }
 

@@ -22,8 +22,8 @@ public interface M4dService {
     List<M4dResponseDto> findAllMrpaRegistry() throws ParseException;
     M4d saveMrpaRegistry(@NotNull M4d m4d);
     M4d updateMrpaRegistry(@NotNull M4d m4d);
-    Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
-    Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativePassport representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
+    Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
+    Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
     Integer countM4dByGuid(@NotNull String guid);
     M4d findMrpaRegistryByGuid(@NotNull String guid);
     M4d findById(@NotNull Long id);

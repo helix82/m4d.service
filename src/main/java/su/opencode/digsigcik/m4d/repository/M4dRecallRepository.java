@@ -17,7 +17,7 @@ public interface M4dRecallRepository extends JpaRepository<M4dRecall, Long> {
     @Query("SELECT new su.opencode.digsigcik.m4d.dto.M4dResponseDto("
             + "m4d.id, m4d.guid, m4d.internalNumber, "
             + "p.id, p.inn, p.snils, pd.id, pd.jobTitle, pd.name, pd.surname, pd.patronymic, "
-            + "r.id, r.inn, r.snils, r.birthDate, r.name, r.surname, r.patronymic, "
+            + "r.id, r.inn, r.snils, r.birthDate, rd.name, rd.surname, rd.patronymic, "
             + "m4d.startDate, m4d.endDate, m4d.createDate, "
             + "m4drc.id, m4drc.author, m4drc.argument) "
             + "from M4dRecall m4drc "
@@ -25,6 +25,7 @@ public interface M4dRecallRepository extends JpaRepository<M4dRecall, Long> {
             + "join Principal p on p.id = m4d.principalId "
             + "join PrincipalDetail pd on pd.id = m4d.principalDetailId "
             + "join Representative r on r.id = m4d.representativeId "
+            + "join RepresentativeDetail rd on rd.id = m4d.representativeDetailId "
             + "where (p.inn IN (:innList) or r.inn IN (:innList))")
     List<M4dResponseDto> findListM4dRevokeBySetInn(@Param("innList") Set<String> innList);
 

@@ -97,10 +97,10 @@ public class M4dController {
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
-        RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
+        RepresentativeDetail representativeDetail = convertRepresentativeDetailToEntity(m4dSaveFullDto.representativeDetail);
         Long m4dSaved;
         try {
-            m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
+            m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, representativeDetail, null, List.of(m4dSaveFullDto.getCredentials()));
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
@@ -234,10 +234,10 @@ public class M4dController {
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
-        RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
+        RepresentativeDetail representativeDetail = convertRepresentativeDetailToEntity(m4dSaveFullDto.representativeDetail);
         Long m4dUpdated;
         try {
-            m4dUpdated = m4dService.updateAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
+            m4dUpdated = m4dService.updateAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, representativeDetail, null, List.of(m4dSaveFullDto.getCredentials()));
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
@@ -543,21 +543,21 @@ public class M4dController {
         representative.setInn(representativeDto.getInn());
         representative.setSnils(representativeDto.getSnils());
         representative.setBirthDate(this.convertStringToLocalDateTime(representativeDto.getBirthDate()));
-        representative.setSurname(representativeDto.getSurname());
-        representative.setName(representativeDto.getName());
-        representative.setPatronymic(representativeDto.getPatronymic());
         return representative;
     }
 
-    private RepresentativePassport convertRepresentativePassportToEntity(M4dRequestDto.RepresentativePassport representativePassportDto) {
-        RepresentativePassport representativePassport = new RepresentativePassport();
-        representativePassport.setId(representativePassportDto.getId());
-        representativePassport.setSeriesNumber(representativePassportDto.getSeriesNumber());
-        representativePassport.setDateIssue(this.convertStringToLocalDateTime(representativePassportDto.getDateIssue()));
-        representativePassport.setWhoIssue(representativePassportDto.getWhoIssue());
-        representativePassport.setDepartmentCode(representativePassportDto.getDepartmentCode());
-        representativePassport.setRepresentativeId(representativePassportDto.getRepresentativeId());
-        return representativePassport;
+    private RepresentativeDetail convertRepresentativeDetailToEntity(M4dRequestDto.RepresentativeDetail representativeDetailDto) {
+        RepresentativeDetail representativeDetail = new RepresentativeDetail();
+        representativeDetail.setId(representativeDetailDto.getId());
+        representativeDetail.setSurname(representativeDetailDto.getSurname());
+        representativeDetail.setName(representativeDetailDto.getName());
+        representativeDetail.setPatronymic(representativeDetailDto.getPatronymic());
+        representativeDetail.setSeriesNumber(representativeDetailDto.getSeriesNumber());
+        representativeDetail.setDateIssue(this.convertStringToLocalDateTime(representativeDetailDto.getDateIssue()));
+        representativeDetail.setWhoIssue(representativeDetailDto.getWhoIssue());
+        representativeDetail.setDepartmentCode(representativeDetailDto.getDepartmentCode());
+        representativeDetail.setRepresentativeId(representativeDetailDto.getRepresentativeId());
+        return representativeDetail;
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {

@@ -66,16 +66,16 @@ public class M4dRequestDto {
         private String inn;
         private String snils;
         private String birthDate;
+    }
+
+    public RepresentativeDetail representativeDetail;
+
+    @Data
+    public static  class RepresentativeDetail {
+        private Long id;
         private String surname;
         private String patronymic;
         private String name;
-
-        public RepresentativePassport representativePassport;
-    }
-
-    @Data
-    public static  class RepresentativePassport {
-        private Long id;
         private String seriesNumber;
         private String dateIssue;
         private String whoIssue;

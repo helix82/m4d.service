@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.exception.M4dException;
-import su.opencode.digsigcik.m4d.mapper.M4dRevokeMapper;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.repository.M4dRecallRepository;
@@ -129,9 +128,9 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             detailRepresentative.setInn(mrpaRegistryResponseDto.representative.getInn());
             detailRepresentative.setSnils(mrpaRegistryResponseDto.representative.getSnils());
             M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative fioRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative();
-            fioRepresentative.setName(mrpaRegistryResponseDto.representative.getName());
-            fioRepresentative.setSurname(mrpaRegistryResponseDto.representative.getSurname());
-            fioRepresentative.setPatronymic(mrpaRegistryResponseDto.representative.getPatronymic());
+            fioRepresentative.setName(mrpaRegistryResponseDto.representativeDetail.getName());
+            fioRepresentative.setSurname(mrpaRegistryResponseDto.representativeDetail.getSurname());
+            fioRepresentative.setPatronymic(mrpaRegistryResponseDto.representativeDetail.getPatronymic());
             representative.setDetailRepresentative(detailRepresentative);
             detailRepresentative.setFioRepresentative(fioRepresentative);
         }

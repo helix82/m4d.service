@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import su.opencode.digsigcik.audit.AllowAudit;
-import su.opencode.digsigcik.m4d.enums.AuthorTypeEnum;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -19,21 +19,35 @@ public class M4dRecall {
     @AllowAudit
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "author", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "PRINCIPAL")
-    @JsonProperty("author")
-    @AllowAudit
-    private AuthorTypeEnum author;
-
-    @Column(name = "argument", columnDefinition = "TEXT")
+    @Column(name = "status")
     @Schema(example = "")
-    @JsonProperty("argument")
+    @JsonProperty("status")
     @AllowAudit
-    private String argument;
+    private String status;
+
+    @Column(name = "error_detail")
+    @Schema(example = "")
+    @JsonProperty("errorDetail")
+    @AllowAudit
+    private String errorDetail;
+
+    @Column(name = "create_date")
+    @Schema(example = "")
+    @JsonProperty("createDate")
+    @AllowAudit
+    private LocalDateTime createDate;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "xml_file_id", referencedColumnName = "id")
+    @AllowAudit
+    private M4dFile xmlFile;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "sig_file_id", referencedColumnName = "id")
     @AllowAudit
-    private M4dFile m4dFile;
+    private M4dFile sigFile;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "m4d_registry_id", referencedColumnName = "id")
+    private M4d m4d_id;
 }
