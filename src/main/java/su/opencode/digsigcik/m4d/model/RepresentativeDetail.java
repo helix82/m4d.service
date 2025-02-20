@@ -9,13 +9,28 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "m4d_representative_passport")
-public class RepresentativePassport {
+@Table(name = "m4d_representative_detail")
+public class RepresentativeDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(example = "1", required = true)
     @JsonProperty("id")
     private Long id;
+
+    @Column(name = "name")
+    @Schema(example = "")
+    @JsonProperty("name")
+    private String name;
+
+    @Column(name = "surname")
+    @Schema(example = "")
+    @JsonProperty("surname")
+    private String surname;
+
+    @Column(name = "patronymic")
+    @Schema(example = "")
+    @JsonProperty("patronymic")
+    private String patronymic;
 
     @Column(name = "series_number")
     @Schema(example = "1234 123456", required = true)
@@ -36,6 +51,16 @@ public class RepresentativePassport {
     @Schema(example = "123 123")
     @JsonProperty("departmentCode")
     private String departmentCode;
+
+    @Column(name = "version")
+    @Schema(example = "")
+    @JsonProperty("version")
+    private Long version;
+
+    @Column(name = "is_active")
+    @Schema(example = "")
+    @JsonProperty("isActive")
+    private boolean isActive;
 
     @Column(name = "representative_id")
     @Schema(example = "1")
