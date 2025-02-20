@@ -5,4 +5,5 @@ import su.opencode.digsigcik.m4d.model.PrincipalDetail;
 
 public interface PrincipalDetailRepository extends JpaRepository<PrincipalDetail, Integer> {
     PrincipalDetail findPrincipalDetailById(Long id);
+    void deleteByPrincipalId(Long id);
 }

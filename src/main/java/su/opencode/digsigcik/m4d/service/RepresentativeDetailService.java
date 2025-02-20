@@ -12,5 +12,5 @@ public interface RepresentativeDetailService {
     RepresentativeDetail findRepresentativeDetailBySeriesNumber(@NotNull String seriesNumber);
     RepresentativeDetail findRepresentativeDetailByRepresentativeId(@NotNull Long representativeId);
     RepresentativeDetail updateRepresentativeDetail(@NotNull RepresentativeDetail representativePassport);
-    void deleteRepresentativeDetail(@NotNull Long id);
+    void deleteRepresentativeDetailByRepresId(@NotNull Long id);
 }

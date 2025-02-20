@@ -9,4 +9,5 @@ public interface RepresentativeDetailRepository extends JpaRepository<Representa
     RepresentativeDetail findRepresentativeDetailById(Long id);
     RepresentativeDetail findRepresentativeDetailBySeriesNumber(String seriesNumber);
     RepresentativeDetail findRepresentativeDetailByRepresentativeId(Long representativeId);
+    void deleteByRepresentativeId(Long id);
 }

@@ -16,8 +16,8 @@ CREATE TABLE m4d_principal_detail (
           ON DELETE CASCADE
 );
 --changeset Helix:2
-INSERT INTO m4d_principal_detail (name, surname, patronymic, job_title, principal_id)
-    SELECT name, surname, patronymic, job_title, id
+INSERT INTO m4d_principal_detail (name, surname, patronymic, job_title, principal_id, version, is_active)
+    SELECT name, surname, patronymic, job_title, id, '1', 'true'
     FROM m4d_principal;
 --changeset Helix:3
 ALTER TABLE m4d_principal

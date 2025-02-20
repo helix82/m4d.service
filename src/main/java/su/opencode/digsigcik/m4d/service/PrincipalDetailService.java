@@ -7,4 +7,5 @@ import javax.validation.constraints.NotNull;
 public interface PrincipalDetailService {
     PrincipalDetail savePrincipalDetail(@NotNull PrincipalDetail principalDetail);
     PrincipalDetail findByPrincipalDetailId(@NotNull Long id);
+    void deletePrincipalDetailByPrincipalId(@NotNull Long id);
 }

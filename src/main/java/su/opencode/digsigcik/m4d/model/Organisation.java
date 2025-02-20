@@ -5,8 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
 
 @Data
 @Entity
@@ -43,8 +41,4 @@ public class Organisation {
     @Schema(example = "")
     @JsonProperty("regionCode")
     private String regionCode;
-
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "organisation_id", updatable = false)
-    private Set<M4d> mrpaRegistryes = new HashSet<>();
 }

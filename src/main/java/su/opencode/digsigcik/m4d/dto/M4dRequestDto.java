@@ -3,6 +3,8 @@ package su.opencode.digsigcik.m4d.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class M4dRequestDto {
     public MrpaRegistry mrpaRegistry;
@@ -85,4 +87,12 @@ public class M4dRequestDto {
 
     @JsonProperty("credentials")
     private Long[] credentials;
+
+    @JsonProperty("createDate")
+    private String createDate;
+
+    public void setGuid() {
+        this.mrpaRegistry.guid = UUID.randomUUID()
+                .toString();
+    }
 }

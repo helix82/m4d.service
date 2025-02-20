@@ -19,7 +19,7 @@ CREATE TABLE m4d_representative_detail (
           ON DELETE CASCADE
 );
 --changeset Helix:2
-INSERT INTO m4d_representative_detail (name, surname, patronymic, series_number, date_issue, who_issue, department_code, representative_id)
+INSERT INTO m4d_representative_detail (name, surname, patronymic, series_number, date_issue, who_issue, department_code, representative_id, version, is_active)
 SELECT
     r.name,
     r.surname,
@@ -28,7 +28,9 @@ SELECT
     p.date_issue,
     p.who_issue,
     p.department_code,
-    r.id
+    r.id,
+    '1',
+    'true'
 FROM
     m4d_representative r
         JOIN

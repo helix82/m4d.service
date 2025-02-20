@@ -25,4 +25,9 @@ public class PrincipalDetailServiceImpl implements PrincipalDetailService {
         return this.repository.findPrincipalDetailById(id);
     }
 
+    @Override
+    public void deletePrincipalDetailByPrincipalId(@NotNull Long id) {
+        this.repository.deleteByPrincipalId(id);
+    }
+
 }

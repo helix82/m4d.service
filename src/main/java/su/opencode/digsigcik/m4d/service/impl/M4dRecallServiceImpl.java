@@ -5,22 +5,28 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import su.opencode.digsigcik.audit.AuditLogEventEnum;
+import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
+import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
+import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
+import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.M4d;
+import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.repository.M4dRecallRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
+import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.service.UserCertificateService;
 
+import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,29 +35,73 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     private final M4dRecallRepository m4dRevokeRepository;
     private final M4dRepository m4dRepository;
     private final M4dService m4dService;
+    private final M4dFileService m4dFileService;
     private final UserCertificateService userCertificateService;
 
     public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository,
-                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, UserCertificateService userCertificateService1) {
+                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
         this.m4dService = m4dService;
-        this.userCertificateService = userCertificateService1;
+        this.m4dFileService = m4dFileService;
+        this.userCertificateService = userCertificateService;
+    }
+
+    @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_CREATE)
+    public M4dRecall saveM4dRecall(M4dRecall m4dRecall, String xmlString) {
+
+        String idFile="";
+        String start = "НомДовер=\"";
+        int startIndex = xmlString.indexOf(start);
+        if (startIndex != -1) {
+            startIndex += start.length();
+            int endIndex = xmlString.indexOf("\"", startIndex);
+            if (endIndex != -1) {
+                idFile = xmlString.substring(startIndex, endIndex);
+                System.out.println("Найдена подстрока: " + idFile);
+            } else {
+                System.out.println("Закрывающая кавычка не найдена.");
+            }
+        } else {
+            System.out.println("Подстрока не найдена.");
+        }
+
+        M4dFile m4dFile = new M4dFile();
+        m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
+        m4dFile.setFileLogicalType(FileLogicalTypeEnum.DOCUMENT);
+        m4dFile.setFilename("ON_OFFDOVER_" + idFile + ".xml");
+        String base64Content = Base64.getEncoder().encodeToString(xmlString.getBytes());
+        m4dFile.setContent(base64Content);
+        M4dFile existsM4dFile;
+        try {
+            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        m4dRecall.setXmlFile(Objects.requireNonNullElse(existsM4dFile, m4dFile));
+        return this.m4dRevokeRepository.save(m4dRecall);
     }
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistriesWithRecall() throws ParseException {
-        List<M4d> m4ds = m4dRepository.findAll().stream().filter(c -> c.getMrpaRecall() != null).collect(Collectors.toList());
-        List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
-        for (M4d m4d : m4ds) {
-            m4dResponseDtoList.add(m4dService.convertM4dToM4dResponseDto(m4d, false, false));
+        List<M4dRecall> m4dRecalls = m4dRevokeRepository.findAll().stream().filter(c -> c.getM4d() != null).collect(Collectors.toList());
+        List<M4dResponseDto> m4dResponseDtos = new ArrayList<>();
+        for (M4dRecall x : m4dRecalls) {
+            M4d m4d = m4dRepository.findM4dById(x.getM4d().getId());
+            m4dResponseDtos.add(m4dService.convertM4dToM4dResponseDto(m4d, false, false, false, false));
         }
-        return m4dResponseDtoList;
+        return m4dResponseDtos;
     }
 
     @Override
-    public M4d findMrpaRecallById(@NotNull Long id) {
-        return this.m4dRepository.findM4dByMrpaRecallId(id);
+    public M4dRecall findMrpaRecallById(@NotNull Long id) {
+        return this.m4dRevokeRepository.findM4dRecallById(id);
+    }
+
+    @Override
+    public M4dRecall findMrpaRecallByM4dId(@NotNull Long m4dId) {
+        return this.m4dRevokeRepository.findM4dRecallByM4dId(m4dId);
     }
 
     public M4dRecall findById(Long id) {
@@ -60,9 +110,6 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Override
     public void deleteMrpaRecallById(Long id) {
-        M4d mrpaRegistry = this.m4dRepository.findM4dByMrpaRecallId(id);
-        mrpaRegistry.setMrpaRecall(null);
-        this.m4dRepository.save(mrpaRegistry);
         this.m4dRevokeRepository.deleteById(id);
     }
 
@@ -95,7 +142,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
-    public M4dRevokeXml ConvertMrpaRecallToXml(M4dResponseDto mrpaRegistryResponseDto) {
+    public M4dRevokeXml convertMrpaRecallToXml(M4dResponseDto mrpaRegistryResponseDto) {
         M4dRevokeXml mrpaRecallXml = new M4dRevokeXml();
         mrpaRecallXml.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
         mrpaRecallXml.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
@@ -112,7 +159,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         M4dRevokeXml.Document.RecallWho recallWho = new M4dRevokeXml.Document.RecallWho();
         document.setRecallWho(recallWho);
 
-        if (mrpaRegistryResponseDto.recall.getAuthor().equals("PRINCIPAL")) {
+//        if (mrpaRegistryResponseDto.recall.getAuthor().equals("PRINCIPAL")) {
             M4dRevokeXml.Document.RecallWho.Principal principal = new M4dRevokeXml.Document.RecallWho.Principal();
             recallWho.setPrincipal(principal);
             M4dRevokeXml.Document.RecallWho.Principal.LegalEntity legalEntity = new M4dRevokeXml.Document.RecallWho.Principal.LegalEntity();
@@ -121,19 +168,19 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             legalEntity.setKpp(mrpaRegistryResponseDto.organization.getKpp());
             legalEntity.setOgrn(mrpaRegistryResponseDto.organization.getOgrn());
             principal.setLegalEntity(legalEntity);
-        } else if (mrpaRegistryResponseDto.recall.getAuthor().equals("REPRESENTATIVE")) {
-            M4dRevokeXml.Document.RecallWho.Representative representative = new M4dRevokeXml.Document.RecallWho.Representative();
-            recallWho.setRepresentative(representative);
-            M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative detailRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative();
-            detailRepresentative.setInn(mrpaRegistryResponseDto.representative.getInn());
-            detailRepresentative.setSnils(mrpaRegistryResponseDto.representative.getSnils());
-            M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative fioRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative();
-            fioRepresentative.setName(mrpaRegistryResponseDto.representativeDetail.getName());
-            fioRepresentative.setSurname(mrpaRegistryResponseDto.representativeDetail.getSurname());
-            fioRepresentative.setPatronymic(mrpaRegistryResponseDto.representativeDetail.getPatronymic());
-            representative.setDetailRepresentative(detailRepresentative);
-            detailRepresentative.setFioRepresentative(fioRepresentative);
-        }
+//        } else if (mrpaRegistryResponseDto.recall.getAuthor().equals("REPRESENTATIVE")) {
+//            M4dRevokeXml.Document.RecallWho.Representative representative = new M4dRevokeXml.Document.RecallWho.Representative();
+//            recallWho.setRepresentative(representative);
+//            M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative detailRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative();
+//            detailRepresentative.setInn(mrpaRegistryResponseDto.representative.getInn());
+//            detailRepresentative.setSnils(mrpaRegistryResponseDto.representative.getSnils());
+//            M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative fioRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative();
+//            fioRepresentative.setName(mrpaRegistryResponseDto.representativeDetail.getName());
+//            fioRepresentative.setSurname(mrpaRegistryResponseDto.representativeDetail.getSurname());
+//            fioRepresentative.setPatronymic(mrpaRegistryResponseDto.representativeDetail.getPatronymic());
+//            representative.setDetailRepresentative(detailRepresentative);
+//            detailRepresentative.setFioRepresentative(fioRepresentative);
+//        }
 
         return mrpaRecallXml;
     }

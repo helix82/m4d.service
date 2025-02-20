@@ -49,5 +49,5 @@ public class M4dRecall {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "m4d_registry_id", referencedColumnName = "id")
-    private M4d m4d_id;
+    private M4d m4d;
 }

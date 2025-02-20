@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import su.opencode.digsigcik.m4d.enums.AuthorTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 
@@ -24,9 +23,6 @@ public class M4dResponseDto {
 
     @JsonProperty("guid")
     private String guid;
-
-    @JsonProperty("internalNumber")
-    private String internalNumber;
 
     public OrganizationDto organization;
 
@@ -95,6 +91,9 @@ public class M4dResponseDto {
     @JsonProperty("status")
     private String status;
 
+    @JsonProperty("errorDetail")
+    private String errorDetail;
+
     @JsonProperty("sigFile")
     private SigFileDto sigFile;
 
@@ -114,14 +113,27 @@ public class M4dResponseDto {
         private String content;
     }
 
-    @JsonProperty("mrpaXml")
-    private String mrpaXml;
+    @JsonProperty("xmlFile")
+    private XmlFileDto xmlFile;
+
+    @Data
+    public static class XmlFileDto {
+        @JsonProperty("id")
+        private Long id;
+        @JsonProperty("fileLogicalType")
+        @Enumerated(EnumType.STRING)
+        private FileLogicalTypeEnum fileLogicalType;
+        @JsonProperty("fileMimeType")
+        @Enumerated(EnumType.STRING)
+        private FileMimeTypeEnum fileMimeType;
+        @JsonProperty("filename")
+        private String filename;
+        @JsonProperty("content")
+        private String content;
+    }
 
     @JsonProperty("createDate")
     private String createDate;
-
-    @JsonProperty("recallXml")
-    private String recallXml;
 
     @JsonProperty("recall")
     public RecallDto recall;
@@ -130,15 +142,39 @@ public class M4dResponseDto {
     public static class RecallDto {
         @JsonProperty("id")
         private Long id;
-        @JsonProperty("author")
-        private String author;
         @JsonProperty("argument")
         private String argument;
+        @JsonProperty("status")
+        private String status;
+        @JsonProperty("errorDetail")
+        private String errorDetail;
+        @JsonProperty("createDate")
+        private String createDate;
+
         @JsonProperty("signature")
-        private SigFileDto sigFile;
+        private SigFileRecallDto sigFile;
 
         @Data
-        public static class SigFileDto {
+        public static class SigFileRecallDto {
+            @JsonProperty("id")
+            private Long id;
+            @JsonProperty("fileLogicalType")
+            @Enumerated(EnumType.STRING)
+            private FileLogicalTypeEnum fileLogicalType;
+            @JsonProperty("fileMimeType")
+            @Enumerated(EnumType.STRING)
+            private FileMimeTypeEnum fileMimeType;
+            @JsonProperty("filename")
+            private String filename;
+            @JsonProperty("content")
+            private String content;
+        }
+
+        @JsonProperty("xmlFile")
+        private XmlFileRecallDto xmlFile;
+
+        @Data
+        public static class XmlFileRecallDto {
             @JsonProperty("id")
             private Long id;
             @JsonProperty("fileLogicalType")
@@ -166,14 +202,13 @@ public class M4dResponseDto {
         private String name;
     }
 
-    public M4dResponseDto(Long id, String guid, String internalNumber, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
+    public M4dResponseDto(Long id, String guid, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
                           Long principal_id, String principal_inn, String principal_snils, Long principal_detail_id, String principal_detail_jobTitle,
                           String principal_detail_name, String principal_detail_surname, String principal_detail_patronymic,
                           Long representative_id, String representative_inn, String representative_snils, LocalDateTime representative_birthDate,
                           String representative_name, String representative_surname, String representative_patronymic) {
         this.id = id;
         this.guid = guid;
-        this.internalNumber = internalNumber;
         this.startDate = startDate.toString();
         this.endDate = endDate.toString();
         this.createDate = createDate.toString();
@@ -206,18 +241,15 @@ public class M4dResponseDto {
         this.representativeDetail = representativeDetailDto;
     }
 
-    public M4dResponseDto(Long id, String guid, String internalNumber,
+    public M4dResponseDto(Long id, String guid,
                           Long principalId, String principalInn, String principalSnils, Long principalDetailId, String principalDetailJobTitle,
                           String principalDetailName, String principalDetailSurname, String principalDetailPatronymic,
                           Long representativeId, String representativeInn, String representativeSnils,
                           LocalDateTime representative_birthDate, String representativeName, String representativeSurname,
-                          String representativePatronymic,
-                          LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
-                          Long recallId, AuthorTypeEnum recallAuthor, String recallArgument) {
+                          String representativePatronymic, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate, Long recallId) {
 
         this.id = id;
         this.guid = guid;
-        this.internalNumber = internalNumber;
         this.startDate = startDate.toString();
         this.endDate = endDate.toString();
         this.createDate = createDate.toString();
@@ -248,7 +280,5 @@ public class M4dResponseDto {
 
         this.recall = new RecallDto();
         this.recall.setId(recallId);
-        this.recall.setAuthor(recallAuthor.toString());
-        this.recall.setArgument(recallArgument);
     }
 }

@@ -13,9 +13,9 @@ import java.util.Set;
 
 @Repository
 public interface M4dRepository extends JpaRepository<M4d, Long> {
-    M4d findM4dByMrpaRecallId(Long m4dRecallId);
-
     M4d findM4dById(Long id);
+    List<M4d> findByPrincipalId(Long id);
+    List<M4d> findByRepresentativeId(Long id);
 
     List<M4d> findAll();
 
@@ -24,7 +24,7 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
     M4d findByGuid(String guid);
 
     @Query(value = "SELECT new su.opencode.digsigcik.m4d.dto.M4dResponseDto(m4d.id, m4d.guid, "
-            + " m4d.internalNumber, m4d.startDate, m4d.endDate, m4d.createDate, "
+            + " m4d.startDate, m4d.endDate, m4d.createDate, "
             + " p.id, p.inn, p.snils, pd.id, pd.jobTitle, pd.name, pd.surname, pd.patronymic, r.id, r.inn, r.snils, r.birthDate,"
             + " rd.name, rd.surname, rd.patronymic)"
             + " from M4d m4d"
@@ -39,10 +39,11 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
     List<M4d> findM4dByRepresentativeInn(String inn);
 
     @Query("SELECT mr FROM M4d mr JOIN Representative r on r.id= mr.representativeId " +
+            "join M4dRecall rc on rc.m4d.id=mr.id " +
             "WHERE r.inn = :inn " +
             "AND mr.id = :m4dId " +
-            "AND mr.m4dFile IS NOT NULL " +
-            "AND mr.mrpaRecall IS NULL " +
+            "AND mr.sigFile IS NOT NULL " +
+            "AND rc.m4d IS NULL " +
             "AND CURRENT_TIMESTAMP BETWEEN mr.startDate AND mr.endDate")
     Optional<M4d> findValidM4dByIdAndRepresentativeInn(@Param("inn") String inn, @Param("m4dId") Long m4dId);
 }

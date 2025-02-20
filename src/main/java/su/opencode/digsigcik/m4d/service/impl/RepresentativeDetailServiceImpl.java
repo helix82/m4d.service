@@ -47,7 +47,7 @@ public class RepresentativeDetailServiceImpl implements RepresentativeDetailServ
     }
 
     @Override
-    public void deleteRepresentativeDetail(@NotNull Long id) {
-        this.representativeDetailRepository.deleteById(id);
+    public void deleteRepresentativeDetailByRepresId(@NotNull Long id) {
+        this.representativeDetailRepository.deleteByRepresentativeId(id);
     }
 }
