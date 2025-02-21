@@ -58,6 +58,7 @@ public class M4dRequestDto {
         private String surname;
         private String patronymic;
         private String name;
+        private Long principalId;
     }
 
     public Representative representative;
