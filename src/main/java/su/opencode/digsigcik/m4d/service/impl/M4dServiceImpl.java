@@ -55,6 +55,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -86,6 +87,7 @@ public class M4dServiceImpl implements M4dService {
     private final UserCertificateService userCertificateService;
     private final RestTemplate restTemplate;
     private final SynapiClientService synapiClientService;
+    private static final Pattern BASE64_PATTERN = Pattern.compile("^[A-Za-z0-9+/]+={0,2}$");
 
     @Override
     public List<M4dResponseDto> findAllMrpaRegistry() throws ParseException {
@@ -813,7 +815,11 @@ public class M4dServiceImpl implements M4dService {
                 sigFile = this.m4dFileService.findM4dFileById(m4d.getSigFile().getId());
                 if (sigFile != null) {
                     M4dResponseDto.SigFileDto sigFileDTO = convertSigFileToDto(sigFile);
-                    sigFileDTO.setContent(new String(Base64.getDecoder().decode(sigFileDTO.getContent())));
+                    if (isBase64(sigFileDTO.getContent())) {
+                        sigFileDTO.setContent(new String(Base64.getDecoder().decode(sigFileDTO.getContent())));
+                    } else {
+                        sigFileDTO.setContent(sigFileDTO.getContent());
+                    }
                     if (!withM4dSigFile) {
                         sigFileDTO.setContent(null);
                     }
@@ -829,7 +835,11 @@ public class M4dServiceImpl implements M4dService {
                 xmlFile = this.m4dFileService.findM4dFileById(m4d.getXmlFile().getId());
                 if (xmlFile != null) {
                     M4dResponseDto.XmlFileDto xmlFileDTO = convertXmlFileToDto(xmlFile);
-                    xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
+                    if (isBase64(xmlFileDTO.getContent())) {
+                        xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
+                    } else {
+                        xmlFileDTO.setContent(xmlFileDTO.getContent());
+                    }
                     if (!withM4dXmlFile) {
                         xmlFileDTO.setContent(null);
                     }
@@ -853,7 +863,11 @@ public class M4dServiceImpl implements M4dService {
                         m4dFileRecall = this.m4dFileService.findM4dFileById(m4dRecall.getSigFile().getId());
                         if (m4dFileRecall != null) {
                             M4dResponseDto.RecallDto.SigFileRecallDto sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
-                            sigFileDTO.setContent(new String(Base64.getDecoder().decode(sigFileDTO.getContent())));
+                            if (isBase64(sigFileDTO.getContent())) {
+                                sigFileDTO.setContent(new String(Base64.getDecoder().decode(sigFileDTO.getContent())));
+                            } else {
+                                sigFileDTO.setContent(sigFileDTO.getContent());
+                            }
                             if (!withRecallSigFile) {
                                 sigFileDTO.setContent(null);
                             }
@@ -865,7 +879,11 @@ public class M4dServiceImpl implements M4dService {
                         xmlFile = this.m4dFileService.findM4dFileById(m4dRecall.getXmlFile().getId());
                         if (xmlFile != null) {
                             M4dResponseDto.RecallDto.XmlFileRecallDto xmlFileDTO = convertXmlFileRecallToDto(xmlFile);
-                            xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
+                            if (isBase64(xmlFileDTO.getContent())) {
+                                xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
+                            } else {
+                                xmlFileDTO.setContent(xmlFileDTO.getContent());
+                            }
                             if (!withRecallXmlFile) {
                                 xmlFileDTO.setContent(null);
                             }
@@ -1605,6 +1623,18 @@ public class M4dServiceImpl implements M4dService {
         powerAttorneys.setCredential(credentials);
 
         return m4dFullXML;
+    }
+
+    private static boolean isBase64(String str) {
+        if (!BASE64_PATTERN.matcher(str).matches()) {
+            return false;
+        }
+        try {
+            Base64.getDecoder().decode(str);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     private LocalDateTime convertStringToLocalDateTime(String date) {
