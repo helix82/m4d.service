@@ -26,7 +26,10 @@ import su.opencode.digsigcik.m4d.service.UserCertificateService;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,8 +74,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.DOCUMENT);
         m4dFile.setFilename("ON_OFFDOVER_" + idFile + ".xml");
-        String base64Content = Base64.getEncoder().encodeToString(xmlString.getBytes());
-        m4dFile.setContent(base64Content);
+        m4dFile.setContent(xmlString);
         M4dFile existsM4dFile;
         try {
             existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
