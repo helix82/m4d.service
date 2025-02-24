@@ -40,4 +40,6 @@ public interface M4dService {
     Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException, JAXBException;
     ByteArrayResource createArchiveM4dSig(Authentication authentication, Long fileId, String filename) throws IOException;
     M4dFullXML convertM4dRequestDtoToFullXml(M4dRequestDto m4dRequestDto) throws ParseException;
+    String getGuidFromXml(MultipartFile sourceFile);
+    String getHashXmlM4d(MultipartFile sourceFile) throws Exception;
 }

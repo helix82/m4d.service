@@ -906,43 +906,10 @@ public class M4dServiceImpl implements M4dService {
         }
 
         List<SAXParseException> res = new XmlValidator(sourceFile.getInputStream()).listParsingExceptions();
-        String content;
+
         if (res.isEmpty()) {
-            try (InputStream is = sourceFile.getInputStream()) {
-                byte[] bom = new byte[3];
-                int n = is.read(bom, 0, bom.length);
-                Reader reader;
-                if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
-                    reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                } else {
-                    reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
-                }
-                StringBuilder cont = new StringBuilder();
-                char[] buffer = new char[1024];
-                int numRead;
-                while ((numRead = reader.read(buffer)) != -1) {
-                    cont.append(buffer, 0, numRead);
-                }
-                content = cont.toString();
-            }
-
-            M4dXml m4dXml;
-            try {
-                Document document = convertStringToDocument(content);
-                assert document != null;
-                m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
-            } catch (Exception e) {
-                throw new BadRequestException("Ошибка: " + MRPA_REGISTRY_WRONG_FORMAT_XML);
-            }
-
-            if (m4dXml == null) {
-                throw new BadRequestException(MRPA_IS_NULL);
-            }
-            if (m4dXml.document.powerAttorneys.getMrpa().getGuid() == null) {
-                throw new BadRequestException("Ошибка: " + MRPA_REGISTRY_WRONG_FORMAT_XML);
-            }
             String guidXml;
-            guidXml = m4dXml.document.powerAttorneys.getMrpa().getGuid();
+            guidXml = this.getGuidFromXml(sourceFile);
 
             M4d m4d;
             try {
@@ -961,7 +928,7 @@ public class M4dServiceImpl implements M4dService {
 
                 return m4dVerifyStatusDto;
             } else {
-                M4dResponseDto m4dResponseDto = this.parseM4dXml(m4dXml);
+                M4dResponseDto m4dResponseDto = this.parseM4dXml(this.convertM4dFileToM4dXml(sourceFile));
                 String status = "";
                 String source = "Источник РР МЧД ФНС";
                 AuthResponse authResponse = null;
@@ -1207,45 +1174,14 @@ public class M4dServiceImpl implements M4dService {
 
     public Long uploadMrpaRegistry(MultipartFile sourceFile) throws IOException, SAXException {
         List<SAXParseException> res = new XmlValidator(sourceFile.getInputStream()).listParsingExceptions();
-        String content;
         if (res.isEmpty()) {
-            try (InputStream is = sourceFile.getInputStream()) {
-                byte[] bom = new byte[3];
-                int n = is.read(bom, 0, bom.length);
-                Reader reader;
-                if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
-                    reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                } else {
-                    reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
-                }
-                StringBuilder cont = new StringBuilder();
-                char[] buffer = new char[1024];
-                int numRead;
-                while ((numRead = reader.read(buffer)) != -1) {
-                    cont.append(buffer, 0, numRead);
-                }
-                content = cont.toString();
-            }
-
-            M4dXml m4dXml;
-            try {
-                Document document = convertStringToDocument(content);
-                assert document != null;
-                m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
-            } catch (Exception e) {
-                throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
-            }
-
-            if (m4dXml == null) {
-                throw new BadRequestException(MRPA_IS_NULL);
-            }
-
             int guid;
-            guid = this.countM4dByGuid(m4dXml.document.powerAttorneys.getMrpa().getGuid());
+            guid = this.countM4dByGuid(this.getGuidFromXml(sourceFile));
             if (guid > 0) {
                 throw new BadRequestException(MRPA_REGISTRY_IS_EXISTS);
             }
 
+            M4dXml m4dXml = this.convertM4dFileToM4dXml(sourceFile);
             M4d m4d = new M4d();
             //парсинг МЧД из xml
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
@@ -1307,7 +1243,7 @@ public class M4dServiceImpl implements M4dService {
             }
             Long m4dSaved;
             try {
-                m4dSaved = this.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, null, content);
+                m4dSaved = this.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, null, this.readXmlToString(sourceFile));
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(e.getMessage());
             }
@@ -1604,18 +1540,6 @@ public class M4dServiceImpl implements M4dService {
         return m4dFullXML;
     }
 
-    private static boolean isBase64(String str) {
-        if (!BASE64_PATTERN.matcher(str).matches()) {
-            return false;
-        }
-        try {
-            Base64.getDecoder().decode(str);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
     private LocalDateTime convertStringToLocalDateTime(String date) {
         DateTimeFormatter formatter;
         LocalDateTime localDateTime;
@@ -1682,5 +1606,59 @@ public class M4dServiceImpl implements M4dService {
         M4dRevokeXml m4dRevokeXml = XMLUtil.unmarshal(document, M4dRevokeXml.class);
         return m4dRevokeXml.getDocument().recallInfo.getArgument();
     }
+
+    public String getGuidFromXml(MultipartFile sourceFile) {
+        return convertM4dFileToM4dXml(sourceFile).document.powerAttorneys.getMrpa().getGuid();
+    }
+
+    private String readXmlToString(MultipartFile sourceFile){
+        String content;
+        try (InputStream is = sourceFile.getInputStream()) {
+            byte[] bom = new byte[3];
+            int n = is.read(bom, 0, bom.length);
+            Reader reader;
+            if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
+                reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+            } else {
+                reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
+            }
+            StringBuilder cont = new StringBuilder();
+            char[] buffer = new char[1024];
+            int numRead;
+            while ((numRead = reader.read(buffer)) != -1) {
+                cont.append(buffer, 0, numRead);
+            }
+            content = cont.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return content;
+    }
+
+    private M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile) {
+        M4dXml m4dXml;
+        try {
+            Document document = convertStringToDocument(this.readXmlToString(sourceFile));
+            assert document != null;
+            m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
+        } catch (Exception e) {
+            log.error(MRPA_REGISTRY_WRONG_FORMAT_XML + ": ошибка унмаршалинга");
+            throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
+        }
+
+        if (m4dXml == null) {
+            throw new BadRequestException(MRPA_IS_NULL);
+        }
+        if (m4dXml.document.powerAttorneys.getMrpa().getGuid() == null) {
+            log.error(MRPA_REGISTRY_WRONG_FORMAT_XML + ": не найден номер доверенности (guid) в xml-файле");
+            throw new BadRequestException(MRPA_REGISTRY_WRONG_FORMAT_XML);
+        }
+        return m4dXml;
+    }
+
+    public String getHashXmlM4d(MultipartFile sourceFile) throws Exception {
+        return HashUtils.getHash(this.readXmlToString(sourceFile).getBytes());
+    }
+
 }
 
