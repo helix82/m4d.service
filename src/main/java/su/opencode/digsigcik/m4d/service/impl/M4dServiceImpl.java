@@ -1391,7 +1391,7 @@ public class M4dServiceImpl implements M4dService {
         m4dFile.setContent(new String(container.getBytes()));
         M4dFile existsM4dFile;
         try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
+            existsM4dFile = this.m4dFileService.findM4dFileByContent(Base64.getEncoder().encodeToString(m4dFile.getContent().getBytes()));
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
