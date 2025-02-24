@@ -39,7 +39,7 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
     List<M4d> findM4dByRepresentativeInn(String inn);
 
     @Query("SELECT mr FROM M4d mr JOIN Representative r on r.id= mr.representativeId " +
-            "join M4dRecall rc on rc.m4d.id=mr.id " +
+            "left join M4dRecall rc on rc.m4d.id=mr.id " +
             "WHERE r.inn = :inn " +
             "AND mr.id = :m4dId " +
             "AND mr.sigFile IS NOT NULL " +
