@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.UUID;
 
 @Data
-public class M4dRequestDto {
+public class M4dRegistryRequestDto {
     public MrpaRegistry mrpaRegistry;
 
     @Data

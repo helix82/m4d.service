@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.model.M4d;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
 
     M4d findByGuid(String guid);
 
-    @Query(value = "SELECT new su.opencode.digsigcik.m4d.dto.M4dResponseDto(m4d.id, m4d.guid, "
+    @Query(value = "SELECT new su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto(m4d.id, m4d.guid, "
             + " m4d.startDate, m4d.endDate, m4d.createDate, "
             + " p.id, p.inn, p.snils, pd.id, pd.jobTitle, pd.name, pd.surname, pd.patronymic, r.id, r.inn, r.snils, r.birthDate,"
             + " rd.name, rd.surname, rd.patronymic)"
@@ -33,7 +33,7 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
             + " join Representative r on r.id = m4d.representativeId "
             + " join RepresentativeDetail rd on rd.id = m4d.representativeDetailId"
             + " where (p.inn IN (:innList) or r.inn IN (:innList))")
-    List<M4dResponseDto> findListM4dBySetInn(@Param("innList") Set<String> innList);
+    List<M4dRegistryResponseDto> findListM4dBySetInn(@Param("innList") Set<String> innList);
 
     @Query(value = "SELECT mr from M4d mr left join Representative r on r.id=mr.representativeId where r.inn=?1 ")
     List<M4d> findM4dByRepresentativeInn(String inn);

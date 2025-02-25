@@ -118,6 +118,7 @@ m4d:
     uri: ${M4D_HANDBOOK_URI:https://sp.dev.essocode.ru/api/v1}
   api_rr_fns:
     uri: ${M4D_API_RR_FNS_URI:https://operator.cprr-it.weintegrator.com/api/v0}
+  soul: ${M4D_SOUL:"}
 
 # Временное решение до полноценного внедрения kafka
 audit:
