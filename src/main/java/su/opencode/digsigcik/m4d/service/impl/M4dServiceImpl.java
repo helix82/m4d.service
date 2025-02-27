@@ -221,6 +221,9 @@ public class M4dServiceImpl implements M4dService {
         m4d.setPrincipalDetailId(principDetailId);
         m4d.setRepresentativeId(represId);
         m4d.setRepresentativeDetailId(represDetailId);
+        if (m4d.getStatus()==null){
+            m4d.setStatus("CREATED");
+        }
 
         String idFile="";
         String start = "ИдФайл=\"";
@@ -243,7 +246,8 @@ public class M4dServiceImpl implements M4dService {
         m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.DOCUMENT);
         m4dFile.setFilename(idFile + ".xml");
-        m4dFile.setContent(xmlString);
+        String base64Content = Base64.getEncoder().encodeToString(xmlString.getBytes());
+        m4dFile.setContent(base64Content);
         M4dFile existsM4dFile;
         try {
             existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
@@ -814,6 +818,11 @@ public class M4dServiceImpl implements M4dService {
                 sigFile = this.m4dFileService.findM4dFileById(m4d.getSigFile().getId());
                 if (sigFile != null) {
                     M4dResponseDto.SigFileDto sigFileDTO = convertSigFileToDto(sigFile);
+                    if (isBase64(sigFileDTO.getContent())) {
+                        sigFileDTO.setContent(new String(Base64.getDecoder().decode(sigFileDTO.getContent())));
+                    } else {
+                        sigFileDTO.setContent(sigFileDTO.getContent());
+                    }
                     if (!withM4dSigFile) {
                         sigFileDTO.setContent(null);
                     }
@@ -829,6 +838,11 @@ public class M4dServiceImpl implements M4dService {
                 xmlFile = this.m4dFileService.findM4dFileById(m4d.getXmlFile().getId());
                 if (xmlFile != null) {
                     M4dResponseDto.XmlFileDto xmlFileDTO = convertXmlFileToDto(xmlFile);
+                    if (isBase64(xmlFileDTO.getContent())) {
+                        xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
+                    } else {
+                        xmlFileDTO.setContent(xmlFileDTO.getContent());
+                    }
                     if (!withM4dXmlFile) {
                         xmlFileDTO.setContent(null);
                     }
@@ -852,6 +866,11 @@ public class M4dServiceImpl implements M4dService {
                         m4dFileRecall = this.m4dFileService.findM4dFileById(m4dRecall.getSigFile().getId());
                         if (m4dFileRecall != null) {
                             M4dResponseDto.RecallDto.SigFileRecallDto sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
+                            if (isBase64(sigFileDTO.getContent())) {
+                                sigFileDTO.setContent(new String(Base64.getDecoder().decode(sigFileDTO.getContent())));
+                            } else {
+                                sigFileDTO.setContent(sigFileDTO.getContent());
+                            }
                             if (!withRecallSigFile) {
                                 sigFileDTO.setContent(null);
                             }
@@ -863,6 +882,11 @@ public class M4dServiceImpl implements M4dService {
                         xmlFile = this.m4dFileService.findM4dFileById(m4dRecall.getXmlFile().getId());
                         if (xmlFile != null) {
                             M4dResponseDto.RecallDto.XmlFileRecallDto xmlFileDTO = convertXmlFileRecallToDto(xmlFile);
+                            if (isBase64(xmlFileDTO.getContent())) {
+                                xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
+                            } else {
+                                xmlFileDTO.setContent(xmlFileDTO.getContent());
+                            }
                             if (!withRecallXmlFile) {
                                 xmlFileDTO.setContent(null);
                             }
@@ -1321,7 +1345,7 @@ public class M4dServiceImpl implements M4dService {
         throw new BadRequestException(body.toString());
     }
 
-    public Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException, JAXBException {
+    public Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException {
         String bearerToken = getTokenValue(authentication);
         M4d m4d;
         try {
@@ -1388,7 +1412,8 @@ public class M4dServiceImpl implements M4dService {
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
         m4dFile.setFilename(container.getOriginalFilename());
-        m4dFile.setContent(new String(container.getBytes()));
+        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
+        m4dFile.setContent(base64Content);
         M4dFile existsM4dFile;
         try {
             existsM4dFile = this.m4dFileService.findM4dFileByContent(Base64.getEncoder().encodeToString(m4dFile.getContent().getBytes()));
@@ -1426,7 +1451,7 @@ public class M4dServiceImpl implements M4dService {
             tempContainerFile = "/tmp/" + m4dFile.getFilename();
             tempFileNames.add(tempContainerFile);
             fo = new FileOutputStream(tempContainerFile);
-            byte[] bytes = m4dFile.getContent().getBytes();
+            byte[] bytes = Base64.getDecoder().decode(m4dFile.getContent());
             fo.write(bytes);
             fo.close();
 
