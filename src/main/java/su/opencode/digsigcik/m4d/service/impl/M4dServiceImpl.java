@@ -1702,7 +1702,13 @@ public class M4dServiceImpl implements M4dService {
     }
 
     private String getArgumentFromXml(M4dFile m4dFile) throws JAXBException {
-        Document document = convertStringToDocument(m4dFile.getContent());
+        String content;
+        if (isBase64(m4dFile.getContent())) {
+            content = new String(Base64.getDecoder().decode(m4dFile.getContent()));
+        } else {
+            content = m4dFile.getContent();
+        }
+        Document document = convertStringToDocument(content);
         assert document != null;
         M4dRevokeXml m4dRevokeXml = XMLUtil.unmarshal(document, M4dRevokeXml.class);
         return m4dRevokeXml.getDocument().recallInfo.getArgument();
