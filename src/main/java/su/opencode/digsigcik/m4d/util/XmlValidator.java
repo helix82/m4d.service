@@ -23,8 +23,9 @@ public class XmlValidator {
     private final String xsdPath;
     private final InputStream xmlString;
 
-    public XmlValidator(String xsdPath, InputStream xmlString) {
-        this.xsdPath = xsdPath;
+    public XmlValidator(InputStream xmlString) { //String xsdPath,
+        //this.xsdPath = xsdPath;
+        this.xsdPath = "/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd";
         this.xmlString = xmlString;
     }
 

@@ -1,4 +1,4 @@
-package su.opencode.digsigcik.m4d.model;
+package su.opencode.digsigcik.m4d.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

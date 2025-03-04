@@ -90,16 +90,21 @@ public class M4dController {
     })
     @PostMapping(value = "save", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody M4dRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
+        m4dSaveFullDto.setGuid();
+        m4dSaveFullDto.setCreateDate(LocalDateTime.now().toString());
         M4d m4d = convertMrpaRegistryToEntity(m4dSaveFullDto.mrpaRegistry);
-        m4d.setGuid();
         m4d.setCreateDate(LocalDateTime.now());
+        m4d.setStatus("CREATED");
         Organisation organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
+        PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
-        RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
+        RepresentativeDetail representativeDetail = convertRepresentativeDetailToEntity(m4dSaveFullDto.representativeDetail);
+        M4dFullXML m4dFullXML = this.m4dService.convertM4dRequestDtoToFullXml(m4dSaveFullDto);
+        String xmlString = XMLUtil.marshall(m4dFullXML, M4dFullXML.class);
         Long m4dSaved;
         try {
-            m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
+            m4dSaved = this.m4dService.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, representativeDetail, null, List.of(m4dSaveFullDto.getCredentials()), xmlString);
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
@@ -113,9 +118,9 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @GetMapping(value = "/{id}", produces = "application/json; charset=UTF-8")
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> findMrpaRegistryById(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws ParseException, JAXBException {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws ParseException {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -128,10 +133,7 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
-        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false);
-        M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
-        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
-        m4dResponseDto.setMrpaXml(xmlString);
+        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
         return new ResponseEntity<>(m4dResponseDto, HttpStatus.OK);
     }
 
@@ -157,10 +159,7 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
-        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false);
-        M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
-        String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
-        m4dResponseDto.setMrpaXml(xmlString);
+        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
         return new ResponseEntity<>(m4dResponseDto, HttpStatus.OK);
     }
 
@@ -188,7 +187,7 @@ public class M4dController {
         }
         List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
         for (M4d m : m4d) {
-            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m, false, false);
+            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m, false, false, false, false);
             m4dResponseDto.credentials = m4dService.getCredentialByMrpaRegistryId(m.getId());
             m4dResponseDto.setStatus(this.m4dService.getStatusM4d(m.getId()));
             m4dResponseDtoList.add(m4dResponseDto);
@@ -225,17 +224,14 @@ public class M4dController {
         M4d m4d = this.m4dService.findById(m4dSaveFullDto.mrpaRegistry.getId());
         m4d.setStartDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getStartDate()));
         m4d.setEndDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getEndDate()));
-        if (m4dSaveFullDto.mrpaRegistry.getInternalNumber() != null) {
-            m4d.setInternalNumber(m4dSaveFullDto.mrpaRegistry.getInternalNumber());
-        }
-
         Organisation organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
+        PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
         Representative representative = convertRepresentativeToEntity(m4dSaveFullDto.representative);
-        RepresentativePassport representativePassport = convertRepresentativePassportToEntity(m4dSaveFullDto.representative.representativePassport);
+        RepresentativeDetail representativeDetail = convertRepresentativeDetailToEntity(m4dSaveFullDto.representativeDetail);
         Long m4dUpdated;
         try {
-            m4dUpdated = m4dService.updateAllDataMrpaRegistry(m4d, organisation, principal, representative, representativePassport, null, List.of(m4dSaveFullDto.getCredentials()));
+            m4dUpdated = m4dService.updateAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, representativeDetail, null, List.of(m4dSaveFullDto.getCredentials()));
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
@@ -312,9 +308,9 @@ public class M4dController {
         if (mrpaRegistry == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.BAD_REQUEST);
         }
-        if (mrpaRegistry.getM4dFile() != null) {
-            Long fileId = mrpaRegistry.getM4dFile().getId();
-            mrpaRegistry.setM4dFile(null);
+        if (mrpaRegistry.getSigFile() != null) {
+            Long fileId = mrpaRegistry.getSigFile().getId();
+            mrpaRegistry.setSigFile(null);
             M4d mrpaRegistrySaved;
             try {
                 mrpaRegistrySaved = this.m4dService.saveMrpaRegistry(mrpaRegistry);
@@ -479,11 +475,15 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
-        String filename = "ON_EMCHD_"+m4d.getCreateDate().toString().replace("-","").substring(0,8)+"_"+m4d.getGuid();
-        if (m4d.getM4dFile().getId()==null){
-            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false);
-            M4dFullXML mrpaRegistryFullXML = this.m4dService.ConvertMrpaRegistryFullDtoToFullXml(m4dResponseDto);
-            String xmlString = XMLUtil.marshall(mrpaRegistryFullXML, M4dFullXML.class);
+
+        String filename = m4d.getXmlFile().getFilename();
+        int lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex > 0) {
+            filename = filename.substring(0, lastDotIndex);
+        }
+        if (m4d.getSigFile()==null){
+            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
+            String xmlString = m4dResponseDto.getXmlFile().getContent();
             try {
                 response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".xml\"");
 
@@ -495,7 +495,7 @@ public class M4dController {
                 return ResponseEntity.noContent().build();
             }
         } else {
-            ByteArrayResource resp = this.m4dService.createArchiveM4dSig(authentication, m4d.getM4dFile().getId(), filename);
+            ByteArrayResource resp = this.m4dService.createArchiveM4dSig(authentication, m4d.getSigFile().getId(), filename);
             if (resp == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
             }
@@ -515,11 +515,9 @@ public class M4dController {
 
     private M4d convertMrpaRegistryToEntity(M4dRequestDto.MrpaRegistry mrpaRegistryDto) {
         M4d m4d = new M4d();
-        if (mrpaRegistryDto.getInternalNumber() != null) {
-            m4d.setInternalNumber(mrpaRegistryDto.getInternalNumber());
-        }
         m4d.setStartDate(this.convertStringToLocalDateTime(mrpaRegistryDto.getStartDate()));
         m4d.setEndDate(this.convertStringToLocalDateTime(mrpaRegistryDto.getEndDate()));
+        m4d.setGuid(mrpaRegistryDto.getGuid());
         return m4d;
     }
 
@@ -531,27 +529,31 @@ public class M4dController {
         return modelMapper.map(principalDto, Principal.class);
     }
 
+    private PrincipalDetail convertPrincipalDetailToEntity(M4dRequestDto.PrincipalDetail principalDetailDto) {
+        return modelMapper.map(principalDetailDto, PrincipalDetail.class);
+    }
+
     private Representative convertRepresentativeToEntity(M4dRequestDto.Representative representativeDto) {
         Representative representative = new Representative();
         representative.setId(representativeDto.getId());
         representative.setInn(representativeDto.getInn());
         representative.setSnils(representativeDto.getSnils());
         representative.setBirthDate(this.convertStringToLocalDateTime(representativeDto.getBirthDate()));
-        representative.setSurname(representativeDto.getSurname());
-        representative.setName(representativeDto.getName());
-        representative.setPatronymic(representativeDto.getPatronymic());
         return representative;
     }
 
-    private RepresentativePassport convertRepresentativePassportToEntity(M4dRequestDto.RepresentativePassport representativePassportDto) {
-        RepresentativePassport representativePassport = new RepresentativePassport();
-        representativePassport.setId(representativePassportDto.getId());
-        representativePassport.setSeriesNumber(representativePassportDto.getSeriesNumber());
-        representativePassport.setDateIssue(this.convertStringToLocalDateTime(representativePassportDto.getDateIssue()));
-        representativePassport.setWhoIssue(representativePassportDto.getWhoIssue());
-        representativePassport.setDepartmentCode(representativePassportDto.getDepartmentCode());
-        representativePassport.setRepresentativeId(representativePassportDto.getRepresentativeId());
-        return representativePassport;
+    private RepresentativeDetail convertRepresentativeDetailToEntity(M4dRequestDto.RepresentativeDetail representativeDetailDto) {
+        RepresentativeDetail representativeDetail = new RepresentativeDetail();
+        representativeDetail.setId(representativeDetailDto.getId());
+        representativeDetail.setSurname(representativeDetailDto.getSurname());
+        representativeDetail.setName(representativeDetailDto.getName());
+        representativeDetail.setPatronymic(representativeDetailDto.getPatronymic());
+        representativeDetail.setSeriesNumber(representativeDetailDto.getSeriesNumber());
+        representativeDetail.setDateIssue(this.convertStringToLocalDateTime(representativeDetailDto.getDateIssue()));
+        representativeDetail.setWhoIssue(representativeDetailDto.getWhoIssue());
+        representativeDetail.setDepartmentCode(representativeDetailDto.getDepartmentCode());
+        representativeDetail.setRepresentativeId(representativeDetailDto.getRepresentativeId());
+        return representativeDetail;
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {

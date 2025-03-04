@@ -19,21 +19,6 @@ public class Representative {
     @JsonProperty("id")
     private Long id;
 
-    @Column(name = "name")
-    @Schema(example = "")
-    @JsonProperty("name")
-    private String name;
-
-    @Column(name = "surname")
-    @Schema(example = "")
-    @JsonProperty("surname")
-    private String surname;
-
-    @Column(name = "patronymic")
-    @Schema(example = "")
-    @JsonProperty("patronymic")
-    private String patronymic;
-
     @Schema(example = "1234567890", required = true)
     @JsonProperty("inn")
     private String inn;
@@ -53,5 +38,5 @@ public class Representative {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "representative_id", updatable = false)
-    private Set<RepresentativePassport> representativePassports = new HashSet<>();
+    private Set<RepresentativeDetail> representativeDetails = new HashSet<>();
 }

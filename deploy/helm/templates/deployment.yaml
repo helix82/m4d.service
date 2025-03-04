@@ -149,6 +149,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.CONTAINER_PART_JSON_URI }}
+            - name: M4D_API_RR_FNS_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.M4D_API_RR_FNS_URI }}
+            - name: CONTAINER_CREATE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONTAINER_CREATE_URI }}
       imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
         - name: {{ . }}

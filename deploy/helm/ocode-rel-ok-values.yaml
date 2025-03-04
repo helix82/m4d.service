@@ -62,6 +62,10 @@ secret:
     CONTAINER_PART_JSON_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9nZXQtcGFydC1qc29u
     #http://synapi-service.release-ok.svc.cluster.local/api/v1/audit/external
     AUDIT_URL: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2F1ZGl0L2V4dGVybmFs
+    #https://operator.cprr-it.weintegrator.com/api/v0
+    M4D_API_RR_FNS_URI: aHR0cHM6Ly9vcGVyYXRvci5jcHJyLWl0LndlaW50ZWdyYXRvci5jb20vYXBpL3YwPT0=
+    #http://synapi-service.release-ok.svc.cluster.local/api/v1/container/create
+    CONTAINER_CREATE_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9jcmVhdGU=
     SERVER_PORT: ODA1MQ==
     #sep
     RESOURCE_ACCESS: c2Vw
@@ -112,6 +116,8 @@ env:
   RPD_CONNECTION_TIMEOUT: RPD_CONNECTION_TIMEOUT
   RPD_READ_TIMEOUT: RPD_READ_TIMEOUT
   DISABLE_TLS_CHECK: DISABLE_TLS_CHECK
+  M4D_API_RR_FNS_URI: M4D_API_RR_FNS_URI
+  CONTAINER_CREATE_URI: CONTAINER_CREATE_URI
 
 appName: m4d
 

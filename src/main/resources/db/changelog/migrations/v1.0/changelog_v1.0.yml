@@ -39,3 +39,11 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/delete_enum_file_logical_type.sql
   - include:
       file: db/changelog/migrations/v1.0/delete_enum_file_mime_type.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_principal.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_representative.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_revoke.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_registry.sql

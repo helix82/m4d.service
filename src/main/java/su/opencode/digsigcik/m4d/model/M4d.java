@@ -9,8 +9,6 @@ import su.opencode.digsigcik.audit.AllowAudit;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -33,17 +31,11 @@ public class M4d {
     @AllowAudit
     private String guid;
 
-    @Column(name = "internal_number", columnDefinition = "VARCHAR(255)")
+    @Column(name = "organisation_inn", columnDefinition = "VARCHAR(10)")
     @Schema(example = "1")
-    @JsonProperty("internalNumber")
+    @JsonProperty("organisationInn")
     @AllowAudit
-    private String internalNumber;
-
-    @Column(name = "organisation_id")
-    @Schema(example = "1")
-    @JsonProperty("organisationId")
-    @AllowAudit
-    private Long organisationId;
+    private String organisationInn;
 
     @Column(name = "principal_id")
     @Schema(example = "1")
@@ -51,11 +43,23 @@ public class M4d {
     @AllowAudit
     private Long principalId;
 
+    @Column(name = "principal_detail_id")
+    @Schema(example = "1")
+    @JsonProperty("principalDetailId")
+    @AllowAudit
+    private Long principalDetailId;
+
     @Column(name = "representative_id")
     @Schema(example = "1")
     @JsonProperty("representativeId")
     @AllowAudit
     private Long representativeId;
+
+    @Column(name = "representative_detail_id")
+    @Schema(example = "1")
+    @JsonProperty("representativeDetailId")
+    @AllowAudit
+    private Long representativeDetailId;
 
     @Column(name = "start_date")
     @Schema(example = "")
@@ -69,23 +73,31 @@ public class M4d {
     @AllowAudit
     private LocalDateTime endDate;
 
+    @Column(name = "status")
+    @Schema(example = "")
+    @JsonProperty("status")
+    @AllowAudit
+    private String status;
+
+    @Column(name = "error_detail")
+    @Schema(example = "")
+    @JsonProperty("errorDetail")
+    @AllowAudit
+    private String errorDetail;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "sig_file_id", referencedColumnName = "id")
-    private M4dFile m4dFile;
+    private M4dFile sigFile;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "xml_file_id", referencedColumnName = "id")
+    private M4dFile xmlFile;
 
     @Column(name = "create_date")
     @Schema(example = "")
     @JsonProperty("createDate")
     @AllowAudit
     private LocalDateTime createDate;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "mrpa_recall_id", referencedColumnName = "id")
-    private M4dRecall mrpaRecall;
-
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "mrpa_registry_id")
-    private Set<M4dCredential> m4dCredentials = new HashSet<>();
 
     public void setGuid() {
         this.guid = UUID.randomUUID()
