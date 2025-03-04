@@ -60,7 +60,7 @@
 
 - Java 11 Bellsoft Liberica Full
 - Maven
-- Postgres 14
+- Postgres 16
 - Доступ к системе РПД
 
 P.S. Необходимо в values хелмов в значение tag добавить необходимый тэг образа.
