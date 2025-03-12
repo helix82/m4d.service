@@ -144,6 +144,7 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список заявлений на отзыв МЧД пользователя";
     String CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY = "Загрузить ЭП заявления на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY = "Получить XML отзыв МЧД и открепленную подпись в zip-архиве";
     String CONTROLLER_MRPA_VALID_SCHEME_SUMMARY = "Проверить соответствие МЧД схеме";
     String CONTROLLER_MRPA_VALID_SCHEME_DESCRIPTION = "Возвращает JSON ответ результата проверки";
 

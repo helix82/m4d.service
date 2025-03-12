@@ -35,6 +35,8 @@ import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
+import javax.persistence.EntityNotFoundException;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.*;
@@ -384,6 +386,74 @@ public class M4dRevokeController {
         }
 
         return findMrpaRecallById(id);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY, description = CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @GetMapping(value = "/{id}/archive", produces = "application/zip")
+    public ResponseEntity<?> archive(Authentication authentication, HttpServletResponse response,
+                                     @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id) throws IOException, ParseException, JAXBException {
+        if (id == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        M4dRecall m4dRecall;
+        try {
+            m4dRecall = this.m4dRecallService.findById(id);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if (m4dRecall == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.NOT_FOUND);
+        }
+        M4d m4d;
+        try {
+            m4d = this.m4dService.findById(m4dRecall.getM4d().getId());
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if (m4d == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+        }
+
+        String filename = m4dRecall.getXmlFile().getFilename();
+        int lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex > 0) {
+            filename = filename.substring(0, lastDotIndex);
+        }
+        if (m4dRecall.getSigFile()==null){
+            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, false, true, false, true);
+            String xmlString = m4dResponseDto.recall.getXmlFile().getContent();
+            try {
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".xml\"");
+
+                return new ResponseEntity<>(
+                        xmlString,
+                        HttpStatus.OK
+                );
+            } catch (EntityNotFoundException e) {
+                return ResponseEntity.noContent().build();
+            }
+        } else {
+            ByteArrayResource resp = this.m4dService.createArchiveM4dSig(authentication, m4dRecall.getSigFile().getId(), filename);
+            if (resp == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
+            }
+            try {
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".zip\"");
+
+                return new ResponseEntity<>(
+                        resp,
+                        HttpStatus.OK
+                );
+            } catch (EntityNotFoundException e) {
+                return ResponseEntity.noContent().build();
+            }
+        }
+
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {
