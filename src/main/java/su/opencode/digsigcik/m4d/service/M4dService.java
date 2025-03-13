@@ -12,6 +12,7 @@ import su.opencode.digsigcik.m4d.model.*;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -32,7 +33,10 @@ public interface M4dService {
     M4dRegistryResponseDto findM4dByIdAndRepresentativeInn(String inn, Long id);
     String getStatusM4d(Long id) throws ParseException;
     M4dRegistryResponseDto convertM4dToM4dResponseDto(M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile, Boolean withM4dXmlFile, Boolean withRecallXmlFile) throws ParseException;
-    M4dVerifyStatusDto verify(@RequestPart("srcFile") MultipartFile sourceFile) throws Exception;
+    ReportCheckStatusM4dDto verify(@RequestPart("srcFile") MultipartFile sourceFile) throws NoSuchAlgorithmException, ParseException, IOException;
+    ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(MultipartFile sourceFile) throws NoSuchAlgorithmException;
+    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPep(MultipartFile sourceFile) throws NoSuchAlgorithmException;
+    ReportCheckStatusM4dDto checkM4dInPep(MultipartFile sourceFile) throws ParseException;
     M4dVerifyStatus getStatusVerifyInFns(@NotNull String guid);
     M4dRegistryResponseDto parseM4dXml(@NotNull M4dXml m4dXml) throws ParseException;
     ByteArrayResource createContainer(Authentication authentication, MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException;

@@ -7,19 +7,20 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 
 public class HashUtils {
     @Value("${m4d.soul}")
     private static String M4D_SOUL;
-    public static String getHash(byte[] origin) throws Exception {
+    public static String getHash(byte[] origin) throws NoSuchAlgorithmException {
         String base64Encoded = Base64.toBase64String(origin);
         String saltedBase64 = M4D_SOUL + base64Encoded + M4D_SOUL;
         byte[] hash = hashGOST3411_2012_256(saltedBase64.getBytes(StandardCharsets.UTF_8));
         return Base58.encode(hash);
     }
 
-    private static byte[] hashGOST3411_2012_256(byte[] input) throws Exception {
+    private static byte[] hashGOST3411_2012_256(byte[] input) throws NoSuchAlgorithmException {
         Security.addProvider(new BouncyCastleProvider());
         MessageDigest digest = MessageDigest.getInstance("GOST3411-2012-256");
         return digest.digest(input);

@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import su.opencode.digsigcik.audit.AllowAudit;
-import su.opencode.digsigcik.m4d.enums.StatusRequestTypeEnum;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -28,7 +27,7 @@ public class M4dRequestSearchDetail {
     @Schema(example = "")
     @JsonProperty("status")
     @AllowAudit
-    private StatusRequestTypeEnum status;
+    private String status;
 
     @Column(name = "error_detail")
     @Schema(example = "")

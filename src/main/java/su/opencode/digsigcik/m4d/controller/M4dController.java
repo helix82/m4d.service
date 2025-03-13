@@ -17,14 +17,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
-import su.opencode.digsigcik.m4d.dto.M4dFullXML;
-import su.opencode.digsigcik.m4d.dto.M4dRegistryRequestDto;
-import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
+import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
+import su.opencode.digsigcik.m4d.service.M4dRequestService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -37,6 +36,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -56,11 +56,13 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 public class M4dController {
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
+    private final M4dRequestService m4dRequestService;
     private final M4dFileService m4dFileService;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dRequestService m4dRequestService, M4dFileService m4dFileService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
+        this.m4dRequestService = m4dRequestService;
         this.m4dFileService = m4dFileService;
     }
 
@@ -340,6 +342,7 @@ public class M4dController {
         return new ResponseEntity<>(findMrpaRegistryById(m4dId), HttpStatus.OK);
     }
 
+    @Deprecated()
     @Operation(summary = CONTROLLER_MRPA_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
@@ -347,8 +350,40 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> verify(@RequestPart("srcFile") MultipartFile sourceFile) throws Exception {
+    public ResponseEntity<?> verify(@RequestPart("srcFile") MultipartFile sourceFile) throws NoSuchAlgorithmException, ParseException, IOException {
         return new ResponseEntity<>(m4dService.verify(sourceFile), HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_CHECK_XML_SUMMARY, description = CONTROLLER_MRPA_CHECK_XML_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PostMapping(value = "/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> check(@RequestPart("srcFile") MultipartFile sourceFile) throws ParseException, NoSuchAlgorithmException, IOException, SAXException {
+        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
+        if (!Objects.equals(extension, "xml")) {
+            throw new BadRequestException("Ошибка: Формат файла не XML");
+        }
+        ReportValidSchemeDto reportValidSchemeDto = m4dService.validXmlM4dScheme(sourceFile, "EMCHD_1");
+        if (Objects.equals(reportValidSchemeDto.getResult(), "false")) {
+            throw new BadRequestException("XML файл не соответствует схеме EMCHD_1");
+        }
+// - поиск МЧД в ПЭП по номеру
+        ReportCheckStatusM4dDto reportM4d = m4dService.checkM4dInPep(sourceFile);
+        if (reportM4d != null) { //мчд в пэп найдена
+            return new ResponseEntity<>(reportM4d, HttpStatus.OK);
+        } else { //мчд в пэп не найдена
+// - поиск ранее сформированного запроса в РР МЧД на проверку статуса МЧД (по номеру и хеш)
+            ReportCheckStatusM4dDto reportM4dRequestSearch = m4dService.getReportM4dRequestSearchForFindPep(sourceFile);
+            if (reportM4dRequestSearch != null) { // запрос найден, возвращаем отчёт
+                return new ResponseEntity<>(reportM4dRequestSearch, HttpStatus.OK);
+            } else { //ранее запрос не формировался, создаем новый запрос
+                ReportCheckStatusM4dDto reportCreateM4dRequestSearch = m4dService.createM4dRequestSearchForFindRR(sourceFile);
+                return new ResponseEntity<>(reportCreateM4dRequestSearch, HttpStatus.OK);
+            }
+        }
     }
 
     @Operation(summary = CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION)

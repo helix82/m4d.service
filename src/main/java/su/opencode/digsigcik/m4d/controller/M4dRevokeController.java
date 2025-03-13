@@ -425,7 +425,7 @@ public class M4dRevokeController {
             filename = filename.substring(0, lastDotIndex);
         }
         if (m4dRecall.getSigFile()==null){
-            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, false, true, false, true);
+            M4dRegistryResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, false, true, false, true);
             String xmlString = m4dResponseDto.recall.getXmlFile().getContent();
             try {
                 response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".xml\"");
