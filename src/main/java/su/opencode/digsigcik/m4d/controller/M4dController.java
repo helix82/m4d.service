@@ -17,14 +17,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
-import su.opencode.digsigcik.m4d.dto.M4dFullXML;
-import su.opencode.digsigcik.m4d.dto.M4dRequestDto;
-import su.opencode.digsigcik.m4d.dto.M4dResponseDto;
+import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
+import su.opencode.digsigcik.m4d.service.M4dRequestService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -37,6 +36,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -56,11 +56,13 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 public class M4dController {
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
+    private final M4dRequestService m4dRequestService;
     private final M4dFileService m4dFileService;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dRequestService m4dRequestService, M4dFileService m4dFileService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
+        this.m4dRequestService = m4dRequestService;
         this.m4dFileService = m4dFileService;
     }
 
@@ -73,7 +75,7 @@ public class M4dController {
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRegistry() {
-        List<M4dResponseDto> mrpaRegistryFindAll;
+        List<M4dRegistryResponseDto> mrpaRegistryFindAll;
         try {
             mrpaRegistryFindAll = this.m4dService.findAllMrpaRegistry();
         } catch (ConstraintViolationException | ParseException e) {
@@ -89,7 +91,7 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "save", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody M4dRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
+    public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         m4dSaveFullDto.setGuid();
         m4dSaveFullDto.setCreateDate(LocalDateTime.now().toString());
         M4d m4d = convertMrpaRegistryToEntity(m4dSaveFullDto.mrpaRegistry);
@@ -133,8 +135,8 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
-        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
-        return new ResponseEntity<>(m4dResponseDto, HttpStatus.OK);
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
+        return new ResponseEntity<>(m4DRegistryResponseDto, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_BY_GUID_SUMMARY,
@@ -159,8 +161,8 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
-        M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
-        return new ResponseEntity<>(m4dResponseDto, HttpStatus.OK);
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
+        return new ResponseEntity<>(m4DRegistryResponseDto, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_BY_REPRESENTATIVE_ID_SUMMARY,
@@ -185,14 +187,14 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
-        List<M4dResponseDto> m4dResponseDtoList = new ArrayList<>();
+        List<M4dRegistryResponseDto> m4DRegistryResponseDtoList = new ArrayList<>();
         for (M4d m : m4d) {
-            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m, false, false, false, false);
-            m4dResponseDto.credentials = m4dService.getCredentialByMrpaRegistryId(m.getId());
-            m4dResponseDto.setStatus(this.m4dService.getStatusM4d(m.getId()));
-            m4dResponseDtoList.add(m4dResponseDto);
+            M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(m, false, false, false, false);
+            m4DRegistryResponseDto.credentials = m4dService.getCredentialByMrpaRegistryId(m.getId());
+            m4DRegistryResponseDto.setStatus(this.m4dService.getStatusM4d(m.getId()));
+            m4DRegistryResponseDtoList.add(m4DRegistryResponseDto);
         }
-        return new ResponseEntity<>(m4dResponseDtoList, HttpStatus.OK);
+        return new ResponseEntity<>(m4DRegistryResponseDtoList, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_SUMMARY,
@@ -220,7 +222,7 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping(value = "update", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> updateAllDataMrpaRegistry(@RequestBody M4dRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
+    public ResponseEntity<?> updateAllDataMrpaRegistry(@RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         M4d m4d = this.m4dService.findById(m4dSaveFullDto.mrpaRegistry.getId());
         m4d.setStartDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getStartDate()));
         m4d.setEndDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getEndDate()));
@@ -340,6 +342,7 @@ public class M4dController {
         return new ResponseEntity<>(findMrpaRegistryById(m4dId), HttpStatus.OK);
     }
 
+    @Deprecated()
     @Operation(summary = CONTROLLER_MRPA_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
@@ -347,8 +350,40 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> verify(@RequestPart("srcFile") MultipartFile sourceFile) throws Exception {
+    public ResponseEntity<?> verify(@RequestPart("srcFile") MultipartFile sourceFile) throws NoSuchAlgorithmException, ParseException, IOException {
         return new ResponseEntity<>(m4dService.verify(sourceFile), HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_CHECK_XML_SUMMARY, description = CONTROLLER_MRPA_CHECK_XML_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PostMapping(value = "/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> check(@RequestPart("srcFile") MultipartFile sourceFile) throws ParseException, NoSuchAlgorithmException, IOException, SAXException {
+        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
+        if (!Objects.equals(extension, "xml")) {
+            throw new BadRequestException("Ошибка: Формат файла не XML");
+        }
+        ReportValidSchemeDto reportValidSchemeDto = m4dService.validXmlM4dScheme(sourceFile, "EMCHD_1");
+        if (Objects.equals(reportValidSchemeDto.getResult(), "false")) {
+            throw new BadRequestException("XML файл не соответствует схеме EMCHD_1");
+        }
+// - поиск МЧД в ПЭП по номеру
+        ReportCheckStatusM4dDto reportM4d = m4dService.checkM4dInPep(sourceFile);
+        if (reportM4d != null) { //мчд в пэп найдена
+            return new ResponseEntity<>(reportM4d, HttpStatus.OK);
+        } else { //мчд в пэп не найдена
+// - поиск ранее сформированного запроса в РР МЧД на проверку статуса МЧД (по номеру и хеш)
+            ReportCheckStatusM4dDto reportM4dRequestSearch = m4dService.getReportM4dRequestSearchForFindPep(sourceFile);
+            if (reportM4dRequestSearch != null) { // запрос найден, возвращаем отчёт
+                return new ResponseEntity<>(reportM4dRequestSearch, HttpStatus.OK);
+            } else { //ранее запрос не формировался, создаем новый запрос
+                ReportCheckStatusM4dDto reportCreateM4dRequestSearch = m4dService.createM4dRequestSearchForFindRR(sourceFile);
+                return new ResponseEntity<>(reportCreateM4dRequestSearch, HttpStatus.OK);
+            }
+        }
     }
 
     @Operation(summary = CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION)
@@ -397,7 +432,7 @@ public class M4dController {
             Authentication authentication,
             @RequestPart("srcFile") MultipartFile sourceFile,
             @RequestPart(value="sigFile", required = false) MultipartFile sourceSig,
-            @RequestParam(value="hashAlgorithm", required = false, defaultValue = "GOST3411_2012_256") HashAlgorithm hashAlgorithm) throws IOException, JAXBException, ParseException {
+            @RequestParam(value="hashAlgorithm", required = false, defaultValue = "GOST3411_2012_256") HashAlgorithm hashAlgorithm) throws IOException, ParseException {
         if (sourceFile.isEmpty()){
             return new ResponseEntity<>(getCustomErrorJsonFromString("Обязательный xml-файл МЧД не указан"), HttpStatus.BAD_REQUEST);
         }
@@ -462,7 +497,7 @@ public class M4dController {
     })
     @GetMapping(value = "/{id}/archive", produces = "application/zip")
     public ResponseEntity<?> archive(Authentication authentication, HttpServletResponse response,
-                                     @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws IOException, ParseException, JAXBException {
+                                     @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws IOException, ParseException {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -482,8 +517,8 @@ public class M4dController {
             filename = filename.substring(0, lastDotIndex);
         }
         if (m4d.getSigFile()==null){
-            M4dResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
-            String xmlString = m4dResponseDto.getXmlFile().getContent();
+            M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, true, false, true, false);
+            String xmlString = m4DRegistryResponseDto.getXmlFile().getContent();
             try {
                 response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".xml\"");
 
@@ -513,7 +548,19 @@ public class M4dController {
 
     }
 
-    private M4d convertMrpaRegistryToEntity(M4dRequestDto.MrpaRegistry mrpaRegistryDto) {
+    @Operation(summary = CONTROLLER_MRPA_VALID_SCHEME_SUMMARY, description = CONTROLLER_MRPA_VALID_SCHEME_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @GetMapping(value = "/valid-scheme", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> validScheme(@RequestPart("srcFile") MultipartFile sourceFile,
+                                         @RequestParam(value="reqScheme", required = false) String reqScheme) throws IOException, SAXException {
+        return new ResponseEntity<>(m4dService.validXmlM4dScheme(sourceFile, reqScheme), HttpStatus.OK);
+    }
+
+    private M4d convertMrpaRegistryToEntity(M4dRegistryRequestDto.MrpaRegistry mrpaRegistryDto) {
         M4d m4d = new M4d();
         m4d.setStartDate(this.convertStringToLocalDateTime(mrpaRegistryDto.getStartDate()));
         m4d.setEndDate(this.convertStringToLocalDateTime(mrpaRegistryDto.getEndDate()));
@@ -521,19 +568,19 @@ public class M4dController {
         return m4d;
     }
 
-    private Organisation convertOrganisationToEntity(M4dRequestDto.Organisation organisationDto) {
+    private Organisation convertOrganisationToEntity(M4dRegistryRequestDto.Organisation organisationDto) {
         return modelMapper.map(organisationDto, Organisation.class);
     }
 
-    private Principal convertPrincipalToEntity(M4dRequestDto.Principal principalDto) {
+    private Principal convertPrincipalToEntity(M4dRegistryRequestDto.Principal principalDto) {
         return modelMapper.map(principalDto, Principal.class);
     }
 
-    private PrincipalDetail convertPrincipalDetailToEntity(M4dRequestDto.PrincipalDetail principalDetailDto) {
+    private PrincipalDetail convertPrincipalDetailToEntity(M4dRegistryRequestDto.PrincipalDetail principalDetailDto) {
         return modelMapper.map(principalDetailDto, PrincipalDetail.class);
     }
 
-    private Representative convertRepresentativeToEntity(M4dRequestDto.Representative representativeDto) {
+    private Representative convertRepresentativeToEntity(M4dRegistryRequestDto.Representative representativeDto) {
         Representative representative = new Representative();
         representative.setId(representativeDto.getId());
         representative.setInn(representativeDto.getInn());
@@ -542,7 +589,7 @@ public class M4dController {
         return representative;
     }
 
-    private RepresentativeDetail convertRepresentativeDetailToEntity(M4dRequestDto.RepresentativeDetail representativeDetailDto) {
+    private RepresentativeDetail convertRepresentativeDetailToEntity(M4dRegistryRequestDto.RepresentativeDetail representativeDetailDto) {
         RepresentativeDetail representativeDetail = new RepresentativeDetail();
         representativeDetail.setId(representativeDetailDto.getId());
         representativeDetail.setSurname(representativeDetailDto.getSurname());
