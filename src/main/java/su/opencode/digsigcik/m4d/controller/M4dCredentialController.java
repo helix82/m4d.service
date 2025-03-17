@@ -53,7 +53,7 @@ public class M4dCredentialController {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @PostMapping("save")
+    @PostMapping()
     public ResponseEntity<?> saveCredential(@RequestBody CredentialDto credentialDTO) {
         Credential credential = convertToEntity(credentialDTO);
         if ((credential.getName() == null || credential.getName().isEmpty()) && (credential.getCode() == null || credential.getCode().isEmpty())) {
@@ -140,7 +140,7 @@ public class M4dCredentialController {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @PutMapping("update")
+    @PutMapping()
     public ResponseEntity<?> updateCredential(@RequestBody CredentialDto credentialDTO) {
         Credential credential = convertToEntity(credentialDTO);
         if (credential == null) {
@@ -163,7 +163,7 @@ public class M4dCredentialController {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("{id}")
     public ResponseEntity<?> deleteCredential(@PathVariable @Parameter(name = "id",
             description = PARAMETER_CREDENTIAL_ID_DESCRIPTION, example = "1") Long id) {
         if (id == null) {

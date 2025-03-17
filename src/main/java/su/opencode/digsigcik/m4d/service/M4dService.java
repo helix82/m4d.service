@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.model.*;
 
@@ -47,4 +48,5 @@ public interface M4dService {
     String getGuidFromXml(MultipartFile sourceFile);
     String getHashXmlM4d(MultipartFile sourceFile) throws Exception;
     ReportValidSchemeDto validXmlM4dScheme(MultipartFile sourceFile, String reqScheme) throws IOException, SAXException;
+    ReportCheckStatusM4dDto updateStatusM4d(M4dFnsDataResponse m4dFnsDataResponse);
 }
