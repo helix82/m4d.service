@@ -87,7 +87,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @GetMapping(value = "", produces = "application/json; charset=UTF-8")
+    @GetMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findAllMrpaRecall() throws ParseException {
         List<M4dRegistryResponseDto> mrpaRegistryFindAllRecall;
         try {
@@ -140,7 +140,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PostMapping("save")
+    @PostMapping()
     public ResponseEntity<?> saveMrpaRecall(@RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws JAXBException, ParseException {
         M4dRecall mrpaRecall = convertMrpaRecallRequestDtoToEntity(mrpaRecallRequestDto);
         if (mrpaRecall == null) {
@@ -180,7 +180,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping("update")
+    @PutMapping()
     public ResponseEntity<?> updateMrpaRecall(@RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws JAXBException, ParseException {
         M4dRecall mrpaRecall = convertMrpaRecallRequestDtoToEntity(mrpaRecallRequestDto);
         if (mrpaRecall == null) {
@@ -214,7 +214,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @DeleteMapping("delete/{id}")
+    @DeleteMapping("{id}")
     public ResponseEntity<?> deleteMrpaRecall(@PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id) {
         if (id == null) {

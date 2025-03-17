@@ -1749,11 +1749,17 @@ public class M4dServiceImpl implements M4dService {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDate localDate = LocalDate.parse(date, formatter);
             localDateTime = localDate.atStartOfDay();
-        } else if (date.length() > 20) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
         } else if (date.length() == 16) {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
+        } else if (date.length() == 23) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
+        } else if (date.length() == 25) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+            localDateTime = LocalDateTime.from(formatter.parse(date));
+        } else if (date.length() > 25) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
             localDateTime = LocalDateTime.from(formatter.parse(date));
         } else {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
@@ -1929,6 +1935,7 @@ public class M4dServiceImpl implements M4dService {
         return HashUtils.getHash(this.readXmlToString(sourceFile).getBytes());
     }
 
+    @Override
     public ReportValidSchemeDto validXmlM4dScheme(MultipartFile sourceFile, String reqScheme) throws IOException, SAXException {
         String scheme;
         ReportValidSchemeDto report = new ReportValidSchemeDto();
@@ -1958,6 +1965,48 @@ public class M4dServiceImpl implements M4dService {
             }
         }
         return report;
+    }
+
+    @Override
+    public ReportCheckStatusM4dDto updateStatusM4d(M4dFnsDataResponse m4dFnsDataResponse) {
+        M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dFnsDataResponse.getGuid(), m4dFnsDataResponse.getId());
+        M4dRequestSearchDetail m4dRequestSearchDetail;
+        if (m4dRequestSearch != null) {
+            m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
+            M4dRequestSearchDetail m4dRequestSearchDetailNew = new M4dRequestSearchDetail();
+            m4dRequestSearchDetailNew.setStatus(m4dFnsDataResponse.getStatus());
+            m4dRequestSearchDetailNew.setStatusDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
+            m4dRequestSearchDetailNew.setRegistrationDate(convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
+            m4dRequestSearchDetailNew.setStartDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
+            m4dRequestSearchDetailNew.setEndDate(convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
+            m4dRequestSearchDetailNew.setActive(true);
+            m4dRequestSearchDetailNew.setRequestSearchId(m4dRequestSearch.getId());
+            if (m4dRequestSearchDetail != null) {
+                m4dRequestSearchDetailNew.setVersion(m4dRequestSearchDetail.getVersion()+1);
+                m4dRequestSearchDetail.setActive(false);
+                this.m4dRequestService.updateM4dRequestSearchDetail(m4dRequestSearchDetail);
+            } else { m4dRequestSearchDetailNew.setVersion(1L); }
+            M4dRequestSearchDetail m4dRequestSearchDetailSaved;
+            m4dRequestSearchDetailSaved = this.m4dRequestService.saveM4dRequestSearchDetail(m4dRequestSearchDetailNew);
+                if(m4dRequestSearchDetailSaved == null) {
+                    throw new BadRequestException("Активных деталей запроса статуса МЧД в РР МЧД не найдено");
+                }
+                ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+                report.setSource("m4d_rr");
+                ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+                report.setReport(rep);
+                rep.setGuid(m4dFnsDataResponse.getGuid());
+                rep.setStatus(m4dRequestSearchDetailSaved.getStatus());
+                rep.setStartDate(m4dRequestSearchDetailSaved.getStartDate().toString());
+                rep.setEndDate(m4dRequestSearchDetailSaved.getEndDate().toString());
+//                rep.setCredentials(getCredentialM4dFromXml(sourceFile));
+//                rep.setRepresentative(getRepresentativeM4dFromXml(sourceFile));
+//                rep.setPrincipal(getPrincipalM4dFromXml(sourceFile));
+//                rep.setInnOrganisation(getInnOrganizationFromXml(sourceFile));
+//                rep.setNameOrganisation(getNameOrganizationFromXml(sourceFile));
+                return report;
+        }
+        return null;
     }
 
     private String getSubstringFromXml(String content, String subStringParam){

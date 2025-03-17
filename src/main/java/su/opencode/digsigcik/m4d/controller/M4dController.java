@@ -18,12 +18,12 @@ import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
 import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
-import su.opencode.digsigcik.m4d.service.M4dRequestService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -56,13 +56,11 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 public class M4dController {
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
-    private final M4dRequestService m4dRequestService;
     private final M4dFileService m4dFileService;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dRequestService m4dRequestService, M4dFileService m4dFileService) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
-        this.m4dRequestService = m4dRequestService;
         this.m4dFileService = m4dFileService;
     }
 
@@ -90,7 +88,7 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PostMapping(value = "save", produces = "application/json; charset=UTF-8")
+    @PostMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> saveAllDataMrpaRegistry(@RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         m4dSaveFullDto.setGuid();
         m4dSaveFullDto.setCreateDate(LocalDateTime.now().toString());
@@ -148,7 +146,7 @@ public class M4dController {
     })
     @GetMapping(value = "/guid/{guid}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> findMrpaRegistryByGuid(@PathVariable @Parameter(name = "guid",
-            description = PARAMETER_MRPA_GUID_DESCRIPTION, example = "1") String guid) throws ParseException, JAXBException {
+            description = PARAMETER_MRPA_GUID_DESCRIPTION, example = "1") String guid) throws ParseException {
         if (guid == null || guid.isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(GUID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -221,8 +219,8 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "update", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> updateAllDataMrpaRegistry(@RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
+    @PutMapping(produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> updateAllDataMrpaRegistry(@RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws ParseException {
         M4d m4d = this.m4dService.findById(m4dSaveFullDto.mrpaRegistry.getId());
         m4d.setStartDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getStartDate()));
         m4d.setEndDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getEndDate()));
@@ -247,7 +245,7 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @DeleteMapping(value = "delete/{id}", produces = "application/json; charset=UTF-8")
+    @DeleteMapping(value = "{id}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> deleteMrpaRegistry(@PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) {
         if (id == null) {
@@ -302,7 +300,7 @@ public class M4dController {
     })
     @PutMapping(value = "/{id}/clear-sig", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> clearSig(@PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws JAXBException, ParseException {
+            description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws ParseException {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -558,6 +556,22 @@ public class M4dController {
     public ResponseEntity<?> validScheme(@RequestPart("srcFile") MultipartFile sourceFile,
                                          @RequestParam(value="reqScheme", required = false) String reqScheme) throws IOException, SAXException {
         return new ResponseEntity<>(m4dService.validXmlM4dScheme(sourceFile, reqScheme), HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY, description = CONTROLLER_MRPA_UPDATE_STATUS_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PutMapping(value = "/status", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> updateStatusM4d(@RequestBody M4dFnsDataResponse m4dFnsDataResponse) {
+        ReportCheckStatusM4dDto report;
+        report = m4dService.updateStatusM4d(m4dFnsDataResponse);
+        if (report == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("В ПЭП не найден запрос на получение статуса о МЧД в РР МЧД"), HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(report, HttpStatus.OK);
     }
 
     private M4d convertMrpaRegistryToEntity(M4dRegistryRequestDto.MrpaRegistry mrpaRegistryDto) {
