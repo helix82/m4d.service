@@ -82,7 +82,6 @@ public class M4dServiceImpl implements M4dService {
     private final M4dFileService m4dFileService;
     private final M4dRequestService m4dRequestService;
     private final CredentialService credentialService;
-    private final OrganisationService organisationService;
     private final PrincipalService principalService;
     private final PrincipalDetailService principalDetailService;
     private final RepresentativeService representativeService;
@@ -90,14 +89,15 @@ public class M4dServiceImpl implements M4dService {
     private final UserCertificateService userCertificateService;
     private final RestTemplate restTemplate;
     private final SynapiClientService synapiClientService;
+    private final RefBookClientService refBookClientService;
     private static final Pattern BASE64_PATTERN = Pattern.compile("^[A-Za-z0-9+/]+={0,2}$");
 
     @Override
-    public List<M4dRegistryResponseDto> findAllMrpaRegistry() throws ParseException {
+    public List<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication) throws ParseException {
         List<M4d> m4ds = m4dRepository.findAll();
         List<M4dRegistryResponseDto> m4DRegistryResponseDtoList = new ArrayList<>();
         for (M4d m4d : m4ds) {
-            m4DRegistryResponseDtoList.add(convertM4dToM4dResponseDto(m4d, false, false, false, false));
+            m4DRegistryResponseDtoList.add(convertM4dToM4dResponseDto(authentication, m4d, false, false, false, false));
         }
         return m4DRegistryResponseDtoList;
     }
@@ -115,7 +115,8 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public Long saveAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) {
+    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) {
+        String bearerToken = getTokenValue(authentication);
         String orgInn;
         Long principId;
         Long principDetailId;
@@ -134,13 +135,13 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException("The passport's SeriesNumber is not specified");
         }
         //------------------- save organisation ----------------
-        Organisation existsOrganisation;
+        OrganizationDto existsOrganisation;
         try {
-            existsOrganisation = this.organisationService.findByOrganisationInn(organisation.getInn());
+            existsOrganisation = this.refBookClientService.findByOrganisationInn(organisation.getInn(), bearerToken);
             if (existsOrganisation == null) {
-                Organisation respOrganisation;
+                OrganizationDto respOrganisation;
                 try {
-                    respOrganisation = this.organisationService.saveOrganisation(organisation);
+                    respOrganisation = this.refBookClientService.saveOrganization(organisation, bearerToken);
                 } catch (ConstraintViolationException e) {
                     throw new BadRequestException(e.getMessage());
                 }
@@ -149,10 +150,10 @@ public class M4dServiceImpl implements M4dService {
             } else if (!existsOrganisation.getInn().equals(organisation.getInn()) || !existsOrganisation.getKpp().equals(organisation.getKpp())
                     || !existsOrganisation.getOgrn().equals(organisation.getOgrn()) || !existsOrganisation.getName().equals(organisation.getName())
                     || !existsOrganisation.getRegionCode().equals(organisation.getRegionCode())) { //|| !existsOrganisation.getLegalAddress().equals(organisation.getLegalAddress())
-                Organisation respOrganisation;
+                OrganizationDto respOrganisation;
                 try {
                     organisation.setId(existsOrganisation.getId());
-                    respOrganisation = this.organisationService.saveOrganisation(organisation);
+                    respOrganisation = this.refBookClientService.saveOrganization(organisation, bearerToken);
                 } catch (ConstraintViolationException e) {
                     throw new BadRequestException(e.getMessage());
                 }
@@ -305,7 +306,8 @@ public class M4dServiceImpl implements M4dService {
 
     @AuditLogThis(event = AuditLogEventEnum.M4D_UPDATE)
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
-    public Long updateAllDataMrpaRegistry(M4d m4d, Organisation organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials) {
+    public Long updateAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials) {
+        String bearerToken = getTokenValue(authentication);
         String orgInn;
         Long principId;
         Long principDetailId;
@@ -328,17 +330,18 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(String.format("Can`t update. Mrpa registry with id=%d %s", m4d.getId(), NOT_FOUND));
         }
         //------------------- save organisation ----------------
-        Organisation existsOrganisation;
+        OrganizationDto existsOrganisation;
         try {
-            existsOrganisation = this.organisationService.findByOrganisationInn(organisation.getInn());
+            //existsOrganisation = this.organisationService.findByOrganisationInn(organisation.getInn());
+            existsOrganisation = this.refBookClientService.findByOrganisationInn(organisation.getInn(), bearerToken);
             if (existsOrganisation != null) {
                 organisation.setId(existsOrganisation.getId());
             }
             assert existsOrganisation != null;
             if (!existsOrganisation.equals(organisation)) {
-                Organisation respOrganisation;
+                OrganizationDto respOrganisation;
                 try {
-                    respOrganisation = this.organisationService.saveOrganisation(organisation);
+                    respOrganisation = this.refBookClientService.saveOrganization(organisation, bearerToken);
                 } catch (ConstraintViolationException e) {
                     throw new BadRequestException(e.getMessage());
                 }
@@ -389,7 +392,6 @@ public class M4dServiceImpl implements M4dService {
                     } catch (ConstraintViolationException e) {
                         throw new BadRequestException(e.getMessage());
                     }
-                    // set Active=false for old principal detail
                     try {
                         existsPrincipalDetail.setActive(false);
                         this.principalDetailService.savePrincipalDetail(existsPrincipalDetail);
@@ -455,7 +457,6 @@ public class M4dServiceImpl implements M4dService {
                     } catch (ConstraintViolationException e) {
                         throw new BadRequestException(e.getMessage());
                     }
-                    // set Active=false for old representative detail
                     try {
                         existsRepresentativeDetail.setActive(false);
                         this.representativeDetailService.saveRepresentativeDetail(existsRepresentativeDetail);
@@ -753,11 +754,11 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(readOnly = true)
     @Override
-    public M4dRegistryResponseDto findM4dByIdAndRepresentativeInn(String inn, Long id) {
+    public M4dRegistryResponseDto findM4dByIdAndRepresentativeInn(Authentication authentication, String inn, Long id) {
         return m4dRepository.findValidM4dByIdAndRepresentativeInn(inn, id)
                 .map(m4d -> {
                     try {
-                        M4dRegistryResponseDto m4DRegistryResponseDto = convertM4dToM4dResponseDto(m4d, true, false, true, false);
+                        M4dRegistryResponseDto m4DRegistryResponseDto = convertM4dToM4dResponseDto(authentication, m4d, true, false, true, false);
                         m4DRegistryResponseDto.credentials = getCredentialByMrpaRegistryId(m4DRegistryResponseDto.getId());
                         m4DRegistryResponseDto.setStatus(getStatusM4d(m4DRegistryResponseDto.getId()));
                         return m4DRegistryResponseDto;
@@ -792,7 +793,8 @@ public class M4dServiceImpl implements M4dService {
         }
     }
 
-    public M4dRegistryResponseDto convertM4dToM4dResponseDto(M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile, Boolean withM4dXmlFile, Boolean withRecallXmlFile) throws ParseException {
+    public M4dRegistryResponseDto convertM4dToM4dResponseDto(Authentication authentication, M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile, Boolean withM4dXmlFile, Boolean withRecallXmlFile) throws ParseException {
+        String bearerToken = getTokenValue(authentication);
         M4dRegistryResponseDto m4DRegistryResponseDto = new M4dRegistryResponseDto();
         m4DRegistryResponseDto.setGuid(m4d.getGuid());
         m4DRegistryResponseDto.setStartDate(m4d.getStartDate().toString());
@@ -887,8 +889,7 @@ public class M4dServiceImpl implements M4dService {
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
-
-        Organisation organisation = this.organisationService.findByOrganisationInn(m4d.getOrganisationInn());
+        OrganizationDto organisation = this.refBookClientService.findByOrganisationInn(m4d.getOrganisationInn(), bearerToken);
         if (organisation != null) {
             m4DRegistryResponseDto.setOrganization(convertOrganisationToDto(organisation));
         }
@@ -911,7 +912,7 @@ public class M4dServiceImpl implements M4dService {
         return m4DRegistryResponseDto;
     }
 
-    public ReportCheckStatusM4dDto verify(MultipartFile sourceFile) throws NoSuchAlgorithmException, ParseException, IOException {
+    public ReportCheckStatusM4dDto verify(Authentication authentication, MultipartFile sourceFile) throws NoSuchAlgorithmException, ParseException, IOException {
 
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
@@ -921,7 +922,7 @@ public class M4dServiceImpl implements M4dService {
         String guidXml;
         guidXml = this.getGuidFromXml(sourceFile);
 // - поиск МЧД в ПЭП по номеру
-        ReportCheckStatusM4dDto reportM4d = this.checkM4dInPep(sourceFile);
+        ReportCheckStatusM4dDto reportM4d = this.checkM4dInPep(authentication, sourceFile);
         if (reportM4d != null) {
             return reportM4d;
         } else { //мчд в пэп не найдено
@@ -1155,7 +1156,7 @@ public class M4dServiceImpl implements M4dService {
         m4dRequestSearchDetail.setVersion(1L);
         m4dRequestSearchDetail.setActive(true);
         m4dRequestSearchDetail.setRequestSearchId(m4dRequestSearchSaved.getId());
-        M4dRequestSearchDetail m4dRequestSearchDetailSaved = null;
+        M4dRequestSearchDetail m4dRequestSearchDetailSaved;
         m4dRequestSearchDetailSaved = this.m4dRequestService.saveM4dRequestSearchDetail(m4dRequestSearchDetail);
         if (m4dRequestSearchDetailSaved != null) {
             ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
@@ -1209,7 +1210,7 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
-    public ReportCheckStatusM4dDto checkM4dInPep(MultipartFile sourceFile) throws ParseException {
+    public ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, MultipartFile sourceFile) throws ParseException {
         // - извлечение номера МЧД из XML
         String guidXml;
         guidXml = this.getGuidFromXml(sourceFile);
@@ -1221,7 +1222,7 @@ public class M4dServiceImpl implements M4dService {
         }
         if (m4d != null) { //мчд в пэп найдено
             ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
-            M4dRegistryResponseDto m4dRegistryResponseDto = this.convertM4dToM4dResponseDto(m4d, false, false, false, false);
+            M4dRegistryResponseDto m4dRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, false, false, false, false);
             report.setSource("m4d_pep");
             ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
             report.setReport(rep);
@@ -1271,7 +1272,7 @@ public class M4dServiceImpl implements M4dService {
         m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
         m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
-        Organisation organisation = new Organisation();
+        OrganizationDto organisation = new OrganizationDto();
         organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
         organisation.setKpp(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getKpp());
         organisation.setOgrn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getOgrn());
@@ -1357,7 +1358,7 @@ public class M4dServiceImpl implements M4dService {
         return res;
     }
 
-    public Long uploadMrpaRegistry(MultipartFile sourceFile) throws IOException, SAXException {
+    public Long uploadMrpaRegistry(Authentication authentication, MultipartFile sourceFile) throws IOException, SAXException {
         List<SAXParseException> res = new XmlValidator(sourceFile.getInputStream(), "EMCHD_1").listParsingExceptions();
         if (res.isEmpty()) {
             int guid;
@@ -1375,7 +1376,7 @@ public class M4dServiceImpl implements M4dService {
             m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
             m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
-            Organisation organisation = new Organisation();
+            OrganizationDto organisation = new OrganizationDto();
             organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
             organisation.setKpp(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getKpp());
             organisation.setOgrn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getOgrn());
@@ -1428,7 +1429,7 @@ public class M4dServiceImpl implements M4dService {
             }
             Long m4dSaved;
             try {
-                m4dSaved = this.saveAllDataMrpaRegistry(m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, null, this.readXmlToString(sourceFile));
+                m4dSaved = this.saveAllDataMrpaRegistry(authentication, m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, null, this.readXmlToString(sourceFile));
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(e.getMessage());
             }
@@ -1453,7 +1454,7 @@ public class M4dServiceImpl implements M4dService {
         if (m4d == null) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(m4d, false, false, true, false);
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, false, false, true, false);
         List<String> tempFileNames = new ArrayList<>();
         String tempFileName;
         FileOutputStream fo;
@@ -1784,7 +1785,7 @@ public class M4dServiceImpl implements M4dService {
         return modelMapper.map(m4dFile, M4dRegistryResponseDto.RecallDto.XmlFileRecallDto.class);
     }
 
-    private M4dRegistryResponseDto.OrganizationDto convertOrganisationToDto(Organisation organisation) {
+    private M4dRegistryResponseDto.OrganizationDto convertOrganisationToDto(OrganizationDto organisation) {
         return modelMapper.map(organisation, M4dRegistryResponseDto.OrganizationDto.class);
     }
 

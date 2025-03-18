@@ -35,7 +35,8 @@ public class M4dRegistryResponseDto {
         private String legalAddress;
         private String regionCode;
         private String name;
-
+        private String regionName;
+        private String locality;
     }
 
     public PrincipalDto principal;

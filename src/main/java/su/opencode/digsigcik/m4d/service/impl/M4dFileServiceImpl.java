@@ -3,10 +3,7 @@ package su.opencode.digsigcik.m4d.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import su.opencode.digsigcik.m4d.exception.M4dException;
-import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dFile;
-import su.opencode.digsigcik.m4d.model.Organisation;
 import su.opencode.digsigcik.m4d.repository.M4dFileRepository;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
 

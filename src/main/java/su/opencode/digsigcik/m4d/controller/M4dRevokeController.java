@@ -88,10 +88,10 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping(produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> findAllMrpaRecall() throws ParseException {
+    public ResponseEntity<?> findAllMrpaRecall(Authentication authentication) throws ParseException {
         List<M4dRegistryResponseDto> mrpaRegistryFindAllRecall;
         try {
-            mrpaRegistryFindAllRecall = this.m4dRecallService.findAllMrpaRegistriesWithRecall();
+            mrpaRegistryFindAllRecall = this.m4dRecallService.findAllMrpaRegistriesWithRecall(authentication);
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
@@ -110,7 +110,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping(value = "{id}", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> findMrpaRecallById(@PathVariable @Parameter(name = "id",
+    public ResponseEntity<?> findMrpaRecallById(Authentication authentication, @PathVariable @Parameter(name = "id",
             description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id) throws ParseException {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
@@ -130,7 +130,7 @@ public class M4dRevokeController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
-        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, false, true, false, true);
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, false, true, false, true);
         return new ResponseEntity<>(m4DRegistryResponseDto, HttpStatus.OK);
     }
 
@@ -141,7 +141,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping()
-    public ResponseEntity<?> saveMrpaRecall(@RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws JAXBException, ParseException {
+    public ResponseEntity<?> saveMrpaRecall(Authentication authentication, @RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws JAXBException, ParseException {
         M4dRecall mrpaRecall = convertMrpaRecallRequestDtoToEntity(mrpaRecallRequestDto);
         if (mrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_ERROR_CONVERT), HttpStatus.BAD_REQUEST);
@@ -157,7 +157,7 @@ public class M4dRevokeController {
         mrpaRecall.setM4d(mrpaRegistry);
         mrpaRecall.setCreateDate(LocalDateTime.now());
         mrpaRecall.setStatus("CREATED");
-        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(mrpaRegistry, false, true, false, true);
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, mrpaRegistry, false, true, false, true);
         M4dRegistryResponseDto.RecallDto recallDto = new M4dRegistryResponseDto.RecallDto();
         recallDto.setArgument(mrpaRecallRequestDto.getArgument());
         recallDto.setCreateDate(String.valueOf(LocalDateTime.now()));
@@ -171,7 +171,7 @@ public class M4dRevokeController {
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        return findMrpaRecallById(m4dRecallSaved.getId());
+        return findMrpaRecallById(authentication, m4dRecallSaved.getId());
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_UPDATE_SUMMARY, description = CONTROLLER_MRPA_RECALL_UPDATE_DESCRIPTION)
@@ -181,7 +181,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping()
-    public ResponseEntity<?> updateMrpaRecall(@RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws JAXBException, ParseException {
+    public ResponseEntity<?> updateMrpaRecall(Authentication authentication, @RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws JAXBException, ParseException {
         M4dRecall mrpaRecall = convertMrpaRecallRequestDtoToEntity(mrpaRecallRequestDto);
         if (mrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_ERROR_CONVERT), HttpStatus.BAD_REQUEST);
@@ -205,7 +205,7 @@ public class M4dRevokeController {
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        return findMrpaRecallById(response.getId());
+        return findMrpaRecallById(authentication, response.getId());
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_DELETE_SUMMARY, description = CONTROLLER_MRPA_RECALL_DELETE_DESCRIPTION)
@@ -339,7 +339,7 @@ public class M4dRevokeController {
         if (mrpaRegistryFind == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.BAD_REQUEST);
         }
-        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(mrpaRegistryFind, false, false, false, true);
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, mrpaRegistryFind, false, false, false, true);
         String normalizedResource = new String(resource.getByteArray(), StandardCharsets.UTF_8).replaceAll("\\s+", "");
         String normalizedXmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent().replaceAll("\\s+", "");
         if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
@@ -385,7 +385,7 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
 
-        return findMrpaRecallById(id);
+        return findMrpaRecallById(authentication, id);
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY, description = CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY)
@@ -425,7 +425,7 @@ public class M4dRevokeController {
             filename = filename.substring(0, lastDotIndex);
         }
         if (m4dRecall.getSigFile()==null){
-            M4dRegistryResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(m4d, false, true, false, true);
+            M4dRegistryResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, false, true, false, true);
             String xmlString = m4dResponseDto.recall.getXmlFile().getContent();
             try {
                 response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".xml\"");
