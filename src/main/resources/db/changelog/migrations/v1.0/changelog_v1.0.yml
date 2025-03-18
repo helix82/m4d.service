@@ -51,3 +51,5 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/create_table_m4d_request_search.sql
   - include:
       file: db/changelog/migrations/v1.0/create_table_m4d_request_search_detail.sql
+  - include:
+      file: db/changelog/migrations/v1.0/delete_table_m4d_organisation.sql

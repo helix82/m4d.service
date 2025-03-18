@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface M4dRecallService {
     M4dRecall saveM4dRecall(M4dRecall m4dRecall, String xmlString);
-    List<M4dRegistryResponseDto> findAllMrpaRegistriesWithRecall() throws ParseException;
+    List<M4dRegistryResponseDto> findAllMrpaRegistriesWithRecall(Authentication authentication) throws ParseException;
     M4dRecall findMrpaRecallById(Long id);
     M4dRecall findMrpaRecallByM4dId(Long id);
     M4dRecall findById(Long id);

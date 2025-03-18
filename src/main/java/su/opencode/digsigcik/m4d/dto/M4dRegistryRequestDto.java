@@ -36,6 +36,8 @@ public class M4dRegistryRequestDto {
         private String ogrn;
         private String legalAddress;
         private String regionCode;
+        private String regionName;
+        private String locality;
         private String name;
 
     }

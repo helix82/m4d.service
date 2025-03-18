@@ -85,12 +85,12 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
-    public List<M4dRegistryResponseDto> findAllMrpaRegistriesWithRecall() throws ParseException {
+    public List<M4dRegistryResponseDto> findAllMrpaRegistriesWithRecall(Authentication authentication) throws ParseException {
         List<M4dRecall> m4dRecalls = m4dRevokeRepository.findAll().stream().filter(c -> c.getM4d() != null).collect(Collectors.toList());
         List<M4dRegistryResponseDto> m4DRegistryResponseDtos = new ArrayList<>();
         for (M4dRecall x : m4dRecalls) {
             M4d m4d = m4dRepository.findM4dById(x.getM4d().getId());
-            m4DRegistryResponseDtos.add(m4dService.convertM4dToM4dResponseDto(m4d, false, false, false, false));
+            m4DRegistryResponseDtos.add(m4dService.convertM4dToM4dResponseDto(authentication,  m4d, false, false, false, false));
         }
         return m4DRegistryResponseDtos;
     }
