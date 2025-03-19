@@ -80,6 +80,8 @@ jvmOptions:
   sslJMX: false
   hostnameJMX: localhost
   localOnlyJMX: false
+  timezone: UTC
+  encoding: UTF-8
 
 jarFile: m4d-0.0.1-SNAPSHOT.jar
 
