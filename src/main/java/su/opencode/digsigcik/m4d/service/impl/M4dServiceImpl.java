@@ -1561,10 +1561,16 @@ public class M4dServiceImpl implements M4dService {
             fo.close();
 
             resSig = this.synapiClientService.getPartContainer(tempContainerFile, "detachedSign", bearerToken);
+            String signatureData = "";
+            if (!isBase64(resSig.toString())) {
+                signatureData = Base64.getEncoder().encodeToString(resSig.getByteArray()).replaceAll("\\s+", "");
+            } else {
+                signatureData = resSig.toString().replaceAll("\\s+", "");
+            }
             tempSigFile = "/tmp/" + filename + "_detached.sig";
             tempFileNames.add(tempSigFile);
             fo = new FileOutputStream(tempSigFile);
-            fo.write(resSig.getByteArray());
+            fo.write(signatureData.getBytes());
             fo.close();
 
             tempZipFile = "/tmp" + filename + ".zip";
