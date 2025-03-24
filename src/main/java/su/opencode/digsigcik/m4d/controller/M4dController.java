@@ -39,10 +39,7 @@ import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static java.util.Objects.isNull;
@@ -222,8 +219,8 @@ public class M4dController {
     @PutMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> updateAllDataMrpaRegistry(Authentication authentication, @RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws ParseException {
         M4d m4d = this.m4dService.findById(m4dSaveFullDto.mrpaRegistry.getId());
-        m4d.setStartDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getStartDate()));
-        m4d.setEndDate(this.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getEndDate()));
+        m4d.setStartDate(this.m4dService.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getStartDate()));
+        m4d.setEndDate(this.m4dService.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getEndDate()));
         OrganizationDto organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
@@ -276,7 +273,7 @@ public class M4dController {
     public ResponseEntity<?> uploadSig(Authentication authentication,
                                        @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id,
                                        @RequestPart("container") MultipartFile container,
-                                       @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws IOException, ParseException, JAXBException {
+                                       @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws IOException, ParseException, JAXBException, NoSuchAlgorithmException {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -323,35 +320,6 @@ public class M4dController {
         return new ResponseEntity<>(getCustomErrorJsonFromString("Signature not found"), HttpStatus.BAD_REQUEST);
     }
 
-    @Deprecated()
-    @Operation(summary = CONTROLLER_MRPA_UPLOAD_XML_SUMMARY, description = CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
-            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
-    })
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> upload(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws IOException, ParseException, SAXException, JAXBException {
-        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
-        if (!Objects.equals(extension, "xml")) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT_XML), HttpStatus.BAD_REQUEST);
-        }
-        Long m4dId = this.m4dService.uploadMrpaRegistry(authentication, sourceFile);
-        return new ResponseEntity<>(findMrpaRegistryById(authentication, m4dId), HttpStatus.OK);
-    }
-
-    @Deprecated()
-    @Operation(summary = CONTROLLER_MRPA_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
-            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
-    })
-    @PostMapping(value = "/verify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> verify(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws NoSuchAlgorithmException, ParseException, IOException {
-        return new ResponseEntity<>(m4dService.verify(authentication, sourceFile), HttpStatus.OK);
-    }
-
     @Operation(summary = CONTROLLER_MRPA_CHECK_XML_SUMMARY, description = CONTROLLER_MRPA_CHECK_XML_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
@@ -382,31 +350,6 @@ public class M4dController {
                 return new ResponseEntity<>(reportCreateM4dRequestSearch, HttpStatus.OK);
             }
         }
-    }
-
-    @Deprecated()
-    @Operation(summary = CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY, description = CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
-            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
-    })
-    @PostMapping(value = "/verify/{guid}", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> getStatusVerifyInFns(@PathVariable @Parameter(name = "guid",
-            description = PARAMETER_MRPA_GUID_DESCRIPTION, example = "1") String guid) {
-        if (guid == null || guid.isEmpty()) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(GUID_IS_NULL), HttpStatus.BAD_REQUEST);
-        }
-        M4dVerifyStatus m4dVerifyStatus;
-        try {
-            m4dVerifyStatus = this.m4dService.getStatusVerifyInFns(guid);
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        if (m4dVerifyStatus == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_VERIFY_STATUS_IS_NULL), HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(m4dVerifyStatus, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY,
@@ -577,8 +520,8 @@ public class M4dController {
 
     private M4d convertMrpaRegistryToEntity(M4dRegistryRequestDto.MrpaRegistry mrpaRegistryDto) {
         M4d m4d = new M4d();
-        m4d.setStartDate(this.convertStringToLocalDateTime(mrpaRegistryDto.getStartDate()));
-        m4d.setEndDate(this.convertStringToLocalDateTime(mrpaRegistryDto.getEndDate()));
+        m4d.setStartDate(this.m4dService.convertStringToLocalDateTime(mrpaRegistryDto.getStartDate()));
+        m4d.setEndDate(this.m4dService.convertStringToLocalDateTime(mrpaRegistryDto.getEndDate()));
         m4d.setGuid(mrpaRegistryDto.getGuid());
         return m4d;
     }
@@ -600,7 +543,7 @@ public class M4dController {
         representative.setId(representativeDto.getId());
         representative.setInn(representativeDto.getInn());
         representative.setSnils(representativeDto.getSnils());
-        representative.setBirthDate(this.convertStringToLocalDateTime(representativeDto.getBirthDate()));
+        representative.setBirthDate(this.m4dService.convertStringToLocalDateTime(representativeDto.getBirthDate()));
         return representative;
     }
 
@@ -611,7 +554,7 @@ public class M4dController {
         representativeDetail.setName(representativeDetailDto.getName());
         representativeDetail.setPatronymic(representativeDetailDto.getPatronymic());
         representativeDetail.setSeriesNumber(representativeDetailDto.getSeriesNumber());
-        representativeDetail.setDateIssue(this.convertStringToLocalDateTime(representativeDetailDto.getDateIssue()));
+        representativeDetail.setDateIssue(this.m4dService.convertStringToLocalDateTime(representativeDetailDto.getDateIssue()));
         representativeDetail.setWhoIssue(representativeDetailDto.getWhoIssue());
         representativeDetail.setDepartmentCode(representativeDetailDto.getDepartmentCode());
         representativeDetail.setRepresentativeId(representativeDetailDto.getRepresentativeId());
@@ -622,29 +565,5 @@ public class M4dController {
         Map<String, String> body = new HashMap<>();
         body.put("error", text);
         return body;
-    }
-
-    private LocalDateTime convertStringToLocalDateTime(String date) {
-        DateTimeFormatter formatter;
-        LocalDateTime localDateTime;
-        if (date.length() == 8) {
-            formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            LocalDate localDate = LocalDate.parse(date, formatter);
-            localDateTime = localDate.atStartOfDay().atZone(ZoneOffset.UTC).toLocalDateTime();
-        } else if (date.length() == 10) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            LocalDate localDate = LocalDate.parse(date, formatter);
-            localDateTime = localDate.atStartOfDay().atZone(ZoneOffset.UTC).toLocalDateTime();
-        } else if (date.length() > 20) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
-        } else if (date.length() == 16) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
-        } else {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
-        }
-        return localDateTime;
     }
 }
