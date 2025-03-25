@@ -17,6 +17,7 @@ public class HashUtils {
     private static String M4D_SOUL;
     public static String getHash(byte[] origin) throws NoSuchAlgorithmException {
         String base64Encoded = Base64.toBase64String(origin);
+        // TODO: @helix82 вынести соль во внешний параметр
         //String saltedBase64 = M4D_SOUL + base64Encoded + M4D_SOUL;
         String saltedBase64 = '"' + base64Encoded + '"';
         byte[] hash = hashGOST3411_2012_256(saltedBase64.getBytes(StandardCharsets.UTF_8));

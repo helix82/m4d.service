@@ -7,23 +7,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.FilenameUtils;
 import org.codehaus.plexus.util.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
-import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
-import su.opencode.digsigcik.m4d.dto.M4dRevokeRequestDto;
-import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
-import su.opencode.digsigcik.m4d.dto.ReportDto;
+import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
@@ -33,13 +27,17 @@ import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
+import su.opencode.digsigcik.m4d.service.SynapiClientService;
+import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.LocalDateTime;
@@ -53,31 +51,18 @@ import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 @RequestMapping("/api/v1/m4d/revoke")
 @Tag(name = "M4d Revoke Controller")
 public class M4dRevokeController {
-
-    @Value("${synapi.container.get-part.uri}")
-    private String CONTAINER_PART_URI;
-    @Value("${synapi.container.get-part-json.uri}")
-    private String CONTAINER_PART_JSON_URI;
-
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dRecallService m4dRecallService;
     private final M4dFileService m4dFileService;
-    private final RestTemplate restTemplate;
+    private final SynapiClientService synapiClientService;
 
-    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dFileService m4dFileService, RestTemplate restTemplate) {
+    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dFileService m4dFileService, SynapiClientService synapiClientService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dRecallService = m4dRecallService;
         this.m4dFileService = m4dFileService;
-        this.restTemplate = restTemplate;
-    }
-
-    private static @NotNull HttpHeaders createHttpHeaders(String bearerToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-        headers.setBearerAuth(bearerToken);
-        return headers;
+        this.synapiClientService = synapiClientService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY,
@@ -141,7 +126,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping()
-    public ResponseEntity<?> saveMrpaRecall(Authentication authentication, @RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws JAXBException, ParseException {
+    public ResponseEntity<?> saveMrpaRecall(Authentication authentication, @RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws Exception {
         M4dRecall mrpaRecall = convertMrpaRecallRequestDtoToEntity(mrpaRecallRequestDto);
         if (mrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_ERROR_CONVERT), HttpStatus.BAD_REQUEST);
@@ -171,6 +156,38 @@ public class M4dRevokeController {
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
+
+        String xmlString = "";
+        if (this.m4dService.isBase64(m4dRecallSaved.getM4d().getXmlFile().getContent())) {
+            xmlString = new String(Base64.getDecoder().decode(m4dRecallSaved.getM4d().getXmlFile().getContent()));
+        } else {
+            xmlString = m4dRecallSaved.getM4d().getXmlFile().getContent();
+        }
+        List<String> tempFileNames = new ArrayList<>();
+        String hash;
+        String tempSourceFile;
+        FileOutputStream fo;
+        String filename = m4dRecallSaved.getM4d().getGuid();
+
+        tempSourceFile = "/tmp/" + filename + ".xml";
+        tempFileNames.add(tempSourceFile);
+        fo = new FileOutputStream(tempSourceFile);
+        fo.write(xmlString.getBytes());
+        fo.close();
+        MultipartFile sourceFile = new CustomMultipartFile(new File(tempSourceFile));
+        hash = this.m4dService.getHashXmlM4d(sourceFile);
+        for (String fileName : tempFileNames) {
+            File f = new File(fileName);
+            f.delete();
+        }
+        M4dFnsDataResponse m4dFnsDataResponse = new M4dFnsDataResponse();
+        m4dFnsDataResponse.setGuid(m4dRecallSaved.getM4d().getGuid());
+        m4dFnsDataResponse.setId(hash);
+        m4dFnsDataResponse.setStatus("ONCANCEL");
+        m4dFnsDataResponse.setStatusDateTime(LocalDateTime.now().toString());
+        m4dFnsDataResponse.setStartDateTime(m4dRecallSaved.getM4d().getStartDate().toString());
+        m4dFnsDataResponse.setEndDateTime(m4dRecallSaved.getM4d().getEndDate().toString());
+        ReportCheckStatusM4dDto report = this.m4dService.updateStatusM4d(m4dFnsDataResponse);
         return findMrpaRecallById(authentication, m4dRecallSaved.getId());
     }
 
@@ -285,17 +302,7 @@ public class M4dRevokeController {
             fo = new FileOutputStream(tempFileName);
             fo.write(container.getBytes());
             fo.close();
-
-            LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
-            map.add("container", new FileSystemResource(tempFileName));
-            map.add("reverify",true);
-
-            HttpHeaders headers = createHttpHeaders(bearerToken);
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-            HttpEntity<LinkedMultiValueMap<String, Object>> requestEntity = new HttpEntity<>(map, headers);
-            reportDto = restTemplate.postForObject(CONTAINER_PART_JSON_URI, requestEntity, ReportDto.class);
-
+            reportDto = this.synapiClientService.getReportContainer(tempFileName, true, bearerToken);
             assert reportDto != null;
             reportDto.getResults().stream()
                     .flatMap(result -> result.getVerificationResults().stream())
@@ -307,13 +314,7 @@ public class M4dRevokeController {
                             throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
                         }
                     });
-
-            LinkedMultiValueMap<String, Object> map1 = new LinkedMultiValueMap<>();
-            map1.add("container", new FileSystemResource(tempFileName));
-            map1.add("selector","sourceFile");
-            HttpEntity<MultiValueMap<String, Object>> requestEntity1 = new HttpEntity<>(map1, headers);
-            res = restTemplate.postForObject(CONTAINER_PART_URI, requestEntity1, ByteArrayResource.class);
-
+            res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -323,7 +324,7 @@ public class M4dRevokeController {
             f.delete();
         }
         assert res != null;
-        var resource = new ByteArrayResource(res.getByteArray());
+        byte[] resource = res.getByteArray();
         M4dRecall m4dRecall;
         try {
             m4dRecall = this.m4dRecallService.findMrpaRecallById(id);
@@ -340,7 +341,7 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, mrpaRegistryFind, false, false, false, true);
-        String normalizedResource = new String(resource.getByteArray(), StandardCharsets.UTF_8).replaceAll("\\s+", "");
+        String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
         String normalizedXmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent().replaceAll("\\s+", "");
         if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
@@ -349,23 +350,13 @@ public class M4dRevokeController {
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
         m4dFile.setFilename(container.getOriginalFilename());
-
-        try (InputStream inputStream = container.getInputStream();
-             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                byteArrayOutputStream.write(buffer, 0, bytesRead);
-            }
-            m4dFile.setContent(Arrays.toString(byteArrayOutputStream.toByteArray()));
-        }
+        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
+        m4dFile.setContent(base64Content);
         M4dFile existsM4dFile;
         M4dFile m4dFileSaved;
         Long fileId;
         try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
+            existsM4dFile = this.m4dFileService.findM4dFileByContent(Base64.getEncoder().encodeToString(m4dFile.getContent().getBytes()));
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }

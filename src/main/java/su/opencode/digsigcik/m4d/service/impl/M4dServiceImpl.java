@@ -44,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -1371,7 +1372,7 @@ public class M4dServiceImpl implements M4dService {
         return m4dFullXML;
     }
 
-    private static boolean isBase64(String str) {
+    public boolean isBase64(String str) {
         if (!BASE64_PATTERN.matcher(str).matches()) {
             return false;
         }
@@ -1385,32 +1386,35 @@ public class M4dServiceImpl implements M4dService {
 
     public LocalDateTime convertStringToLocalDateTime(String date) {
         DateTimeFormatter formatter;
-        LocalDateTime localDateTime;
-        if (date.length() == 8) {
-            formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            LocalDate localDate = LocalDate.parse(date, formatter);
-            localDateTime = localDate.atStartOfDay();
-        } else if (date.length() == 10) {
+
+        if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?")) {
+            String dateWithoutMillis = date.split("\\.")[0];
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+            return LocalDateTime.parse(dateWithoutMillis, formatter);
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+            return LocalDateTime.parse(date, formatter);
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+\\-]\\d{2}:\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, formatter);
+            return zonedDateTime.toLocalDateTime();
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+\\-]\\d{2}:\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, formatter);
+            return zonedDateTime.toLocalDateTime();
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            return LocalDateTime.from(formatter.parse(date));
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}")) {
             formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDate localDate = LocalDate.parse(date, formatter);
-            localDateTime = localDate.atStartOfDay();
-        } else if (date.length() == 16) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
-        } else if (date.length() == 23) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
-        } else if (date.length() == 25) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
-        } else if (date.length() > 25) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
-        } else {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
-            localDateTime = LocalDateTime.from(formatter.parse(date));
+            return localDate.atStartOfDay();
+        } else if (date.matches("\\d{4}\\d{2}\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            LocalDate localDate = LocalDate.parse(date, formatter);
+            return localDate.atStartOfDay();
         }
-        return localDateTime;
+        return null;
     }
 
     private M4dRegistryResponseDto.SigFileDto convertSigFileToDto(M4dFile m4dFile) {
@@ -1620,10 +1624,18 @@ public class M4dServiceImpl implements M4dService {
             m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
             M4dRequestSearchDetail m4dRequestSearchDetailNew = new M4dRequestSearchDetail();
             m4dRequestSearchDetailNew.setStatus(m4dFnsDataResponse.getStatus());
-            m4dRequestSearchDetailNew.setStatusDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
-            m4dRequestSearchDetailNew.setRegistrationDate(convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
-            m4dRequestSearchDetailNew.setStartDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
-            m4dRequestSearchDetailNew.setEndDate(convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
+            if (m4dFnsDataResponse.getStatusDateTime() != null) {
+                m4dRequestSearchDetailNew.setStatusDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStatusDateTime()));
+            }
+            if (m4dFnsDataResponse.getCreatedDateTime() != null) {
+                m4dRequestSearchDetailNew.setRegistrationDate(convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
+            }
+            if (m4dFnsDataResponse.getStartDateTime() != null) {
+                m4dRequestSearchDetailNew.setStartDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
+            }
+            if (m4dFnsDataResponse.getEndDateTime() != null) {
+                m4dRequestSearchDetailNew.setEndDate(convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
+            }
             m4dRequestSearchDetailNew.setActive(true);
             m4dRequestSearchDetailNew.setRequestSearchId(m4dRequestSearch.getId());
             if (m4dRequestSearchDetail != null) {
