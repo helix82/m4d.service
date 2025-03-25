@@ -45,4 +45,5 @@ public interface M4dService {
     ReportValidSchemeDto validXmlM4dScheme(MultipartFile sourceFile, String reqScheme) throws IOException, SAXException;
     ReportCheckStatusM4dDto updateStatusM4d(M4dFnsDataResponse m4dFnsDataResponse);
     LocalDateTime convertStringToLocalDateTime(String date);
+    boolean isBase64(String str);
 }
