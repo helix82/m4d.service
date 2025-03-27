@@ -1377,6 +1377,9 @@ public class M4dServiceImpl implements M4dService {
             formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
             LocalDate localDate = LocalDate.parse(date, formatter);
             return localDate.atStartOfDay();
+        } else if (date.charAt(date.length() - 1) == 'Z') {
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DateTimeFormatter.ISO_DATE_TIME);
+            return zonedDateTime.toLocalDateTime();
         }
         return null;
     }
