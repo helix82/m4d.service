@@ -112,7 +112,7 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
-    String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД";
+    String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД в запросе РР МЧД";
     String CONTROLLER_MRPA_UPDATE_STATUS_DESCRIPTION = "Возвращает данные о статусе МЧД";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
     String CONTROLLER_MRPA_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";

@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.plexus.util.StringUtils;
@@ -42,6 +43,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -91,6 +94,12 @@ public class M4dServiceImpl implements M4dService {
     @Override
     public M4d saveMrpaRegistry(@NotNull M4d m4d) {
         return this.m4dRepository.save(m4d);
+    }
+
+    @Override
+    public M4d updateStatusM4d(Long id, String status) {
+        this.m4dRepository.updateStatusM4d(id, status);
+        return this.m4dRepository.findM4dById(id);
     }
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
@@ -206,7 +215,7 @@ public class M4dServiceImpl implements M4dService {
         m4d.setRepresentativeId(represId);
         m4d.setRepresentativeDetailId(represDetailId);
         if (m4d.getStatus()==null){
-            m4d.setStatus("CREATED");
+            m4d.setStatus("DRAFT");
         }
 
         String idFile = this.getSubstringFromXml(xmlString, "ИдФайл=\"");
@@ -635,80 +644,19 @@ public class M4dServiceImpl implements M4dService {
 
     public String getStatusM4d(Long id) throws ParseException {
         M4d mrpaRegistry = this.m4dRepository.findM4dById(id);
-//        Date currentDT = Date.from(Instant.now());
-//        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(mrpaRegistry.getStartDate()));
-//        Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(mrpaRegistry.getEndDate()));
-//        if (currentDT.before(startDate) && currentDT.after(endDate)) {
-//            return "EXPIRED";
-//        }
-//        M4dRecall m4dRecall = this.m4dRecallService.findMrpaRecallByM4dId(id);
-//        if (m4dRecall != null) {
-//            if (m4dRecall.getSigFile() != null) {
-//                return "WITHDRAWN";
-//            } else {
-//                return "WITHDRAWAL";
-//            }
-//        } else {
-//            if (mrpaRegistry.getSigFile() != null) {
-//                return "VALID";
-//            } else {
-//                return "NOT_SIGNED";
-//            }
-//        }
-        String hash = "";
-        if (mrpaRegistry.getXmlFile() != null) {
-            M4dFile xmlFile;
-            try {
-                xmlFile = this.m4dFileService.findM4dFileById(mrpaRegistry.getXmlFile().getId());
-                if (xmlFile != null) {
-                    M4dRegistryResponseDto.XmlFileDto xmlFileDTO = convertXmlFileToDto(xmlFile);
-                    if (isBase64(xmlFileDTO.getContent())) {
-                        xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
-                    } else {
-                        xmlFileDTO.setContent(xmlFileDTO.getContent());
-                    }
-
-                    String xmlString = xmlFileDTO.getContent();
-                    List<String> tempFileNames = new ArrayList<>();
-                    String tempSourceFile;
-                    FileOutputStream fo;
-                    String filename = mrpaRegistry.getGuid();
-
-                    tempSourceFile = "/tmp/" + filename + ".xml";
-                    tempFileNames.add(tempSourceFile);
-                    fo = new FileOutputStream(tempSourceFile);
-                    fo.write(xmlString.getBytes());
-                    fo.close();
-                    MultipartFile sourceFile = new CustomMultipartFile(new File(tempSourceFile));
-                    hash = this.getHashXmlM4d(sourceFile);
-                    for (String fileName : tempFileNames) {
-                        File f = new File(fileName);
-                        f.delete();
-                    }
-                }
-            } catch (Exception e) {
-                throw new BadRequestException(e.getMessage());
+        Date currentDT = Date.from(Instant.now());
+        Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(mrpaRegistry.getStartDate()));
+        Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(mrpaRegistry.getEndDate()));
+        if (Objects.equals(mrpaRegistry.getStatus(), "ACTIVE")) {
+            if (currentDT.before(startDate)) {
+                return "REGISTERED";
+            } else if (currentDT.after(endDate)) {
+                return "EXPIRED";
+            } else {
+                return mrpaRegistry.getStatus();
             }
-        }
-        M4dRequestSearch m4dRequestSearch;
-        try {
-            m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(mrpaRegistry.getGuid(), hash);
-        } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        if (m4dRequestSearch != null){ // запрос найден
-            M4dRequestSearchDetail m4dRequestSearchDetail;
-            try {
-                m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
-            } catch (Exception e) {
-                throw new BadRequestException(e.getMessage());
-            }
-            if(m4dRequestSearchDetail == null) {
-                throw new BadRequestException("Активных деталей запроса статуса МЧД в РР МЧД не найдено");
-            }
-            return m4dRequestSearchDetail.getStatus();
-        } else { // запрос не найден
-            return "DRAFT";
+        } else {
+            return mrpaRegistry.getStatus();
         }
     }
 
@@ -918,7 +866,20 @@ public class M4dServiceImpl implements M4dService {
             ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
             report.setReport(rep);
             rep.setGuid(getGuidFromXml(sourceFile));
-            rep.setStatus(m4dRegistryResponseDto.getStatus());
+            Date currentDT = Date.from(Instant.now());
+            Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(m4dRegistryResponseDto.getStartDate()));
+            Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(m4dRegistryResponseDto.getEndDate()));
+            if (Objects.equals(m4dRegistryResponseDto.getStatus(), "ACTIVE")) {
+                if (currentDT.before(startDate)) {
+                    rep.setStatus("REGISTERED");
+                } else if (currentDT.after(endDate)) {
+                    rep.setStatus("EXPIRED");
+                } else {
+                    rep.setStatus(m4dRegistryResponseDto.getStatus());
+                }
+            } else {
+                rep.setStatus(m4dRegistryResponseDto.getStatus());
+            }
             rep.setStartDate(getStartDateM4dFromXml(sourceFile));
             rep.setEndDate(getEndDateM4dFromXml(sourceFile));
             rep.setCredentials(getCredentialM4dFromXml(sourceFile));
@@ -992,6 +953,7 @@ public class M4dServiceImpl implements M4dService {
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             String dateCreate = m4dXml.getIdFile().substring(9, 17);
             m4d.setCreateDate(convertStringToLocalDateTime(dateCreate));
+            m4d.setStatus("DRAFT");
             m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
             m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
@@ -1087,8 +1049,9 @@ public class M4dServiceImpl implements M4dService {
                 fo = new FileOutputStream(tempFileName);
                 fo.write(container.getBytes());
                 fo.close();
-
-                reportDto = this.synapiClientService.getReportContainer(tempFileName, true, bearerToken);
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
+                reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
 
                 assert reportDto != null;
                 if (reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
@@ -1138,6 +1101,7 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(e.getMessage());
         }
         m4d.setSigFile(Objects.requireNonNullElse(existsM4dFile, m4dFile));
+        m4d.setStatus("ONCHECK");
 
         M4d m4dSaved;
         try {
@@ -1617,7 +1581,7 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
-    public ReportCheckStatusM4dDto updateStatusM4d(M4dFnsDataResponse m4dFnsDataResponse) {
+    public ReportCheckStatusM4dDto updateStatusM4dRequestSearch(M4dFnsDataResponse m4dFnsDataResponse) {
         M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dFnsDataResponse.getGuid(), m4dFnsDataResponse.getId());
         M4dRequestSearchDetail m4dRequestSearchDetail;
         if (m4dRequestSearch != null) {

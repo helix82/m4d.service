@@ -91,7 +91,7 @@ public class M4dController {
         m4dSaveFullDto.setCreateDate(LocalDateTime.now().toString());
         M4d m4d = convertMrpaRegistryToEntity(m4dSaveFullDto.mrpaRegistry);
         m4d.setCreateDate(LocalDateTime.now());
-        m4d.setStatus("CREATED");
+        m4d.setStatus("DRAFT");
         OrganizationDto organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
@@ -235,7 +235,6 @@ public class M4dController {
         return findMrpaRegistryById(authentication, m4dUpdated);
     }
 
-    //TODO: @helix82 При удалении физически не удаляем а ставим пометку об удалении
     @Operation(summary = CONTROLLER_MRPA_DELETE_SUMMARY, description = CONTROLLER_MRPA_DELETE_DESCRIPTION)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
@@ -308,6 +307,7 @@ public class M4dController {
         if (mrpaRegistry.getSigFile() != null) {
             Long fileId = mrpaRegistry.getSigFile().getId();
             mrpaRegistry.setSigFile(null);
+            mrpaRegistry.setStatus("DRAFT");
             M4d mrpaRegistrySaved;
             try {
                 mrpaRegistrySaved = this.m4dService.saveMrpaRegistry(mrpaRegistry);
@@ -509,9 +509,9 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping(value = "/status", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> updateStatusM4d(@RequestBody M4dFnsDataResponse m4dFnsDataResponse) {
+    public ResponseEntity<?> updateStatusM4dRequestSearch(@RequestBody M4dFnsDataResponse m4dFnsDataResponse) {
         ReportCheckStatusM4dDto report;
-        report = m4dService.updateStatusM4d(m4dFnsDataResponse);
+        report = m4dService.updateStatusM4dRequestSearch(m4dFnsDataResponse);
         if (report == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString("В ПЭП не найден запрос на получение статуса о МЧД в РР МЧД"), HttpStatus.BAD_REQUEST);
         }

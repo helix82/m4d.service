@@ -120,6 +120,11 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
+    public void updateStatusMrpaRecallById(Long id, String status) {
+        this.m4dRevokeRepository.updateStatusMrpaRecallById(id, status);
+    }
+
+    @Override
     public M4dRecall updateMrpaRecall(M4dRecall mrpaRecall) {
         return this.m4dRevokeRepository.save(mrpaRecall);
     }
@@ -159,29 +164,14 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
         M4dRevokeXml.Document.RecallWho recallWho = new M4dRevokeXml.Document.RecallWho();
         document.setRecallWho(recallWho);
-
-//        if (mrpaRegistryResponseDto.recall.getAuthor().equals("PRINCIPAL")) {
-            M4dRevokeXml.Document.RecallWho.Principal principal = new M4dRevokeXml.Document.RecallWho.Principal();
-            recallWho.setPrincipal(principal);
-            M4dRevokeXml.Document.RecallWho.Principal.LegalEntity legalEntity = new M4dRevokeXml.Document.RecallWho.Principal.LegalEntity();
-            legalEntity.setName(mrpaRegistryResponseDto.organization.getName());
-            legalEntity.setInn(mrpaRegistryResponseDto.organization.getInn());
-            legalEntity.setKpp(mrpaRegistryResponseDto.organization.getKpp());
-            legalEntity.setOgrn(mrpaRegistryResponseDto.organization.getOgrn());
-            principal.setLegalEntity(legalEntity);
-//        } else if (mrpaRegistryResponseDto.recall.getAuthor().equals("REPRESENTATIVE")) {
-//            M4dRevokeXml.Document.RecallWho.Representative representative = new M4dRevokeXml.Document.RecallWho.Representative();
-//            recallWho.setRepresentative(representative);
-//            M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative detailRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative();
-//            detailRepresentative.setInn(mrpaRegistryResponseDto.representative.getInn());
-//            detailRepresentative.setSnils(mrpaRegistryResponseDto.representative.getSnils());
-//            M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative fioRepresentative = new M4dRevokeXml.Document.RecallWho.Representative.DetailRepresentative.FioRepresentative();
-//            fioRepresentative.setName(mrpaRegistryResponseDto.representativeDetail.getName());
-//            fioRepresentative.setSurname(mrpaRegistryResponseDto.representativeDetail.getSurname());
-//            fioRepresentative.setPatronymic(mrpaRegistryResponseDto.representativeDetail.getPatronymic());
-//            representative.setDetailRepresentative(detailRepresentative);
-//            detailRepresentative.setFioRepresentative(fioRepresentative);
-//        }
+        M4dRevokeXml.Document.RecallWho.Principal principal = new M4dRevokeXml.Document.RecallWho.Principal();
+        recallWho.setPrincipal(principal);
+        M4dRevokeXml.Document.RecallWho.Principal.LegalEntity legalEntity = new M4dRevokeXml.Document.RecallWho.Principal.LegalEntity();
+        legalEntity.setName(mrpaRegistryResponseDto.organization.getName());
+        legalEntity.setInn(mrpaRegistryResponseDto.organization.getInn());
+        legalEntity.setKpp(mrpaRegistryResponseDto.organization.getKpp());
+        legalEntity.setOgrn(mrpaRegistryResponseDto.organization.getOgrn());
+        principal.setLegalEntity(legalEntity);
 
         return mrpaRecallXml;
     }

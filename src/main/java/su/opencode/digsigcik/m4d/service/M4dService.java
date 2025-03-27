@@ -20,6 +20,7 @@ import java.util.List;
 public interface M4dService {
     List<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication) throws ParseException;
     M4d saveMrpaRegistry(@NotNull M4d m4d);
+    M4d updateStatusM4d(Long id, String status);
     Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials, String xmlString);
     Long updateAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
     Integer countM4dByGuid(@NotNull String guid);
@@ -43,7 +44,7 @@ public interface M4dService {
     String getGuidFromXml(MultipartFile sourceFile);
     String getHashXmlM4d(MultipartFile sourceFile) throws Exception;
     ReportValidSchemeDto validXmlM4dScheme(MultipartFile sourceFile, String reqScheme) throws IOException, SAXException;
-    ReportCheckStatusM4dDto updateStatusM4d(M4dFnsDataResponse m4dFnsDataResponse);
+    ReportCheckStatusM4dDto updateStatusM4dRequestSearch(M4dFnsDataResponse m4dFnsDataResponse);
     LocalDateTime convertStringToLocalDateTime(String date);
     boolean isBase64(String str);
 }

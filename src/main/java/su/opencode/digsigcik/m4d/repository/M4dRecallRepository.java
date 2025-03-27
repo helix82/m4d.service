@@ -32,4 +32,9 @@ public interface M4dRecallRepository extends JpaRepository<M4dRecall, Long> {
     @Transactional
     @Query(value = "UPDATE m4d_revoke SET sig_file_id = :fileId WHERE id = :id", nativeQuery = true)
     void updateMrpaRecallById(@Param("id") Long id, @Param("fileId") Long fileId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE m4d_revoke SET status = :status WHERE id = :id", nativeQuery = true)
+    void updateStatusMrpaRecallById(@Param("id") Long id, @Param("status")  String status);
 }
