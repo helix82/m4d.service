@@ -1,9 +1,11 @@
 package su.opencode.digsigcik.m4d.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.model.M4d;
 
@@ -16,6 +18,11 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
     M4d findM4dById(Long id);
     List<M4d> findByPrincipalId(Long id);
     List<M4d> findByRepresentativeId(Long id);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE m4d_registry SET status = :status WHERE id = :id", nativeQuery = true)
+    void updateStatusM4d(@Param("id") Long id, @Param("status")  String status);
 
     List<M4d> findAll();
 

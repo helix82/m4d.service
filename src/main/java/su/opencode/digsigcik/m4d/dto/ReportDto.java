@@ -95,7 +95,7 @@ public class ReportDto {
                     @JsonProperty("Result")
                     private boolean result;
                     @JsonProperty("Error")
-                    private String error;
+                    private ResultError error;
                 }
 
                 @Data
@@ -107,19 +107,19 @@ public class ReportDto {
                     @JsonProperty("Result")
                     private boolean result;
                     @JsonProperty("Errors")
-                    private List<CertificateResultError> errors;
+                    private List<ResultError> errors;
+                }
 
-                    @Data
-                    @AllArgsConstructor
-                    @NoArgsConstructor
-                    @Builder
-                    @JsonIgnoreProperties(ignoreUnknown = true)
-                    public static class CertificateResultError {
-                        @JsonProperty("ErrorCode")
-                        private String errorCode;
-                        @JsonProperty("ErrorMessage")
-                        private String errorMessage;
-                    }
+                @Data
+                @AllArgsConstructor
+                @NoArgsConstructor
+                @Builder
+                @JsonIgnoreProperties(ignoreUnknown = true)
+                public static class ResultError {
+                    @JsonProperty("ErrorCode")
+                    private String errorCode;
+                    @JsonProperty("ErrorMessage")
+                    private String errorMessage;
                 }
             }
 
