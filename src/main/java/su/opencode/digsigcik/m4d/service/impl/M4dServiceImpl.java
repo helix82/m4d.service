@@ -321,7 +321,6 @@ public class M4dServiceImpl implements M4dService {
         //------------------- save organisation ----------------
         OrganizationDto existsOrganisation;
         try {
-            //existsOrganisation = this.organisationService.findByOrganisationInn(organisation.getInn());
             existsOrganisation = this.refBookClientService.findByOrganisationInn(organisation.getInn(), bearerToken);
             if (existsOrganisation != null) {
                 organisation.setId(existsOrganisation.getId());
@@ -348,9 +347,6 @@ public class M4dServiceImpl implements M4dService {
         try {
             existsPrincipal = this.principalService.findByPrincipalId(m4d.getPrincipalId());
             if (existsPrincipal != null) {
-                if (!existsPrincipal.getInn().equals(principal.getInn())) {
-                    throw new BadRequestException("Переданная ИНН доверителя не соответствует хранящейся в ПЭП. Добавьте МЧД по новой.");
-                }
                 principal.setId(existsPrincipal.getId());
             }
             Principal respPrincipal;
@@ -411,9 +407,6 @@ public class M4dServiceImpl implements M4dService {
         try {
             existsRepresentative = this.representativeService.findByRepresentativeId(m4d.getRepresentativeId());
             if (existsRepresentative != null) {
-                if (!existsRepresentative.getInn().equals(representative.getInn())) {
-                    throw new BadRequestException("Переданная ИНН представителя не соответствует хранящейся в ПЭП. Добавьте МЧД по новой.");
-                }
                 representative.setId(existsRepresentative.getId());
             }
             Representative respRepresentative;
