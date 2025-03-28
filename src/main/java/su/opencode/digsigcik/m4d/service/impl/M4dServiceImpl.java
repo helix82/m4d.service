@@ -600,11 +600,11 @@ public class M4dServiceImpl implements M4dService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<M4dRegistryResponseDto> findAllM4dUsers(Authentication authentication) {
+    public List<M4dRegistryResponseDto> findAllM4dUsers(Authentication authentication) throws ParseException {
         Set<String> setINNs = userCertificateService.getUserCertificateINNs(authentication);
 
-        // TODO: когда будут связи переделать запрос в части маппинга
-        return m4dRepository.findListM4dBySetInn(setINNs).stream()
+        return this.findAllMrpaRegistry(authentication).stream()
+                .filter(x -> setINNs.contains(x.principal.getInn()) || setINNs.contains(x.representative.getInn()))
                 .peek(m4d -> {
                     try {
                         Long id = m4d.getId();
@@ -613,8 +613,7 @@ public class M4dServiceImpl implements M4dService {
                     } catch (ParseException e) {
                         throw new M4dException(e.getMessage());
                     }
-                })
-                .collect(Collectors.toList());
+                }).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
