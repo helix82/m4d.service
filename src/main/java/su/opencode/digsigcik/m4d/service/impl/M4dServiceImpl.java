@@ -97,6 +97,11 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
+    public M4d updateM4d(@NotNull M4d m4d) {
+        return this.m4dRepository.save(m4d);
+    }
+
+    @Override
     public M4d updateStatusM4d(Long id, String status) {
         this.m4dRepository.updateStatusM4d(id, status);
         return this.m4dRepository.findM4dById(id);
@@ -1607,6 +1612,54 @@ public class M4dServiceImpl implements M4dService {
             m4dRequestSearchDetailSaved = this.m4dRequestService.saveM4dRequestSearchDetail(m4dRequestSearchDetailNew);
                 if(m4dRequestSearchDetailSaved == null) {
                     throw new BadRequestException("Активных деталей запроса статуса МЧД в РР МЧД не найдено");
+                }
+                M4d m4d;
+                try {
+                    m4d = this.findMrpaRegistryByGuid(m4dFnsDataResponse.getGuid());
+                } catch (Exception e) {
+                    throw new BadRequestException(e.getMessage());
+                }
+                String statusM4d = "";
+                String statusDetailM4d = "";
+                if (m4d != null) {
+                    switch (m4dRequestSearchDetailSaved.getStatus()) {
+                        case "ONCHECK":
+                            statusM4d = "ONCHECK";
+                            break;
+                        case "ERROR":
+                            statusM4d = "ERROR";
+                            break;
+                        case "PROCESSING":
+                            statusM4d = "";
+                            break;
+                        case "REJECTED":
+                            statusM4d = "ERROR";
+                            statusDetailM4d = "МЧД не принята РР МЧД на хранение";
+                            break;
+                        case "CREATED":
+                            statusM4d = "ACTIVE";
+                            break;
+                        case "ACTIVE":
+                            statusM4d = "ACTIVE";
+                            break;
+                        case "EXPIRED":
+                            statusM4d = "ACTIVE";
+                            break;
+                        case "REVOKED":
+                            statusM4d = "REVOKED";
+                            break;
+                    }
+                    if (!statusM4d.isEmpty()) {
+                        m4d.setStatus(statusM4d);
+                    }
+                    if (!statusDetailM4d.isEmpty()) {
+                        m4d.setErrorDetail(statusDetailM4d);
+                    }
+                    try {
+                        this.updateM4d(m4d);
+                    } catch (Exception e) {
+                        throw new BadRequestException(e.getMessage());
+                    }
                 }
                 ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
                 report.setSource("m4d_rr");
