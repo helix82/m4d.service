@@ -7,4 +7,6 @@ import su.opencode.digsigcik.m4d.model.M4dRequestSearchDetail;
 public interface M4dRequestDetailRepository extends JpaRepository<M4dRequestSearchDetail, Long> {
     @Query(value = "SELECT rsd FROM M4dRequestSearchDetail rsd WHERE rsd.requestSearchId=?1 and rsd.isActive=true")
     M4dRequestSearchDetail findByRequestSearchId(Long id);
+    @Query(value = "delete from M4dRequestSearchDetail rsd where rsd.requestSearchId=?1")
+    void deleteByRequestSearchId(Long id);
 }

@@ -11,4 +11,5 @@ public interface M4dRequestService {
     M4dRequestSearch saveM4dRequestSearch(M4dRequestSearch m4dRequestSearch);
     M4dRequestSearchDetail saveM4dRequestSearchDetail(M4dRequestSearchDetail m4dRequestSearchDetail);
     M4dRequestSearchDetail updateM4dRequestSearchDetail(M4dRequestSearchDetail m4dRequestSearchDetail);
+    void deleteM4dRequestSearch(@NotNull String guid);
 }
