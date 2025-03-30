@@ -23,7 +23,7 @@ public class M4dRequestServiceImpl implements M4dRequestService {
     private final M4dRequestDetailRepository detailRepository;
 
     public M4dRequestSearch findM4dRequestByGuidAndHash(@NotNull String guid, @NotNull String hash) {
-        return repository.findByGuidAndAndHashXml(guid, hash);
+        return repository.findByGuidAndHashXml(guid, hash);
     }
 
     public M4dRequestSearchDetail findM4dRequestDetailByM4dRequestId(@NotNull Long id) {
@@ -40,5 +40,11 @@ public class M4dRequestServiceImpl implements M4dRequestService {
 
     public M4dRequestSearchDetail updateM4dRequestSearchDetail(M4dRequestSearchDetail m4dRequestSearchDetail) {
         return detailRepository.save(m4dRequestSearchDetail);
+    }
+
+    public void deleteM4dRequestSearch(@NotNull String guid) {
+        M4dRequestSearch requestSearch = repository.findByGuid(guid);
+        detailRepository.deleteByRequestSearchId(requestSearch.getId());
+        repository.deleteById(requestSearch.getId());
     }
 }

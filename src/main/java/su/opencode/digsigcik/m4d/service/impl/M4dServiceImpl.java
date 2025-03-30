@@ -858,7 +858,7 @@ public class M4dServiceImpl implements M4dService {
         }
         if (m4d != null) { //мчд в пэп найдено
             ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
-            M4dRegistryResponseDto m4dRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, false, false, false, false);
+            M4dRegistryResponseDto m4dRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, true, false, false, false);
             report.setSource("m4d_pep");
             ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
             report.setReport(rep);
@@ -880,7 +880,14 @@ public class M4dServiceImpl implements M4dService {
             rep.setStartDate(getStartDateM4dFromXml(sourceFile));
             rep.setEndDate(getEndDateM4dFromXml(sourceFile));
             rep.setCredentials(getCredentialM4dFromXml(sourceFile));
-
+            if (m4dRegistryResponseDto.getSigFile() != null) {
+                ReportCheckStatusM4dDto.Report.SigFileDto sigFile = new ReportCheckStatusM4dDto.Report.SigFileDto();
+                sigFile.setId(m4dRegistryResponseDto.getSigFile().getId());
+                sigFile.setFileLogicalType(m4dRegistryResponseDto.getSigFile().getFileLogicalType().getValue());
+                sigFile.setFileMimeType(m4dRegistryResponseDto.getSigFile().getFileMimeType().getValue());
+                sigFile.setFilename(m4dRegistryResponseDto.getSigFile().getFilename());
+                rep.setSigFile(sigFile);
+            }
             List<ReportCheckStatusM4dDto.Report.Representative> representativeList = new ArrayList<>();
             ReportCheckStatusM4dDto.Report.Representative representative = new ReportCheckStatusM4dDto.Report.Representative();
             String fioRepres = m4dRegistryResponseDto.representativeDetail.getSurname() + " "
@@ -1121,6 +1128,11 @@ public class M4dServiceImpl implements M4dService {
         fo1.write(xmlString.getBytes());
         fo1.close();
         MultipartFile sourceFile = new CustomMultipartFile(new File(tempSourceFile));
+
+        ReportCheckStatusM4dDto reportM4dRequestSearch = this.getReportM4dRequestSearchForFindPep(sourceFile);
+        if (reportM4dRequestSearch != null) { // запрос найден, удаляем его
+            m4dRequestService.deleteM4dRequestSearch(reportM4dRequestSearch.report.getGuid());
+        }
         ReportCheckStatusM4dDto reportCreateM4dRequestSearch = this.createM4dRequestSearchForFindRR(sourceFile);
         for (String fileName : tmpFileNames) {
             File f = new File(fileName);

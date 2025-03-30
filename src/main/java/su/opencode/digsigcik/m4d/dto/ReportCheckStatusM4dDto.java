@@ -60,6 +60,23 @@ public class ReportCheckStatusM4dDto {
             @JsonProperty("name")
             private String name;
         }
+
+        @JsonProperty("sigFile")
+        private SigFileDto sigFile;
+
+        @Data
+        public static class SigFileDto {
+            @JsonProperty("id")
+            private Long id;
+            @JsonProperty("fileLogicalType")
+            private String fileLogicalType;
+            @JsonProperty("fileMimeType")
+            private String fileMimeType;
+            @JsonProperty("filename")
+            private String filename;
+            @JsonProperty("content")
+            private String content;
+        }
     }
 
 }
