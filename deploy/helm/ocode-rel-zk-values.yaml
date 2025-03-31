@@ -66,6 +66,12 @@ secret:
     M4D_API_RR_FNS_URI: aHR0cHM6Ly9vcGVyYXRvci5jcHJyLWl0LndlaW50ZWdyYXRvci5jb20vYXBpL3YwPT0=
     #http://synapi-service.release-zk.svc.cluster.local/api/v1/container/create
     CONTAINER_CREATE_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utemsuc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9jcmVhdGU=
+    #http://ref-book-service.release-zk.svc.cluster.local:8055/api/v1/ref-book/organization
+    ORGANIZATION_CREATE_URI: aHR0cDovL3JlZi1ib29rLXNlcnZpY2UucmVsZWFzZS16ay5zdmMuY2x1c3Rlci5sb2NhbDo4MDU1L2FwaS92MS9yZWYtYm9vay9vcmdhbml6YXRpb24=
+    #http://ref-book-service.release-zk.svc.cluster.local:8055/api/v1/ref-book/organization/inn
+    ORGANIZATION_FIND_BY_INN_URI: aHR0cDovL3JlZi1ib29rLXNlcnZpY2UucmVsZWFzZS16ay5zdmMuY2x1c3Rlci5sb2NhbDo4MDU1L2FwaS92MS9yZWYtYm9vay9vcmdhbml6YXRpb24vaW5u
+    #"
+    M4D_SOUL: Ig==
     SERVER_PORT: ODA1MQ==
     #sep
     RESOURCE_ACCESS: c2Vw
@@ -120,6 +126,9 @@ env:
   DISABLE_TLS_CHECK: DISABLE_TLS_CHECK
   M4D_API_RR_FNS_URI: M4D_API_RR_FNS_URI
   CONTAINER_CREATE_URI: CONTAINER_CREATE_URI
+  ORGANIZATION_CREATE_URI: ORGANIZATION_CREATE_URI
+  ORGANIZATION_FIND_BY_INN_URI: ORGANIZATION_FIND_BY_INN_URI
+  M4D_SOUL: M4D_SOUL
 
 appName: m4d
 
