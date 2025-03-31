@@ -34,10 +34,11 @@ secret:
   enabled: true
   name: m4d-back-cred
   data:
-    #jdbc:postgresql://db-pgsql.pep.cp01.cikrf.cp:5432/m4d_db
-    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vZGItcGdzcWwucGVwLmNwMDEuY2lrcmYuY3A6NTQzMi9tNGRfZGI=
+    # jdbc:postgresql://10.0.248.59:5432/m4d_db
+    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMTAuMC4yNDguNTk6NTQzMi9tNGRfZGI=
+    # pep
     SPRING_DATASOURCE_USERNAME: cGVw
-    #jwjljrrjy
+    # jwjljrrjy
     SPRING_DATASOURCE_PASSWORD: andqbGpycmp5
     #https://sso.prpd.cikcp.ru:8443/realms/ozk/protocol/openid-connect/auth
     RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28ucHJwZC5jaWtjcC5ydTo4NDQzL3JlYWxtcy9vemsvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvYXV0aA==
@@ -80,6 +81,8 @@ jvmOptions:
   sslJMX: false
   hostnameJMX: localhost
   localOnlyJMX: false
+  timezone: UTC
+  encoding: UTF-8
 
 jarFile: m4d-0.0.1-SNAPSHOT.jar
 

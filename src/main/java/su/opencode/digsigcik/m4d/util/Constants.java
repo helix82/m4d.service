@@ -112,6 +112,8 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД в запросе РР МЧД";
+    String CONTROLLER_MRPA_UPDATE_STATUS_DESCRIPTION = "Возвращает данные о статусе МЧД";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
     String CONTROLLER_MRPA_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
     String CONTROLLER_MRPA_UPLOAD_SUMMARY = "Загрузить ЭП";
@@ -120,6 +122,8 @@ public interface Constants {
     String CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_VERIFY_XML_SUMMARY = "Проверка МЧД в ПЭП или на РР ФНС";
     String CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION = "Возвращает результат проверки";
+    String CONTROLLER_MRPA_CHECK_XML_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС";
+    String CONTROLLER_MRPA_CHECK_XML_DESCRIPTION = "Возвращает отчёт результата проверки";
     String CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY = "Получить статус проверки МЧД через РР ФНС";
     String CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION = "Возвращает запись статуса проверки МЧД";
     String CONTROLLER_MRPA_CLEAR_SIG_SUMMARY = "Удалить ЭП МЧД";
@@ -145,6 +149,8 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY = "Загрузить ЭП заявления на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY = "Получить XML отзыв МЧД и открепленную подпись в zip-архиве";
+    String CONTROLLER_MRPA_VALID_SCHEME_SUMMARY = "Проверить соответствие МЧД схеме";
+    String CONTROLLER_MRPA_VALID_SCHEME_DESCRIPTION = "Возвращает JSON ответ результата проверки";
 
     String CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY = "Получить список полномочий";
     String CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION = "Возвращает список полномочий";

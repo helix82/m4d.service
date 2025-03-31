@@ -11,5 +11,5 @@ public class M4dVerifyStatusDto {
     private LocalDateTime verifyDate;
     private String status;
     private String source;
-    private M4dResponseDto m4d;
+    private M4dRegistryResponseDto m4d;
 }

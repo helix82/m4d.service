@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "m4d_verify_status")
-public class M4dVerifyStatus {
+@Table(name = "m4d_request_search")
+public class M4dRequestSearch {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(example = "1", required = true)
@@ -29,15 +29,21 @@ public class M4dVerifyStatus {
     @AllowAudit
     private String guid;
 
-    @Column(name = "verify_date")
+    @Column(name = "hash_xml", columnDefinition = "TEXT")
     @Schema(example = "")
-    @JsonProperty("verifyDate")
+    @JsonProperty("hashXml")
     @AllowAudit
-    private LocalDateTime verifyDate;
+    private String hashXml;
 
-    @Column(name = "status", columnDefinition = "VARCHAR(255)")
-    @Schema(example = "1")
-    @JsonProperty("status")
+    @Column(name = "create_date")
+    @Schema(example = "")
+    @JsonProperty("createDate")
     @AllowAudit
-    private String status;
+    private LocalDateTime createDate;
+
+    @Column(name = "modify_date")
+    @Schema(example = "")
+    @JsonProperty("modifyDate")
+    @AllowAudit
+    private LocalDateTime modifyDate;
 }

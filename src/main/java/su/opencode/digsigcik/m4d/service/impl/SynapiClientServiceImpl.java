@@ -3,6 +3,7 @@ package su.opencode.digsigcik.m4d.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpMethod;
@@ -10,12 +11,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
-import su.opencode.digsigcik.m4d.dto.ReportDto;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.service.RestTemplateService;
 import su.opencode.digsigcik.m4d.service.SynapiClientService;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -58,16 +60,17 @@ public class SynapiClientServiceImpl implements SynapiClientService {
     }
 
     @Override
-    public ReportDto getReportContainer(String tempFileContainer, boolean reverify, String bearerToken) {
+    public Map<String, String> getReportContainer(String tempFileContainer, String bearerToken) {
         log.info("Отправка запроса на получение отчёта из контейнера");
         LinkedMultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
         map.add("container", new FileSystemResource(tempFileContainer));
-        map.add("reverify", true);
+        map.add("selector", "signCheck");
         try {
-            ResponseEntity<ReportDto> responseEntity =
+            ResponseEntity<HashMap<String, String>> responseEntity =
                     restTemplateService.fetchServiceResponse(
                             CONTAINER_PART_JSON_URI,
-                            ReportDto.class,
+                            new ParameterizedTypeReference<>() {
+                            },
                             bearerToken,
                             HttpMethod.POST,
                             map

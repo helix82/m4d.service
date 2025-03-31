@@ -119,6 +119,13 @@ m4d:
     uri: ${M4D_HANDBOOK_URI:https://sp.dev.essocode.ru/api/v1}
   api_rr_fns:
     uri: ${M4D_API_RR_FNS_URI:https://operator.cprr-it.weintegrator.com/api/v0}
+  soul: ${M4D_SOUL:"}
+
+ref-book:
+  organization-create:
+    uri: ${ORGANIZATION_CREATE_URI:https://ref-book.dev.essocode.ru/api/v1/ref-book/organization}
+  organization-find-by-inn:
+    uri: ${ORGANIZATION_FIND_BY_INN_URI:https://ref-book.dev.essocode.ru/api/v1/ref-book/organization/inn}
 
 # Временное решение до полноценного внедрения kafka
 audit:
