@@ -47,7 +47,7 @@ public class M4dRecall {
     @AllowAudit
     private M4dFile sigFile;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name = "m4d_registry_id", referencedColumnName = "id")
     private M4d m4d;
 }
