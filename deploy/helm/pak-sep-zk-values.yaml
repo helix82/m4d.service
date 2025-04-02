@@ -77,6 +77,11 @@ secret:
     RPD_READ_TIMEOUT: MTAwMDA=
     DISABLE_TLS_CHECK: dHJ1ZQ==
 
+hostAliases:
+  - ip: "10.0.232.162"
+    hostnames:
+      - "sso.prpd-zk.cikrf.cp"
+
 jvmOptions:
   xms: 2G
   xmx: 64G
