@@ -3,6 +3,7 @@ package su.opencode.digsigcik.m4d.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import su.opencode.digsigcik.audit.AllowAudit;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -16,16 +17,19 @@ public class Credential {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(example = "1", required = true)
     @JsonProperty("id")
+    @AllowAudit
     private Long id;
 
     @Column(name = "name", columnDefinition = "VARCHAR(255)")
     @Schema(example = "")
     @JsonProperty("name")
+    @AllowAudit
     private String name;
 
     @Column(name = "code", columnDefinition = "VARCHAR(255)")
     @Schema(example = "EMPOWERMENT")
     @JsonProperty("code")
+    @AllowAudit
     private String code;
 
     @OneToMany(cascade = CascadeType.ALL)

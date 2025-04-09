@@ -15,36 +15,43 @@ public class PrincipalDetail {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(example = "1", required = true)
     @JsonProperty("id")
+    @AllowAudit
     private Long id;
 
     @Column(name = "name")
     @Schema(example = "")
     @JsonProperty("name")
+    @AllowAudit
     private String name;
 
     @Column(name = "surname")
     @Schema(example = "")
     @JsonProperty("surname")
+    @AllowAudit
     private String surname;
 
     @Column(name = "patronymic")
     @Schema(example = "")
     @JsonProperty("patronymic")
+    @AllowAudit
     private String patronymic;
 
     @Column(name = "job_title")
     @Schema(example = "")
     @JsonProperty("jobTitle")
+    @AllowAudit
     private String jobTitle;
 
     @Column(name = "version")
     @Schema(example = "")
     @JsonProperty("version")
+    @AllowAudit
     private Long version;
 
     @Column(name = "is_active")
     @Schema(example = "")
     @JsonProperty("isActive")
+    @AllowAudit
     private boolean isActive;
 
     @Column(name = "principal_id")
