@@ -3,6 +3,7 @@ package su.opencode.digsigcik.m4d.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import su.opencode.digsigcik.audit.AllowAudit;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -17,19 +18,23 @@ public class Representative {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(example = "1", required = true)
     @JsonProperty("id")
+    @AllowAudit
     private Long id;
 
     @Schema(example = "1234567890", required = true)
     @JsonProperty("inn")
+    @AllowAudit
     private String inn;
 
     @Schema(example = "123-456-789 11")
     @JsonProperty("snils")
+    @AllowAudit
     private String snils;
 
     @Column(name = "birth_date")
     @Schema(example = "")
     @JsonProperty("birthDate")
+    @AllowAudit
     private LocalDateTime birthDate;
 
     @OneToMany(cascade = CascadeType.ALL)
