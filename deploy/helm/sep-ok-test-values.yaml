@@ -55,8 +55,8 @@ secret:
     CONTAINER_CREATE_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2NyZWF0ZQ==
     #https://operator.cprr-it.weintegrator.com/api/v0
     M4D_API_RR_FNS_URI: aHR0cHM6Ly9vcGVyYXRvci5jcHJyLWl0LndlaW50ZWdyYXRvci5jb20vYXBpL3YwPT0=
-    #https://log.master.svc.cluster.local/api/v1/audit/external
-    AUDIT_URL: aHR0cHM6Ly9sb2cubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsL2FwaS92MS9hdWRpdC9leHRlcm5hbA==
+    #http://log-service.master.svc.cluster.local:8055/api/v1/audit/external
+    AUDIT_URL: aHR0cDovL2xvZy1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbDo4MDU1L2FwaS92MS9hdWRpdC9leHRlcm5hbA==
     #http://ref-book-service.master.svc.cluster.local:8055/api/v1/ref-book/organization
     ORGANIZATION_CREATE_URI: aHR0cDovL3JlZi1ib29rLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNTUvYXBpL3YxL3JlZi1ib29rL29yZ2FuaXphdGlvbg==
     #http://ref-book-service.master.svc.cluster.local:8055/api/v1/ref-book/organization/inn
