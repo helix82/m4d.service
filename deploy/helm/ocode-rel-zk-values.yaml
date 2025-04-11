@@ -60,8 +60,8 @@ secret:
     CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utemsuc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9nZXQtcGFydA==
     #http://synapi-service.release-zk.svc.cluster.local/api/v1/container/get-part-json
     CONTAINER_PART_JSON_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utemsuc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9nZXQtcGFydC1qc29u
-    #https://log.release-zk.svc.cluster.local/api/v1/audit/external
-    AUDIT_URL: aHR0cHM6Ly9sb2cucmVsZWFzZS16ay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
+    #http://log-service.release-zk.svc.cluster.local:8055/api/v1/audit/external
+    AUDIT_URL: aHR0cDovL2xvZy1zZXJ2aWNlLnJlbGVhc2Utemsuc3ZjLmNsdXN0ZXIubG9jYWw6ODA1NS9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
     #https://operator.cprr-it.weintegrator.com/api/v0
     M4D_API_RR_FNS_URI: aHR0cHM6Ly9vcGVyYXRvci5jcHJyLWl0LndlaW50ZWdyYXRvci5jb20vYXBpL3YwPT0=
     #http://synapi-service.release-zk.svc.cluster.local/api/v1/container/create
