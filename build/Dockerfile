@@ -29,6 +29,7 @@ RUN apt-get update && \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias zkssorpdpak -file cik_san.pem \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias zkssorpdpak2 -file cikrf_selfsign_CA.crt \
     && keytool -cacerts -storepass changeit -noprompt -importcert -alias okssorpdpak -file cikcp.ru \
+    && keytool -cacerts -storepass changeit -noprompt -importcert -alias cikrf -file ok_ca.crt \
     && rm -rf  $JAVA_HOME/lib/security/_.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/sso.rpd.zk.test.st.crt \
     && rm -rf  $JAVA_HOME/lib/security/_.zk.test.st.crt \
@@ -38,6 +39,7 @@ RUN apt-get update && \
     && rm -rf  $JAVA_HOME/lib/security/cik_san.pem \
     && rm -rf  $JAVA_HOME/lib/security/cikrf_selfsign_CA.crt \
     && rm -rf  $JAVA_HOME/lib/security/cikcp.ru \
+    && rm -rf  $JAVA_HOME/lib/security/ok_ca.crt \
     && unzip -o /app/security.zip -d $JAVA_HOME/conf \
     && rm -rf  /app/security.zip
 
