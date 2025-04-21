@@ -88,8 +88,8 @@ hostAliases:
       - "sso.rpd.ok.dev.cit.st"
 
 jvmOptions:
-  xms: 2G
-  xmx: 64G
+  xms: 1G
+  xmx: 2G
   gc: "-XX:+UseG1GC"
   minHeapFreeRatio: 10
   maxHeapFreeRatio: 30
@@ -131,6 +131,15 @@ env:
   M4D_SOUL: M4D_SOUL
 
 appName: m4d
+
+deployment:
+  container:
+    requests:
+      cpu: 250m
+      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 2Gi
 
 imagePullSecrets:
   - registrypullsecret
