@@ -10,6 +10,12 @@ spec:
   selector:
     matchLabels:
       app: {{ .Values.appName }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  minReadySeconds: 60
   template:
     metadata:
       labels:
@@ -30,6 +36,13 @@ spec:
         - name: {{ .Values.appName }}-dev
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          resources:
+            requests:
+              cpu: {{ .Values.deployment.container.requests.cpu }}
+              memory: {{ .Values.deployment.container.requests.memory }}
+            limits:
+              cpu: {{ .Values.deployment.container.limits.cpu }}
+              memory: {{ .Values.deployment.container.limits.memory }}
           command:
             - java
             - "-Xms{{ .Values.jvmOptions.xms }}"
