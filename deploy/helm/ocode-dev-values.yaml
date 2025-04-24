@@ -81,8 +81,8 @@ secret:
     DISABLE_TLS_CHECK: ZmFsc2U=
 
 jvmOptions:
-  xms: 1G
-  xmx: 2G
+  xms: 512m
+  xmx: 1G
   gc: "-XX:+UseG1GC"
   minHeapFreeRatio: 10
   maxHeapFreeRatio: 30
@@ -128,11 +128,11 @@ appName: m4d
 deployment:
   container:
     requests:
-      cpu: 250m
-      memory: 1Gi
+      cpu: 150m
+      memory: 512Mi
     limits:
-      cpu: 500m
-      memory: 2Gi
+      cpu: 400m
+      memory: 1Gi
 
 imagePullSecrets:
   - registrypullsecret
