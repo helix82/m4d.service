@@ -24,6 +24,7 @@ import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
+import su.opencode.digsigcik.m4d.service.M4dRequestService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -36,7 +37,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -54,11 +54,13 @@ public class M4dController {
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
+    private final M4dRequestService m4dRequestService;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, M4dRequestService m4dRequestService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
+        this.m4dRequestService = m4dRequestService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
@@ -272,7 +274,7 @@ public class M4dController {
     public ResponseEntity<?> uploadSig(Authentication authentication,
                                        @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id,
                                        @RequestPart("container") MultipartFile container,
-                                       @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws IOException, ParseException, JAXBException, NoSuchAlgorithmException {
+                                       @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws Exception {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -283,8 +285,27 @@ public class M4dController {
             System.out.println(container.getContentType());
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
-        Long mrpaId = this.m4dService.uploadSig(authentication, id, container, verify);
-        return findMrpaRegistryById(authentication, mrpaId);
+        Long sigFileId = this.m4dService.uploadSig(authentication, id, container, verify);
+        // create M4d Request Search For Find RR
+        // TODO: @helix82 Формирование запроса должно происходить после отправки архива с xml-файлом мчд и подписью на регистрацию в РР МЧД (пока пропускаем этот этап)
+        MultipartFile sourceFile = this.m4dService.getMultipartFileByM4dId(authentication, id);
+        M4dXml m4dXml = this.m4dService.convertM4dFileToM4dXml(sourceFile);
+        String hashXml = this.m4dService.getHashXmlM4d(sourceFile);
+        ReportCheckStatusM4dDto reportM4dRequestSearch = this.m4dService.getReportM4dRequestSearchForFindPep(m4dXml, hashXml);
+        if (reportM4dRequestSearch != null) { // запрос найден, удаляем его
+            m4dRequestService.deleteM4dRequestSearch(reportM4dRequestSearch.report.getGuid());
+        }
+        ReportCheckStatusM4dDto reportCreateM4dRequestSearch = this.m4dService.createM4dRequestSearchForFindRR(m4dXml, hashXml);
+
+        if (reportCreateM4dRequestSearch != null) {
+            M4d m4dSaved;
+            try {
+                m4dSaved = this.m4dService.updateStatusM4d(id, "ONCHECK");
+            } catch (ConstraintViolationException e) {
+                throw new BadRequestException(e.getMessage());
+            }
+        }
+        return findMrpaRegistryById(authentication, id);
     }
 
     //TODO: @helix82 Временный эндпоинт для Дениса
@@ -327,7 +348,7 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> check(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws ParseException, NoSuchAlgorithmException, IOException, SAXException {
+    public ResponseEntity<?> check(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws Exception {
         String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
         if (!Objects.equals(extension, "xml")) {
             throw new BadRequestException("Ошибка: Формат файла не XML");
@@ -336,17 +357,19 @@ public class M4dController {
         if (Objects.equals(reportValidSchemeDto.getResult(), "false")) {
             throw new BadRequestException("XML файл не соответствует схеме EMCHD_1");
         }
+        M4dXml m4dXml = this.m4dService.convertM4dFileToM4dXml(sourceFile);
+        String hashXml = this.m4dService.getHashXmlM4d(sourceFile);
 // - поиск МЧД в ПЭП по номеру
-        ReportCheckStatusM4dDto reportM4d = m4dService.checkM4dInPep(authentication, sourceFile);
+        ReportCheckStatusM4dDto reportM4d = m4dService.checkM4dInPep(authentication, m4dXml);
         if (reportM4d != null) { //мчд в пэп найдена
             return new ResponseEntity<>(reportM4d, HttpStatus.OK);
         } else { //мчд в пэп не найдена
 // - поиск ранее сформированного запроса в РР МЧД на проверку статуса МЧД (по номеру и хеш)
-            ReportCheckStatusM4dDto reportM4dRequestSearch = m4dService.getReportM4dRequestSearchForFindPep(sourceFile);
+            ReportCheckStatusM4dDto reportM4dRequestSearch = m4dService.getReportM4dRequestSearchForFindPep(m4dXml, hashXml);
             if (reportM4dRequestSearch != null) { // запрос найден, возвращаем отчёт
                 return new ResponseEntity<>(reportM4dRequestSearch, HttpStatus.OK);
             } else { //ранее запрос не формировался, создаем новый запрос
-                ReportCheckStatusM4dDto reportCreateM4dRequestSearch = m4dService.createM4dRequestSearchForFindRR(sourceFile);
+                ReportCheckStatusM4dDto reportCreateM4dRequestSearch = m4dService.createM4dRequestSearchForFindRR(m4dXml, hashXml);
                 return new ResponseEntity<>(reportCreateM4dRequestSearch, HttpStatus.OK);
             }
         }
@@ -378,10 +401,20 @@ public class M4dController {
         if (sourceFile.isEmpty()){
             return new ResponseEntity<>(getCustomErrorJsonFromString("Обязательный xml-файл МЧД не указан"), HttpStatus.BAD_REQUEST);
         }
-        Long m4dId;
+        Long m4dId = null;
         //upload m4d !!!!!!!!!!!!!!!!!!!!!!!!
         try {
-            m4dId = this.m4dService.uploadMrpaRegistry(authentication, sourceFile);
+            M4dParseResponseDto m4dParseResponseDto = this.m4dService.parse(sourceFile);
+            if (m4dParseResponseDto != null) {
+                try {
+                    m4dId = this.m4dService.saveAllDataMrpaRegistry(authentication, m4dParseResponseDto.getM4d(), m4dParseResponseDto.getOrganisation(),
+                            m4dParseResponseDto.getPrincipal(), m4dParseResponseDto.getPrincipalDetail(), m4dParseResponseDto.getRepresentative(),
+                            m4dParseResponseDto.getRepresentativeDetail(), m4dParseResponseDto.getCredentialList(), null, m4dParseResponseDto.getXmlString());
+                } catch (ConstraintViolationException e) {
+                    throw new BadRequestException(e.getMessage());
+                }
+            }
+
         } catch (Exception e) {
             log.error("Ошибка импорта МЧД: " + e.getMessage());
             e.printStackTrace();
@@ -421,6 +454,23 @@ public class M4dController {
                 if (result == null) {
                     log.error("Загрузка подписи МЧД не вернула результат");
                     return new ResponseEntity<>(getCustomErrorJsonFromString("Загрузка подписи МЧД не вернула результат"), HttpStatus.BAD_REQUEST);
+                }
+                // create M4d Request Search For Find RR
+                // TODO: @helix82 Формирование запроса должно происходить после отправки архива с xml-файлом мчд и подписью на регистрацию в РР МЧД (пока пропускаем этот этап)
+                M4dXml m4dXml = this.m4dService.convertM4dFileToM4dXml(sourceFile);
+                String hashXml = this.m4dService.getHashXmlM4d(sourceFile);
+                ReportCheckStatusM4dDto reportM4dRequestSearch = this.m4dService.getReportM4dRequestSearchForFindPep(m4dXml, hashXml);
+                if (reportM4dRequestSearch != null) { // запрос найден, удаляем его
+                    m4dRequestService.deleteM4dRequestSearch(reportM4dRequestSearch.report.getGuid());
+                }
+                ReportCheckStatusM4dDto reportCreateM4dRequestSearch = this.m4dService.createM4dRequestSearchForFindRR(m4dXml, hashXml);
+                if (reportCreateM4dRequestSearch != null) {
+                    M4d m4dSaved;
+                    try {
+                        m4dSaved = this.m4dService.updateStatusM4d(m4dId, "ONCHECK");
+                    } catch (ConstraintViolationException e) {
+                        throw new BadRequestException(e.getMessage());
+                    }
                 }
             } catch (Exception e) {
                 log.error("Ошибка при загрузке подписи МЧД: " + e.getMessage());
