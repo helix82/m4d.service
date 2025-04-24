@@ -1,13 +1,11 @@
 package su.opencode.digsigcik.m4d.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.io.FilenameUtils;
-import org.codehaus.plexus.util.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -17,13 +15,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
-import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
+import su.opencode.digsigcik.m4d.dto.M4dRevokeRequestDto;
+import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
+import su.opencode.digsigcik.m4d.dto.ReportCheckStatusM4dDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
-import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
-import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
-import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4d;
-import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
@@ -38,13 +35,11 @@ import javax.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.*;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
-import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 
 @RestController
 @M4dExceptionHandler
@@ -242,11 +237,15 @@ public class M4dRevokeController {
         if (mrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("M4d Recall %s", NOT_FOUND)), HttpStatus.NOT_FOUND);
         }
+        if (mrpaRecall.getSigFile() != null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_SIGN_CANNOT_DELETE), HttpStatus.BAD_REQUEST);
+        }
         try {
             this.m4dRecallService.deleteMrpaRecallById(id);
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
+        this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), "ACTIVE");
         Map<String, String> body = new HashMap<>();
         body.put("result", "true");
 
@@ -273,108 +272,110 @@ public class M4dRevokeController {
     })
     @PutMapping(value = "{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSigRecall(Authentication authentication, @PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container) throws IOException, ParseException {
+            description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile container,
+                                             @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws IOException, ParseException {
         if (id == null){
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         if (container == null || container.isEmpty()){
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
-        String bearerToken = getTokenValue(authentication);
+        //String bearerToken = getTokenValue(authentication);
         String extension = FilenameUtils.getExtension(container.getOriginalFilename());
         if(!Objects.equals(extension, "dscp")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
+        Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, container, verify);
         M4dRecall mrpaRecall = this.m4dRecallService.findById(id);
-        if (mrpaRecall==null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.BAD_REQUEST);
-        }
-        if (mrpaRecall.getSigFile()!=null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Заявление на отзыв МЧД уже подписано"), HttpStatus.BAD_REQUEST);
-        }
-        List<String> tempFileNames = new ArrayList<>();
-        String tempFileName;
-        FileOutputStream fo;
-        ReportDto reportDto;
-        ByteArrayResource res = null;
-        try {
-            tempFileName = "/tmp/" + container.getOriginalFilename();
-            tempFileNames.add(tempFileName);
-            fo = new FileOutputStream(tempFileName);
-            fo.write(container.getBytes());
-            fo.close();
-            ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
-            reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
-            assert reportDto != null;
-            reportDto.getResults().stream()
-                    .flatMap(result -> result.getVerificationResults().stream())
-                    .findFirst()
-                    .ifPresent(verificationResult -> {
-                        boolean isResultTrue = verificationResult.isResult();
-                        System.out.println("Result value: " + isResultTrue);
-                        if (!isResultTrue) {
-                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
-                        }
-                    });
-            res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        for (String fileName : tempFileNames) {
-            File f = new File(fileName);
-            f.delete();
-        }
-        assert res != null;
-        byte[] resource = res.getByteArray();
-        M4d mrpaRegistryFind;
-        try {
-            mrpaRegistryFind = this.m4dService.findById(mrpaRecall.getM4d().getId());
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        if (mrpaRegistryFind == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.BAD_REQUEST);
-        }
-        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, mrpaRegistryFind, false, false, false, true);
-        String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
-        String normalizedXmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent().replaceAll("\\s+", "");
-        if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
-        }
-        M4dFile m4dFile = new M4dFile();
-        m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
-        m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
-        m4dFile.setFilename(container.getOriginalFilename());
-        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
-        m4dFile.setContent(base64Content);
-        M4dFile existsM4dFile;
-        M4dFile m4dFileSaved;
-        Long fileId;
-        try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(Base64.getEncoder().encodeToString(m4dFile.getContent().getBytes()));
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        if (existsM4dFile == null){
-            try {
-                m4dFileSaved = this.m4dFileService.saveM4dFile(m4dFile);
-            } catch (ConstraintViolationException e) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-            }
-            fileId = m4dFileSaved.getId();
-        } else {
-            fileId = existsM4dFile.getId();
-        }
-        try {
-            this.m4dRecallService.updateMrpaRecallById(id, fileId);
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
+//        if (mrpaRecall==null) {
+//            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.BAD_REQUEST);
+//        }
+//        if (mrpaRecall.getSigFile()!=null) {
+//            return new ResponseEntity<>(getCustomErrorJsonFromString("Заявление на отзыв МЧД уже подписано"), HttpStatus.BAD_REQUEST);
+//        }
+//        List<String> tempFileNames = new ArrayList<>();
+//        String tempFileName;
+//        FileOutputStream fo;
+//        ReportDto reportDto;
+//        ByteArrayResource res = null;
+//        try {
+//            tempFileName = "/tmp/" + container.getOriginalFilename();
+//            tempFileNames.add(tempFileName);
+//            fo = new FileOutputStream(tempFileName);
+//            fo.write(container.getBytes());
+//            fo.close();
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
+//            reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
+//            assert reportDto != null;
+//            reportDto.getResults().stream()
+//                    .flatMap(result -> result.getVerificationResults().stream())
+//                    .findFirst()
+//                    .ifPresent(verificationResult -> {
+//                        boolean isResultTrue = verificationResult.isResult();
+//                        System.out.println("Result value: " + isResultTrue);
+//                        if (!isResultTrue) {
+//                            throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
+//                        }
+//                    });
+//            res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        for (String fileName : tempFileNames) {
+//            File f = new File(fileName);
+//            f.delete();
+//        }
+//        assert res != null;
+//        byte[] resource = res.getByteArray();
+//        M4d mrpaRegistryFind;
+//        try {
+//            mrpaRegistryFind = this.m4dService.findById(mrpaRecall.getM4d().getId());
+//        } catch (ConstraintViolationException e) {
+//            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+//        }
+//        if (mrpaRegistryFind == null) {
+//            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.BAD_REQUEST);
+//        }
+//        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, mrpaRegistryFind, false, false, false, true);
+//        String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
+//        String normalizedXmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent().replaceAll("\\s+", "");
+//        if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
+//            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_NOT_VERIFY_CONTENT), HttpStatus.BAD_REQUEST);
+//        }
+//        M4dFile m4dFile = new M4dFile();
+//        m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
+//        m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
+//        m4dFile.setFilename(container.getOriginalFilename());
+//        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
+//        m4dFile.setContent(base64Content);
+//        M4dFile existsM4dFile;
+//        M4dFile m4dFileSaved;
+//        Long fileId;
+//        try {
+//            existsM4dFile = this.m4dFileService.findM4dFileByContent(Base64.getEncoder().encodeToString(m4dFile.getContent().getBytes()));
+//        } catch (ConstraintViolationException e) {
+//            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+//        }
+//        if (existsM4dFile == null){
+//            try {
+//                m4dFileSaved = this.m4dFileService.saveM4dFile(m4dFile);
+//            } catch (ConstraintViolationException e) {
+//                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+//            }
+//            fileId = m4dFileSaved.getId();
+//        } else {
+//            fileId = existsM4dFile.getId();
+//        }
+//        try {
+//            this.m4dRecallService.updateMrpaRecallById(id, fileId);
+//        } catch (ConstraintViolationException e) {
+//            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+//        }
         // TODO: @helix82 Отправляем архив с xml-файлом отзыва мчд и подписью на РР МЧД для отзыва
         this.m4dRecallService.updateStatusMrpaRecallById(id, "REVOKED");
-        this.m4dService.updateStatusM4d(mrpaRegistryFind.getId(), "REVOKED");
+        this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), "REVOKED");
         return findMrpaRecallById(authentication, id);
     }
 

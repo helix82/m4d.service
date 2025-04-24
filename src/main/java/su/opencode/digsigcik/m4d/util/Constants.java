@@ -184,6 +184,7 @@ public interface Constants {
     String MRPA_IS_NULL = "МЧД не найдена";
     String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
+    String MRPA_RECALL_SIGN_CANNOT_DELETE = "Невозможно удалить! Заявление на отзыв МЧД уже подписано и отправлено в РР МЧД.";
     String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);
     String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
     String MRPA_REGISTRY_IS_EXISTS = "Добавляемая МЧД уже существует в базе";
@@ -195,6 +196,7 @@ public interface Constants {
     String MRPA_REGISTRY_XML_NOT_VERIFY = "XML не прошел проверку";
     String MRPA_REGISTRY_NOT_VERIFY_REPORT = "Контейнер не прошел проверку (по отчёту верификации)";
     String MRPA_REGISTRY_NOT_VERIFY_CONTENT = "Контейнер не прошел проверку (данные МЧД и контент контейнера не совпадают)";
+    String MRPA_RECALL_NOT_VERIFY_CONTENT = "Контейнер не прошел проверку (данные заявления МЧД и контент контейнера не совпадают)";
     String MRPA_VERIFY_STATUS_IS_NULL = String.format("Mrpa verify status is %s!", NULL);
     String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
     String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);
