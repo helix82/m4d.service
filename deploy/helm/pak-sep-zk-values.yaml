@@ -83,8 +83,8 @@ hostAliases:
       - "sso.prpd-zk.cikrf.cp"
 
 jvmOptions:
-  xms: 1G
-  xmx: 2G
+  xms: 2G
+  xmx: 6G
   gc: "-XX:+UseG1GC"
   minHeapFreeRatio: 10
   maxHeapFreeRatio: 30
@@ -130,11 +130,11 @@ appName: m4d
 deployment:
   container:
     requests:
-      cpu: 250m
-      memory: 1Gi
-    limits:
-      cpu: 500m
+      cpu: 800m
       memory: 2Gi
+    limits:
+      cpu: 2500m
+      memory: 6Gi
 
 imagePullSecrets:
   - registrypullsecret
