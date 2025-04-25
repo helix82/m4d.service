@@ -2,6 +2,7 @@ package su.opencode.digsigcik.m4d.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import su.opencode.digsigcik.audit.AllowAudit;
 
 import javax.xml.bind.annotation.*;
 import java.util.List;
@@ -25,9 +26,11 @@ public class M4dXml {
     @XmlAttribute(name = XML_ATTRIBUTE_MCHD_FORMAT_ELEMENTS)
     private String elementsFormat; //00000000
     @XmlAttribute(name = XML_ATTRIBUTE_MCHD_FILE_ID)
+    @AllowAudit
     private String idFile; //ON_EMCHD_20240516_75655b80-cc58-4a2b-b244-8334eb895a2f
 
     @XmlElement(name = XML_ELEMENT_DOCUMENT)
+    @AllowAudit
     public Document document;
 
     @XmlRootElement
@@ -35,6 +38,7 @@ public class M4dXml {
     @Data
     public static class Document{
         @XmlElement(name = XML_ELEMENT_MCHD_SHORT)
+        @AllowAudit
         public PowerAttorneys powerAttorneys;
 
         @XmlRootElement
@@ -42,6 +46,7 @@ public class M4dXml {
         @Data
         public static class PowerAttorneys{
             @XmlElement(name = XML_ELEMENT_MRPA)
+            @AllowAudit
             public Mrpa mrpa;
 
             @XmlRootElement
@@ -55,16 +60,20 @@ public class M4dXml {
                 @XmlAttribute(name = XML_ATTRIBUTE_MRPA_INTERNAL_NUMBER)
                 private String internalNumber;
                 @XmlAttribute(name = XML_ATTRIBUTE_MRPA_GUID)
+                @AllowAudit
                 private String guid;
                 @XmlAttribute(name = XML_ATTRIBUTE_MRPA_DATE_START)
+                @AllowAudit
                 private String startDate;
                 @XmlAttribute(name = XML_ATTRIBUTE_MRPA_DATE_END)
+                @AllowAudit
                 private String endDate;
                 @XmlElement(name = XML_ATTRIBUTE_MRPA_SYSTEM_INFO)
                 private String infoSystem;
             }
 
             @XmlElement(name = XML_ELEMENT_PRINCIPALS)
+            @AllowAudit
             public InfoPrincipals principals;
 
             @XmlRootElement
@@ -74,6 +83,7 @@ public class M4dXml {
                 @XmlAttribute(name = XML_ATTRIBUTE_PRINCIPAL_TYPE)
                 private String typePrincipal;//1
                 @XmlElement(name = XML_ELEMENT_INFO_PRINCIPAL)
+                @AllowAudit
                 public InfoPrincipal principal;
 
                 @XmlRootElement
@@ -81,6 +91,7 @@ public class M4dXml {
                 @Data
                 public static class InfoPrincipal{
                     @XmlElement(name = XML_ELEMENT_LEGAL_ENTITY)
+                    @AllowAudit
                     public LegalEntity legalEntity;
 
                     @XmlRootElement
@@ -94,6 +105,7 @@ public class M4dXml {
                         @XmlAttribute(name = XML_ATTRIBUTE_LEGAL_ENTITY_INDIVIDUAL_ENTR)
                         private String individualEntrepreneur; //0
                         @XmlElement(name = XML_ELEMENT_ORGANISATION)
+                        @AllowAudit
                         public Organisation organisation;
 
                         @XmlRootElement
@@ -103,6 +115,7 @@ public class M4dXml {
                             @XmlAttribute(name = XML_ATTRIBUTE_ORGANISATION_NAME)
                             private String name;
                             @XmlAttribute(name = XML_ATTRIBUTE_ORGANISATION_INN)
+                            @AllowAudit
                             private String inn;
                             @XmlAttribute(name = XML_ATTRIBUTE_ORGANISATION_KPP)
                             private String kpp;
@@ -123,6 +136,7 @@ public class M4dXml {
                         }
 
                         @XmlElement(name = XML_ELEMENT_PERSON_PRINCIPAL)
+                        @AllowAudit
                         public PersonPrincipal principal;
 
                         @XmlRootElement
@@ -133,6 +147,7 @@ public class M4dXml {
                             private String typePrincipal; //1
 
                             @XmlElement(name = XML_ELEMENT_PRINCIPAL)
+                            @AllowAudit
                             public Principal principal;
 
                             @XmlRootElement
@@ -140,8 +155,10 @@ public class M4dXml {
                             @Data
                             public static class Principal{
                                 @XmlAttribute(name = XML_ATTRIBUTE_INN)
+                                @AllowAudit
                                 private String inn;
                                 @XmlAttribute(name = XML_ATTRIBUTE_SNILS)
+                                @AllowAudit
                                 private String snils;
                                 @XmlAttribute(name = XML_ATTRIBUTE_JOB_TITLE)
                                 private String jobTitle;
@@ -176,6 +193,7 @@ public class M4dXml {
             }
 
             @XmlElement(name = XML_ELEMENT_INFO_REPRESENTATIVE)
+            @AllowAudit
             public List<InfoRepresentative> infoRepresentative;
 
             @XmlRootElement
@@ -186,6 +204,7 @@ public class M4dXml {
                 private String typeRepresentative; //3
 
                 @XmlElement(name = XML_ELEMENT_REPRESENTATIVE)
+                @AllowAudit
                 public Representative representative;
 
                 @XmlRootElement
@@ -193,6 +212,7 @@ public class M4dXml {
                 @Data
                 public static class Representative{
                     @XmlElement(name = XML_ELEMENT_DETAIL_REPRESENTATIVE)
+                    @AllowAudit
                     public DetailRepresentative detailRepresentative;
 
                     @XmlRootElement
@@ -200,8 +220,10 @@ public class M4dXml {
                     @Data
                     public static class DetailRepresentative{
                         @XmlAttribute(name = XML_ATTRIBUTE_INN)
+                        @AllowAudit
                         private String inn;
                         @XmlAttribute(name = XML_ATTRIBUTE_SNILS)
+                        @AllowAudit
                         private String snils;
                         @XmlElement(name = XML_ELEMENT_INFO_INDIVIDUAL)
                         public InfoIndividual infoIndividual;

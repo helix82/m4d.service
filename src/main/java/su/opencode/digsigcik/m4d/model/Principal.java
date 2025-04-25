@@ -32,9 +32,11 @@ public class Principal {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "principal_id", updatable = false)
+    @AllowAudit
     private Set<M4d> mrpaRegistryes = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "principal_id", updatable = false)
+    @AllowAudit
     private Set<PrincipalDetail> principalDetails = new HashSet<>();
 }

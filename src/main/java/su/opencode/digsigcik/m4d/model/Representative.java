@@ -39,9 +39,11 @@ public class Representative {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "representative_id", updatable = false)
+    @AllowAudit
     private Set<M4d> mrpaRegistryes = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "representative_id", updatable = false)
+    @AllowAudit
     private Set<RepresentativeDetail> representativeDetails = new HashSet<>();
 }
