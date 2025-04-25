@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import su.opencode.digsigcik.audit.AuditLogEventEnum;
+import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.model.M4dRequestSearch;
 import su.opencode.digsigcik.m4d.model.M4dRequestSearchDetail;
 import su.opencode.digsigcik.m4d.repository.M4dRequestDetailRepository;
@@ -42,6 +44,8 @@ public class M4dRequestServiceImpl implements M4dRequestService {
         return detailRepository.save(m4dRequestSearchDetail);
     }
 
+    //TODO: @helix82 - Использование Aspect-Oriented Programming (AOP) для передачи в логи guid?
+    @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_DELETE, deleteByIdRepository = M4dRequestRepository.class)
     public void deleteM4dRequestSearch(@NotNull String guid) {
         M4dRequestSearch requestSearch = repository.findByGuid(guid);
         detailRepository.deleteByRequestSearchId(requestSearch.getId());

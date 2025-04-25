@@ -87,10 +87,12 @@ public class M4d {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "sig_file_id", referencedColumnName = "id")
+    @AllowAudit
     private M4dFile sigFile;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "xml_file_id", referencedColumnName = "id")
+    @AllowAudit
     private M4dFile xmlFile;
 
     @Column(name = "create_date")
