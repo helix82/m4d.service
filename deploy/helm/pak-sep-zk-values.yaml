@@ -84,7 +84,7 @@ hostAliases:
 
 jvmOptions:
   xms: 2G
-  xmx: 6G
+  xmx: 4608m
   gc: "-XX:+UseG1GC"
   minHeapFreeRatio: 10
   maxHeapFreeRatio: 30
