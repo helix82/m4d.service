@@ -327,21 +327,8 @@ public class M4dServiceImpl implements M4dService {
         OrganizationDto existsOrganisation;
         try {
             existsOrganisation = this.refBookClientService.findByOrganisationInn(organisation.getInn(), bearerToken);
-            if (existsOrganisation != null) {
-                organisation.setId(existsOrganisation.getId());
-            }
             assert existsOrganisation != null;
-            if (!existsOrganisation.equals(organisation)) {
-                OrganizationDto respOrganisation;
-                try {
-                    respOrganisation = this.refBookClientService.saveOrganization(organisation, bearerToken);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(e.getMessage());
-                }
-                orgInn = respOrganisation.getInn();
-            } else {
-                orgInn = existsOrganisation.getInn();
-            }
+            orgInn = existsOrganisation.getInn();
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
