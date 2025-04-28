@@ -126,30 +126,8 @@ public class M4dServiceImpl implements M4dService {
         OrganizationDto existsOrganisation;
         try {
             existsOrganisation = this.refBookClientService.findByOrganisationInn(organisation.getInn(), bearerToken);
-            if (existsOrganisation == null) {
-                OrganizationDto respOrganisation;
-                try {
-                    respOrganisation = this.refBookClientService.saveOrganization(organisation, bearerToken);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(e.getMessage());
-                }
-                assert respOrganisation != null;
-                orgInn = respOrganisation.getInn();
-            } else if (!existsOrganisation.getInn().equals(organisation.getInn()) || !existsOrganisation.getKpp().equals(organisation.getKpp())
-                    || !existsOrganisation.getOgrn().equals(organisation.getOgrn()) || !existsOrganisation.getName().equals(organisation.getName())
-                    || !existsOrganisation.getRegionCode().equals(organisation.getRegionCode())) { //|| !existsOrganisation.getLegalAddress().equals(organisation.getLegalAddress())
-                OrganizationDto respOrganisation;
-                try {
-                    organisation.setId(existsOrganisation.getId());
-                    respOrganisation = this.refBookClientService.saveOrganization(organisation, bearerToken);
-                } catch (ConstraintViolationException e) {
-                    throw new BadRequestException(e.getMessage());
-                }
-                assert respOrganisation != null;
-                orgInn = respOrganisation.getInn();
-            } else {
-                orgInn = existsOrganisation.getInn();
-            }
+            assert existsOrganisation != null;
+            orgInn = existsOrganisation.getInn();
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
