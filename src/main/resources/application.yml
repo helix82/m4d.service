@@ -129,5 +129,6 @@ ref-book:
 
 # Временное решение до полноценного внедрения kafka
 audit:
-  url: ${AUDIT_URL:https://log.dev.essocode.ru/api/v1/audit/external}
+  #url: ${AUDIT_URL:https://log.dev.essocode.ru/api/v1/audit/external}
+  url: ${AUDIT_URL:http://localhost:8055/api/v1/audit/external}
   default-user: 'Администратор МЧД'

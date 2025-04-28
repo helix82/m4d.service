@@ -1,12 +1,10 @@
 package su.opencode.digsigcik.m4d.service;
 
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
-import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.model.*;
 
 import javax.validation.constraints.NotNull;
@@ -37,10 +35,8 @@ public interface M4dService {
     ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) throws NoSuchAlgorithmException;
     ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPep(M4dXml m4dXml, String HashXml);
     ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, M4dXml m4dXml) throws ParseException;
-    ByteArrayResource createContainer(Authentication authentication, MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException;
     M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException;
     Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException, JAXBException, NoSuchAlgorithmException;
-    ByteArrayResource createArchiveM4dSig(Authentication authentication, Long fileId, String filename) throws IOException;
     M4dFullXML convertM4dRequestDtoToFullXml(M4dRegistryRequestDto m4DRegistryRequestDto) throws ParseException;
     String getGuidFromXml(M4dXml m4dXml);
     String getStartDateM4dFromXml(M4dXml m4dXml);

@@ -91,6 +91,48 @@ public interface Constants {
     String XML_ATTRIBUTE_RECALL_FIO_SURNAME = "Фамилия";
     String XML_ATTRIBUTE_RECALL_FIO_PATRONYMIC = "Отчество";
 
+    String XML_ELEMENT_MCHD_CONFIRM = "Подтверждение";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_FORMAT_VERSION = "ВерсФорм";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_TYPE = "ТипПодтв";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_FILE_ID = "ИдФайл";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_GUID = "НомПодтв";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_DATE_REGISTERED = "ДатаВремВыдПодтв";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_OPERATOR_ID = "АдрНодОпер";
+    String XML_ELEMENT_MCHD_CONFIRM_ORGANISATION = "СвЮЛПодтв";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_ORGANISATION_ID = "ИдЮЛ";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_ORGANISATION_NAME = "НаимОрг";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_ORGANISATION_TRADE_NAME = "ТоргНаим";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_ORGANISATION_INN = "ИННЮЛ";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_ORGANISATION_OGRN = "ОГРН";
+    String XML_ELEMENT_MCHD_CONFIRM_SYSTEM_INFO = "URLПродуктОпер";
+    String XML_ELEMENT_MCHD_CONFIRM_SYSTEM_VERSION = "ВерсПрог";
+    String XML_ELEMENT_MCHD_CONFIRM_INFO = "СвДовер";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_INFO_FILE_ID = "ИдФайл";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_INFO_GUID = "НомДовер";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_INFO_INTERNAL_NUMBER = "ВнНомДовер";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_INFO_DATE_START = "ДатаВыдДовер";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_INFO_DATE_END = "СрокДейст";
+    String XML_ATTRIBUTE_MCHD_CONFIRM_INFO_SYSTEM_INFO = "СведСист";
+
+    String XML_ELEMENT_MCHD_REVOKE_CONFIRM = "Подтверждение";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_FORMAT_VERSION = "ВерсФорм";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_TYPE = "ТипПодтв";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_FILE_ID = "ИдФайл";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_GUID = "НомПодтв";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_DATE_REGISTERED = "ДатаВремВыдПодтв";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_OPERATOR_ID = "АдрНодОпер";
+    String XML_ELEMENT_MCHD_REVOKE_CONFIRM_ORGANISATION = "СвЮЛПодтв";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_ORGANISATION_ID = "ИдЮЛ";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_ORGANISATION_NAME = "НаимОрг";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_ORGANISATION_TRADE_NAME = "ТоргНаим";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_ORGANISATION_INN = "ИННЮЛ";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_ORGANISATION_OGRN = "ОГРН";
+    String XML_ELEMENT_MCHD_REVOKE_CONFIRM_SYSTEM_INFO = "URLПродуктОпер";
+    String XML_ELEMENT_MCHD_REVOKE_CONFIRM_SYSTEM_VERSION = "ВерсПрог";
+    String XML_ELEMENT_MCHD_REVOKE_CONFIRM_INFO = "СвЗаявлОтмена";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_INFO_FILE_HASH = "ХэшЗаявлОтмена";
+    String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_INFO_GUID = "НомДовер";
+
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
     String PARAMETER_MRPA_GUID_DESCRIPTION = "GUID МЧД";
     String PARAMETER_REPRESENTATIVE_INN_DESCRIPTION = "ИНН представителя";
@@ -183,6 +225,7 @@ public interface Constants {
     String INN_IS_NULL = String.format("INN is %s", NULL);
     String MRPA_IS_NULL = "МЧД не найдена";
     String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
+    String MRPA_CONFIRM_IS_NULL = "Подтверждения МЧД не найдены";
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
     String MRPA_RECALL_SIGN_CANNOT_DELETE = "Невозможно удалить! Заявление на отзыв МЧД уже подписано и отправлено в РР МЧД.";
     String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);

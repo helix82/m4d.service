@@ -1,12 +1,9 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.codehaus.plexus.util.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -22,7 +19,6 @@ import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
-import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.enums.StatusRequestTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
@@ -38,9 +34,9 @@ import su.opencode.digsigcik.m4d.util.XmlValidator;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBException;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -52,8 +48,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
@@ -77,8 +71,8 @@ public class M4dServiceImpl implements M4dService {
     private final RepresentativeService representativeService;
     private final RepresentativeDetailService representativeDetailService;
     private final UserCertificateService userCertificateService;
-    private final SynapiClientService synapiClientService;
     private final RefBookClientService refBookClientService;
+    private final ContainerService containerService;
     private static final Pattern BASE64_PATTERN = Pattern.compile("^[A-Za-z0-9+/]+={0,2}$");
 
     @Override
@@ -223,7 +217,7 @@ public class M4dServiceImpl implements M4dService {
             m4d.setStatus("DRAFT");
         }
 
-        String idFile = this.getSubstringFromXml(xmlString, "ИдФайл=\"");
+        String idFile = XMLUtil.getSubstringFromXml(xmlString, "ИдФайл=\"");
 
         M4dFile m4dFile = new M4dFile();
         m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
@@ -905,31 +899,31 @@ public class M4dServiceImpl implements M4dService {
         return null;
     }
 
-    public ByteArrayResource createContainer(Authentication authentication,MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException {
-        String bearerToken = getTokenValue(authentication);
-        String tempFileSource;
-        String tempFileSig;
-        FileOutputStream foSource;
-        FileOutputStream foSig;
-        ByteArrayResource res;
-
-        tempFileSource = "/tmp/" + sourceFile.getOriginalFilename();
-        foSource = new FileOutputStream(tempFileSource);
-        foSource.write(sourceFile.getBytes());
-        foSource.close();
-
-        tempFileSig = "/tmp/" + sourceSig.getOriginalFilename();
-        foSig = new FileOutputStream(tempFileSig);
-        foSig.write(sourceSig.getBytes());
-        foSig.close();
-
-        res = synapiClientService.createContainer(tempFileSource, tempFileSig, hashAlgorithm, bearerToken);
-        File f1 = new File(tempFileSource);
-        f1.delete();
-        File f2 = new File(tempFileSig);
-        f2.delete();
-        return res;
-    }
+//    public ByteArrayResource createContainer(Authentication authentication,MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException {
+//        String bearerToken = getTokenValue(authentication);
+//        String tempFileSource;
+//        String tempFileSig;
+//        FileOutputStream foSource;
+//        FileOutputStream foSig;
+//        ByteArrayResource res;
+//
+//        tempFileSource = "/tmp/" + sourceFile.getOriginalFilename();
+//        foSource = new FileOutputStream(tempFileSource);
+//        foSource.write(sourceFile.getBytes());
+//        foSource.close();
+//
+//        tempFileSig = "/tmp/" + sourceSig.getOriginalFilename();
+//        foSig = new FileOutputStream(tempFileSig);
+//        foSig.write(sourceSig.getBytes());
+//        foSig.close();
+//
+//        res = synapiClientService.createContainer(tempFileSource, tempFileSig, hashAlgorithm, bearerToken);
+//        File f1 = new File(tempFileSource);
+//        f1.delete();
+//        File f2 = new File(tempFileSig);
+//        f2.delete();
+//        return res;
+//    }
 
 
     public M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException {
@@ -1001,7 +995,7 @@ public class M4dServiceImpl implements M4dService {
                     credentialList.add(newCredential);
                 }
             }
-            return new M4dParseResponseDto(m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, this.readXmlToString(sourceFile));
+            return new M4dParseResponseDto(m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, XMLUtil.readXmlToString(sourceFile));
         }
         return null;
     }
@@ -1020,57 +1014,60 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
         M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, false, false, true, false);
-        List<String> tempFileNames = new ArrayList<>();
-        String tempFileName;
-        FileOutputStream fo;
-        ReportDto reportDto;
-        ByteArrayResource res = null;
+//        List<String> tempFileNames = new ArrayList<>();
+//        String tempFileName;
+//        FileOutputStream fo;
+//        ReportDto reportDto;
+//        ByteArrayResource res = null;
+//        if (verify) {
+//            try {
+//                tempFileName = "/tmp/" + container.getOriginalFilename();
+//
+//                tempFileNames.add(tempFileName);
+//                fo = new FileOutputStream(tempFileName);
+//                fo.write(container.getBytes());
+//                fo.close();
+//                ObjectMapper objectMapper = new ObjectMapper();
+//                Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
+//                reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
+//
+//                assert reportDto != null;
+//                if (reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
+//                    reportDto.getResults().stream()
+//                            .flatMap(result -> result.getVerificationResults().stream())
+//                            .findFirst()
+//                            .ifPresent(verificationResult -> {
+//                                boolean isResultTrue = verificationResult.isResult();
+//                                System.out.println("Result value: " + isResultTrue);
+//                                if (!isResultTrue) {
+//                                    throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
+//                                }
+//                            });
+//                } else {
+//                    log.error(reportDto.getError() + ": {}", reportDto.getErrorDescription());
+//                    throw new BadRequestException(reportDto.getError());
+//                }
+//
+//                res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            for (String fileName : tempFileNames) {
+//                File f = new File(fileName);
+//                f.delete();
+//            }
+//
+//            assert res != null;
+//            byte[] resource = res.getByteArray();
+//            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
+//            String normalizedXmlString = m4DRegistryResponseDto.getXmlFile().getContent().replaceAll("\\s+", "");
+//            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
+//                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_CONTENT);
+//            }
+//        }
         if (verify) {
-            try {
-                tempFileName = "/tmp/" + container.getOriginalFilename();
-
-                tempFileNames.add(tempFileName);
-                fo = new FileOutputStream(tempFileName);
-                fo.write(container.getBytes());
-                fo.close();
-                ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
-                reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
-
-                assert reportDto != null;
-                if (reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
-                    reportDto.getResults().stream()
-                            .flatMap(result -> result.getVerificationResults().stream())
-                            .findFirst()
-                            .ifPresent(verificationResult -> {
-                                boolean isResultTrue = verificationResult.isResult();
-                                System.out.println("Result value: " + isResultTrue);
-                                if (!isResultTrue) {
-                                    throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
-                                }
-                            });
-                } else {
-                    log.error(reportDto.getError() + ": {}", reportDto.getErrorDescription());
-                    throw new BadRequestException(reportDto.getError());
-                }
-
-                res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            for (String fileName : tempFileNames) {
-                File f = new File(fileName);
-                f.delete();
-            }
-
-            assert res != null;
-            byte[] resource = res.getByteArray();
-            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
-            String normalizedXmlString = m4DRegistryResponseDto.getXmlFile().getContent().replaceAll("\\s+", "");
-            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
-                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_CONTENT);
-            }
+            containerService.verify(authentication, container, m4DRegistryResponseDto.recall.getXmlFile().getContent());
         }
         M4dFile m4dFile = new M4dFile();
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
@@ -1098,92 +1095,6 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(e.getMessage());
         }
         return m4dSaved.getSigFile().getId();
-    }
-
-    public ByteArrayResource createArchiveM4dSig(Authentication authentication, Long fileId, String filename) throws IOException {
-        String bearerToken = getTokenValue(authentication);
-        M4dFile m4dFile;
-        try {
-            m4dFile = this.m4dFileService.findM4dFileById(fileId);
-        } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        List<String> tempFileNames = new ArrayList<>();
-        String tempContainerFile;
-        String tempSourceFile;
-        String tempSigFile;
-        String tempZipFile = "";
-        FileOutputStream fo;
-        ByteArrayResource resSource;
-        ByteArrayResource resSig;
-        try {
-            tempContainerFile = "/tmp/" + m4dFile.getFilename();
-            tempFileNames.add(tempContainerFile);
-            fo = new FileOutputStream(tempContainerFile);
-            byte[] bytes = Base64.getDecoder().decode(m4dFile.getContent());
-            fo.write(bytes);
-            fo.close();
-
-            resSource = this.synapiClientService.getPartContainer(tempContainerFile, "sourceFile", bearerToken);
-            tempSourceFile = "/tmp/" + filename + ".xml";
-            tempFileNames.add(tempSourceFile);
-            fo = new FileOutputStream(tempSourceFile);
-            fo.write(resSource.getByteArray());
-            fo.close();
-
-            resSig = this.synapiClientService.getPartContainer(tempContainerFile, "detachedSign", bearerToken);
-            String signatureData = "";
-            if (!isBase64(resSig.toString())) {
-                signatureData = Base64.getEncoder().encodeToString(resSig.getByteArray()).replaceAll("\\s+", "");
-            } else {
-                signatureData = resSig.toString().replaceAll("\\s+", "");
-            }
-            tempSigFile = "/tmp/" + filename + "_detached.sig";
-            tempFileNames.add(tempSigFile);
-            fo = new FileOutputStream(tempSigFile);
-            fo.write(signatureData.getBytes());
-            fo.close();
-
-            tempZipFile = "/tmp" + filename + ".zip";
-            createZip(tempZipFile, tempSourceFile, tempSigFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        for (String fileName : tempFileNames) {
-            File f = new File(fileName);
-            f.delete();
-        }
-
-
-        return new ByteArrayResource(Files.readAllBytes((new File(tempZipFile)).toPath()));
-    }
-
-    private static void createZip(String zipFilePath, String... files) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(zipFilePath);
-             ZipOutputStream zos = new ZipOutputStream(fos)) {
-
-            for (String filePath : files) {
-                File file = new File(filePath);
-                if (!file.exists()) {
-                    System.err.println("Файл не найден: " + filePath);
-                    continue;
-                }
-
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    ZipEntry zipEntry = new ZipEntry(file.getName());
-                    zos.putNextEntry(zipEntry);
-
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = fis.read(buffer)) >= 0) {
-                        zos.write(buffer, 0, length);
-                    }
-
-                    zos.closeEntry();
-                }
-            }
-        }
     }
 
     @Override
@@ -1465,35 +1376,10 @@ public class M4dServiceImpl implements M4dService {
         return m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getName();
     }
 
-
-    private String readXmlToString(MultipartFile sourceFile){
-        String content;
-        try (InputStream is = sourceFile.getInputStream()) {
-            byte[] bom = new byte[3];
-            int n = is.read(bom, 0, bom.length);
-            Reader reader;
-            if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
-                reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-            } else {
-                reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
-            }
-            StringBuilder cont = new StringBuilder();
-            char[] buffer = new char[1024];
-            int numRead;
-            while ((numRead = reader.read(buffer)) != -1) {
-                cont.append(buffer, 0, numRead);
-            }
-            content = cont.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return content;
-    }
-
     public M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile) {
         M4dXml m4dXml;
         try {
-            Document document = convertStringToDocument(this.readXmlToString(sourceFile));
+            Document document = convertStringToDocument(XMLUtil.readXmlToString(sourceFile));
             assert document != null;
             m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
         } catch (Exception e) {
@@ -1516,7 +1402,7 @@ public class M4dServiceImpl implements M4dService {
     }
 
     public String getHashXmlM4d(MultipartFile sourceFile) throws NoSuchAlgorithmException {
-        return HashUtils.getHash(this.readXmlToString(sourceFile).getBytes());
+        return HashUtils.getHash(XMLUtil.readXmlToString(sourceFile).getBytes());
     }
 
     @Override
@@ -1526,8 +1412,8 @@ public class M4dServiceImpl implements M4dService {
         report.setFileName(sourceFile.getOriginalFilename());
         if (reqScheme.isEmpty()) {
             report.setReqSchema("none");
-            String content = readXmlToString(sourceFile);
-            scheme = this.getSubstringFromXml(content, "ВерсФорм=\"");
+            String content = XMLUtil.readXmlToString(sourceFile);
+            scheme = XMLUtil.getSubstringFromXml(content, "ВерсФорм=\"");
         } else {
             report.setReqSchema(reqScheme);
             scheme = reqScheme;
@@ -1648,26 +1534,6 @@ public class M4dServiceImpl implements M4dService {
                 return report;
         }
         return null;
-    }
-
-    private String getSubstringFromXml(String content, String subStringParam){
-        String subString;
-        int startIndex = content.indexOf(subStringParam);
-        if (startIndex != -1) {
-            startIndex += subStringParam.length();
-            int endIndex = content.indexOf("\"", startIndex);
-            if (endIndex != -1) {
-                subString = content.substring(startIndex, endIndex);
-                System.out.println("Найдена подстрока: " + subString);
-                return subString;
-            } else {
-                System.out.println("Закрывающая кавычка не найдена.");
-                return "error";
-            }
-        } else {
-            System.out.println("Подстрока не найдена.");
-            return "not_found";
-        }
     }
 
     public MultipartFile getMultipartFileByM4dId(Authentication authentication, Long id) throws ParseException, IOException {

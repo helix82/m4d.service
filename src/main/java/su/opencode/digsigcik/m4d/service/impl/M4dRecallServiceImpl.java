@@ -1,10 +1,7 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.codehaus.plexus.util.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +10,6 @@ import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
-import su.opencode.digsigcik.m4d.dto.ReportDto;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
@@ -27,16 +23,13 @@ import su.opencode.digsigcik.m4d.service.*;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static su.opencode.digsigcik.m4d.util.Constants.*;
-import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
+import static su.opencode.digsigcik.m4d.util.Constants.MRPA_RECALL_IS_NULL;
+import static su.opencode.digsigcik.m4d.util.Constants.MRPA_REGISTRY_IS_NULL;
 
 @Service
 @Primary
@@ -46,16 +39,16 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
     private final UserCertificateService userCertificateService;
-    private final SynapiClientService synapiClientService;
+    private final ContainerService containerService;
 
     public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository,
-                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, SynapiClientService synapiClientService) {
+                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, ContainerService containerService) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
         this.userCertificateService = userCertificateService;
-        this.synapiClientService = synapiClientService;
+        this.containerService = containerService;
     }
 
     @Override
@@ -192,7 +185,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_SIGNATURE)
     public Long uploadSig(Authentication authentication, Long id, MultipartFile container, boolean verify) throws IOException, ParseException {
-        String bearerToken = getTokenValue(authentication);
+        //String bearerToken = getTokenValue(authentication);
         M4dRecall mrpaRecall = this.findById(id);
         if (mrpaRecall==null) {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
@@ -200,43 +193,43 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         if (mrpaRecall.getSigFile()!=null) {
             throw new BadRequestException("Заявление на отзыв МЧД уже подписано");
         }
-        List<String> tempFileNames = new ArrayList<>();
-        String tempFileName;
-        FileOutputStream fo;
-        ReportDto reportDto;
-        ByteArrayResource res = null;
-        if (verify) {
-            try {
-                tempFileName = "/tmp/" + container.getOriginalFilename();
-                tempFileNames.add(tempFileName);
-                fo = new FileOutputStream(tempFileName);
-                fo.write(container.getBytes());
-                fo.close();
-                ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
-                reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
-                assert reportDto != null;
-                reportDto.getResults().stream()
-                        .flatMap(result -> result.getVerificationResults().stream())
-                        .findFirst()
-                        .ifPresent(verificationResult -> {
-                            boolean isResultTrue = verificationResult.isResult();
-                            System.out.println("Result value: " + isResultTrue);
-                            if (!isResultTrue) {
-                                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
-                            }
-                        });
-                res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            for (String fileName : tempFileNames) {
-                File f = new File(fileName);
-                f.delete();
-            }
-            assert res != null;
-            byte[] resource = res.getByteArray();
+//        List<String> tempFileNames = new ArrayList<>();
+//        String tempFileName;
+//        FileOutputStream fo;
+//        ReportDto reportDto;
+//        ByteArrayResource res = null;
+//        if (verify) {
+//            try {
+//                tempFileName = "/tmp/" + container.getOriginalFilename();
+//                tempFileNames.add(tempFileName);
+//                fo = new FileOutputStream(tempFileName);
+//                fo.write(container.getBytes());
+//                fo.close();
+//                ObjectMapper objectMapper = new ObjectMapper();
+//                Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
+//                reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
+//                assert reportDto != null;
+//                reportDto.getResults().stream()
+//                        .flatMap(result -> result.getVerificationResults().stream())
+//                        .findFirst()
+//                        .ifPresent(verificationResult -> {
+//                            boolean isResultTrue = verificationResult.isResult();
+//                            System.out.println("Result value: " + isResultTrue);
+//                            if (!isResultTrue) {
+//                                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
+//                            }
+//                        });
+//                res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            for (String fileName : tempFileNames) {
+//                File f = new File(fileName);
+//                f.delete();
+//            }
+//            assert res != null;
+//            byte[] resource = res.getByteArray();
             M4d mrpaRegistryFind;
             try {
                 mrpaRegistryFind = this.m4dService.findById(mrpaRecall.getM4d().getId());
@@ -248,11 +241,14 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
             }
             M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, mrpaRegistryFind, false, false, false, true);
-            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
-            String normalizedXmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent().replaceAll("\\s+", "");
-            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
-                throw new BadRequestException(MRPA_RECALL_NOT_VERIFY_CONTENT);
-            }
+//            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
+//            String normalizedXmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent().replaceAll("\\s+", "");
+//            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
+//                throw new BadRequestException(MRPA_RECALL_NOT_VERIFY_CONTENT);
+//            }
+//        }
+        if (verify) {
+            containerService.verify(authentication, container, m4DRegistryResponseDto.recall.getXmlFile().getContent());
         }
         M4dFile m4dFile = new M4dFile();
         m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));

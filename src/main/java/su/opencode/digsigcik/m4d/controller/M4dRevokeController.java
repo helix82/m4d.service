@@ -22,10 +22,9 @@ import su.opencode.digsigcik.m4d.dto.ReportCheckStatusM4dDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
-import su.opencode.digsigcik.m4d.service.M4dFileService;
+import su.opencode.digsigcik.m4d.service.ContainerService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
-import su.opencode.digsigcik.m4d.service.SynapiClientService;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
@@ -49,15 +48,13 @@ public class M4dRevokeController {
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dRecallService m4dRecallService;
-    private final M4dFileService m4dFileService;
-    private final SynapiClientService synapiClientService;
+    private final ContainerService containerService;
 
-    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dFileService m4dFileService, SynapiClientService synapiClientService) {
+    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, ContainerService containerService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dRecallService = m4dRecallService;
-        this.m4dFileService = m4dFileService;
-        this.synapiClientService = synapiClientService;
+        this.containerService = containerService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY,
@@ -429,7 +426,7 @@ public class M4dRevokeController {
                 return ResponseEntity.noContent().build();
             }
         } else {
-            ByteArrayResource resp = this.m4dService.createArchiveM4dSig(authentication, m4dRecall.getSigFile().getId(), filename);
+            ByteArrayResource resp = this.containerService.createArchiveSourceSig(authentication, m4dRecall.getSigFile().getId(), filename);
             if (resp == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
             }

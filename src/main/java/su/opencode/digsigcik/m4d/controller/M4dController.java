@@ -23,6 +23,7 @@ import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
+import su.opencode.digsigcik.m4d.service.ContainerService;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRequestService;
 import su.opencode.digsigcik.m4d.service.M4dService;
@@ -55,12 +56,14 @@ public class M4dController {
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
     private final M4dRequestService m4dRequestService;
+    private final ContainerService containerService;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, M4dRequestService m4dRequestService) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, M4dRequestService m4dRequestService, ContainerService containerService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
         this.m4dRequestService = m4dRequestService;
+        this.containerService = containerService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
@@ -436,7 +439,7 @@ public class M4dController {
                 String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
                 tempFileName = "/tmp/container_" + timestamp + ".dscp";
             }
-            ByteArrayResource response = this.m4dService.createContainer(authentication, sourceFile, sourceSig, hashAlgorithm);
+            ByteArrayResource response = this.containerService.createContainer(authentication, sourceFile, sourceSig, hashAlgorithm);
             if(response != null) {
                 try (OutputStream outputStream = new FileOutputStream(tempFileName)) {
                     outputStream.write(response.getByteArray());
@@ -522,7 +525,7 @@ public class M4dController {
                 return ResponseEntity.noContent().build();
             }
         } else {
-            ByteArrayResource resp = this.m4dService.createArchiveM4dSig(authentication, m4d.getSigFile().getId(), filename);
+            ByteArrayResource resp = this.containerService.createArchiveSourceSig(authentication, m4d.getSigFile().getId(), filename);
             if (resp == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
             }
