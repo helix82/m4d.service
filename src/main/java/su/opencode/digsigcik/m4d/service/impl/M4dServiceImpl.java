@@ -1486,6 +1486,10 @@ public class M4dServiceImpl implements M4dService {
                     }
                     if (!statusM4d.isEmpty()) {
                         m4d.setStatus(statusM4d);
+                        if (statusM4d.equals("REVOKED")) {
+                            M4dRecall m4dRecall = this.m4dRecallService.findMrpaRecallByM4dId(m4d.getId());
+                            this.m4dRecallService.updateStatusMrpaRecallById(m4dRecall.getId(), "REVOKED");
+                        }
                     }
                     if (!statusDetailM4d.isEmpty()) {
                         m4d.setErrorDetail(statusDetailM4d);

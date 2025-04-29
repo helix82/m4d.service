@@ -371,7 +371,7 @@ public class M4dRevokeController {
 //            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
 //        }
         // TODO: @helix82 Отправляем архив с xml-файлом отзыва мчд и подписью на РР МЧД для отзыва
-        this.m4dRecallService.updateStatusMrpaRecallById(id, "ONCANCEL");
+        this.m4dRecallService.updateStatusMrpaRecallById(id, "ONCHECK");
         this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), "ONCANCEL");
         return findMrpaRecallById(authentication, id);
     }
