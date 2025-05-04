@@ -12,7 +12,6 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface M4dService {
@@ -20,7 +19,7 @@ public interface M4dService {
     M4d saveMrpaRegistry(@NotNull M4d m4d);
     M4d updateM4d(@NotNull M4d m4d);
     M4d updateStatusM4d(Long id, String status);
-    Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials, String xmlString);
+    Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) throws JAXBException;
     Long updateAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
     Integer countM4dByGuid(@NotNull String guid);
     M4d findMrpaRegistryByGuid(@NotNull String guid);
@@ -49,7 +48,6 @@ public interface M4dService {
     String getHashXmlM4d(MultipartFile sourceFile) throws Exception;
     ReportValidSchemeDto validXmlM4dScheme(MultipartFile sourceFile, String reqScheme) throws IOException, SAXException;
     ReportCheckStatusM4dDto updateStatusM4dRequestSearch(M4dFnsDataResponse m4dFnsDataResponse);
-    LocalDateTime convertStringToLocalDateTime(String date);
     boolean isBase64(String str);
     MultipartFile getMultipartFileByM4dId(Authentication authentication, Long id) throws ParseException, IOException;
     M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile);

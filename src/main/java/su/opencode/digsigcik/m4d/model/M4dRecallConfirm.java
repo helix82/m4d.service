@@ -45,5 +45,5 @@ public class M4dRecallConfirm {
 
     @OneToOne
     @JoinColumn(name = "m4d_revoke_id", referencedColumnName = "id")
-    private M4d m4d;
+    private M4dRecall m4dRecall;
 }

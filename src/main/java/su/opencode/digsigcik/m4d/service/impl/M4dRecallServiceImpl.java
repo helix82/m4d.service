@@ -17,14 +17,20 @@ import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
+import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
 import su.opencode.digsigcik.m4d.repository.M4dRecallRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,20 +46,22 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     private final M4dFileService m4dFileService;
     private final UserCertificateService userCertificateService;
     private final ContainerService containerService;
+    private final M4dRecallConfirmService m4dRecallConfirmService;
 
     public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository,
-                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, ContainerService containerService) {
+                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, ContainerService containerService, M4dRecallConfirmService m4dRecallConfirmService) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
         this.userCertificateService = userCertificateService;
         this.containerService = containerService;
+        this.m4dRecallConfirmService = m4dRecallConfirmService;
     }
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_CREATE)
-    public M4dRecall saveM4dRecall(M4dRecall m4dRecall, String xmlString) {
+    public M4dRecall saveM4dRecall(M4dRecall m4dRecall, String xmlString) throws Exception {
 
         String idFile="";
         String start = "НомДовер=\"";
@@ -75,7 +83,6 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.DOCUMENT);
         m4dFile.setFilename("ON_OFFDOVER_" + idFile + ".xml");
-        //m4dFile.setContent(xmlString);
         String base64Content = Base64.getEncoder().encodeToString(xmlString.getBytes());
         m4dFile.setContent(base64Content);
         M4dFile existsM4dFile;
@@ -85,7 +92,15 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             throw new BadRequestException(e.getMessage());
         }
         m4dRecall.setXmlFile(Objects.requireNonNullElse(existsM4dFile, m4dFile));
-        return this.m4dRevokeRepository.save(m4dRecall);
+        M4dRecall m4dRecallSaved;
+        try {
+            m4dRecallSaved = this.m4dRevokeRepository.save(m4dRecall);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        String hash = this.getHashFromXmlString(xmlString);
+        M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(m4dRecall, idFile, hash);
+        return m4dRecallSaved;
     }
 
     @Override
@@ -280,5 +295,27 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             throw new BadRequestException(e.getMessage());
         }
         return fileId;
+    }
+
+    @Override
+    public String getHashFromXmlString(String xmlString) throws Exception {
+        List<String> tempFileNames = new ArrayList<>();
+        String hash;
+        String tempSourceFile;
+        FileOutputStream fo;
+        String filename = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+
+        tempSourceFile = "/tmp/" + filename + ".xml";
+        tempFileNames.add(tempSourceFile);
+        fo = new FileOutputStream(tempSourceFile);
+        fo.write(xmlString.getBytes());
+        fo.close();
+        MultipartFile sourceFile = new CustomMultipartFile(new File(tempSourceFile));
+        hash = this.m4dService.getHashXmlM4d(sourceFile);
+        for (String fileName : tempFileNames) {
+            File f = new File(fileName);
+            f.delete();
+        }
+        return hash;
     }
 }

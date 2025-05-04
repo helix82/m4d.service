@@ -26,10 +26,7 @@ import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
-import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
-import su.opencode.digsigcik.m4d.util.HashUtils;
-import su.opencode.digsigcik.m4d.util.XMLUtil;
-import su.opencode.digsigcik.m4d.util.XmlValidator;
+import su.opencode.digsigcik.m4d.util.*;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
@@ -41,10 +38,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -73,6 +67,8 @@ public class M4dServiceImpl implements M4dService {
     private final UserCertificateService userCertificateService;
     private final RefBookClientService refBookClientService;
     private final ContainerService containerService;
+    private final M4dConfirmService m4dConfirmService;
+    private final M4dRecallConfirmService m4dRecallConfirmService;
     private static final Pattern BASE64_PATTERN = Pattern.compile("^[A-Za-z0-9+/]+={0,2}$");
 
     @Override
@@ -103,7 +99,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) {
+    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) throws JAXBException {
         String bearerToken = getTokenValue(authentication);
         String orgInn;
         Long principId;
@@ -210,12 +206,9 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(e.getMessage());
         }
         m4d.setXmlFile(Objects.requireNonNullElse(existsM4dFile, m4dFile));
-
-
         M4d m4dSaved;
         try {
             m4dSaved = this.m4dRepository.save(m4d);
-
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -266,7 +259,8 @@ public class M4dServiceImpl implements M4dService {
                 }
             }
         }
-
+        String internalNumber = XMLUtil.getSubstringFromXml(xmlString, "ВнНомДовер=\"");
+        M4dConfirm m4dConfirm = this.m4dConfirmService.createAndSignedM4dConfirm(m4d, idFile, m4dSaved.getGuid(), internalNumber, m4dSaved.getStartDate().toString().substring(0, 10), m4dSaved.getEndDate().toString().substring(0, 10));
         return m4dSaved.getId();
     }
 
@@ -747,8 +741,8 @@ public class M4dServiceImpl implements M4dService {
         M4dRequestSearch m4dRequestSearchSaved = this.m4dRequestService.saveM4dRequestSearch(m4dRequestSearchNew);
         M4dRequestSearchDetail m4dRequestSearchDetail = new M4dRequestSearchDetail();
         m4dRequestSearchDetail.setStatus(StatusRequestTypeEnum.ONCHECK.toString());
-        m4dRequestSearchDetail.setStartDate(convertStringToLocalDateTime(getStartDateM4dFromXml(m4dXml)));
-        m4dRequestSearchDetail.setEndDate(convertStringToLocalDateTime(getEndDateM4dFromXml(m4dXml)));
+        m4dRequestSearchDetail.setStartDate(DateUtils.convertStringToLocalDateTime(getStartDateM4dFromXml(m4dXml)));
+        m4dRequestSearchDetail.setEndDate(DateUtils.convertStringToLocalDateTime(getEndDateM4dFromXml(m4dXml)));
         m4dRequestSearchDetail.setVersion(1L);
         m4dRequestSearchDetail.setActive(true);
         m4dRequestSearchDetail.setRequestSearchId(m4dRequestSearchSaved.getId());
@@ -877,33 +871,6 @@ public class M4dServiceImpl implements M4dService {
         return null;
     }
 
-//    public ByteArrayResource createContainer(Authentication authentication,MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException {
-//        String bearerToken = getTokenValue(authentication);
-//        String tempFileSource;
-//        String tempFileSig;
-//        FileOutputStream foSource;
-//        FileOutputStream foSig;
-//        ByteArrayResource res;
-//
-//        tempFileSource = "/tmp/" + sourceFile.getOriginalFilename();
-//        foSource = new FileOutputStream(tempFileSource);
-//        foSource.write(sourceFile.getBytes());
-//        foSource.close();
-//
-//        tempFileSig = "/tmp/" + sourceSig.getOriginalFilename();
-//        foSig = new FileOutputStream(tempFileSig);
-//        foSig.write(sourceSig.getBytes());
-//        foSig.close();
-//
-//        res = synapiClientService.createContainer(tempFileSource, tempFileSig, hashAlgorithm, bearerToken);
-//        File f1 = new File(tempFileSource);
-//        f1.delete();
-//        File f2 = new File(tempFileSig);
-//        f2.delete();
-//        return res;
-//    }
-
-
     public M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException {
         List<SAXParseException> res = new XmlValidator(sourceFile.getInputStream(), "EMCHD_1").listParsingExceptions();
         if (res.isEmpty()) {
@@ -917,10 +884,10 @@ public class M4dServiceImpl implements M4dService {
             //парсинг МЧД из xml
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             String dateCreate = m4dXml.getIdFile().substring(9, 17);
-            m4d.setCreateDate(convertStringToLocalDateTime(dateCreate));
+            m4d.setCreateDate(DateUtils.convertStringToLocalDateTime(dateCreate));
             m4d.setStatus("DRAFT");
-            m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
-            m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
+            m4d.setStartDate(DateUtils.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
+            m4d.setEndDate(DateUtils.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
             OrganizationDto organisation = new OrganizationDto();
             organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
@@ -950,7 +917,7 @@ public class M4dServiceImpl implements M4dService {
                     if (c.representative.detailRepresentative != null) {
                         representative.setInn(c.representative.detailRepresentative.getInn());
                         representative.setSnils(c.representative.detailRepresentative.getSnils());
-                        representative.setBirthDate(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.getBirthDate()));
+                        representative.setBirthDate(DateUtils.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.getBirthDate()));
                         represDetail.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
                         represDetail.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
                         represDetail.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
@@ -958,7 +925,7 @@ public class M4dServiceImpl implements M4dService {
                             throw new BadRequestException(REPRESENTATIVE_IS_NULL);
                         }
                         represDetail.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-                        represDetail.setDateIssue(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
+                        represDetail.setDateIssue(DateUtils.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
                         represDetail.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
                         represDetail.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
                     }
@@ -992,58 +959,6 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
         M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, false, false, true, false);
-//        List<String> tempFileNames = new ArrayList<>();
-//        String tempFileName;
-//        FileOutputStream fo;
-//        ReportDto reportDto;
-//        ByteArrayResource res = null;
-//        if (verify) {
-//            try {
-//                tempFileName = "/tmp/" + container.getOriginalFilename();
-//
-//                tempFileNames.add(tempFileName);
-//                fo = new FileOutputStream(tempFileName);
-//                fo.write(container.getBytes());
-//                fo.close();
-//                ObjectMapper objectMapper = new ObjectMapper();
-//                Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
-//                reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
-//
-//                assert reportDto != null;
-//                if (reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
-//                    reportDto.getResults().stream()
-//                            .flatMap(result -> result.getVerificationResults().stream())
-//                            .findFirst()
-//                            .ifPresent(verificationResult -> {
-//                                boolean isResultTrue = verificationResult.isResult();
-//                                System.out.println("Result value: " + isResultTrue);
-//                                if (!isResultTrue) {
-//                                    throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
-//                                }
-//                            });
-//                } else {
-//                    log.error(reportDto.getError() + ": {}", reportDto.getErrorDescription());
-//                    throw new BadRequestException(reportDto.getError());
-//                }
-//
-//                res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//
-//            for (String fileName : tempFileNames) {
-//                File f = new File(fileName);
-//                f.delete();
-//            }
-//
-//            assert res != null;
-//            byte[] resource = res.getByteArray();
-//            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
-//            String normalizedXmlString = m4DRegistryResponseDto.getXmlFile().getContent().replaceAll("\\s+", "");
-//            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
-//                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_CONTENT);
-//            }
-//        }
         if (verify) {
             containerService.verify(authentication, container, m4DRegistryResponseDto.recall.getXmlFile().getContent());
         }
@@ -1203,42 +1118,6 @@ public class M4dServiceImpl implements M4dService {
         } catch (IllegalArgumentException e) {
             return false;
         }
-    }
-
-    public LocalDateTime convertStringToLocalDateTime(String date) {
-        DateTimeFormatter formatter;
-
-        if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?")) {
-            String dateWithoutMillis = date.split("\\.")[0];
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-            return LocalDateTime.parse(dateWithoutMillis, formatter);
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-            return LocalDateTime.parse(date, formatter);
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+\\-]\\d{2}:\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, formatter);
-            return zonedDateTime.toLocalDateTime();
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+\\-]\\d{2}:\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
-            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, formatter);
-            return zonedDateTime.toLocalDateTime();
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-            return LocalDateTime.from(formatter.parse(date));
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            LocalDate localDate = LocalDate.parse(date, formatter);
-            return localDate.atStartOfDay();
-        } else if (date.matches("\\d{4}\\d{2}\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            LocalDate localDate = LocalDate.parse(date, formatter);
-            return localDate.atStartOfDay();
-        } else if (date.charAt(date.length() - 1) == 'Z') {
-            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DateTimeFormatter.ISO_DATE_TIME);
-            return zonedDateTime.toLocalDateTime();
-        }
-        return null;
     }
 
     private M4dRegistryResponseDto.SigFileDto convertSigFileToDto(M4dFile m4dFile) {
@@ -1425,16 +1304,16 @@ public class M4dServiceImpl implements M4dService {
             M4dRequestSearchDetail m4dRequestSearchDetailNew = new M4dRequestSearchDetail();
             m4dRequestSearchDetailNew.setStatus(m4dFnsDataResponse.getStatus());
             if (m4dFnsDataResponse.getStatusDateTime() != null) {
-                m4dRequestSearchDetailNew.setStatusDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStatusDateTime()));
+                m4dRequestSearchDetailNew.setStatusDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStatusDateTime()));
             }
             if (m4dFnsDataResponse.getCreatedDateTime() != null) {
-                m4dRequestSearchDetailNew.setRegistrationDate(convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
+                m4dRequestSearchDetailNew.setRegistrationDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
             }
             if (m4dFnsDataResponse.getStartDateTime() != null) {
-                m4dRequestSearchDetailNew.setStartDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
+                m4dRequestSearchDetailNew.setStartDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
             }
             if (m4dFnsDataResponse.getEndDateTime() != null) {
-                m4dRequestSearchDetailNew.setEndDate(convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
+                m4dRequestSearchDetailNew.setEndDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
             }
             m4dRequestSearchDetailNew.setActive(true);
             m4dRequestSearchDetailNew.setRequestSearchId(m4dRequestSearch.getId());

@@ -28,6 +28,7 @@ import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRequestService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
+import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.persistence.EntityNotFoundException;
@@ -40,7 +41,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static java.util.Objects.isNull;
@@ -93,9 +93,9 @@ public class M4dController {
     @PostMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> saveAllDataMrpaRegistry(Authentication authentication, @RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         m4dSaveFullDto.setGuid();
-        m4dSaveFullDto.setCreateDate(LocalDateTime.now().toString());
+        m4dSaveFullDto.setCreateDate(DateUtils.getCreatedDate());
         M4d m4d = convertMrpaRegistryToEntity(m4dSaveFullDto.mrpaRegistry);
-        m4d.setCreateDate(LocalDateTime.now());
+        m4d.setCreateDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCreatedDate()));
         m4d.setStatus("DRAFT");
         OrganizationDto organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
@@ -224,8 +224,8 @@ public class M4dController {
     @PutMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> updateAllDataMrpaRegistry(Authentication authentication, @RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws ParseException {
         M4d m4d = this.m4dService.findById(m4dSaveFullDto.mrpaRegistry.getId());
-        m4d.setStartDate(this.m4dService.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getStartDate()));
-        m4d.setEndDate(this.m4dService.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getEndDate()));
+        m4d.setStartDate(DateUtils.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getStartDate()));
+        m4d.setEndDate(DateUtils.convertStringToLocalDateTime(m4dSaveFullDto.mrpaRegistry.getEndDate()));
         OrganizationDto organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
@@ -573,8 +573,8 @@ public class M4dController {
 
     private M4d convertMrpaRegistryToEntity(M4dRegistryRequestDto.MrpaRegistry mrpaRegistryDto) {
         M4d m4d = new M4d();
-        m4d.setStartDate(this.m4dService.convertStringToLocalDateTime(mrpaRegistryDto.getStartDate()));
-        m4d.setEndDate(this.m4dService.convertStringToLocalDateTime(mrpaRegistryDto.getEndDate()));
+        m4d.setStartDate(DateUtils.convertStringToLocalDateTime(mrpaRegistryDto.getStartDate()));
+        m4d.setEndDate(DateUtils.convertStringToLocalDateTime(mrpaRegistryDto.getEndDate()));
         m4d.setGuid(mrpaRegistryDto.getGuid());
         return m4d;
     }
@@ -596,7 +596,7 @@ public class M4dController {
         representative.setId(representativeDto.getId());
         representative.setInn(representativeDto.getInn());
         representative.setSnils(representativeDto.getSnils());
-        representative.setBirthDate(this.m4dService.convertStringToLocalDateTime(representativeDto.getBirthDate()));
+        representative.setBirthDate(DateUtils.convertStringToLocalDateTime(representativeDto.getBirthDate()));
         return representative;
     }
 
@@ -607,7 +607,7 @@ public class M4dController {
         representativeDetail.setName(representativeDetailDto.getName());
         representativeDetail.setPatronymic(representativeDetailDto.getPatronymic());
         representativeDetail.setSeriesNumber(representativeDetailDto.getSeriesNumber());
-        representativeDetail.setDateIssue(this.m4dService.convertStringToLocalDateTime(representativeDetailDto.getDateIssue()));
+        representativeDetail.setDateIssue(DateUtils.convertStringToLocalDateTime(representativeDetailDto.getDateIssue()));
         representativeDetail.setWhoIssue(representativeDetailDto.getWhoIssue());
         representativeDetail.setDepartmentCode(representativeDetailDto.getDepartmentCode());
         representativeDetail.setRepresentativeId(representativeDetailDto.getRepresentativeId());

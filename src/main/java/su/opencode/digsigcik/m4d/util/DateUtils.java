@@ -3,7 +3,9 @@ package su.opencode.digsigcik.m4d.util;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
@@ -70,5 +72,41 @@ public class DateUtils {
         Instant instant = Instant.now();
         int nano = instant.getNano();
         return instant.minusNanos(nano).toString();
+    }
+
+    public static LocalDateTime convertStringToLocalDateTime(String date) {
+        DateTimeFormatter formatter;
+
+        if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?")) {
+            String dateWithoutMillis = date.split("\\.")[0];
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+            return LocalDateTime.parse(dateWithoutMillis, formatter);
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+            return LocalDateTime.parse(date, formatter);
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+\\-]\\d{2}:\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, formatter);
+            return zonedDateTime.toLocalDateTime();
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+\\-]\\d{2}:\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, formatter);
+            return zonedDateTime.toLocalDateTime();
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            return LocalDateTime.from(formatter.parse(date));
+        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate localDate = LocalDate.parse(date, formatter);
+            return localDate.atStartOfDay();
+        } else if (date.matches("\\d{4}\\d{2}\\d{2}")) {
+            formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            LocalDate localDate = LocalDate.parse(date, formatter);
+            return localDate.atStartOfDay();
+        } else if (date.charAt(date.length() - 1) == 'Z') {
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DateTimeFormatter.ISO_DATE_TIME);
+            return zonedDateTime.toLocalDateTime();
+        }
+        return null;
     }
 }

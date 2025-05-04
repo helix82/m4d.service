@@ -226,6 +226,7 @@ public interface Constants {
     String MRPA_IS_NULL = "МЧД не найдена";
     String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
     String MRPA_CONFIRM_IS_NULL = "Подтверждения МЧД не найдены";
+    String MRPA_RECALL_CONFIRM_IS_NULL = "Подтверждения отзыва МЧД не найдены";
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
     String MRPA_RECALL_SIGN_CANNOT_DELETE = "Невозможно удалить! Заявление на отзыв МЧД уже подписано и отправлено в РР МЧД.";
     String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);

@@ -25,7 +25,7 @@ public class M4dRevokeConfirmDto {
     private String operatorId;
 
     @XmlElement(name = XML_ELEMENT_MCHD_REVOKE_CONFIRM_ORGANISATION)
-    public M4dConfirmDto.Organisation organisation;
+    public Organisation organisation;
 
     @XmlRootElement
     @XmlAccessorType(XmlAccessType.FIELD)

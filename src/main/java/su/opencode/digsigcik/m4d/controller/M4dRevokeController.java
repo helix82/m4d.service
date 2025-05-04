@@ -25,14 +25,11 @@ import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.service.ContainerService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
-import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
@@ -156,23 +153,7 @@ public class M4dRevokeController {
         } else {
             xmlString = m4dRecallSaved.getM4d().getXmlFile().getContent();
         }
-        List<String> tempFileNames = new ArrayList<>();
-        String hash;
-        String tempSourceFile;
-        FileOutputStream fo;
-        String filename = m4dRecallSaved.getM4d().getGuid();
-
-        tempSourceFile = "/tmp/" + filename + ".xml";
-        tempFileNames.add(tempSourceFile);
-        fo = new FileOutputStream(tempSourceFile);
-        fo.write(xmlString.getBytes());
-        fo.close();
-        MultipartFile sourceFile = new CustomMultipartFile(new File(tempSourceFile));
-        hash = this.m4dService.getHashXmlM4d(sourceFile);
-        for (String fileName : tempFileNames) {
-            File f = new File(fileName);
-            f.delete();
-        }
+        String hash = this.m4dRecallService.getHashFromXmlString(xmlString);
         M4dFnsDataResponse m4dFnsDataResponse = new M4dFnsDataResponse();
         m4dFnsDataResponse.setGuid(m4dRecallSaved.getM4d().getGuid());
         m4dFnsDataResponse.setId(hash);

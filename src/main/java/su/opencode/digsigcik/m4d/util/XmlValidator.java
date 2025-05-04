@@ -24,8 +24,7 @@ public class XmlValidator {
     private final InputStream xmlString;
 
     public XmlValidator(InputStream xmlString, String scheme) {
-        //this.xsdPath = "/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd";
-        this.xsdPath = "xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd";
+        this.xsdPath = "/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd";
         if (scheme.equals("EMCHD_1")) {
             //this.xsdPath = "/app/xml/validation/ON_EMCHD_1_928_00_01_01_01.xsd";
         }
@@ -55,8 +54,7 @@ public class XmlValidator {
 
     private Validator initValidator(String xsdPath) throws SAXException {
         SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        //Source schemaFile = new StreamSource(xsdPath);
-        Source schemaFile = new StreamSource(getFile(xsdPath));
+        Source schemaFile = new StreamSource(xsdPath);
         Schema schema = factory.newSchema(schemaFile);
         return schema.newValidator();
     }
