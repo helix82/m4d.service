@@ -535,6 +535,10 @@ public class M4dServiceImpl implements M4dService {
                 this.representativeService.deleteRepresentative(m4d.getRepresentativeId());
                 this.representativeDetailService.deleteRepresentativeDetailByRepresId(m4d.getRepresentativeId());
             }
+            M4dRecall m4dRecall = this.m4dRecallService.findMrpaRecallByM4dId(m4d.getId());
+            if (m4dRecall != null) {
+                this.m4dRecallService.deleteMrpaRecallById(m4dRecall.getId());
+            }
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
