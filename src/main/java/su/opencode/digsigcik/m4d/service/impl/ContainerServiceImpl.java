@@ -129,11 +129,17 @@ public class ContainerServiceImpl implements ContainerService {
         return res;
     }
 
-    public ByteArrayResource createArchiveSourceSig(Authentication authentication, Long fileId, String filename) throws IOException {
+    public ByteArrayResource createArchiveSourceSig(Authentication authentication, Long sourceFileId, Long confirmFileId, String filenameSource, String filenameConfirm) throws IOException {
         String bearerToken = getTokenValue(authentication);
         M4dFile m4dFile;
         try {
-            m4dFile = this.m4dFileService.findM4dFileById(fileId);
+            m4dFile = this.m4dFileService.findM4dFileById(sourceFileId);
+        } catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        M4dFile m4dConfirmFile;
+        try {
+            m4dConfirmFile = this.m4dFileService.findM4dFileById(confirmFileId);
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -141,10 +147,15 @@ public class ContainerServiceImpl implements ContainerService {
         String tempContainerFile;
         String tempSourceFile;
         String tempSigFile;
+        String tempConfirmContainerFile;
+        String tempConfirmSourceFile;
+        String tempConfirmSigFile;
         String tempZipFile = "";
         FileOutputStream fo;
         ByteArrayResource resSource;
         ByteArrayResource resSig;
+        ByteArrayResource resConfirmSource;
+        ByteArrayResource resConfirmSig;
         try {
             tempContainerFile = "/tmp/" + m4dFile.getFilename();
             tempFileNames.add(tempContainerFile);
@@ -154,7 +165,7 @@ public class ContainerServiceImpl implements ContainerService {
             fo.close();
 
             resSource = this.synapiClientService.getPartContainer(tempContainerFile, "sourceFile", bearerToken);
-            tempSourceFile = "/tmp/" + filename + ".xml";
+            tempSourceFile = "/tmp/" + filenameSource + ".xml";
             tempFileNames.add(tempSourceFile);
             fo = new FileOutputStream(tempSourceFile);
             fo.write(resSource.getByteArray());
@@ -167,14 +178,41 @@ public class ContainerServiceImpl implements ContainerService {
             } else {
                 signatureData = resSig.toString().replaceAll("\\s+", "");
             }
-            tempSigFile = "/tmp/" + filename + "_detached.sig";
+            tempSigFile = "/tmp/" + filenameSource + "_detached.sig";
             tempFileNames.add(tempSigFile);
             fo = new FileOutputStream(tempSigFile);
             fo.write(signatureData.getBytes());
             fo.close();
 
-            tempZipFile = "/tmp" + filename + ".zip";
-            createZip(tempZipFile, tempSourceFile, tempSigFile);
+            tempConfirmContainerFile = "/tmp/" + m4dConfirmFile.getFilename();
+            tempFileNames.add(tempConfirmContainerFile);
+            fo = new FileOutputStream(tempConfirmContainerFile);
+            byte[] bytesConfirm = Base64.getDecoder().decode(m4dFile.getContent());
+            fo.write(bytesConfirm);
+            fo.close();
+
+            resConfirmSource = this.synapiClientService.getPartContainer(tempConfirmContainerFile, "sourceFile", bearerToken);
+            tempConfirmSourceFile = "/tmp/" + filenameConfirm + ".xml";
+            tempFileNames.add(tempConfirmSourceFile);
+            fo = new FileOutputStream(tempConfirmSourceFile);
+            fo.write(resConfirmSource.getByteArray());
+            fo.close();
+
+            resConfirmSig = this.synapiClientService.getPartContainer(tempConfirmContainerFile, "detachedSign", bearerToken);
+            String signatureConfirmData = "";
+            if (!isBase64(resConfirmSig.toString())) {
+                signatureConfirmData = Base64.getEncoder().encodeToString(resConfirmSig.getByteArray()).replaceAll("\\s+", "");
+            } else {
+                signatureConfirmData = resConfirmSig.toString().replaceAll("\\s+", "");
+            }
+            tempConfirmSigFile = "/tmp/" + filenameConfirm + "_detached.sig";
+            tempFileNames.add(tempConfirmSigFile);
+            fo = new FileOutputStream(tempConfirmSigFile);
+            fo.write(signatureConfirmData.getBytes());
+            fo.close();
+
+            tempZipFile = "/tmp" + filenameSource + ".zip";
+            createZip(tempZipFile, tempSourceFile, tempSigFile, tempConfirmSourceFile, tempConfirmSigFile);
         } catch (IOException e) {
             e.printStackTrace();
         }

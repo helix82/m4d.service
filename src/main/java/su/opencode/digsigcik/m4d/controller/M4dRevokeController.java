@@ -22,7 +22,9 @@ import su.opencode.digsigcik.m4d.dto.ReportCheckStatusM4dDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
+import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
 import su.opencode.digsigcik.m4d.service.ContainerService;
+import su.opencode.digsigcik.m4d.service.M4dRecallConfirmService;
 import su.opencode.digsigcik.m4d.service.M4dRecallService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -46,12 +48,14 @@ public class M4dRevokeController {
     private final M4dService m4dService;
     private final M4dRecallService m4dRecallService;
     private final ContainerService containerService;
+    private final M4dRecallConfirmService m4dRecallConfirmService;
 
-    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, ContainerService containerService) {
+    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, ContainerService containerService, M4dRecallConfirmService m4dRecallConfirmService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dRecallService = m4dRecallService;
         this.containerService = containerService;
+        this.m4dRecallConfirmService = m4dRecallConfirmService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY,
@@ -388,16 +392,16 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
 
-        String filename = m4dRecall.getXmlFile().getFilename();
-        int lastDotIndex = filename.lastIndexOf('.');
+        String filenameSource = m4dRecall.getXmlFile().getFilename();
+        int lastDotIndex = filenameSource.lastIndexOf('.');
         if (lastDotIndex > 0) {
-            filename = filename.substring(0, lastDotIndex);
+            filenameSource = filenameSource.substring(0, lastDotIndex);
         }
         if (m4dRecall.getSigFile()==null){
             M4dRegistryResponseDto m4dResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, false, true, false, true);
             String xmlString = m4dResponseDto.recall.getXmlFile().getContent();
             try {
-                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".xml\"");
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filenameSource + ".xml\"");
 
                 return new ResponseEntity<>(
                         xmlString,
@@ -407,12 +411,26 @@ public class M4dRevokeController {
                 return ResponseEntity.noContent().build();
             }
         } else {
-            ByteArrayResource resp = this.containerService.createArchiveSourceSig(authentication, m4dRecall.getSigFile().getId(), filename);
+            M4dRecallConfirm m4dRecallConfirm;
+            try {
+                m4dRecallConfirm = this.m4dRecallConfirmService.findM4dRecallConfirmByM4dRecallId(m4dRecall.getId());
+            } catch (ConstraintViolationException e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+            if (m4dRecallConfirm == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_CONFIRM_IS_NULL), HttpStatus.NOT_FOUND);
+            }
+            String filenameConfirm = m4dRecallConfirm.getSigFileRegisteredPep().getFilename();
+            int lastDotIndex1 = filenameConfirm.lastIndexOf('.');
+            if (lastDotIndex1 > 0) {
+                filenameConfirm = filenameConfirm.substring(0, lastDotIndex1);
+            }
+            ByteArrayResource resp = this.containerService.createArchiveSourceSig(authentication, m4dRecall.getSigFile().getId(), m4dRecallConfirm.getSigFileRegisteredPep().getId(), filenameSource, filenameConfirm);
             if (resp == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
             }
             try {
-                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".zip\"");
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filenameSource + ".zip\"");
 
                 return new ResponseEntity<>(
                         resp,

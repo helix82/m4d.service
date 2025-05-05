@@ -46,8 +46,8 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     }
 
     @Override
-    public M4dRecallConfirm findM4dRecallConfirmByM4dId(Long m4dId) {
-        return this.m4dRecallConfirmRepository.findM4dRecallConfirmByM4dId(m4dId);
+    public M4dRecallConfirm findM4dRecallConfirmByM4dRecallId(Long m4dRecallId) {
+        return this.m4dRecallConfirmRepository.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
     }
 
     @Override
@@ -61,8 +61,8 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredPep(Authentication authentication, Long m4dId, MultipartFile container, boolean verify) throws IOException {
-        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dId(m4dId);
+    public Long uploadSigRegisteredPep(Authentication authentication, Long m4dRecallId, MultipartFile container, boolean verify) throws IOException {
+        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
         if (m4dRecallConfirm==null) {
             throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
         }
@@ -99,8 +99,8 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredRr(Authentication authentication, Long m4dId, MultipartFile container, boolean verify) throws IOException {
-        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dId(m4dId);
+    public Long uploadSigRegisteredRr(Authentication authentication, Long m4dRecallId, MultipartFile container, boolean verify) throws IOException {
+        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
         if (m4dRecallConfirm==null) {
             throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
         }
@@ -137,8 +137,8 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     }
 
     @Override
-    public Long uploadXmlRegisteredRr(Authentication authentication, Long m4dId, String xmlContent) throws IOException {
-        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dId(m4dId);
+    public Long uploadXmlRegisteredRr(Authentication authentication, Long m4dRecallId, String xmlContent) throws IOException {
+        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
         if (m4dRecallConfirm==null) {
             throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
         }

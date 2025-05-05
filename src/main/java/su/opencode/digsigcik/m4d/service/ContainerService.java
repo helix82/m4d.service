@@ -10,5 +10,5 @@ import java.io.IOException;
 public interface ContainerService {
     boolean verify(Authentication authentication, MultipartFile container, String content);
     ByteArrayResource createContainer(Authentication authentication, MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException;
-    ByteArrayResource createArchiveSourceSig(Authentication authentication, Long fileId, String filename) throws IOException;
+    ByteArrayResource createArchiveSourceSig(Authentication authentication, Long sourceFileId, Long confirmFileId, String filenameSource, String filenameConfirm) throws IOException;
 }

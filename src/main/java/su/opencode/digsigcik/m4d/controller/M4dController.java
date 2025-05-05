@@ -23,10 +23,7 @@ import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
-import su.opencode.digsigcik.m4d.service.ContainerService;
-import su.opencode.digsigcik.m4d.service.M4dFileService;
-import su.opencode.digsigcik.m4d.service.M4dRequestService;
-import su.opencode.digsigcik.m4d.service.M4dService;
+import su.opencode.digsigcik.m4d.service.*;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -57,13 +54,15 @@ public class M4dController {
     private final M4dFileService m4dFileService;
     private final M4dRequestService m4dRequestService;
     private final ContainerService containerService;
+    private final M4dConfirmService m4dConfirmService;
 
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, M4dRequestService m4dRequestService, ContainerService containerService) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, M4dRequestService m4dRequestService, ContainerService containerService, M4dConfirmService m4dConfirmService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
         this.m4dRequestService = m4dRequestService;
         this.containerService = containerService;
+        this.m4dConfirmService = m4dConfirmService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
@@ -506,16 +505,16 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
         }
 
-        String filename = m4d.getXmlFile().getFilename();
-        int lastDotIndex = filename.lastIndexOf('.');
+        String filenameSource = m4d.getXmlFile().getFilename();
+        int lastDotIndex = filenameSource.lastIndexOf('.');
         if (lastDotIndex > 0) {
-            filename = filename.substring(0, lastDotIndex);
+            filenameSource = filenameSource.substring(0, lastDotIndex);
         }
         if (m4d.getSigFile()==null){
             M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, true, false, true, false);
             String xmlString = m4DRegistryResponseDto.getXmlFile().getContent();
             try {
-                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".xml\"");
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filenameSource + ".xml\"");
 
                 return new ResponseEntity<>(
                         xmlString,
@@ -525,12 +524,26 @@ public class M4dController {
                 return ResponseEntity.noContent().build();
             }
         } else {
-            ByteArrayResource resp = this.containerService.createArchiveSourceSig(authentication, m4d.getSigFile().getId(), filename);
+            M4dConfirm m4dConfirm;
+            try {
+                m4dConfirm = this.m4dConfirmService.findM4dConfirmByM4dId(m4d.getId());
+            } catch (ConstraintViolationException e) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+            }
+            if (m4dConfirm == null) {
+                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_CONFIRM_IS_NULL), HttpStatus.NOT_FOUND);
+            }
+            String filenameConfirm = m4dConfirm.getSigFileRegisteredPep().getFilename();
+            int lastDotIndex1 = filenameConfirm.lastIndexOf('.');
+            if (lastDotIndex1 > 0) {
+                filenameConfirm = filenameConfirm.substring(0, lastDotIndex1);
+            }
+            ByteArrayResource resp = this.containerService.createArchiveSourceSig(authentication, m4d.getSigFile().getId(), m4dConfirm.getSigFileRegisteredPep().getId(), filenameSource, filenameConfirm);
             if (resp == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
             }
             try {
-                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + ".zip\"");
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filenameSource + ".zip\"");
 
                 return new ResponseEntity<>(
                         resp,
