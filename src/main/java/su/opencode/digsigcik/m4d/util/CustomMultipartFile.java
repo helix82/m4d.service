@@ -28,11 +28,6 @@ public class CustomMultipartFile implements MultipartFile {
 
     @Override
     public String getContentType() {
-//        try {
-//            return Files.probeContentType(file.toPath());
-//        } catch (IOException e) {
-//            return null;
-//        }
         String filename = getOriginalFilename();
         if (filename != null) {
             String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();

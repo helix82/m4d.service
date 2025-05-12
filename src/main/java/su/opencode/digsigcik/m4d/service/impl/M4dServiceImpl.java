@@ -1,12 +1,9 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.codehaus.plexus.util.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -22,7 +19,6 @@ import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
-import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.enums.StatusRequestTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
@@ -30,32 +26,22 @@ import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
-import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
-import su.opencode.digsigcik.m4d.util.HashUtils;
-import su.opencode.digsigcik.m4d.util.XMLUtil;
-import su.opencode.digsigcik.m4d.util.XmlValidator;
+import su.opencode.digsigcik.m4d.util.*;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBException;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.EncodingUtils.isBase64;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
@@ -77,9 +63,8 @@ public class M4dServiceImpl implements M4dService {
     private final RepresentativeService representativeService;
     private final RepresentativeDetailService representativeDetailService;
     private final UserCertificateService userCertificateService;
-    private final SynapiClientService synapiClientService;
     private final RefBookClientService refBookClientService;
-    private static final Pattern BASE64_PATTERN = Pattern.compile("^[A-Za-z0-9+/]+={0,2}$");
+    private final M4dConfirmService m4dConfirmService;
 
     @Override
     public List<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication) throws ParseException {
@@ -109,7 +94,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) {
+    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) throws JAXBException, IOException {
         String bearerToken = getTokenValue(authentication);
         String orgInn;
         Long principId;
@@ -201,7 +186,7 @@ public class M4dServiceImpl implements M4dService {
             m4d.setStatus("DRAFT");
         }
 
-        String idFile = this.getSubstringFromXml(xmlString, "ИдФайл=\"");
+        String idFile = XMLUtil.getSubstringFromXml(xmlString, "ИдФайл=\"");
 
         M4dFile m4dFile = new M4dFile();
         m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
@@ -216,12 +201,9 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(e.getMessage());
         }
         m4d.setXmlFile(Objects.requireNonNullElse(existsM4dFile, m4dFile));
-
-
         M4d m4dSaved;
         try {
             m4dSaved = this.m4dRepository.save(m4d);
-
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -272,7 +254,8 @@ public class M4dServiceImpl implements M4dService {
                 }
             }
         }
-
+        String internalNumber = XMLUtil.getSubstringFromXml(xmlString, "ВнНомДовер=\"");
+        M4dConfirm m4dConfirm = this.m4dConfirmService.createAndSignedM4dConfirm(authentication, m4d, idFile, m4dSaved.getGuid(), internalNumber, m4dSaved.getStartDate().toString().substring(0, 10), m4dSaved.getEndDate().toString().substring(0, 10));
         return m4dSaved.getId();
     }
 
@@ -746,9 +729,8 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_CREATE)
-    public ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) throws NoSuchAlgorithmException {
+    public ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) {
         String guidXml = this.getGuidFromXml(m4dXml);
-        //String hashXml = this.getHashXmlM4d(m4dXml);
         // - формирование запроса в РР МЧД на проверку статуса МЧД (если результаты предыдущего отрицательные)
         M4dRequestSearch m4dRequestSearchNew = new M4dRequestSearch();
         m4dRequestSearchNew.setGuid(guidXml);
@@ -757,8 +739,8 @@ public class M4dServiceImpl implements M4dService {
         M4dRequestSearch m4dRequestSearchSaved = this.m4dRequestService.saveM4dRequestSearch(m4dRequestSearchNew);
         M4dRequestSearchDetail m4dRequestSearchDetail = new M4dRequestSearchDetail();
         m4dRequestSearchDetail.setStatus(StatusRequestTypeEnum.ONCHECK.toString());
-        m4dRequestSearchDetail.setStartDate(convertStringToLocalDateTime(getStartDateM4dFromXml(m4dXml)));
-        m4dRequestSearchDetail.setEndDate(convertStringToLocalDateTime(getEndDateM4dFromXml(m4dXml)));
+        m4dRequestSearchDetail.setStartDate(DateUtils.convertStringToLocalDateTime(getStartDateM4dFromXml(m4dXml)));
+        m4dRequestSearchDetail.setEndDate(DateUtils.convertStringToLocalDateTime(getEndDateM4dFromXml(m4dXml)));
         m4dRequestSearchDetail.setVersion(1L);
         m4dRequestSearchDetail.setActive(true);
         m4dRequestSearchDetail.setRequestSearchId(m4dRequestSearchSaved.getId());
@@ -811,7 +793,6 @@ public class M4dServiceImpl implements M4dService {
             rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
             return report;
         }
-
         return null;
     }
 
@@ -887,33 +868,6 @@ public class M4dServiceImpl implements M4dService {
         return null;
     }
 
-    public ByteArrayResource createContainer(Authentication authentication,MultipartFile sourceFile, MultipartFile sourceSig, HashAlgorithm hashAlgorithm) throws IOException {
-        String bearerToken = getTokenValue(authentication);
-        String tempFileSource;
-        String tempFileSig;
-        FileOutputStream foSource;
-        FileOutputStream foSig;
-        ByteArrayResource res;
-
-        tempFileSource = "/tmp/" + sourceFile.getOriginalFilename();
-        foSource = new FileOutputStream(tempFileSource);
-        foSource.write(sourceFile.getBytes());
-        foSource.close();
-
-        tempFileSig = "/tmp/" + sourceSig.getOriginalFilename();
-        foSig = new FileOutputStream(tempFileSig);
-        foSig.write(sourceSig.getBytes());
-        foSig.close();
-
-        res = synapiClientService.createContainer(tempFileSource, tempFileSig, hashAlgorithm, bearerToken);
-        File f1 = new File(tempFileSource);
-        f1.delete();
-        File f2 = new File(tempFileSig);
-        f2.delete();
-        return res;
-    }
-
-
     public M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException {
         List<SAXParseException> res = new XmlValidator(sourceFile.getInputStream(), "EMCHD_1").listParsingExceptions();
         if (res.isEmpty()) {
@@ -927,10 +881,10 @@ public class M4dServiceImpl implements M4dService {
             //парсинг МЧД из xml
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             String dateCreate = m4dXml.getIdFile().substring(9, 17);
-            m4d.setCreateDate(convertStringToLocalDateTime(dateCreate));
+            m4d.setCreateDate(DateUtils.convertStringToLocalDateTime(dateCreate));
             m4d.setStatus("DRAFT");
-            m4d.setStartDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
-            m4d.setEndDate(this.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
+            m4d.setStartDate(DateUtils.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
+            m4d.setEndDate(DateUtils.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
             OrganizationDto organisation = new OrganizationDto();
             organisation.setInn(m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn());
@@ -960,7 +914,7 @@ public class M4dServiceImpl implements M4dService {
                     if (c.representative.detailRepresentative != null) {
                         representative.setInn(c.representative.detailRepresentative.getInn());
                         representative.setSnils(c.representative.detailRepresentative.getSnils());
-                        representative.setBirthDate(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.getBirthDate()));
+                        representative.setBirthDate(DateUtils.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.getBirthDate()));
                         represDetail.setName(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getName());
                         represDetail.setSurname(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname());
                         represDetail.setPatronymic(c.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic());
@@ -968,7 +922,7 @@ public class M4dServiceImpl implements M4dService {
                             throw new BadRequestException(REPRESENTATIVE_IS_NULL);
                         }
                         represDetail.setSeriesNumber(c.representative.detailRepresentative.infoIndividual.representativePassport.getSeriesNumber());
-                        represDetail.setDateIssue(this.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
+                        represDetail.setDateIssue(DateUtils.convertStringToLocalDateTime(c.representative.detailRepresentative.infoIndividual.representativePassport.getDateIssue()));
                         represDetail.setWhoIssue(c.representative.detailRepresentative.infoIndividual.representativePassport.getWhoIssue());
                         represDetail.setDepartmentCode(c.representative.detailRepresentative.infoIndividual.representativePassport.getDepartmentCode());
                     }
@@ -983,15 +937,14 @@ public class M4dServiceImpl implements M4dService {
                     credentialList.add(newCredential);
                 }
             }
-            return new M4dParseResponseDto(m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, this.readXmlToString(sourceFile));
+            return new M4dParseResponseDto(m4d, organisation, principal, principalDetail, representative, represDetail, credentialList, XMLUtil.readXmlToString(sourceFile));
         }
         return null;
     }
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_SIGNATURE)
-    public Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException {
-        String bearerToken = getTokenValue(authentication);
+    public Long uploadSig(Long mrpaId, MultipartFile signature){
         M4d m4d;
         try {
             m4d = this.findById(mrpaId);
@@ -1001,76 +954,8 @@ public class M4dServiceImpl implements M4dService {
         if (m4d == null) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, false, false, true, false);
-        List<String> tempFileNames = new ArrayList<>();
-        String tempFileName;
-        FileOutputStream fo;
-        ReportDto reportDto;
-        ByteArrayResource res = null;
-        if (verify) {
-            try {
-                tempFileName = "/tmp/" + container.getOriginalFilename();
-
-                tempFileNames.add(tempFileName);
-                fo = new FileOutputStream(tempFileName);
-                fo.write(container.getBytes());
-                fo.close();
-                ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, String> resultMap = this.synapiClientService.getReportContainer(tempFileName, bearerToken);
-                reportDto = objectMapper.readValue(resultMap.get("signCheck"), ReportDto.class);
-
-                assert reportDto != null;
-                if (reportDto.getResults() != null && !reportDto.getResults().isEmpty()) {
-                    reportDto.getResults().stream()
-                            .flatMap(result -> result.getVerificationResults().stream())
-                            .findFirst()
-                            .ifPresent(verificationResult -> {
-                                boolean isResultTrue = verificationResult.isResult();
-                                System.out.println("Result value: " + isResultTrue);
-                                if (!isResultTrue) {
-                                    throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_REPORT);
-                                }
-                            });
-                } else {
-                    log.error(reportDto.getError() + ": {}", reportDto.getErrorDescription());
-                    throw new BadRequestException(reportDto.getError());
-                }
-
-                res = this.synapiClientService.getPartContainer(tempFileName, "sourceFile", bearerToken);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            for (String fileName : tempFileNames) {
-                File f = new File(fileName);
-                f.delete();
-            }
-
-            assert res != null;
-            byte[] resource = res.getByteArray();
-            String normalizedResource = new String(resource, StandardCharsets.UTF_8).replaceAll("\\s+", "");
-            String normalizedXmlString = m4DRegistryResponseDto.getXmlFile().getContent().replaceAll("\\s+", "");
-            if (!StringUtils.difference(normalizedResource, normalizedXmlString).isEmpty()) {
-                throw new BadRequestException(MRPA_REGISTRY_NOT_VERIFY_CONTENT);
-            }
-        }
-        M4dFile m4dFile = new M4dFile();
-        m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
-        m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
-        m4dFile.setFilename(container.getOriginalFilename());
-        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
-        m4dFile.setContent(base64Content);
-        M4dFile existsM4dFile;
-        try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        if (existsM4dFile == null){
-            m4d.setSigFile(m4dFile);
-        } else {
-            m4d.setSigFile(existsM4dFile);
-        }
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.toString());
+        m4d.setSigFile(m4dFile);
         m4d.setStatus("ONCHECK");
 
         M4d m4dSaved;
@@ -1080,92 +965,6 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(e.getMessage());
         }
         return m4dSaved.getSigFile().getId();
-    }
-
-    public ByteArrayResource createArchiveM4dSig(Authentication authentication, Long fileId, String filename) throws IOException {
-        String bearerToken = getTokenValue(authentication);
-        M4dFile m4dFile;
-        try {
-            m4dFile = this.m4dFileService.findM4dFileById(fileId);
-        } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        List<String> tempFileNames = new ArrayList<>();
-        String tempContainerFile;
-        String tempSourceFile;
-        String tempSigFile;
-        String tempZipFile = "";
-        FileOutputStream fo;
-        ByteArrayResource resSource;
-        ByteArrayResource resSig;
-        try {
-            tempContainerFile = "/tmp/" + m4dFile.getFilename();
-            tempFileNames.add(tempContainerFile);
-            fo = new FileOutputStream(tempContainerFile);
-            byte[] bytes = Base64.getDecoder().decode(m4dFile.getContent());
-            fo.write(bytes);
-            fo.close();
-
-            resSource = this.synapiClientService.getPartContainer(tempContainerFile, "sourceFile", bearerToken);
-            tempSourceFile = "/tmp/" + filename + ".xml";
-            tempFileNames.add(tempSourceFile);
-            fo = new FileOutputStream(tempSourceFile);
-            fo.write(resSource.getByteArray());
-            fo.close();
-
-            resSig = this.synapiClientService.getPartContainer(tempContainerFile, "detachedSign", bearerToken);
-            String signatureData = "";
-            if (!isBase64(resSig.toString())) {
-                signatureData = Base64.getEncoder().encodeToString(resSig.getByteArray()).replaceAll("\\s+", "");
-            } else {
-                signatureData = resSig.toString().replaceAll("\\s+", "");
-            }
-            tempSigFile = "/tmp/" + filename + "_detached.sig";
-            tempFileNames.add(tempSigFile);
-            fo = new FileOutputStream(tempSigFile);
-            fo.write(signatureData.getBytes());
-            fo.close();
-
-            tempZipFile = "/tmp" + filename + ".zip";
-            createZip(tempZipFile, tempSourceFile, tempSigFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        for (String fileName : tempFileNames) {
-            File f = new File(fileName);
-            f.delete();
-        }
-
-
-        return new ByteArrayResource(Files.readAllBytes((new File(tempZipFile)).toPath()));
-    }
-
-    private static void createZip(String zipFilePath, String... files) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(zipFilePath);
-             ZipOutputStream zos = new ZipOutputStream(fos)) {
-
-            for (String filePath : files) {
-                File file = new File(filePath);
-                if (!file.exists()) {
-                    System.err.println("Файл не найден: " + filePath);
-                    continue;
-                }
-
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    ZipEntry zipEntry = new ZipEntry(file.getName());
-                    zos.putNextEntry(zipEntry);
-
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = fis.read(buffer)) >= 0) {
-                        zos.write(buffer, 0, length);
-                    }
-
-                    zos.closeEntry();
-                }
-            }
-        }
     }
 
     @Override
@@ -1286,54 +1085,6 @@ public class M4dServiceImpl implements M4dService {
         return m4dFullXML;
     }
 
-    public boolean isBase64(String str) {
-        if (!BASE64_PATTERN.matcher(str).matches()) {
-            return false;
-        }
-        try {
-            Base64.getDecoder().decode(str);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    public LocalDateTime convertStringToLocalDateTime(String date) {
-        DateTimeFormatter formatter;
-
-        if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?")) {
-            String dateWithoutMillis = date.split("\\.")[0];
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-            return LocalDateTime.parse(dateWithoutMillis, formatter);
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-            return LocalDateTime.parse(date, formatter);
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+\\-]\\d{2}:\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, formatter);
-            return zonedDateTime.toLocalDateTime();
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+\\-]\\d{2}:\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
-            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, formatter);
-            return zonedDateTime.toLocalDateTime();
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-            return LocalDateTime.from(formatter.parse(date));
-        } else if (date.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            LocalDate localDate = LocalDate.parse(date, formatter);
-            return localDate.atStartOfDay();
-        } else if (date.matches("\\d{4}\\d{2}\\d{2}")) {
-            formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-            LocalDate localDate = LocalDate.parse(date, formatter);
-            return localDate.atStartOfDay();
-        } else if (date.charAt(date.length() - 1) == 'Z') {
-            ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DateTimeFormatter.ISO_DATE_TIME);
-            return zonedDateTime.toLocalDateTime();
-        }
-        return null;
-    }
-
     private M4dRegistryResponseDto.SigFileDto convertSigFileToDto(M4dFile m4dFile) {
         return modelMapper.map(m4dFile, M4dRegistryResponseDto.SigFileDto.class);
     }
@@ -1383,18 +1134,22 @@ public class M4dServiceImpl implements M4dService {
         return m4dRevokeXml.getDocument().recallInfo.getArgument();
     }
 
+    @Override
     public String getGuidFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.getMrpa().getGuid();
     }
 
+    @Override
     public String getStartDateM4dFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.getMrpa().getStartDate();
     }
 
+    @Override
     public String getEndDateM4dFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.getMrpa().getEndDate();
     }
 
+    @Override
     public List<ReportCheckStatusM4dDto.Report.Credential> getCredentialM4dFromXml(M4dXml m4dXml) {
         List<ReportCheckStatusM4dDto.Report.Credential> credentials = new ArrayList<>();
         List<M4dXml.Document.PowerAttorneys.Credentials.Credential> credentialList = m4dXml.document.powerAttorneys.credential.getCredentials();
@@ -1410,6 +1165,7 @@ public class M4dServiceImpl implements M4dService {
         return null;
     }
 
+    @Override
     public List<ReportCheckStatusM4dDto.Report.Representative> getRepresentativeM4dFromXml(M4dXml m4dXml) {
         List<ReportCheckStatusM4dDto.Report.Representative> representatives = new ArrayList<>();
         List<M4dXml.Document.PowerAttorneys.InfoRepresentative> representativeList = m4dXml.document.powerAttorneys.getInfoRepresentative();
@@ -1425,6 +1181,7 @@ public class M4dServiceImpl implements M4dService {
         return representatives;
     }
 
+    @Override
     public List<ReportCheckStatusM4dDto.Report.Principal> getPrincipalM4dFromXml(M4dXml m4dXml) {
         List<ReportCheckStatusM4dDto.Report.Principal> principals = new ArrayList<>();
         M4dXml.Document.PowerAttorneys.InfoPrincipals principal = m4dXml.document.powerAttorneys.getPrincipals();
@@ -1439,43 +1196,21 @@ public class M4dServiceImpl implements M4dService {
         return principals;
     }
 
+    @Override
     public String getInnOrganizationFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn();
     }
 
+    @Override
     public String getNameOrganizationFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getName();
     }
 
-
-    private String readXmlToString(MultipartFile sourceFile){
-        String content;
-        try (InputStream is = sourceFile.getInputStream()) {
-            byte[] bom = new byte[3];
-            int n = is.read(bom, 0, bom.length);
-            Reader reader;
-            if (n == 3 && (bom[0] & 0xFF) == 0xEF && (bom[1] & 0xFF) == 0xBB && (bom[2] & 0xFF) == 0xBF) {
-                reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-            } else {
-                reader = new InputStreamReader(sourceFile.getInputStream(), StandardCharsets.UTF_8);
-            }
-            StringBuilder cont = new StringBuilder();
-            char[] buffer = new char[1024];
-            int numRead;
-            while ((numRead = reader.read(buffer)) != -1) {
-                cont.append(buffer, 0, numRead);
-            }
-            content = cont.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return content;
-    }
-
+    @Override
     public M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile) {
         M4dXml m4dXml;
         try {
-            Document document = convertStringToDocument(this.readXmlToString(sourceFile));
+            Document document = convertStringToDocument(XMLUtil.readXmlToString(sourceFile));
             assert document != null;
             m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
         } catch (Exception e) {
@@ -1497,8 +1232,9 @@ public class M4dServiceImpl implements M4dService {
         return m4dXml;
     }
 
+    @Override
     public String getHashXmlM4d(MultipartFile sourceFile) throws NoSuchAlgorithmException {
-        return HashUtils.getHash(this.readXmlToString(sourceFile).getBytes());
+        return HashUtils.getHash(XMLUtil.readXmlToString(sourceFile).getBytes());
     }
 
     @Override
@@ -1508,8 +1244,8 @@ public class M4dServiceImpl implements M4dService {
         report.setFileName(sourceFile.getOriginalFilename());
         if (reqScheme.isEmpty()) {
             report.setReqSchema("none");
-            String content = readXmlToString(sourceFile);
-            scheme = this.getSubstringFromXml(content, "ВерсФорм=\"");
+            String content = XMLUtil.readXmlToString(sourceFile);
+            scheme = XMLUtil.getSubstringFromXml(content, "ВерсФорм=\"");
         } else {
             report.setReqSchema(reqScheme);
             scheme = reqScheme;
@@ -1543,16 +1279,16 @@ public class M4dServiceImpl implements M4dService {
             M4dRequestSearchDetail m4dRequestSearchDetailNew = new M4dRequestSearchDetail();
             m4dRequestSearchDetailNew.setStatus(m4dFnsDataResponse.getStatus());
             if (m4dFnsDataResponse.getStatusDateTime() != null) {
-                m4dRequestSearchDetailNew.setStatusDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStatusDateTime()));
+                m4dRequestSearchDetailNew.setStatusDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStatusDateTime()));
             }
             if (m4dFnsDataResponse.getCreatedDateTime() != null) {
-                m4dRequestSearchDetailNew.setRegistrationDate(convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
+                m4dRequestSearchDetailNew.setRegistrationDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
             }
             if (m4dFnsDataResponse.getStartDateTime() != null) {
-                m4dRequestSearchDetailNew.setStartDate(convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
+                m4dRequestSearchDetailNew.setStartDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
             }
             if (m4dFnsDataResponse.getEndDateTime() != null) {
-                m4dRequestSearchDetailNew.setEndDate(convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
+                m4dRequestSearchDetailNew.setEndDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
             }
             m4dRequestSearchDetailNew.setActive(true);
             m4dRequestSearchDetailNew.setRequestSearchId(m4dRequestSearch.getId());
@@ -1636,41 +1372,13 @@ public class M4dServiceImpl implements M4dService {
         return null;
     }
 
-    private String getSubstringFromXml(String content, String subStringParam){
-        String subString;
-        int startIndex = content.indexOf(subStringParam);
-        if (startIndex != -1) {
-            startIndex += subStringParam.length();
-            int endIndex = content.indexOf("\"", startIndex);
-            if (endIndex != -1) {
-                subString = content.substring(startIndex, endIndex);
-                System.out.println("Найдена подстрока: " + subString);
-                return subString;
-            } else {
-                System.out.println("Закрывающая кавычка не найдена.");
-                return "error";
-            }
-        } else {
-            System.out.println("Подстрока не найдена.");
-            return "not_found";
-        }
-    }
-
+    @Override
     public MultipartFile getMultipartFileByM4dId(Authentication authentication, Long id) throws ParseException, IOException {
         M4d m4d = this.findById(id);
         M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, true, false, true, false);
         String xmlString = m4DRegistryResponseDto.getXmlFile().getContent();
-        //List<String> tmpFileNames = new ArrayList<>();
-        String tempSourceFile;
-        FileOutputStream fo1;
-        String filename = m4DRegistryResponseDto.getGuid();
-
-        tempSourceFile = "/tmp/" + filename + ".xml";
-       // tmpFileNames.add(tempSourceFile);
-        fo1 = new FileOutputStream(tempSourceFile);
-        fo1.write(xmlString.getBytes());
-        fo1.close();
-        return new CustomMultipartFile(new File(tempSourceFile));
+        String filename = m4DRegistryResponseDto.getGuid()+".xml";
+        return FileUtils.mapStringToMultipart(xmlString, filename);
     }
 
 }

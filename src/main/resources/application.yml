@@ -106,13 +106,16 @@ synapi:
   user-certs-me:
     uri: ${USER_CERTS_ME_URI:https://sp.dev.essocode.ru/api/v1/user-certificate/me}
 
+#  container:
+#    get-part:
+#      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
+#    get-part-json:
+#      uri: ${CONTAINER_PART_JSON_URI:https://sp.dev.essocode.ru/api/v1/container/get-part-json}
+#    create:
+#      uri: ${CONTAINER_CREATE_URI:https://sp.dev.essocode.ru/api/v1/container/create}
   container:
     get-part:
-      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
-    get-part-json:
-      uri: ${CONTAINER_PART_JSON_URI:https://sp.dev.essocode.ru/api/v1/container/get-part-json}
-    create:
-      uri: ${CONTAINER_CREATE_URI:https://sp.dev.essocode.ru/api/v1/container/create}
+      uri: ${CONTAINER_PART_URI:http://localhost:8081/api/v1/container/get-part}
 
 m4d:
   handbook:
@@ -129,5 +132,15 @@ ref-book:
 
 # Временное решение до полноценного внедрения kafka
 audit:
-  url: ${AUDIT_URL:https://log.dev.essocode.ru/api/v1/audit/external}
+  #url: ${AUDIT_URL:https://log.dev.essocode.ru/api/v1/audit/external}
+  url: ${AUDIT_URL:http://localhost:8055/api/v1/audit/external}
   default-user: 'Администратор МЧД'
+
+cryptopro:
+  proxy-service: ${CRYPTO_PROXY_SIGN_URL:https://cp.dev.essocode.ru/api/v1/sign/cades/as-user}
+
+autosign:
+  user-login: "pep"
+  pincode: '1234'
+  is-detached: 'true'
+  sig-type: 'CAdES_BES'

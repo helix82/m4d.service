@@ -10,6 +10,7 @@ import java.net.URLConnection;
 
 public enum FileMimeTypeEnum {
     DSCP("application/octet-stream"),
+    SIG("application/pgp-signature"),
     ZIP("application/x-zip-compressed"),
     XML("text/xml"),
     PDF("application/pdf"),
