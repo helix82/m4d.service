@@ -38,6 +38,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.EncodingUtils.isBase64;
 
 @RestController
 @M4dExceptionHandler
@@ -152,7 +153,7 @@ public class M4dRevokeController {
         }
 
         String xmlString;
-        if (this.m4dService.isBase64(m4dRecallSaved.getM4d().getXmlFile().getContent())) {
+        if (isBase64(m4dRecallSaved.getM4d().getXmlFile().getContent())) {
             xmlString = new String(Base64.getDecoder().decode(m4dRecallSaved.getM4d().getXmlFile().getContent()));
         } else {
             xmlString = m4dRecallSaved.getM4d().getXmlFile().getContent();
