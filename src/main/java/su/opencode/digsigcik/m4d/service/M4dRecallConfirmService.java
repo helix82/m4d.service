@@ -14,9 +14,9 @@ public interface M4dRecallConfirmService {
     M4dRecallConfirm findM4dRecallConfirmByM4dRecallId(Long m4dRecallId);
     M4dRecallConfirm updateM4dRecallConfirm(M4dRecallConfirm m4dConfirm);
     void deleteM4dRecallConfirmById(Long id);
-    Long uploadSigRegisteredPep(Authentication authentication, Long m4dRecallId, MultipartFile container, boolean verify) throws IOException;
-    Long uploadSigRegisteredRr(Authentication authentication, Long m4dRecallId, MultipartFile container, boolean verify) throws IOException;
-    Long uploadXmlRegisteredRr(Authentication authentication, Long m4dRecallId, String xmlContent) throws IOException;
+    Long uploadSigRegisteredPep(Long m4dRecallId, MultipartFile signature);
+    Long uploadSigRegisteredRr(Long m4dRecallId, MultipartFile signature);
+    Long uploadXmlRegisteredRr(Long m4dRecallId, String xmlContent);
     M4dRevokeConfirmDto getXml(String guid, String hashFile);
-    M4dRecallConfirm createAndSignedM4dRecallConfirm(M4dRecall m4dRecall, String guid, String hashFile) throws JAXBException;
+    M4dRecallConfirm createAndSignedM4dRecallConfirm(Authentication authentication, M4dRecall m4dRecall, String guid, String hashFile) throws JAXBException, IOException;
 }

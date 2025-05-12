@@ -31,8 +31,6 @@ import su.opencode.digsigcik.m4d.util.*;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBException;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
@@ -40,10 +38,10 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.EncodingUtils.isBase64;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
@@ -66,10 +64,7 @@ public class M4dServiceImpl implements M4dService {
     private final RepresentativeDetailService representativeDetailService;
     private final UserCertificateService userCertificateService;
     private final RefBookClientService refBookClientService;
-    private final ContainerService containerService;
     private final M4dConfirmService m4dConfirmService;
-    private final M4dRecallConfirmService m4dRecallConfirmService;
-    private static final Pattern BASE64_PATTERN = Pattern.compile("^[A-Za-z0-9+/]+={0,2}$");
 
     @Override
     public List<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication) throws ParseException {
@@ -99,7 +94,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) throws JAXBException {
+    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) throws JAXBException, IOException {
         String bearerToken = getTokenValue(authentication);
         String orgInn;
         Long principId;
@@ -260,7 +255,7 @@ public class M4dServiceImpl implements M4dService {
             }
         }
         String internalNumber = XMLUtil.getSubstringFromXml(xmlString, "ВнНомДовер=\"");
-        M4dConfirm m4dConfirm = this.m4dConfirmService.createAndSignedM4dConfirm(m4d, idFile, m4dSaved.getGuid(), internalNumber, m4dSaved.getStartDate().toString().substring(0, 10), m4dSaved.getEndDate().toString().substring(0, 10));
+        M4dConfirm m4dConfirm = this.m4dConfirmService.createAndSignedM4dConfirm(authentication, m4d, idFile, m4dSaved.getGuid(), internalNumber, m4dSaved.getStartDate().toString().substring(0, 10), m4dSaved.getEndDate().toString().substring(0, 10));
         return m4dSaved.getId();
     }
 
@@ -734,9 +729,8 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_CREATE)
-    public ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) throws NoSuchAlgorithmException {
+    public ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) {
         String guidXml = this.getGuidFromXml(m4dXml);
-        //String hashXml = this.getHashXmlM4d(m4dXml);
         // - формирование запроса в РР МЧД на проверку статуса МЧД (если результаты предыдущего отрицательные)
         M4dRequestSearch m4dRequestSearchNew = new M4dRequestSearch();
         m4dRequestSearchNew.setGuid(guidXml);
@@ -799,7 +793,6 @@ public class M4dServiceImpl implements M4dService {
             rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
             return report;
         }
-
         return null;
     }
 
@@ -951,8 +944,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_SIGNATURE)
-    public Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException {
-        String bearerToken = getTokenValue(authentication);
+    public Long uploadSig(Long mrpaId, MultipartFile signature){
         M4d m4d;
         try {
             m4d = this.findById(mrpaId);
@@ -962,27 +954,8 @@ public class M4dServiceImpl implements M4dService {
         if (m4d == null) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, false, false, true, false);
-        if (verify) {
-            containerService.verify(authentication, container, m4DRegistryResponseDto.recall.getXmlFile().getContent());
-        }
-        M4dFile m4dFile = new M4dFile();
-        m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
-        m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
-        m4dFile.setFilename(container.getOriginalFilename());
-        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
-        m4dFile.setContent(base64Content);
-        M4dFile existsM4dFile;
-        try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        if (existsM4dFile == null){
-            m4d.setSigFile(m4dFile);
-        } else {
-            m4d.setSigFile(existsM4dFile);
-        }
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.toString());
+        m4d.setSigFile(m4dFile);
         m4d.setStatus("ONCHECK");
 
         M4d m4dSaved;
@@ -1112,18 +1085,6 @@ public class M4dServiceImpl implements M4dService {
         return m4dFullXML;
     }
 
-    public boolean isBase64(String str) {
-        if (!BASE64_PATTERN.matcher(str).matches()) {
-            return false;
-        }
-        try {
-            Base64.getDecoder().decode(str);
-            return true;
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
     private M4dRegistryResponseDto.SigFileDto convertSigFileToDto(M4dFile m4dFile) {
         return modelMapper.map(m4dFile, M4dRegistryResponseDto.SigFileDto.class);
     }
@@ -1173,18 +1134,22 @@ public class M4dServiceImpl implements M4dService {
         return m4dRevokeXml.getDocument().recallInfo.getArgument();
     }
 
+    @Override
     public String getGuidFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.getMrpa().getGuid();
     }
 
+    @Override
     public String getStartDateM4dFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.getMrpa().getStartDate();
     }
 
+    @Override
     public String getEndDateM4dFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.getMrpa().getEndDate();
     }
 
+    @Override
     public List<ReportCheckStatusM4dDto.Report.Credential> getCredentialM4dFromXml(M4dXml m4dXml) {
         List<ReportCheckStatusM4dDto.Report.Credential> credentials = new ArrayList<>();
         List<M4dXml.Document.PowerAttorneys.Credentials.Credential> credentialList = m4dXml.document.powerAttorneys.credential.getCredentials();
@@ -1200,6 +1165,7 @@ public class M4dServiceImpl implements M4dService {
         return null;
     }
 
+    @Override
     public List<ReportCheckStatusM4dDto.Report.Representative> getRepresentativeM4dFromXml(M4dXml m4dXml) {
         List<ReportCheckStatusM4dDto.Report.Representative> representatives = new ArrayList<>();
         List<M4dXml.Document.PowerAttorneys.InfoRepresentative> representativeList = m4dXml.document.powerAttorneys.getInfoRepresentative();
@@ -1215,6 +1181,7 @@ public class M4dServiceImpl implements M4dService {
         return representatives;
     }
 
+    @Override
     public List<ReportCheckStatusM4dDto.Report.Principal> getPrincipalM4dFromXml(M4dXml m4dXml) {
         List<ReportCheckStatusM4dDto.Report.Principal> principals = new ArrayList<>();
         M4dXml.Document.PowerAttorneys.InfoPrincipals principal = m4dXml.document.powerAttorneys.getPrincipals();
@@ -1229,14 +1196,17 @@ public class M4dServiceImpl implements M4dService {
         return principals;
     }
 
+    @Override
     public String getInnOrganizationFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getInn();
     }
 
+    @Override
     public String getNameOrganizationFromXml(M4dXml m4dXml) {
         return m4dXml.document.powerAttorneys.principals.principal.legalEntity.organisation.getName();
     }
 
+    @Override
     public M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile) {
         M4dXml m4dXml;
         try {
@@ -1262,6 +1232,7 @@ public class M4dServiceImpl implements M4dService {
         return m4dXml;
     }
 
+    @Override
     public String getHashXmlM4d(MultipartFile sourceFile) throws NoSuchAlgorithmException {
         return HashUtils.getHash(XMLUtil.readXmlToString(sourceFile).getBytes());
     }
@@ -1401,21 +1372,13 @@ public class M4dServiceImpl implements M4dService {
         return null;
     }
 
+    @Override
     public MultipartFile getMultipartFileByM4dId(Authentication authentication, Long id) throws ParseException, IOException {
         M4d m4d = this.findById(id);
         M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, true, false, true, false);
         String xmlString = m4DRegistryResponseDto.getXmlFile().getContent();
-        //List<String> tmpFileNames = new ArrayList<>();
-        String tempSourceFile;
-        FileOutputStream fo1;
-        String filename = m4DRegistryResponseDto.getGuid();
-
-        tempSourceFile = "/tmp/" + filename + ".xml";
-       // tmpFileNames.add(tempSourceFile);
-        fo1 = new FileOutputStream(tempSourceFile);
-        fo1.write(xmlString.getBytes());
-        fo1.close();
-        return new CustomMultipartFile(new File(tempSourceFile));
+        String filename = m4DRegistryResponseDto.getGuid()+".xml";
+        return FileUtils.mapStringToMultipart(xmlString, filename);
     }
 
 }

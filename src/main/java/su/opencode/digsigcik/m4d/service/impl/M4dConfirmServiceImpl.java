@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -7,22 +8,22 @@ import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.m4d.dto.M4dConfirmDto;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
+import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dConfirm;
 import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.repository.M4dConfirmRepository;
-import su.opencode.digsigcik.m4d.service.ContainerService;
+import su.opencode.digsigcik.m4d.service.CryptoProCloudSignatureService;
 import su.opencode.digsigcik.m4d.service.M4dConfirmService;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.util.DateUtils;
+import su.opencode.digsigcik.m4d.util.FileUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Objects;
 import java.util.UUID;
 
 import static su.opencode.digsigcik.m4d.util.Constants.MRPA_CONFIRM_IS_NULL;
@@ -30,14 +31,22 @@ import static su.opencode.digsigcik.m4d.util.Constants.MRPA_CONFIRM_IS_NULL;
 @Service
 @Primary
 public class M4dConfirmServiceImpl implements M4dConfirmService {
+    @Value("${autosign.user-login}")
+    private String USER_LOGIN;
+    @Value("${autosign.pincode}")
+    private String PINCODE;
+    @Value("${autosign.is-detached}")
+    private String IS_DETACHED;
+    @Value("${autosign.sig-type}")
+    private String SIG_TYPE;
     private final M4dConfirmRepository m4dConfirmRepository;
     private final M4dFileService m4dFileService;
-    private final ContainerService containerService;
+    private final CryptoProCloudSignatureService cryptoProCloudSignatureService;
 
-    public M4dConfirmServiceImpl(M4dConfirmRepository m4dConfirmRepository, M4dFileService m4dFileService, ContainerService containerService) {
+    public M4dConfirmServiceImpl(M4dConfirmRepository m4dConfirmRepository, M4dFileService m4dFileService, CryptoProCloudSignatureService cryptoProCloudSignatureService) {
         this.m4dConfirmRepository = m4dConfirmRepository;
         this.m4dFileService = m4dFileService;
-        this.containerService = containerService;
+        this.cryptoProCloudSignatureService = cryptoProCloudSignatureService;
     }
 
     @Override
@@ -61,7 +70,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredPep(Authentication authentication, Long m4dId, MultipartFile container, boolean verify) throws IOException {
+    public Long uploadSigRegisteredPep(Long m4dId, MultipartFile signature) {
         M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
         if (m4dConfirm==null) {
             throw new BadRequestException(MRPA_CONFIRM_IS_NULL);
@@ -69,26 +78,9 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         if (m4dConfirm.getSigFileRegisteredPep()!=null) {
             throw new BadRequestException("Подтверждение регистрации МЧД в ПЭП уже подписано");
         }
-        if (verify) {
-            containerService.verify(authentication, container, m4dConfirm.getXmlFileRegisteredPep().getContent());
-        }
-        M4dFile m4dFile = new M4dFile();
-        m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
-        m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
-        m4dFile.setFilename(container.getOriginalFilename());
-        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
-        m4dFile.setContent(base64Content);
-        M4dFile existsM4dFile;
-        try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        if (existsM4dFile == null){
-            m4dConfirm.setSigFileRegisteredPep(m4dFile);
-        } else {
-            m4dConfirm.setSigFileRegisteredPep(existsM4dFile);
-        }
+        String filename = signature.getOriginalFilename();
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.toString());
+        m4dConfirm.setSigFileRegisteredPep(m4dFile);
         M4dConfirm m4dConfirmSaved;
         try {
             m4dConfirmSaved = this.saveM4dConfirm(m4dConfirm);
@@ -99,7 +91,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredRr(Authentication authentication, Long m4dId, MultipartFile container, boolean verify) throws IOException {
+    public Long uploadSigRegisteredRr(Long m4dId, MultipartFile signature) {
         M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
         if (m4dConfirm==null) {
             throw new BadRequestException(MRPA_CONFIRM_IS_NULL);
@@ -107,26 +99,9 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         if (m4dConfirm.getSigFileRegisteredRr()!=null) {
             throw new BadRequestException("Подтверждение регистрации МЧД в РР уже подписано");
         }
-        if (verify) {
-            containerService.verify(authentication, container, m4dConfirm.getXmlFileRegisteredRr().getContent());
-        }
-        M4dFile m4dFile = new M4dFile();
-        m4dFile.setFileMimeType(FileMimeTypeEnum.fromValue(container.getContentType()));
-        m4dFile.setFileLogicalType(FileLogicalTypeEnum.CONTAINER);
-        m4dFile.setFilename(container.getOriginalFilename());
-        String base64Content = Base64.getEncoder().encodeToString(container.getBytes());
-        m4dFile.setContent(base64Content);
-        M4dFile existsM4dFile;
-        try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        if (existsM4dFile == null){
-            m4dConfirm.setSigFileRegisteredRr(m4dFile);
-        } else {
-            m4dConfirm.setSigFileRegisteredRr(existsM4dFile);
-        }
+        String filenameXml = signature.getOriginalFilename();
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameXml, signature.toString());
+        m4dConfirm.setSigFileRegisteredRr(m4dFile);
         M4dConfirm m4dConfirmSaved;
         try {
             m4dConfirmSaved = this.saveM4dConfirm(m4dConfirm);
@@ -137,28 +112,15 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     }
 
     @Override
-    public Long uploadXmlRegisteredRr(Authentication authentication, Long m4dId, String xmlContent) throws IOException {
+    public Long uploadXmlRegisteredRr(Long m4dId, String xmlContent) {
         M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
         if (m4dConfirm==null) {
             throw new BadRequestException(MRPA_CONFIRM_IS_NULL);
         }
-        M4dFile m4dFile = new M4dFile();
-        m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
-        m4dFile.setFileLogicalType(FileLogicalTypeEnum.DOCUMENT);
-        m4dFile.setFilename(XMLUtil.getSubstringFromXml(xmlContent, "ИдФайл=\"")+".xml");
-        String base64Content = Base64.getEncoder().encodeToString(xmlContent.getBytes());
-        m4dFile.setContent(base64Content);
-        M4dFile existsM4dFile;
-        try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        if (existsM4dFile == null){
-            m4dConfirm.setSigFileRegisteredRr(m4dFile);
-        } else {
-            m4dConfirm.setSigFileRegisteredRr(existsM4dFile);
-        }
+
+        String filenameXml = XMLUtil.getSubstringFromXml(xmlContent, "ИдФайл=\"")+".xml";
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlContent);
+        m4dConfirm.setXmlFileRegisteredRr(m4dFile);
         M4dConfirm m4dConfirmSaved;
         try {
             m4dConfirmSaved = this.saveM4dConfirm(m4dConfirm);
@@ -208,34 +170,34 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     }
 
     @Override
-    public M4dConfirm createAndSignedM4dConfirm(M4d m4d, String idFile, String guid, String internalNumber, String startDate, String endDate) throws JAXBException {
-        //формируем подтверждение регистрации мчд в ПЭП
+    public M4dConfirm createAndSignedM4dConfirm(Authentication authentication, M4d m4d, String idFile, String guid, String internalNumber, String startDate, String endDate) throws JAXBException, IOException {
         M4dConfirmDto m4dConfirmDto = this.getXml(idFile, guid, internalNumber, startDate, endDate);
         String xmlConfirmString = XMLUtil.marshall(m4dConfirmDto, M4dConfirmDto.class);
         M4dConfirm m4dConfirm = new M4dConfirm();
         m4dConfirm.setM4d(m4d);
         m4dConfirm.setRegisteredPepDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCreatedDate()));
 
-        M4dFile m4dFile = new M4dFile();
-        m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
-        m4dFile.setFileLogicalType(FileLogicalTypeEnum.DOCUMENT);
-        m4dFile.setFilename(m4dConfirmDto.getIdFile()+".xml");
-        String base64Content = Base64.getEncoder().encodeToString(xmlConfirmString.getBytes());
-        m4dFile.setContent(base64Content);
-        M4dFile existsM4dFile;
-        try {
-            existsM4dFile = this.m4dFileService.findM4dFileByContent(m4dFile.getContent());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        m4dConfirm.setXmlFileRegisteredPep(Objects.requireNonNullElse(existsM4dFile, m4dFile));
+        String filenameXml = m4dConfirmDto.getIdFile()+".xml";
+        M4dFile m4dFileXml = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlConfirmString);
+        m4dConfirm.setXmlFileRegisteredPep(m4dFileXml);
+        //автоподписание
+        MultipartFile sourceFile = FileUtils.mapStringToMultipart(xmlConfirmString, m4dFileXml.getFilename());
+        String resource = cryptoProCloudSignatureService.initializeSignature(authentication, sourceFile,
+                0L, USER_LOGIN, PINCODE, Boolean.parseBoolean(IS_DETACHED), SIG_TYPE, HashAlgorithm.GOST3411_2012_256);
+
+        String filenameSig = null;
+        if (Boolean.parseBoolean(IS_DETACHED)) {
+            filenameSig = m4dConfirmDto.getIdFile()+"_detached.sig";
+        } else filenameSig = m4dConfirmDto.getIdFile()+".sig";
+        M4dFile m4dFileSig = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameSig, resource);
+        m4dConfirm.setSigFileRegisteredPep(m4dFileSig);
+
         M4dConfirm m4dConfirmSaved;
         try {
             m4dConfirmSaved = this.saveM4dConfirm(m4dConfirm);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        //автоподписание и сохранение контейнера с подписью в базу
         return m4dConfirmSaved;
     }
 }

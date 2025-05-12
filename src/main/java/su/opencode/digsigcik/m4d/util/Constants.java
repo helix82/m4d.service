@@ -249,4 +249,15 @@ public interface Constants {
     String CREDENTIAL_CODE_EXISTS = "Запись полномочия с таким кодом уже существует в базе";
 
     String M4D_EXCEPRION_NOT_FOUND = "МЧД с данным id = %s не найден";
+    String CRYPTO_PROXY_EXCEPTION = "Ошибка на Крипто-Прокси";
+    String SIG = "sig";
+
+    //Ошибки с файлами
+    String FILE_CONVERT_BASE64_EXCEPTION = "Содержимое файла не было закодировано в Base64";
+    String SOURCE_SIG_CREATE_EXCEPTION = "Ошибка при создании файла с подписью/подписи";
+    String MAX_SIZE_CONTENT_EXCEPTION = "Размер закодированного файла превышает %s";
+    String DETACHED_CONTENT_EXCEPTION = "Исходный файл для открепленной подписи отсутствует или пуст.";
+
+    //Ошибки с контейнерами
+    String CONTAINER_CREATE_EXCEPTION = "Ошибка при создании контейнера";
 }

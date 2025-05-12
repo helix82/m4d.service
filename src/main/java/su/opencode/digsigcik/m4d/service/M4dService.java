@@ -10,7 +10,6 @@ import su.opencode.digsigcik.m4d.model.*;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -19,7 +18,7 @@ public interface M4dService {
     M4d saveMrpaRegistry(@NotNull M4d m4d);
     M4d updateM4d(@NotNull M4d m4d);
     M4d updateStatusM4d(Long id, String status);
-    Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) throws JAXBException;
+    Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) throws JAXBException, IOException;
     Long updateAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
     Integer countM4dByGuid(@NotNull String guid);
     M4d findMrpaRegistryByGuid(@NotNull String guid);
@@ -31,11 +30,11 @@ public interface M4dService {
     M4dRegistryResponseDto findM4dByIdAndRepresentativeInn(Authentication authentication, String inn, Long id);
     String getStatusM4d(Long id) throws ParseException;
     M4dRegistryResponseDto convertM4dToM4dResponseDto(Authentication authentication, M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile, Boolean withM4dXmlFile, Boolean withRecallXmlFile) throws ParseException;
-    ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) throws NoSuchAlgorithmException;
+    ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml);
     ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPep(M4dXml m4dXml, String HashXml);
     ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, M4dXml m4dXml) throws ParseException;
     M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException;
-    Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile container, boolean verify) throws IOException, ParseException, JAXBException, NoSuchAlgorithmException;
+    Long uploadSig(Long mrpaId, MultipartFile signature);
     M4dFullXML convertM4dRequestDtoToFullXml(M4dRegistryRequestDto m4DRegistryRequestDto) throws ParseException;
     String getGuidFromXml(M4dXml m4dXml);
     String getStartDateM4dFromXml(M4dXml m4dXml);
@@ -48,7 +47,6 @@ public interface M4dService {
     String getHashXmlM4d(MultipartFile sourceFile) throws Exception;
     ReportValidSchemeDto validXmlM4dScheme(MultipartFile sourceFile, String reqScheme) throws IOException, SAXException;
     ReportCheckStatusM4dDto updateStatusM4dRequestSearch(M4dFnsDataResponse m4dFnsDataResponse);
-    boolean isBase64(String str);
     MultipartFile getMultipartFileByM4dId(Authentication authentication, Long id) throws ParseException, IOException;
     M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile);
 }
