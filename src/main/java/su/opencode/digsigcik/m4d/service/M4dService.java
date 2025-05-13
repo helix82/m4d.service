@@ -49,4 +49,5 @@ public interface M4dService {
     ReportCheckStatusM4dDto updateStatusM4dRequestSearch(M4dFnsDataResponse m4dFnsDataResponse);
     MultipartFile getMultipartFileByM4dId(Authentication authentication, Long id) throws ParseException, IOException;
     M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile);
+    String sendM4dToRR(Authentication authentication, Long m4dId) throws IOException;
 }

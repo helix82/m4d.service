@@ -117,7 +117,7 @@ public class M4dFileServiceImpl implements M4dFileService {
             }
         }
 
-            tempZipFile = "/tmp" + filename + ".zip";
+            tempZipFile = "/tmp/" + filename + ".zip";
             createZip(tempZipFile, tempFileNames);
 
         for (String fileName : tempFileNames) {
@@ -125,6 +125,59 @@ public class M4dFileServiceImpl implements M4dFileService {
             f.delete();
         }
         return new ByteArrayResource(Files.readAllBytes((new File(tempZipFile)).toPath()));
+    }
+
+    @Override
+    public File createArchiveToFile(Authentication authentication, String filename, List<Long> values) throws IOException {
+        String bearerToken = getTokenValue(authentication);
+        List<String> tempFileNames = new ArrayList<>();
+        String tempContainerFile;
+        String tempFile;
+        String tempZipFile;
+        FileOutputStream fo;
+        for (Long value : values) {
+            M4dFile m4dFile;
+            try {
+                m4dFile = this.findM4dFileById(value);
+            } catch (Exception e) {
+                throw new BadRequestException(e.getMessage());
+            }
+            if (m4dFile.getFilename().endsWith(".dscp")) {
+                tempContainerFile = "/tmp/" + m4dFile.getFilename();
+                fo = new FileOutputStream(tempContainerFile);
+                byte[] bytes = Base64.getDecoder().decode(m4dFile.getContent());
+                fo.write(bytes);
+                fo.close();
+                ByteArrayResource resSig = this.synapiClientService.getPartContainer(tempContainerFile, "detachedSign", bearerToken);
+                String signatureData = "";
+                if (!isBase64(resSig.toString())) {
+                    signatureData = Base64.getEncoder().encodeToString(resSig.getByteArray()).replaceAll("\\s+", "");
+                } else {
+                    signatureData = resSig.toString().replaceAll("\\s+", "");
+                }
+                tempFile = "/tmp/" + filename + "_detached.sig";
+                tempFileNames.add(tempFile);
+                fo = new FileOutputStream(tempFile);
+                fo.write(signatureData.getBytes());
+                fo.close();
+            } else {
+                tempFile = "/tmp/" + m4dFile.getFilename();
+                tempFileNames.add(tempFile);
+                fo = new FileOutputStream(tempFile);
+                byte[] bytes = Base64.getDecoder().decode(m4dFile.getContent());
+                fo.write(bytes);
+                fo.close();
+            }
+        }
+
+        tempZipFile = "/tmp/" + filename + ".zip";
+        createZip(tempZipFile, tempFileNames);
+
+        for (String fileName : tempFileNames) {
+            File f = new File(fileName);
+            f.delete();
+        }
+        return new File(tempZipFile);
     }
 
     private static void createZip(String zipFilePath, List<String> files) throws IOException {

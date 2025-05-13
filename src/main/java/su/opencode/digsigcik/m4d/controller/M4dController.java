@@ -8,12 +8,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
@@ -26,7 +27,6 @@ import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dRequestService;
 import su.opencode.digsigcik.m4d.service.M4dService;
 import su.opencode.digsigcik.m4d.util.DateUtils;
-import su.opencode.digsigcik.m4d.util.FileUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.persistence.EntityNotFoundException;
@@ -34,7 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.net.URI;
 import java.text.ParseException;
 import java.util.*;
 
@@ -52,18 +51,13 @@ public class M4dController {
     private final M4dFileService m4dFileService;
     private final M4dRequestService m4dRequestService;
     private final M4dConfirmService m4dConfirmService;
-    private final RestTemplate restTemplate;
 
-    @Value("${pvv.fns-send-registration-request-m4d}")
-    private URI FNS_SEND_REGISTRATION_REQUEST_M4D_URI;
-
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, M4dRequestService m4dRequestService, M4dConfirmService m4dConfirmService, RestTemplate restTemplate) {
+    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, M4dRequestService m4dRequestService, M4dConfirmService m4dConfirmService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
         this.m4dRequestService = m4dRequestService;
         this.m4dConfirmService = m4dConfirmService;
-        this.restTemplate = restTemplate;
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
@@ -289,42 +283,7 @@ public class M4dController {
         }
         Long sigFileId = this.m4dService.uploadSig(id, signature);
         // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
-
-        M4d m4d;
-        try {
-            m4d = this.m4dService.findById(id);
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        if (m4d == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
-        }
-        M4dConfirm m4dConfirm;
-        try {
-            m4dConfirm = this.m4dConfirmService.findM4dConfirmByM4dId(m4d.getId());
-        } catch (ConstraintViolationException e) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
-        }
-        String filenameSource = m4d.getXmlFile().getFilename();
-        int lastDotIndex = filenameSource.lastIndexOf('.');
-        if (lastDotIndex > 0) {
-            filenameSource = filenameSource.substring(0, lastDotIndex);
-        }
-        List<Long> longList = new ArrayList<>();
-        longList.add(m4d.getXmlFile().getId());
-        if (m4d.getSigFile()!=null) { longList.add(m4d.getSigFile().getId()); }
-        if (m4dConfirm!=null) {
-            if (m4dConfirm.getXmlFileRegisteredPep() != null) { longList.add(m4dConfirm.getXmlFileRegisteredPep().getId()); }
-            if (m4dConfirm.getSigFileRegisteredPep() != null) { longList.add(m4dConfirm.getSigFileRegisteredPep().getId()); }
-        }
-        ByteArrayResource resp = this.m4dFileService.createArchive(authentication, filenameSource, longList);
-        if (resp == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
-        }
-
-        MultipartFile requestTempFile = FileUtils.mapStringToMultipart(resp.toString(), filenameSource+".zip");
-        String res = registrationRequestM4dFnsViaPvv(requestTempFile, FNS_SEND_REGISTRATION_REQUEST_M4D_URI);
-        log.info(res);
+        String res = this.m4dService.sendM4dToRR(authentication, id);
 
         // create M4d Request Search For Find RR
         MultipartFile sourceFile = this.m4dService.getMultipartFileByM4dId(authentication, id);
@@ -464,6 +423,7 @@ public class M4dController {
         if (m4dId == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка импорта МЧД"), HttpStatus.BAD_REQUEST);
         }
+        String res = null;
         if (sourceSig != null){
             //upload sig for m4d !!!!!!!!!!!!!!!!!!!!!!
             try {
@@ -473,8 +433,9 @@ public class M4dController {
                     log.error("Загрузка подписи МЧД не вернула результат");
                     return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД"), HttpStatus.BAD_REQUEST);
                 }
+                // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
+                res = this.m4dService.sendM4dToRR(authentication, m4dId);
                 // create M4d Request Search For Find RR
-                // TODO: @helix82 Формирование запроса должно происходить после отправки архива с xml-файлом мчд и подписью на регистрацию в РР МЧД (пока пропускаем этот этап)
                 M4dXml m4dXml = this.m4dService.convertM4dFileToM4dXml(sourceFile);
                 String hashXml = this.m4dService.getHashXmlM4d(sourceFile);
                 ReportCheckStatusM4dDto reportM4dRequestSearch = this.m4dService.getReportM4dRequestSearchForFindPep(m4dXml, hashXml);
@@ -496,6 +457,13 @@ public class M4dController {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
             }
         }
+        if (res.isEmpty()) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Request-ID", res);
+
+            return new ResponseEntity<>(findMrpaRegistryById(authentication, m4dId).getBody(), headers, HttpStatus.OK);
+        }
+
         return findMrpaRegistryById(authentication, m4dId);
     }
 
@@ -648,19 +616,4 @@ public class M4dController {
         return body;
     }
 
-    public String registrationRequestM4dFnsViaPvv(MultipartFile file, URI uri) {
-        try {
-            log.debug("Отправка файла {}...", file);
-            return restTemplate.postForEntity(
-                            uri,
-                            new HttpEntity<>(file.getBytes()),
-                            String.class
-                    )
-                    .getBody();
-        } catch (Exception ex) {
-            log.error("Ошибка при отправке файла для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
-                    uri);
-        }
-        return null;
-    }
 }

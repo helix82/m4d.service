@@ -7,6 +7,7 @@ import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.model.M4dFile;
 
 import javax.validation.constraints.NotNull;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -17,4 +18,5 @@ public interface M4dFileService {
     M4dFile findM4dFileByContent(@NotNull String content);
     M4dFile fillM4dFile(FileMimeTypeEnum fileMimeTypeEnum, FileLogicalTypeEnum fileLogicalTypeEnum, String filename, String content);
     ByteArrayResource createArchive(Authentication authentication, String filename, List<Long> values) throws IOException;
+    File createArchiveToFile(Authentication authentication, String filename, List<Long> values) throws IOException;
 }
