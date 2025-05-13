@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
@@ -53,8 +52,6 @@ public class M4dController {
     private final M4dFileService m4dFileService;
     private final M4dRequestService m4dRequestService;
     private final M4dConfirmService m4dConfirmService;
-
-    @Autowired
     private final RestTemplate restTemplate;
 
     @Value("${pvv.fns-send-registration-request-m4d}")
