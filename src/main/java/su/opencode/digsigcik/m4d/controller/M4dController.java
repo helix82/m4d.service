@@ -269,7 +269,7 @@ public class M4dController {
     @PutMapping(value = "/{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSig(Authentication authentication,
                                        @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id,
-                                       @RequestPart("signature") MultipartFile signature,
+                                       @RequestPart("container") MultipartFile signature,
                                        @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws Exception {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
