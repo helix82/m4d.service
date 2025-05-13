@@ -269,8 +269,7 @@ public class M4dController {
     @PutMapping(value = "/{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSig(Authentication authentication,
                                        @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id,
-                                       @RequestPart("container") MultipartFile signature,
-                                       @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws Exception {
+                                       @RequestPart("container") MultipartFile signature) throws Exception {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -278,10 +277,10 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString("Signature is null"), HttpStatus.BAD_REQUEST);
         }
         String extension = FilenameUtils.getExtension(signature.getOriginalFilename());
-        if(!Objects.equals(extension, "sig")) {
+        if(!Objects.equals(extension, "sig") || !Objects.equals(extension, "dscp")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
-        Long sigFileId = this.m4dService.uploadSig(id, signature);
+        Long sigFileId = this.m4dService.uploadSig(authentication, id, signature);
         // create M4d Request Search For Find RR
         // TODO: @helix82 Формирование запроса должно происходить после отправки архива с xml-файлом мчд и подписью на регистрацию в РР МЧД (пока пропускаем этот этап)
         MultipartFile sourceFile = this.m4dService.getMultipartFileByM4dId(authentication, id);
@@ -421,7 +420,7 @@ public class M4dController {
         if (sourceSig != null){
             //upload sig for m4d !!!!!!!!!!!!!!!!!!!!!!
             try {
-                var result = this.m4dService.uploadSig(m4dId, sourceSig);
+                var result = this.m4dService.uploadSig(authentication, m4dId, sourceSig);
 
                 if (result == null) {
                     log.error("Загрузка подписи МЧД не вернула результат");

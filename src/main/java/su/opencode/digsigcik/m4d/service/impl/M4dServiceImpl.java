@@ -944,7 +944,8 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_SIGNATURE)
-    public Long uploadSig(Long mrpaId, MultipartFile signature){
+    public Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile signature){
+        String bearerToken = getTokenValue(authentication);
         M4d m4d;
         try {
             m4d = this.findById(mrpaId);
