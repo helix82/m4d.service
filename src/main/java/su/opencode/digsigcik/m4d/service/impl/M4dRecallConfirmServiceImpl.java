@@ -185,7 +185,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         if (Boolean.parseBoolean(IS_DETACHED)) {
             filenameSig = m4dRevokeConfirmDto.getIdFile()+"_detached.sig";
         } else filenameSig = m4dRevokeConfirmDto.getIdFile()+".sig";
-        M4dFile m4dFileSig = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.DSCP, FileLogicalTypeEnum.CONTAINER, filenameSig, resource);
+        M4dFile m4dFileSig = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameSig, resource);
         m4dRecallConfirm.setSigFileRegisteredPep(m4dFileSig);
 
         M4dRecallConfirm m4dRecallConfirmSaved;
