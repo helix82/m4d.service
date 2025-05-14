@@ -59,3 +59,7 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/insert_data_credentials.sql
   - include:
       file: db/changelog/migrations/v1.0/delete_fk_m4d_registry_in_table_m4d_revoke.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_confirm.sql
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_m4d_revoke_confirm.sql

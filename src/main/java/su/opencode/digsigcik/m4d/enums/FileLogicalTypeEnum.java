@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum FileLogicalTypeEnum {
 
     CONTAINER("container"),
+    SIGNATURE("signature"),
     CERTIFICATE("certificate"),
     DOCUMENT("document");
 
