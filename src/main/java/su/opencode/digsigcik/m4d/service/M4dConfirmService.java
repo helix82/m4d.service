@@ -14,8 +14,8 @@ public interface M4dConfirmService {
     M4dConfirm findM4dConfirmByM4dId(Long m4dId);
     M4dConfirm updateM4dConfirm(M4dConfirm m4dConfirm);
     void deleteM4dConfirmById(Long id);
-    Long uploadSigRegisteredPep(Long m4dId, MultipartFile signature);
-    Long uploadSigRegisteredRr(Long m4dId, MultipartFile container);
+    Long uploadSigRegisteredPep(Long m4dId, MultipartFile signature) throws IOException;
+    Long uploadSigRegisteredRr(Long m4dId, MultipartFile container) throws IOException;
     Long uploadXmlRegisteredRr(Long m4dId, String xmlContent);
     M4dConfirmDto getXml(String idFile, String guid, String internalNumber, String startDate, String endDate);
     M4dConfirm createAndSignedM4dConfirm(Authentication authentication, M4d m4d, String idFile, String guid, String internalNumber, String startDate, String endDate) throws JAXBException, IOException;

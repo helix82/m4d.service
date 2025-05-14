@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -269,8 +270,7 @@ public class M4dController {
     @PutMapping(value = "/{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSig(Authentication authentication,
                                        @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id,
-                                       @RequestPart("container") MultipartFile signature,
-                                       @RequestParam(value = "verify", required = false, defaultValue = "true") boolean verify) throws Exception {
+                                       @RequestPart("container") MultipartFile signature) throws Exception {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -282,8 +282,10 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
         Long sigFileId = this.m4dService.uploadSig(id, signature);
+        // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
+        String res = this.m4dService.sendM4dToRR(authentication, id);
+
         // create M4d Request Search For Find RR
-        // TODO: @helix82 Формирование запроса должно происходить после отправки архива с xml-файлом мчд и подписью на регистрацию в РР МЧД (пока пропускаем этот этап)
         MultipartFile sourceFile = this.m4dService.getMultipartFileByM4dId(authentication, id);
         M4dXml m4dXml = this.m4dService.convertM4dFileToM4dXml(sourceFile);
         String hashXml = this.m4dService.getHashXmlM4d(sourceFile);
@@ -301,7 +303,10 @@ public class M4dController {
                 throw new BadRequestException(e.getMessage());
             }
         }
-        return findMrpaRegistryById(authentication, id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Request-ID", res);
+
+        return new ResponseEntity<>(findMrpaRegistryById(authentication, id).getBody(), headers, HttpStatus.OK);
     }
 
     //TODO: @helix82 Временный эндпоинт для Дениса
@@ -418,6 +423,7 @@ public class M4dController {
         if (m4dId == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка импорта МЧД"), HttpStatus.BAD_REQUEST);
         }
+        String res = null;
         if (sourceSig != null){
             //upload sig for m4d !!!!!!!!!!!!!!!!!!!!!!
             try {
@@ -427,8 +433,9 @@ public class M4dController {
                     log.error("Загрузка подписи МЧД не вернула результат");
                     return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД"), HttpStatus.BAD_REQUEST);
                 }
+                // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
+                res = this.m4dService.sendM4dToRR(authentication, m4dId);
                 // create M4d Request Search For Find RR
-                // TODO: @helix82 Формирование запроса должно происходить после отправки архива с xml-файлом мчд и подписью на регистрацию в РР МЧД (пока пропускаем этот этап)
                 M4dXml m4dXml = this.m4dService.convertM4dFileToM4dXml(sourceFile);
                 String hashXml = this.m4dService.getHashXmlM4d(sourceFile);
                 ReportCheckStatusM4dDto reportM4dRequestSearch = this.m4dService.getReportM4dRequestSearchForFindPep(m4dXml, hashXml);
@@ -450,6 +457,13 @@ public class M4dController {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
             }
         }
+        if (res != null) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Request-ID", res);
+
+            return new ResponseEntity<>(findMrpaRegistryById(authentication, m4dId).getBody(), headers, HttpStatus.OK);
+        }
+
         return findMrpaRegistryById(authentication, m4dId);
     }
 
@@ -601,4 +615,5 @@ public class M4dController {
         body.put("error", text);
         return body;
     }
+
 }

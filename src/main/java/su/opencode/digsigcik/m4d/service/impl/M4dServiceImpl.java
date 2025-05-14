@@ -3,12 +3,15 @@ package su.opencode.digsigcik.m4d.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -31,7 +34,9 @@ import su.opencode.digsigcik.m4d.util.*;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBException;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -65,6 +70,10 @@ public class M4dServiceImpl implements M4dService {
     private final UserCertificateService userCertificateService;
     private final RefBookClientService refBookClientService;
     private final M4dConfirmService m4dConfirmService;
+    private final RestTemplate restTemplate;
+
+    @Value("${pvv.fns-send-registration-request-m4d}")
+    private URI FNS_SEND_REGISTRATION_REQUEST_M4D_URI;
 
     @Override
     public List<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication) throws ParseException {
@@ -944,7 +953,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_SIGNATURE)
-    public Long uploadSig(Long mrpaId, MultipartFile signature){
+    public Long uploadSig(Long mrpaId, MultipartFile signature) throws IOException {
         M4d m4d;
         try {
             m4d = this.findById(mrpaId);
@@ -954,7 +963,7 @@ public class M4dServiceImpl implements M4dService {
         if (m4d == null) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.toString());
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.getBytes());
         m4d.setSigFile(m4dFile);
         m4d.setStatus("ONCHECK");
 
@@ -1379,6 +1388,62 @@ public class M4dServiceImpl implements M4dService {
         String xmlString = m4DRegistryResponseDto.getXmlFile().getContent();
         String filename = m4DRegistryResponseDto.getGuid()+".xml";
         return FileUtils.mapStringToMultipart(xmlString, filename);
+    }
+
+    @Override
+    public String sendM4dToRR(Authentication authentication, Long m4dId) throws IOException {
+        M4d m4d;
+        try {
+            m4d = this.findById(m4dId);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        if (m4d == null) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        M4dConfirm m4dConfirm;
+        try {
+            m4dConfirm = this.m4dConfirmService.findM4dConfirmByM4dId(m4d.getId());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        String filenameSource = m4d.getXmlFile().getFilename();
+        int lastDotIndex = filenameSource.lastIndexOf('.');
+        if (lastDotIndex > 0) {
+            filenameSource = filenameSource.substring(0, lastDotIndex);
+        }
+        List<Long> longList = new ArrayList<>();
+        longList.add(m4d.getXmlFile().getId());
+        if (m4d.getSigFile()!=null) { longList.add(m4d.getSigFile().getId()); }
+        if (m4dConfirm!=null) {
+            if (m4dConfirm.getXmlFileRegisteredPep() != null) { longList.add(m4dConfirm.getXmlFileRegisteredPep().getId()); }
+            if (m4dConfirm.getSigFileRegisteredPep() != null) { longList.add(m4dConfirm.getSigFileRegisteredPep().getId()); }
+        }
+        File resp = this.m4dFileService.createArchiveToFile(authentication, filenameSource, longList);
+        if (resp == null) {
+            throw new BadRequestException("Ошибка создания архива");
+        }
+
+        MultipartFile requestTempFile = new CustomMultipartFile(resp);
+        String res = registrationRequestM4dFnsViaPvv(requestTempFile, FNS_SEND_REGISTRATION_REQUEST_M4D_URI);
+        log.info(res);
+        return res;
+    }
+
+    private String registrationRequestM4dFnsViaPvv(MultipartFile file, URI uri) {
+        try {
+            log.debug("Отправка файла {}...", file);
+            return restTemplate.postForEntity(
+                            uri,
+                            new HttpEntity<>(file.getBytes()),
+                            String.class
+                    )
+                    .getBody();
+        } catch (Exception ex) {
+            log.error("Ошибка при отправке файла для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
+                    uri);
+        }
+        return null;
     }
 
 }
