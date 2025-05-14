@@ -1419,7 +1419,7 @@ public class M4dServiceImpl implements M4dService {
             if (m4dConfirm.getXmlFileRegisteredPep() != null) { longList.add(m4dConfirm.getXmlFileRegisteredPep().getId()); }
             if (m4dConfirm.getSigFileRegisteredPep() != null) { longList.add(m4dConfirm.getSigFileRegisteredPep().getId()); }
         }
-        File resp = this.m4dFileService.createArchiveToFile(authentication, filenameSource, longList);
+        File resp = this.m4dFileService.createArchive(authentication, filenameSource, longList);
         if (resp == null) {
             throw new BadRequestException("Ошибка создания архива");
         }

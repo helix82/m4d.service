@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.util.*;
 
@@ -521,7 +522,7 @@ public class M4dController {
                 if (m4dConfirm.getXmlFileRegisteredPep() != null) { longList.add(m4dConfirm.getXmlFileRegisteredPep().getId()); }
                 if (m4dConfirm.getSigFileRegisteredPep() != null) { longList.add(m4dConfirm.getSigFileRegisteredPep().getId()); }
             }
-            ByteArrayResource resp = this.m4dFileService.createArchive(authentication, filenameSource, longList);
+            ByteArrayResource resp = new ByteArrayResource(Files.readAllBytes((this.m4dFileService.createArchive(authentication, filenameSource, longList)).toPath()));
             if (resp == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
             }

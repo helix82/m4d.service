@@ -33,6 +33,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -337,7 +338,7 @@ public class M4dRevokeController {
                 if (m4dRecallConfirm.getXmlFileRegisteredPep()!=null) { longList.add(m4dRecallConfirm.getXmlFileRegisteredPep().getId()); }
                 if (m4dRecallConfirm.getSigFileRegisteredPep()!=null) { longList.add(m4dRecallConfirm.getSigFileRegisteredPep().getId()); }
             }
-             ByteArrayResource resp = this.m4dFileService.createArchive(authentication, filenameSource, longList);
+            ByteArrayResource resp = new ByteArrayResource(Files.readAllBytes((this.m4dFileService.createArchive(authentication, filenameSource, longList)).toPath()));
             if (resp == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
             }
