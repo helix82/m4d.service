@@ -163,6 +163,13 @@ public class M4dFileServiceImpl implements M4dFileService {
                 fo = new FileOutputStream(tempFile);
                 fo.write(signatureData.getBytes());
                 fo.close();
+            } else if (m4dFile.getFilename().endsWith(".sig")) {
+                tempFile = "/tmp/" + m4dFile.getFilename();
+                tempFileNames.add(tempFile);
+                fo = new FileOutputStream(tempFile);
+                byte[] bytes = m4dFile.getContent().getBytes();
+                fo.write(bytes);
+                fo.close();
             } else {
                 tempFile = "/tmp/" + m4dFile.getFilename();
                 tempFileNames.add(tempFile);
