@@ -70,7 +70,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredPep(Long m4dRecallId, MultipartFile signature) {
+    public Long uploadSigRegisteredPep(Long m4dRecallId, MultipartFile signature) throws IOException {
         M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
         if (m4dRecallConfirm==null) {
             throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
@@ -79,7 +79,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
             throw new BadRequestException("Подтверждение регистрации отзыва МЧД в ПЭП уже подписано");
         }
         String filename = signature.getOriginalFilename();
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.toString());
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.getBytes());
         m4dRecallConfirm.setSigFileRegisteredPep(m4dFile);
         M4dRecallConfirm m4dRecallConfirmSaved;
         try {
@@ -91,7 +91,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredRr(Long m4dRecallId, MultipartFile signature) {
+    public Long uploadSigRegisteredRr(Long m4dRecallId, MultipartFile signature) throws IOException {
         M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
         if (m4dRecallConfirm==null) {
             throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
@@ -100,7 +100,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
             throw new BadRequestException("Подтверждение регистрации отзыва МЧД в РР уже подписано");
         }
         String filename = signature.getOriginalFilename();
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.toString());
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.getBytes());
         m4dRecallConfirm.setSigFileRegisteredRr(m4dFile);
         M4dRecallConfirm m4dRecallConfirmSaved;
         try {
@@ -119,7 +119,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         }
 
         String filenameXml = XMLUtil.getSubstringFromXml(xmlContent, "ИдФайл=\"")+".xml";
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlContent);
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlContent.getBytes());
         m4dRecallConfirm.setXmlFileRegisteredRr(m4dFile);
 
         M4dRecallConfirm m4dRecallConfirmSaved;
@@ -175,7 +175,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         m4dRecallConfirm.setRegisteredPepDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCreatedDate()));
 
         String filenameXml = m4dRevokeConfirmDto.getIdFile()+".xml";
-        M4dFile m4dFileXml = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlConfirmString);
+        M4dFile m4dFileXml = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlConfirmString.getBytes());
         m4dRecallConfirm.setXmlFileRegisteredPep(m4dFileXml);
         //автоподписание
         MultipartFile sourceFile = FileUtils.mapStringToMultipart(m4dFileXml.getContent(), m4dFileXml.getFilename());
@@ -185,7 +185,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         if (Boolean.parseBoolean(IS_DETACHED)) {
             filenameSig = m4dRevokeConfirmDto.getIdFile()+"_detached.sig";
         } else filenameSig = m4dRevokeConfirmDto.getIdFile()+".sig";
-        M4dFile m4dFileSig = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameSig, resource);
+        M4dFile m4dFileSig = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameSig, resource.getBytes());
         m4dRecallConfirm.setSigFileRegisteredPep(m4dFileSig);
 
         M4dRecallConfirm m4dRecallConfirmSaved;

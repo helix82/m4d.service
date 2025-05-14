@@ -457,7 +457,7 @@ public class M4dController {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
             }
         }
-        if (res.isEmpty()) {
+        if (res != null) {
             HttpHeaders headers = new HttpHeaders();
             headers.set("X-Request-ID", res);
 

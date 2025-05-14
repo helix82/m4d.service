@@ -953,7 +953,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_SIGNATURE)
-    public Long uploadSig(Long mrpaId, MultipartFile signature){
+    public Long uploadSig(Long mrpaId, MultipartFile signature) throws IOException {
         M4d m4d;
         try {
             m4d = this.findById(mrpaId);
@@ -963,7 +963,7 @@ public class M4dServiceImpl implements M4dService {
         if (m4d == null) {
             throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
         }
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.toString());
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.getBytes());
         m4d.setSigFile(m4dFile);
         m4d.setStatus("ONCHECK");
 

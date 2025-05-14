@@ -58,13 +58,16 @@ public class M4dFileServiceImpl implements M4dFileService {
     }
 
     @Override
-    public M4dFile fillM4dFile(FileMimeTypeEnum fileMimeTypeEnum, FileLogicalTypeEnum fileLogicalTypeEnum, String filename, String content) {
+    public M4dFile fillM4dFile(FileMimeTypeEnum fileMimeTypeEnum, FileLogicalTypeEnum fileLogicalTypeEnum, String filename, byte[] content) {
         M4dFile m4dFile = new M4dFile();
         m4dFile.setFileMimeType(fileMimeTypeEnum);
         m4dFile.setFileLogicalType(fileLogicalTypeEnum);
         m4dFile.setFilename(filename);
-        String base64ContentSig = Base64.getEncoder().encodeToString(content.getBytes());
-        m4dFile.setContent(base64ContentSig);
+        if (!isBase64(new String(content))) {
+            m4dFile.setContent(Base64.getEncoder().encodeToString(content));
+        } else {
+            m4dFile.setContent(new String(content));
+        }
         M4dFile existsM4dFile;
         try {
             existsM4dFile = this.findM4dFileByContent(m4dFile.getContent());

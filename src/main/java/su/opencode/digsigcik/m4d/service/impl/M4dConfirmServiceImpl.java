@@ -70,7 +70,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredPep(Long m4dId, MultipartFile signature) {
+    public Long uploadSigRegisteredPep(Long m4dId, MultipartFile signature) throws IOException {
         M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
         if (m4dConfirm==null) {
             throw new BadRequestException(MRPA_CONFIRM_IS_NULL);
@@ -79,7 +79,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
             throw new BadRequestException("Подтверждение регистрации МЧД в ПЭП уже подписано");
         }
         String filename = signature.getOriginalFilename();
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.toString());
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.getBytes());
         m4dConfirm.setSigFileRegisteredPep(m4dFile);
         M4dConfirm m4dConfirmSaved;
         try {
@@ -91,7 +91,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredRr(Long m4dId, MultipartFile signature) {
+    public Long uploadSigRegisteredRr(Long m4dId, MultipartFile signature) throws IOException {
         M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
         if (m4dConfirm==null) {
             throw new BadRequestException(MRPA_CONFIRM_IS_NULL);
@@ -100,7 +100,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
             throw new BadRequestException("Подтверждение регистрации МЧД в РР уже подписано");
         }
         String filenameXml = signature.getOriginalFilename();
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameXml, signature.toString());
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameXml, signature.getBytes());
         m4dConfirm.setSigFileRegisteredRr(m4dFile);
         M4dConfirm m4dConfirmSaved;
         try {
@@ -119,7 +119,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         }
 
         String filenameXml = XMLUtil.getSubstringFromXml(xmlContent, "ИдФайл=\"")+".xml";
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlContent);
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlContent.getBytes());
         m4dConfirm.setXmlFileRegisteredRr(m4dFile);
         M4dConfirm m4dConfirmSaved;
         try {
@@ -178,7 +178,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         m4dConfirm.setRegisteredPepDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCreatedDate()));
 
         String filenameXml = m4dConfirmDto.getIdFile()+".xml";
-        M4dFile m4dFileXml = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlConfirmString);
+        M4dFile m4dFileXml = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlConfirmString.getBytes());
         m4dConfirm.setXmlFileRegisteredPep(m4dFileXml);
         //автоподписание
         MultipartFile sourceFile = FileUtils.mapStringToMultipart(xmlConfirmString, m4dFileXml.getFilename());
@@ -189,7 +189,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         if (Boolean.parseBoolean(IS_DETACHED)) {
             filenameSig = m4dConfirmDto.getIdFile()+"_detached.sig";
         } else filenameSig = m4dConfirmDto.getIdFile()+".sig";
-        M4dFile m4dFileSig = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameSig, resource);
+        M4dFile m4dFileSig = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameSig, resource.getBytes());
         m4dConfirm.setSigFileRegisteredPep(m4dFileSig);
 
         M4dConfirm m4dConfirmSaved;
