@@ -178,8 +178,9 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         M4dFile m4dFileXml = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlConfirmString.getBytes());
         m4dRecallConfirm.setXmlFileRegisteredPep(m4dFileXml);
         //автоподписание
-        MultipartFile sourceFile = FileUtils.mapStringToMultipart(m4dFileXml.getContent(), m4dFileXml.getFilename());
-        String resource = cryptoProCloudSignatureService.initializeSignature(authentication, sourceFile, 0L, USER_LOGIN, PINCODE, Boolean.parseBoolean(IS_DETACHED), SIG_TYPE, HashAlgorithm.GOST3411_2012_256);
+        MultipartFile sourceFile = FileUtils.mapStringToMultipart(xmlConfirmString, m4dFileXml.getFilename());
+        String resource = cryptoProCloudSignatureService.initializeSignature(authentication, sourceFile,
+                0L, USER_LOGIN, PINCODE, Boolean.parseBoolean(IS_DETACHED), SIG_TYPE, HashAlgorithm.GOST3411_2012_256);
 
         String filenameSig = null;
         if (Boolean.parseBoolean(IS_DETACHED)) {
@@ -196,5 +197,4 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         }
         return m4dRecallConfirmSaved;
     }
-
 }
