@@ -189,6 +189,31 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.M4D_SOUL }}
+            - name: AUTOSIGN_USER_LOGIN
+              valueFrom:
+                secretKeyRef:
+                  name: { { .Values.secret.name } }
+                  key: { { .Values.env.AUTOSIGN_USER_LOGIN } }
+            - name: AUTOSIGN_PINCODE
+              valueFrom:
+                secretKeyRef:
+                  name: { { .Values.secret.name } }
+                  key: { { .Values.env.AUTOSIGN_PINCODE } }
+            - name: AUTOSIGN_IS_DETACHED
+              valueFrom:
+                secretKeyRef:
+                  name: { { .Values.secret.name } }
+                  key: { { .Values.env.AUTOSIGN_IS_DETACHED } }
+            - name: AUTOSIGN_SIG_TYPE
+              valueFrom:
+                secretKeyRef:
+                  name: { { .Values.secret.name } }
+                  key: { { .Values.env.AUTOSIGN_SIG_TYPE } }
+            - name: FNS_SEND_REGISTRATION_REQUEST_M4D_URI
+              valueFrom:
+                secretKeyRef:
+                  name: { { .Values.secret.name } }
+                  key: { { .Values.env.FNS_SEND_REGISTRATION_REQUEST_M4D_URI } }
       imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
         - name: {{ . }}
