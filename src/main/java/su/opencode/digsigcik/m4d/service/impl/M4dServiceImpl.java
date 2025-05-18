@@ -126,7 +126,9 @@ public class M4dServiceImpl implements M4dService {
         OrganizationDto existsOrganisation;
         try {
             existsOrganisation = this.refBookClientService.findByOrganisationInn(organisation.getInn(), bearerToken);
-            assert existsOrganisation != null;
+            if (existsOrganisation == null) {
+                throw new BadRequestException("Организации, указанной в импортируемой мчд, нет в справочнике организаций ПЭП");
+            }
             orgInn = existsOrganisation.getInn();
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
@@ -140,7 +142,9 @@ public class M4dServiceImpl implements M4dService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        assert respPrincipal != null;
+        if (respPrincipal == null) {
+            throw new BadRequestException("Ошибка сохранения основных данных доверителя в ПЭП");
+        }
         principId = respPrincipal.getId();
         //------------------- end save principal ----------------
 
@@ -154,7 +158,9 @@ public class M4dServiceImpl implements M4dService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        assert respPrincipalDetail != null;
+        if (respPrincipalDetail == null) {
+            throw new BadRequestException("Ошибка сохранения дополнительных данных доверителя в ПЭП");
+        }
         principDetailId = respPrincipalDetail.getId();
         //------------------- end save principal detail ----------------
 
@@ -165,7 +171,9 @@ public class M4dServiceImpl implements M4dService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        assert respRepresentative != null;
+        if (respRepresentative == null) {
+            throw new BadRequestException("Ошибка сохранения основных данных представителя в ПЭП");
+        }
         represId = respRepresentative.getId();
         //------------------- end save representative ----------------
 
@@ -179,7 +187,9 @@ public class M4dServiceImpl implements M4dService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        assert respRepresDetail != null;
+        if (respRepresDetail == null) {
+            throw new BadRequestException("Ошибка сохранения дополнительных данных представителя в ПЭП");
+        }
         represDetailId = respRepresDetail.getId();
         //------------------- end save representative detail ----------------
 
@@ -221,7 +231,6 @@ public class M4dServiceImpl implements M4dService {
         if (credentialList != null) {
             for (CredentialDto c : credentialList) {
                 List<Credential> existsCredentials = this.credentialService.findCredentialByCodeOrName(c.getCode());
-                assert existsCredentials != null;
                 if (existsCredentials.isEmpty()) {
                     Credential newCredential = new Credential();
                     newCredential.setCode(c.getCode());
@@ -297,7 +306,9 @@ public class M4dServiceImpl implements M4dService {
         OrganizationDto existsOrganisation;
         try {
             existsOrganisation = this.refBookClientService.findByOrganisationInn(organisation.getInn(), bearerToken);
-            assert existsOrganisation != null;
+            if (existsOrganisation == null) {
+                throw new BadRequestException("Организации, указанной в импортируемой мчд, нет в справочнике организаций ПЭП");
+            }
             orgInn = existsOrganisation.getInn();
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
@@ -455,7 +466,6 @@ public class M4dServiceImpl implements M4dService {
         if (credentialList != null) {
             for (CredentialDto c : credentialList) {
                 List<Credential> existsCredentials = this.credentialService.findCredentialByCodeOrName(c.getCode());
-                assert existsCredentials != null;
                 if (existsCredentials.isEmpty()) {
                     Credential newCredential = new Credential();
                     newCredential.setCode(c.getCode());
@@ -541,15 +551,17 @@ public class M4dServiceImpl implements M4dService {
     public List<M4dRegistryResponseDto.CredentialDto> getCredentialByMrpaRegistryId(Long mrpaId) {
         List<Credential> credentials = this.credentialService.findCredentialByMrpaId(mrpaId);
         List<M4dRegistryResponseDto.CredentialDto> credentialDTOList = new ArrayList<>();
-        assert credentials != null;
-        for (Credential c : credentials) {
-            M4dRegistryResponseDto.CredentialDto credentialDTO = new M4dRegistryResponseDto.CredentialDto();
-            credentialDTO.setId(c.getId());
-            credentialDTO.setName(c.getName());
-            credentialDTO.setCode(c.getCode());
-            credentialDTOList.add(credentialDTO);
+        if (!credentials.isEmpty()){
+            for (Credential c : credentials) {
+                M4dRegistryResponseDto.CredentialDto credentialDTO = new M4dRegistryResponseDto.CredentialDto();
+                credentialDTO.setId(c.getId());
+                credentialDTO.setName(c.getName());
+                credentialDTO.setCode(c.getCode());
+                credentialDTOList.add(credentialDTO);
+            }
+            return credentialDTOList;
         }
-        return credentialDTOList;
+        return null;
     }
 
     /*
@@ -1138,7 +1150,9 @@ public class M4dServiceImpl implements M4dService {
             content = m4dFile.getContent();
         }
         Document document = convertStringToDocument(content);
-        assert document != null;
+        if (document == null) {
+            throw new BadRequestException("Ошибка конвертации Файла в тип Document");
+        }
         M4dRevokeXml m4dRevokeXml = XMLUtil.unmarshal(document, M4dRevokeXml.class);
         return m4dRevokeXml.getDocument().recallInfo.getArgument();
     }
@@ -1220,7 +1234,9 @@ public class M4dServiceImpl implements M4dService {
         M4dXml m4dXml;
         try {
             Document document = convertStringToDocument(XMLUtil.readXmlToString(sourceFile));
-            assert document != null;
+            if (document == null) {
+                throw new BadRequestException("Ошибка конвертации Файла в тип Document");
+            }
             m4dXml = XMLUtil.unmarshal(document, M4dXml.class);
         } catch (Exception e) {
             log.error(MRPA_REGISTRY_WRONG_FORMAT_XML + ": ошибка унмаршалинга");
