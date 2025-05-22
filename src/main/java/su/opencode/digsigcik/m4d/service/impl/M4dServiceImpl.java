@@ -1267,7 +1267,7 @@ public class M4dServiceImpl implements M4dService {
         String scheme;
         ReportValidSchemeDto report = new ReportValidSchemeDto();
         report.setFileName(sourceFile.getOriginalFilename());
-        if (reqScheme.isEmpty()) {
+        if (reqScheme == null) {
             report.setReqSchema("none");
             String content = XMLUtil.readXmlToString(sourceFile);
             scheme = XMLUtil.getSubstringFromXml(content, "ВерсФорм=\"");
