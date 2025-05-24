@@ -545,9 +545,9 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @GetMapping(value = "/valid-scheme", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/valid-scheme", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> validScheme(@RequestPart("srcFile") MultipartFile sourceFile,
-                                         @RequestParam(value="reqScheme", required = false) String reqScheme) throws IOException, SAXException {
+                                         @RequestParam(name="reqScheme", required = false) String reqScheme) throws IOException, SAXException {
         return new ResponseEntity<>(m4dService.validXmlM4dScheme(sourceFile, reqScheme), HttpStatus.OK);
     }
 
