@@ -6,6 +6,7 @@ import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.List;
 
@@ -21,6 +22,6 @@ public interface M4dRecallService {
     M4dRecall updateMrpaRecall(M4dRecall mrpaRecall);
     List<M4dRegistryResponseDto> findAllM4dRevokeUsers(Authentication authentication);
     M4dRevokeXml convertMrpaRecallToXml(M4dRegistryResponseDto mrpaRegistryResponseDto);
-    Long uploadSig(Long id, MultipartFile container);
+    Long uploadSig(Long id, MultipartFile container) throws IOException;
     String getHashFromXmlString(String xmlString) throws Exception;
 }

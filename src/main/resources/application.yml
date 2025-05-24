@@ -78,7 +78,7 @@ web:
       - /favicon.ico
       - /api/v1/m4d/verify
       - /health
-    trust-all: ${DISABLE_TLS_CHECK:false}
+    trust-all: ${DISABLE_TLS_CHECK:true}
 ---
 
 spring:
@@ -140,7 +140,14 @@ cryptopro:
   proxy-service: ${CRYPTO_PROXY_SIGN_URL:https://cp.dev.essocode.ru/api/v1/sign/cades/as-user}
 
 autosign:
-  user-login: "pep"
-  pincode: '1234'
-  is-detached: 'true'
-  sig-type: 'CAdES_BES'
+  user-login: ${AUTOSIGN_USER_LOGIN:pep}
+  pincode: ${AUTOSIGN_PINCODE:1234}
+  is-detached: ${AUTOSIGN_IS_DETACHED:true}
+  sig-type: ${AUTOSIGN_SIG_TYPE:CAdES_BES}
+
+pvv:
+  use-gost: true
+  ping-tsl: ${PVV_ADAPTER_TSL_PING_URI:https://pvv-adapter-zk.dev.essocode.ru/api/v1/tsl}
+  fns-send-registration-request-m4d: ${FNS_SEND_REGISTRATION_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-registration-request-file}
+  fns-send-status-request-m4d: ${FNS_SEND_STATUS_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-status-request-json}
+  fns-send-revoke-request-m4d: ${FNS_SEND_REVOKE_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-revocation-request-file}

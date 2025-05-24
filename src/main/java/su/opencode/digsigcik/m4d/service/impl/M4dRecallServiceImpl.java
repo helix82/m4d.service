@@ -27,6 +27,7 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -196,7 +197,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_SIGNATURE)
-    public Long uploadSig(Long id, MultipartFile signature) {
+    public Long uploadSig(Long id, MultipartFile signature) throws IOException {
         M4dRecall mrpaRecall = this.findById(id);
         if (mrpaRecall==null) {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
@@ -204,7 +205,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         if (mrpaRecall.getSigFile()!=null) {
             throw new BadRequestException("Заявление на отзыв МЧД уже подписано");
         }
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.toString());
+        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.getBytes());
         M4dFile m4dFileSaved;
         Long fileId;
         if (m4dFile.getId() == null){
