@@ -147,7 +147,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         m4dConfirmDto.setTypeConfirm("ПодтвДовер");
         m4dConfirmDto.setIdFile("Квит003_ФНС_"+idFile); //Квит003_ФНС_ON_EMCHD_20240516_75655b80-cc58-4a2b-b244-8334eb895a2f
         m4dConfirmDto.setGuid(guidConfirm);
-        m4dConfirmDto.setRegisteredDate(DateUtils.getCreatedDate());
+        m4dConfirmDto.setRegisteredDate(DateUtils.getCurrentDate());
         m4dConfirmDto.setOperatorId("4M2EFnszPAT1yr45SgWVDLxfYCa4AYvDGns");
         M4dConfirmDto.Organisation organisation = new M4dConfirmDto.Organisation();
         organisation.setId(orgId);
@@ -175,7 +175,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         String xmlConfirmString = XMLUtil.marshall(m4dConfirmDto, M4dConfirmDto.class);
         M4dConfirm m4dConfirm = new M4dConfirm();
         m4dConfirm.setM4d(m4d);
-        m4dConfirm.setRegisteredPepDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCreatedDate()));
+        m4dConfirm.setRegisteredPepDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
 
         String filenameXml = m4dConfirmDto.getIdFile()+".xml";
         M4dFile m4dFileXml = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlConfirmString.getBytes());

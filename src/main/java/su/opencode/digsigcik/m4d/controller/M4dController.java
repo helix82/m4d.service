@@ -20,6 +20,7 @@ import org.xml.sax.SAXException;
 import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
 import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
+import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.M4dConfirmService;
@@ -46,6 +47,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 @RequestMapping("/api/v1/m4d")
 @Tag(name = "M4d Controller")
 public class M4dController {
+
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
@@ -87,9 +89,9 @@ public class M4dController {
     @PostMapping(produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> saveAllDataMrpaRegistry(Authentication authentication, @RequestBody M4dRegistryRequestDto m4dSaveFullDto) throws JAXBException, ParseException {
         m4dSaveFullDto.setGuid();
-        m4dSaveFullDto.setCreateDate(DateUtils.getCreatedDate());
+        m4dSaveFullDto.setCreateDate(DateUtils.getCurrentDate());
         M4d m4d = convertMrpaRegistryToEntity(m4dSaveFullDto.mrpaRegistry);
-        m4d.setCreateDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCreatedDate()));
+        m4d.setCreateDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
         m4d.setStatus("DRAFT");
         OrganizationDto organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
@@ -565,6 +567,28 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString("В ПЭП не найден запрос на получение статуса о МЧД в РР МЧД"), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(report, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION, description = CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PutMapping(value = "/upload-result-sending-to-rr", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> uploadResultSendM4dToRR(@RequestBody M4dResponseInfo m4dResponseInfo) {
+        String error;
+        try {
+            error = m4dService.uploadResultSendM4dToRR(m4dResponseInfo);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if ( error != null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
+        }
+        Map<String, String> body = new HashMap<>();
+        body.put("result", "Результат отправки МЧД на регистрацию в РР МЧД обработан.");
+        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
     private M4d convertMrpaRegistryToEntity(M4dRegistryRequestDto.MrpaRegistry mrpaRegistryDto) {

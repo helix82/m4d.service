@@ -68,7 +68,7 @@ public class DateUtils {
         return operationDate.format(formatter);
     }
 
-    public static String getCreatedDate(){
+    public static String getCurrentDate(){
         Instant instant = Instant.now();
         int nano = instant.getNano();
         return instant.minusNanos(nano).toString();

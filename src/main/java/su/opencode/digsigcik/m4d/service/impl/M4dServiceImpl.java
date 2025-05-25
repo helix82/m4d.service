@@ -20,6 +20,7 @@ import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
+import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.StatusRequestTypeEnum;
@@ -56,6 +57,8 @@ import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 @RequiredArgsConstructor
 @EnableTransactionManagement
 public class M4dServiceImpl implements M4dService {
+    @Value("${m4d.soul}")
+    private String M4D_SOUL;
     private final ModelMapper modelMapper;
     private final M4dRepository m4dRepository;
     private final M4dRecallService m4dRecallService;
@@ -1259,7 +1262,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     public String getHashXmlM4d(MultipartFile sourceFile) throws NoSuchAlgorithmException {
-        return HashUtils.getHash(XMLUtil.readXmlToString(sourceFile).getBytes());
+        return HashUtils.getHash(XMLUtil.readXmlToString(sourceFile).getBytes(), M4D_SOUL);
     }
 
     @Override
@@ -1393,6 +1396,48 @@ public class M4dServiceImpl implements M4dService {
 //                rep.setInnOrganisation(getInnOrganizationFromXml(sourceFile));
 //                rep.setNameOrganisation(getNameOrganizationFromXml(sourceFile));
                 return report;
+        }
+        return null;
+    }
+
+    @Override
+    public String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo) {
+        if (m4dResponseInfo.getError() != null) {
+            String error = "Код: " + m4dResponseInfo.getError().getStatus() + ", Ошибка: " + m4dResponseInfo.getError().getTitle();
+            if (m4dResponseInfo.getError().getDetail() != null) {
+                error = error  + ", Детали: " + m4dResponseInfo.getError().getDetail();
+            }
+            M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dResponseInfo.getPoaNumber(), m4dResponseInfo.getPoaId());
+            if (m4dRequestSearch == null) {
+                return "Ошибка загрузки результата регистрации мчд в рр: не найден запрос на регистрацию";
+            }
+            M4dRequestSearchDetail detail = new M4dRequestSearchDetail();
+            detail.setRequestSearchId(m4dRequestSearch.getId());
+            detail.setStatus("ERROR");
+            detail.setErrorDetail(error);
+            detail.setStatusDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
+            detail.setActive(true);
+            M4dRequestSearchDetail m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
+            if (m4dRequestSearchDetail == null) {
+                detail.setVersion(1L);
+            } else {
+                detail.setStartDate(m4dRequestSearchDetail.getStartDate());
+                detail.setEndDate(m4dRequestSearchDetail.getEndDate());
+                detail.setVersion(m4dRequestSearchDetail.getVersion()+1);
+                m4dRequestSearchDetail.setActive(false);
+            }
+            M4dRequestSearchDetail detailSaving;
+            try {
+                if (m4dRequestSearchDetail != null) {
+                    this.m4dRequestService.updateM4dRequestSearchDetail(m4dRequestSearchDetail);
+                }
+                detailSaving = this.m4dRequestService.saveM4dRequestSearchDetail(detail);
+            } catch (Exception e) {
+                throw new BadRequestException(e.getMessage());
+            }
+            if (detailSaving != null) {
+                return detailSaving.getErrorDetail();
+            }
         }
         return null;
     }
