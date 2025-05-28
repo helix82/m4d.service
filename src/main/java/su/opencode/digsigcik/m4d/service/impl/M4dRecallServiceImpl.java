@@ -10,6 +10,7 @@ import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
+import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
@@ -45,15 +46,17 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     private final M4dFileService m4dFileService;
     private final UserCertificateService userCertificateService;
     private final M4dRecallConfirmService m4dRecallConfirmService;
+    private final M4dRequestService m4dRequestService;
 
     public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository,
-                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, M4dRecallConfirmService m4dRecallConfirmService) {
+                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, M4dRecallConfirmService m4dRecallConfirmService, M4dRequestService m4dRequestService) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
         this.userCertificateService = userCertificateService;
         this.m4dRecallConfirmService = m4dRecallConfirmService;
+        this.m4dRequestService = m4dRequestService;
     }
 
     @Override
@@ -246,5 +249,31 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             f.delete();
         }
         return hash;
+    }
+
+    @Override
+    public String uploadResultSendM4dRevokeToRR(M4dRevokeResponseInfo m4dRevokeResponseInfo) {
+        if (m4dRevokeResponseInfo.getTitle() != null) {
+            String error = "Код: " + m4dRevokeResponseInfo.getStatus() + ", Ошибка: " + m4dRevokeResponseInfo.getTitle();
+            if (m4dRevokeResponseInfo.getDetail() != null) {
+                error = error  + ", Детали: " + m4dRevokeResponseInfo.getDetail();
+            }
+            M4d m4d = this.m4dRepository.findByGuid(m4dRevokeResponseInfo.getPoaNumber());
+            if (m4d == null) {
+                return "Ошибка загрузки результата регистрации отзыва мчд в рр: МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " не найдена в ПЭП";
+            }
+            M4dRecall m4dRecall = this.m4dRevokeRepository.findM4dRecallByM4dId(m4d.getId());
+            if (m4dRecall == null) {
+                return "Ошибка загрузки результата регистрации отзыва мчд в рр: Заявление на отзыв МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " не найдена в ПЭП";
+            }
+            m4dRecall.setStatus("ERROR");
+            m4dRecall.setErrorDetail(error);
+            M4dRecall m4dRecallSaved;
+            m4dRecallSaved = this.updateMrpaRecall(m4dRecall);
+            if (m4dRecallSaved == null) {
+                return "Ошибка загрузки результата регистрации отзыва мчд в рр: не удалось обновить статус заявления на отзыв МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " в ПЭП";
+            }
+        }
+        return null;
     }
 }

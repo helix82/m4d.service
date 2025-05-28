@@ -154,7 +154,7 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
-    String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД в запросе РР МЧД";
+    String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД";
     String CONTROLLER_MRPA_UPDATE_STATUS_DESCRIPTION = "Возвращает данные о статусе МЧД";
     String CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION = "Обработать результат отправки МЧД на регистрацию в РР МЧД";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
@@ -192,6 +192,7 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY = "Загрузить ЭП заявления на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY = "Получить XML отзыв МЧД и открепленную подпись в zip-архиве";
+    String CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION = "Обработать результат отправки отзыва МЧД на регистрацию в РР МЧД";
     String CONTROLLER_MRPA_VALID_SCHEME_SUMMARY = "Проверить соответствие МЧД схеме";
     String CONTROLLER_MRPA_VALID_SCHEME_DESCRIPTION = "Возвращает JSON ответ результата проверки";
 

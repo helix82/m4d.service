@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -35,9 +36,10 @@ import su.opencode.digsigcik.m4d.util.*;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBException;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -45,6 +47,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 import static su.opencode.digsigcik.m4d.util.EncodingUtils.isBase64;
@@ -73,6 +77,7 @@ public class M4dServiceImpl implements M4dService {
     private final UserCertificateService userCertificateService;
     private final RefBookClientService refBookClientService;
     private final M4dConfirmService m4dConfirmService;
+    private final M4dRecallConfirmService m4dRecallConfirmService;
     private final RestTemplate restTemplate;
 
     @Value("${pvv.fns-send-registration-request-m4d}")
@@ -205,7 +210,7 @@ public class M4dServiceImpl implements M4dService {
         m4d.setRepresentativeId(represId);
         m4d.setRepresentativeDetailId(represDetailId);
         if (m4d.getStatus()==null){
-            m4d.setStatus("DRAFT");
+            m4d.setStatus("NEW");
         }
 
         String idFile = XMLUtil.getSubstringFromXml(xmlString, "ИдФайл=\"");
@@ -622,7 +627,7 @@ public class M4dServiceImpl implements M4dService {
         Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(mrpaRegistry.getEndDate()));
         if (Objects.equals(mrpaRegistry.getStatus(), "ACTIVE")) {
             if (currentDT.before(startDate)) {
-                return "REGISTERED";
+                return "NOT_ACTIVE";
             } else if (currentDT.after(endDate)) {
                 return "EXPIRED";
             } else {
@@ -839,20 +844,7 @@ public class M4dServiceImpl implements M4dService {
             ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
             report.setReport(rep);
             rep.setGuid(getGuidFromXml(m4dXml));
-            Date currentDT = Date.from(Instant.now());
-            Date startDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(m4dRegistryResponseDto.getStartDate()));
-            Date endDate = new SimpleDateFormat("yyyy-MM-dd").parse(String.valueOf(m4dRegistryResponseDto.getEndDate()));
-            if (Objects.equals(m4dRegistryResponseDto.getStatus(), "ACTIVE")) {
-                if (currentDT.before(startDate)) {
-                    rep.setStatus("REGISTERED");
-                } else if (currentDT.after(endDate)) {
-                    rep.setStatus("EXPIRED");
-                } else {
-                    rep.setStatus(m4dRegistryResponseDto.getStatus());
-                }
-            } else {
-                rep.setStatus(m4dRegistryResponseDto.getStatus());
-            }
+            rep.setStatus(getStatusM4d(m4d.getId()));
             rep.setStartDate(getStartDateM4dFromXml(m4dXml));
             rep.setEndDate(getEndDateM4dFromXml(m4dXml));
             rep.setCredentials(getCredentialM4dFromXml(m4dXml));
@@ -1299,144 +1291,369 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_UPDATE_STATUS)
-    public ReportCheckStatusM4dDto updateStatusM4dRequestSearch(M4dFnsDataResponse m4dFnsDataResponse) {
-        M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dFnsDataResponse.getGuid(), m4dFnsDataResponse.getId());
-        M4dRequestSearchDetail m4dRequestSearchDetail;
-        if (m4dRequestSearch != null) {
-            m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
-            M4dRequestSearchDetail m4dRequestSearchDetailNew = new M4dRequestSearchDetail();
-            m4dRequestSearchDetailNew.setStatus(m4dFnsDataResponse.getStatus());
-            if (m4dFnsDataResponse.getStatusDateTime() != null) {
-                m4dRequestSearchDetailNew.setStatusDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStatusDateTime()));
-            }
-            if (m4dFnsDataResponse.getCreatedDateTime() != null) {
-                m4dRequestSearchDetailNew.setRegistrationDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
-            }
-            if (m4dFnsDataResponse.getStartDateTime() != null) {
-                m4dRequestSearchDetailNew.setStartDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
-            }
-            if (m4dFnsDataResponse.getEndDateTime() != null) {
-                m4dRequestSearchDetailNew.setEndDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
-            }
-            m4dRequestSearchDetailNew.setActive(true);
-            m4dRequestSearchDetailNew.setRequestSearchId(m4dRequestSearch.getId());
-            if (m4dRequestSearchDetail != null) {
-                m4dRequestSearchDetailNew.setVersion(m4dRequestSearchDetail.getVersion()+1);
-                m4dRequestSearchDetail.setActive(false);
-                this.m4dRequestService.updateM4dRequestSearchDetail(m4dRequestSearchDetail);
-            } else { m4dRequestSearchDetailNew.setVersion(1L); }
-            M4dRequestSearchDetail m4dRequestSearchDetailSaved;
-            m4dRequestSearchDetailSaved = this.m4dRequestService.saveM4dRequestSearchDetail(m4dRequestSearchDetailNew);
-                if(m4dRequestSearchDetailSaved == null) {
-                    throw new BadRequestException("Активных деталей запроса статуса МЧД в РР МЧД не найдено");
-                }
-                M4d m4d;
-                try {
-                    m4d = this.findMrpaRegistryByGuid(m4dFnsDataResponse.getGuid());
-                } catch (Exception e) {
-                    throw new BadRequestException(e.getMessage());
-                }
-                String statusM4d = "";
-                String statusDetailM4d = "";
-                if (m4d != null) {
-                    switch (m4dRequestSearchDetailSaved.getStatus()) {
-                        case "ONCHECK":
-                            statusM4d = "ONCHECK";
-                            break;
-                        case "ERROR":
-                            statusM4d = "ERROR";
-                            break;
-                        case "PROCESSING":
-                            statusM4d = "";
-                            break;
-                        case "REJECTED":
-                            statusM4d = "ERROR";
-                            statusDetailM4d = "МЧД не принята РР МЧД на хранение";
-                            break;
-                        case "CREATED":
-                            statusM4d = "ACTIVE";
-                            break;
-                        case "ACTIVE":
-                            statusM4d = "ACTIVE";
-                            break;
-                        case "EXPIRED":
-                            statusM4d = "ACTIVE";
-                            break;
-                        case "REVOKED":
-                            statusM4d = "REVOKED";
-                            break;
-                    }
-                    if (!statusM4d.isEmpty()) {
-                        m4d.setStatus(statusM4d);
-                        if (statusM4d.equals("REVOKED")) {
-                            M4dRecall m4dRecall = this.m4dRecallService.findMrpaRecallByM4dId(m4d.getId());
-                            this.m4dRecallService.updateStatusMrpaRecallById(m4dRecall.getId(), "REVOKED");
+    public ReportCheckStatusM4dDto updateStatusM4dRequestSearch(MultipartFile zipFile) throws ParseException, IOException {
+        // Создаем временную директорию для распаковки ZIP
+        Path tempDir;
+        try {
+            tempDir = Files.createTempDirectory("M4dRequestSearchZip");
+        } catch (IOException e) {
+            throw new BadRequestException("Не удалось создать временную директорию", e);
+        }
+        File jsonFile = null;
+        File xmlFileKvitM4d = null;
+        File xmlFileKvitM4dRevoke = null;
+        File sigFileKvitM4d = null;
+        File sigFileKvitM4dRevoke = null;
+        int jsonCount = 0;
+        int xmlCount = 0;
+        int sigCount = 0;
+        // Распаковка ZIP-архива и сохранение всех файлов
+        try (InputStream is = zipFile.getInputStream();
+             ZipInputStream zis = new ZipInputStream(new BufferedInputStream(is))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (!entry.isDirectory()) {
+                    File outFile = new File(tempDir.toFile(), entry.getName());
+                    try (OutputStream os = new FileOutputStream(outFile)) {
+                        byte[] buffer = new byte[4096];
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            os.write(buffer, 0, len);
                         }
                     }
-                    if (!statusDetailM4d.isEmpty()) {
-                        m4d.setErrorDetail(statusDetailM4d);
+                    // Если расширение json – увеличиваем счетчик и запоминаем файл
+                    if (entry.getName()
+                            .toLowerCase()
+                            .endsWith(".json")) {
+                        jsonCount++;
+                        jsonFile = outFile;
                     }
-                    try {
-                        this.updateM4d(m4d);
-                    } catch (Exception e) {
-                        throw new BadRequestException(e.getMessage());
+                    // Если расширение xml – увеличиваем счетчик и запоминаем файл
+                    if (entry.getName()
+                            .toLowerCase()
+                            .endsWith(".xml")) {
+                        xmlCount++;
+                        if (entry.getName()
+                                .toLowerCase()
+                                .startsWith("квит003_фнс_on_emchd")) {
+                            xmlFileKvitM4d = outFile;
+                        } else if (entry.getName()
+                                .toLowerCase()
+                                .startsWith("квит003_фнс_on_заявотм")) {
+                            xmlFileKvitM4dRevoke = outFile;
+                        }
+                    }
+                    // Если расширение sig – увеличиваем счетчик и запоминаем файл
+                    if (entry.getName()
+                            .toLowerCase()
+                            .endsWith(".sig")) {
+                        sigCount++;
+                        if (entry.getName()
+                                .toLowerCase()
+                                .startsWith("квит003_фнс_on_emchd")) {
+                            sigFileKvitM4d = outFile;
+                        } else if (entry.getName()
+                                .toLowerCase()
+                                .startsWith("квит003_фнс_on_заявотм")) {
+                            sigFileKvitM4dRevoke = outFile;
+                        }
                     }
                 }
+            }
+        } catch (IOException e) {
+            cleanupDirectory(tempDir);
+            throw new BadRequestException("Ошибка распаковки ZIP файла: " + e.getMessage(), e);
+        }
+
+        if (jsonCount == 0) {
+            cleanupDirectory(tempDir);
+            throw new BadRequestException("JSON-файл не найден в ZIP архиве.");
+        } else if (jsonCount > 1) {
+            cleanupDirectory(tempDir);
+            throw new BadRequestException("В архиве найдено более одного JSON-файла.");
+        }
+        if (xmlCount > 2) {
+            cleanupDirectory(tempDir);
+            throw new BadRequestException("В архиве найдено более двух XML-файлов.");
+        }
+        if (sigCount > 2) {
+            cleanupDirectory(tempDir);
+            throw new BadRequestException("В архиве найдено более двух SIG-файлов.");
+        }
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        M4dFnsDataResponse m4dFnsDataResponse = new M4dFnsDataResponse();
+        try {
+            m4dFnsDataResponse = objectMapper.readValue(jsonFile, M4dFnsDataResponse.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (m4dFnsDataResponse == null) {
+            throw new BadRequestException("Ошибка чтения JSON-файла");
+        }
+        M4d m4d = this.findMrpaRegistryByGuid(m4dFnsDataResponse.getGuid());
+        if (m4d != null) {
+            // мчд наша
+            if (m4dFnsDataResponse.getError() != null) { //ошибка
+                String statusM4d = this.getStatusM4d(m4d.getId());
+                if (statusM4d.equals("ACTIVE")) {
+                    m4d.setStatus("ACTIVE_ERROR");
+                } else if (statusM4d.equals("NOT_ACTIVE")) {
+                    m4d.setStatus("NOT_ACTIVE_ERROR");
+                } else if (statusM4d.equals("ONCANCEL")) {
+                    m4d.setStatus("ONCANCEL_ERROR");
+                }
+                String error = "Код: " + m4dFnsDataResponse.getError().getStatus() + ", Ошибка: " + m4dFnsDataResponse.getError().getTitle();
+                if (m4dFnsDataResponse.getError().getDetail() != null && !m4dFnsDataResponse.getError().getDetail().isEmpty()) {
+                    error = error  + ", Детали: " + m4dFnsDataResponse.getError().getDetail();
+                }
+                m4d.setErrorDetail(error);
+                M4d m4dSaved = null;
+                try {
+                    m4dSaved = this.updateM4d(m4d);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (m4dSaved == null) {
+                    throw new BadRequestException("Ошибка обновления статуса МЧД с GUID=" + m4dFnsDataResponse.getGuid());
+                }
+                // сформировать отчет
                 ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
-                report.setSource("m4d_rr");
+                report.setSource("m4d_pep");
                 ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
                 report.setReport(rep);
                 rep.setGuid(m4dFnsDataResponse.getGuid());
-                rep.setStatus(m4dRequestSearchDetailSaved.getStatus());
-                rep.setStartDate(m4dRequestSearchDetailSaved.getStartDate().toString());
-                rep.setEndDate(m4dRequestSearchDetailSaved.getEndDate().toString());
+                rep.setStatus(m4dSaved.getStatus());
+                rep.setErrorDetail(m4dSaved.getErrorDetail());
+                rep.setStartDate(m4dSaved.getStartDate().toString());
+                rep.setEndDate(m4dSaved.getEndDate().toString());
+
+                MultipartFile sourceFile = FileUtils.mapStringToMultipart(new String(EncodingUtils.decodeFileFromBase64(m4dSaved.getXmlFile().getContent())), m4dSaved.getXmlFile().getFilename());
+                M4dXml m4dXml = this.convertM4dFileToM4dXml(sourceFile);
+
+                rep.setCredentials(getCredentialM4dFromXml(m4dXml));
+                rep.setRepresentative(getRepresentativeM4dFromXml(m4dXml));
+                rep.setPrincipal(getPrincipalM4dFromXml(m4dXml));
+                rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
+                rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
+                return report;
+            } else {
+                if (m4dFnsDataResponse.getStatus().equals("ACTIVE") || m4dFnsDataResponse.getStatus().equals("CREATED") || m4dFnsDataResponse.getStatus().equals("EXPIRED") ) {
+                    m4d.setStatus("ACTIVE");
+                } else {
+                    m4d.setStatus(m4dFnsDataResponse.getStatus());
+                }
+                M4d m4dSaved = null;
+                try {
+                    m4dSaved = this.updateM4d(m4d);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (m4dSaved == null) {
+                    throw new BadRequestException("Ошибка обновления статуса МЧД с GUID=" + m4dFnsDataResponse.getGuid());
+                } else {
+                    if (m4dFnsDataResponse.getStatus().equals("REVOKED")) {
+                        M4dRecall m4dRecall = this.m4dRecallService.findMrpaRecallByM4dId(m4d.getId());
+                        if (m4dRecall != null) {
+                            this.m4dRecallService.updateStatusMrpaRecallById(m4dRecall.getId(), "SUCCESS");
+                        }
+                    }
+                }
+                // сохранить в бд квитанцию с подписью о регистрации мчд в рр
+                M4dConfirm m4dConfirm = this.m4dConfirmService.findM4dConfirmByM4dId(m4d.getId());
+                M4dFile m4dFileXmlKvitM4d = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, xmlFileKvitM4d.getName(), FileUtils.getFileContentByPath(xmlFileKvitM4d.getPath()));
+                M4dFile m4dFileSigKvitM4d = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, sigFileKvitM4d.getName(), FileUtils.getFileContentByPath(sigFileKvitM4d.getPath()));
+                String datetimeRegisteredRR = XMLUtil.getSubstringFromXml(new String(FileUtils.getFileContentByPath(xmlFileKvitM4d.getPath())), "ДатаВремВыдПодтв=\"");
+                m4dConfirm.setRegisteredRrDate(DateUtils.convertStringToLocalDateTime(datetimeRegisteredRR));
+                m4dConfirm.setXmlFileRegisteredRr(m4dFileXmlKvitM4d);
+                m4dConfirm.setSigFileRegisteredRr(m4dFileSigKvitM4d);
+                M4dConfirm m4dConfirmUpdate = null;
+                try {
+                    m4dConfirmUpdate = this.m4dConfirmService.updateM4dConfirm(m4dConfirm);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if (m4dConfirmUpdate == null) {
+                    throw new BadRequestException("Ошибка сохранения квитанции и подписи регистрации МЧД в РР (МЧД GUID=" + m4dFnsDataResponse.getGuid() + ")");
+                }
+                if (xmlFileKvitM4dRevoke != null && sigFileKvitM4dRevoke != null) {
+                    // сохранить в бд квитанцию с подписью о регистрации отзыва мчд в рр
+                    M4dRecall m4dRecall = this.m4dRecallService.findMrpaRecallByM4dId(m4d.getId());
+                    M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.findM4dRecallConfirmByM4dRecallId(m4dRecall.getId());
+                    M4dFile m4dFileXmlKvitM4dRevoke = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, xmlFileKvitM4dRevoke.getName(), FileUtils.getFileContentByPath(xmlFileKvitM4dRevoke.getPath()));
+                    M4dFile m4dFileSigKvitM4dRevoke = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, sigFileKvitM4dRevoke.getName(), FileUtils.getFileContentByPath(sigFileKvitM4dRevoke.getPath()));
+                    String datetimeRevokeRegisteredRR = XMLUtil.getSubstringFromXml(new String(FileUtils.getFileContentByPath(xmlFileKvitM4dRevoke.getPath())), "ДатаВремВыдПодтв=\"");
+                    m4dRecallConfirm.setRegisteredRrDate(DateUtils.convertStringToLocalDateTime(datetimeRevokeRegisteredRR));
+                    m4dRecallConfirm.setXmlFileRegisteredRr(m4dFileXmlKvitM4dRevoke);
+                    m4dRecallConfirm.setSigFileRegisteredRr(m4dFileSigKvitM4dRevoke);
+                    M4dRecallConfirm m4dRecallConfirmUpdate = null;
+                    try {
+                        m4dRecallConfirmUpdate = this.m4dRecallConfirmService.updateM4dRecallConfirm(m4dRecallConfirm);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (m4dRecallConfirmUpdate == null) {
+                        throw new BadRequestException("Ошибка сохранения квитанции и подписи регистрации заявления на отзыв МЧД в РР (МЧД GUID=" + m4dFnsDataResponse.getGuid() + ")");
+                    }
+                }
+                // сформировать отчет
+                ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+                report.setSource("m4d_pep");
+                ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+                report.setReport(rep);
+                rep.setGuid(m4dFnsDataResponse.getGuid());
+                rep.setStatus(m4d.getStatus());
+                rep.setErrorDetail(m4d.getErrorDetail());
+                rep.setStartDate(m4d.getStartDate().toString());
+                rep.setEndDate(m4d.getEndDate().toString());
+
+                MultipartFile sourceFile = FileUtils.mapStringToMultipart(new String(EncodingUtils.decodeFileFromBase64(m4d.getXmlFile().getContent())), m4d.getXmlFile().getFilename());
+                M4dXml m4dXml = this.convertM4dFileToM4dXml(sourceFile);
+
+                rep.setCredentials(getCredentialM4dFromXml(m4dXml));
+                rep.setRepresentative(getRepresentativeM4dFromXml(m4dXml));
+                rep.setPrincipal(getPrincipalM4dFromXml(m4dXml));
+                rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
+                rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
+                return report;
+            }
+        } else {
+            // мчд сторонняя
+            if (m4dFnsDataResponse.getError() != null) { //ошибка
+                M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dFnsDataResponse.getGuid(), m4dFnsDataResponse.getId());
+                M4dRequestSearchDetail m4dRequestSearchDetail;
+                if (m4dRequestSearch != null) {
+                    m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
+                    M4dRequestSearchDetail m4dRequestSearchDetailNew = new M4dRequestSearchDetail();
+                    m4dRequestSearchDetailNew.setStatus("ERROR");
+                    String error = "Код: " + m4dFnsDataResponse.getError().getStatus() + ", Ошибка: " + m4dFnsDataResponse.getError().getTitle();
+                    if (m4dFnsDataResponse.getError().getDetail() != null) {
+                        error = error  + ", Детали: " + m4dFnsDataResponse.getError().getDetail();
+                    }
+                    m4dRequestSearchDetailNew.setErrorDetail(error);
+                    m4dRequestSearchDetailNew.setRequestSearchId(m4dRequestSearch.getId());
+                    m4dRequestSearchDetailNew.setActive(true);
+                    m4dRequestSearchDetailNew.setStatusDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
+                    if (m4dRequestSearchDetail != null) {
+                        m4dRequestSearchDetailNew.setRegistrationDate(m4dRequestSearchDetail.getRegistrationDate());
+                        m4dRequestSearchDetailNew.setStartDate(m4dRequestSearchDetail.getStartDate());
+                        m4dRequestSearchDetailNew.setEndDate(m4dRequestSearchDetail.getEndDate());
+                        m4dRequestSearchDetailNew.setVersion(m4dRequestSearchDetail.getVersion() + 1);
+                        m4dRequestSearchDetail.setActive(false);
+                        this.m4dRequestService.updateM4dRequestSearchDetail(m4dRequestSearchDetail);
+                    } else {
+                        m4dRequestSearchDetailNew.setVersion(1L);
+                    }
+                    M4dRequestSearchDetail m4dRequestSearchDetailSaved;
+                    m4dRequestSearchDetailSaved = this.m4dRequestService.saveM4dRequestSearchDetail(m4dRequestSearchDetailNew);
+                    if (m4dRequestSearchDetailSaved == null) {
+                        throw new BadRequestException("Ошибка обновления статуса МЧД с GUID=" + m4dFnsDataResponse.getGuid());
+                    }
+                    ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+                    report.setSource("m4d_rr");
+                    ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+                    report.setReport(rep);
+                    rep.setGuid(m4dFnsDataResponse.getGuid());
+                    rep.setStatus(m4dRequestSearchDetailSaved.getStatus());
+                    rep.setStartDate(m4dRequestSearchDetailSaved.getStartDate().toString());
+                    rep.setEndDate(m4dRequestSearchDetailSaved.getEndDate().toString());
 //                rep.setCredentials(getCredentialM4dFromXml(sourceFile));
 //                rep.setRepresentative(getRepresentativeM4dFromXml(sourceFile));
 //                rep.setPrincipal(getPrincipalM4dFromXml(sourceFile));
 //                rep.setInnOrganisation(getInnOrganizationFromXml(sourceFile));
 //                rep.setNameOrganisation(getNameOrganizationFromXml(sourceFile));
-                return report;
+                    return report;
+                } else {
+                    throw new BadRequestException("Ошибка обновления статуса МЧД с GUID=" + m4dFnsDataResponse.getGuid() + ". Не найден запрос на проверку статуса в РР.");
+                }
+            } else { // нет ошибки
+                M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dFnsDataResponse.getGuid(), m4dFnsDataResponse.getId());
+                M4dRequestSearchDetail m4dRequestSearchDetail;
+                if (m4dRequestSearch != null) {
+                    m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
+                    M4dRequestSearchDetail m4dRequestSearchDetailNew = new M4dRequestSearchDetail();
+                    switch (m4dFnsDataResponse.getStatus()) {
+                        case "ACTIVE" :
+                            m4dRequestSearchDetailNew.setStatus("SUCCESS_ACTIVE");
+                            break;
+                        case "CREATED" :
+                            m4dRequestSearchDetailNew.setStatus("SUCCESS_NOT_ACTIVE");
+                            break;
+                        case "EXPIRED" :
+                            m4dRequestSearchDetailNew.setStatus("SUCCESS_EXPIRED");
+                            break;
+                        case "REVOKED" :
+                            m4dRequestSearchDetailNew.setStatus("SUCCESS_REVOKED");
+                            break;
+                    }
+                    if (m4dFnsDataResponse.getStatusDateTime() != null) {
+                        m4dRequestSearchDetailNew.setStatusDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStatusDateTime()));
+                    }
+                    if (m4dFnsDataResponse.getCreatedDateTime() != null) {
+                        m4dRequestSearchDetailNew.setRegistrationDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getCreatedDateTime()));
+                    }
+                    if (m4dFnsDataResponse.getStartDateTime() != null) {
+                        m4dRequestSearchDetailNew.setStartDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStartDateTime()));
+                    }
+                    if (m4dFnsDataResponse.getEndDateTime() != null) {
+                        m4dRequestSearchDetailNew.setEndDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
+                    }
+                    m4dRequestSearchDetailNew.setActive(true);
+                    m4dRequestSearchDetailNew.setRequestSearchId(m4dRequestSearch.getId());
+                    if (m4dRequestSearchDetail != null) {
+                        m4dRequestSearchDetailNew.setVersion(m4dRequestSearchDetail.getVersion()+1);
+                        m4dRequestSearchDetail.setActive(false);
+                        this.m4dRequestService.updateM4dRequestSearchDetail(m4dRequestSearchDetail);
+                    } else { m4dRequestSearchDetailNew.setVersion(1L); }
+                    M4dRequestSearchDetail m4dRequestSearchDetailSaved;
+                    m4dRequestSearchDetailSaved = this.m4dRequestService.saveM4dRequestSearchDetail(m4dRequestSearchDetailNew);
+                    if(m4dRequestSearchDetailSaved == null) {
+                        throw new BadRequestException("Ошибка обновления статуса МЧД с GUID=" + m4dFnsDataResponse.getGuid());
+                    }
+                    ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+                    report.setSource("m4d_rr");
+                    ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+                    report.setReport(rep);
+                    rep.setGuid(m4dFnsDataResponse.getGuid());
+                    rep.setStatus(m4dRequestSearchDetailSaved.getStatus());
+                    rep.setStartDate(m4dRequestSearchDetailSaved.getStartDate().toString());
+                    rep.setEndDate(m4dRequestSearchDetailSaved.getEndDate().toString());
+//                rep.setCredentials(getCredentialM4dFromXml(sourceFile));
+//                rep.setRepresentative(getRepresentativeM4dFromXml(sourceFile));
+//                rep.setPrincipal(getPrincipalM4dFromXml(sourceFile));
+//                rep.setInnOrganisation(getInnOrganizationFromXml(sourceFile));
+//                rep.setNameOrganisation(getNameOrganizationFromXml(sourceFile));
+                    return report;
+                }
+            }
         }
         return null;
     }
 
     @Override
-    public String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo) {
+    public String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo) throws ParseException {
         if (m4dResponseInfo.getError() != null) {
             String error = "Код: " + m4dResponseInfo.getError().getStatus() + ", Ошибка: " + m4dResponseInfo.getError().getTitle();
             if (m4dResponseInfo.getError().getDetail() != null) {
                 error = error  + ", Детали: " + m4dResponseInfo.getError().getDetail();
             }
-            M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dResponseInfo.getPoaNumber(), m4dResponseInfo.getPoaId());
-            if (m4dRequestSearch == null) {
-                return "Ошибка загрузки результата регистрации мчд в рр: не найден запрос на регистрацию";
+            M4d m4d = this.m4dRepository.findByGuid(m4dResponseInfo.getPoaNumber());
+            if (m4d == null) {
+                return "Ошибка загрузки результата регистрации мчд в рр: МЧД с GUID=" + m4dResponseInfo.getPoaNumber() + " не найдена в ПЭП";
             }
-            M4dRequestSearchDetail detail = new M4dRequestSearchDetail();
-            detail.setRequestSearchId(m4dRequestSearch.getId());
-            detail.setStatus("ERROR");
-            detail.setErrorDetail(error);
-            detail.setStatusDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
-            detail.setActive(true);
-            M4dRequestSearchDetail m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
-            if (m4dRequestSearchDetail == null) {
-                detail.setVersion(1L);
-            } else {
-                detail.setStartDate(m4dRequestSearchDetail.getStartDate());
-                detail.setEndDate(m4dRequestSearchDetail.getEndDate());
-                detail.setVersion(m4dRequestSearchDetail.getVersion()+1);
-                m4dRequestSearchDetail.setActive(false);
+            String statusM4d = this.getStatusM4d(m4d.getId());
+            if (statusM4d.equals("ACTIVE")) {
+                m4d.setStatus("ACTIVE_ERROR");
+            } else if (statusM4d.equals("NOT_ACTIVE")) {
+                m4d.setStatus("NOT_ACTIVE_ERROR");
+            } else if (statusM4d.equals("ONCANCEL")) {
+                m4d.setStatus("ONCANCEL_ERROR");
             }
-            M4dRequestSearchDetail detailSaving;
-            try {
-                if (m4dRequestSearchDetail != null) {
-                    this.m4dRequestService.updateM4dRequestSearchDetail(m4dRequestSearchDetail);
-                }
-                detailSaving = this.m4dRequestService.saveM4dRequestSearchDetail(detail);
-            } catch (Exception e) {
-                throw new BadRequestException(e.getMessage());
-            }
-            if (detailSaving != null) {
-                return detailSaving.getErrorDetail();
+            m4d.setErrorDetail(error);
+            M4d m4dSaved;
+            m4dSaved = this.updateM4d(m4d);
+            if (m4dSaved == null) {
+                return "Ошибка загрузки результата регистрации мчд в рр: не удалось обновить статус МЧД с GUID=" + m4dResponseInfo.getPoaNumber() + " в ПЭП";
             }
         }
         return null;
@@ -1505,6 +1722,17 @@ public class M4dServiceImpl implements M4dService {
                     uri);
         }
         return null;
+    }
+
+    private void cleanupDirectory(Path directory) {
+        try {
+            Files.walk(directory)
+                    .sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch (IOException e) {
+            log.warn("Ошибка очистки временной директории {}: {}", directory, e.getMessage());
+        }
     }
 
 }

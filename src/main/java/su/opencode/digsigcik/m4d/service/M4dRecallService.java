@@ -4,6 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
+import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 
 import java.io.IOException;
@@ -24,4 +25,5 @@ public interface M4dRecallService {
     M4dRevokeXml convertMrpaRecallToXml(M4dRegistryResponseDto mrpaRegistryResponseDto);
     Long uploadSig(Long id, MultipartFile container) throws IOException;
     String getHashFromXmlString(String xmlString) throws Exception;
+    String uploadResultSendM4dRevokeToRR(M4dRevokeResponseInfo m4dRevokeResponseInfo);
 }
