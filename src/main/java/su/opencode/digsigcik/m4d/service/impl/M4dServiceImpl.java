@@ -760,6 +760,7 @@ public class M4dServiceImpl implements M4dService {
     @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_CREATE)
     public ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) {
         String guidXml = this.getGuidFromXml(m4dXml);
+        this.m4dRequestService.deleteM4dRequestSearch(guidXml);
         // - формирование запроса в РР МЧД на проверку статуса МЧД (если результаты предыдущего отрицательные)
         M4dRequestSearch m4dRequestSearchNew = new M4dRequestSearch();
         m4dRequestSearchNew.setGuid(guidXml);
@@ -796,6 +797,35 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_CREATE)
+    public ReportCheckStatusM4dDto createM4dRequestSearchForFindRRByGuid(String guidXml) {
+        this.m4dRequestService.deleteM4dRequestSearch(guidXml);
+        // - формирование запроса в РР МЧД на проверку статуса МЧД (если результаты предыдущего отрицательные)
+        M4dRequestSearch m4dRequestSearchNew = new M4dRequestSearch();
+        m4dRequestSearchNew.setGuid(guidXml);
+        m4dRequestSearchNew.setCreateDate(LocalDateTime.now());
+        M4dRequestSearch m4dRequestSearchSaved = this.m4dRequestService.saveM4dRequestSearch(m4dRequestSearchNew);
+        M4dRequestSearchDetail m4dRequestSearchDetail = new M4dRequestSearchDetail();
+        m4dRequestSearchDetail.setStatus(StatusRequestTypeEnum.ONCHECK.toString());
+        m4dRequestSearchDetail.setVersion(1L);
+        m4dRequestSearchDetail.setActive(true);
+        m4dRequestSearchDetail.setRequestSearchId(m4dRequestSearchSaved.getId());
+        M4dRequestSearchDetail m4dRequestSearchDetailSaved;
+        m4dRequestSearchDetailSaved = this.m4dRequestService.saveM4dRequestSearchDetail(m4dRequestSearchDetail);
+        if (m4dRequestSearchDetailSaved != null) {
+            ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+            report.setSource("m4d_rr");
+            ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+            report.setReport(rep);
+            rep.setGuid(guidXml);
+            rep.setStatus(m4dRequestSearchDetail.getStatus());
+            rep.setErrorDetail("Для проверки статуса обратитесь к ПВВ адаптеру");
+            return report;
+        }
+        return null;
+    }
+
+    @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_CHECK_IN_REQUEST_SEARCH)
     public ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPep(M4dXml m4dXml, String hashXml) {
         String guidXml = this.getGuidFromXml(m4dXml);
@@ -813,6 +843,7 @@ public class M4dServiceImpl implements M4dService {
             report.setReport(rep);
             rep.setGuid(guidXml);
             rep.setStatus(m4dRequestSearchDetail.getStatus());
+            rep.setErrorDetail(m4dRequestSearchDetail.getErrorDetail());
             rep.setStartDate(getStartDateM4dFromXml(m4dXml));
             rep.setEndDate(getEndDateM4dFromXml(m4dXml));
             rep.setCredentials(getCredentialM4dFromXml(m4dXml));
@@ -821,16 +852,52 @@ public class M4dServiceImpl implements M4dService {
             rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
             rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
             return report;
+        } else {
+            M4dRequestSearch m4dRequestSearchByGuid;
+            m4dRequestSearchByGuid = this.m4dRequestService.findM4dRequestByGuid(guidXml);
+            if (m4dRequestSearchByGuid != null) {
+                return this.getReportM4dRequestSearchForFindPepByGuid(guidXml);
+            }
         }
         return null;
     }
 
     @Override
-    @AuditLogThis(event = AuditLogEventEnum.M4D_CHECK_IN_PEP)
+    @AuditLogThis(event = AuditLogEventEnum.M4D_CHECK_IN_REQUEST_SEARCH)
+    public ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPepByGuid(String guidXml) {
+        M4dRequestSearch m4dRequestSearch;
+        m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuid(guidXml);
+        if (m4dRequestSearch != null) {
+            M4dRequestSearchDetail m4dRequestSearchDetail;
+            m4dRequestSearchDetail = this.m4dRequestService.findM4dRequestDetailByM4dRequestId(m4dRequestSearch.getId());
+            if(m4dRequestSearchDetail == null) {
+                throw new BadRequestException("Активных деталей запроса статуса МЧД в РР МЧД не найдено");
+            }
+            ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+            report.setSource("m4d_rr");
+            ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+            report.setReport(rep);
+            rep.setGuid(guidXml);
+            rep.setStatus(m4dRequestSearchDetail.getStatus());
+            rep.setErrorDetail(m4dRequestSearchDetail.getErrorDetail());
+            rep.setStartDate(m4dRequestSearchDetail.getStartDate().toString());
+            rep.setEndDate(m4dRequestSearchDetail.getEndDate().toString());
+            return report;
+        }
+        return null;
+    }
+
+    @Override
     public ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, M4dXml m4dXml) throws ParseException {
         // - извлечение номера МЧД из XML
         String guidXml;
         guidXml = this.getGuidFromXml(m4dXml);
+        return this.checkM4dInPepByGuid(authentication, guidXml);
+    }
+
+    @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_CHECK_IN_PEP)
+    public ReportCheckStatusM4dDto checkM4dInPepByGuid(Authentication authentication, String guidXml) throws ParseException {
         M4d m4d;
         try {
             m4d = this.findMrpaRegistryByGuid(guidXml);
@@ -843,11 +910,12 @@ public class M4dServiceImpl implements M4dService {
             report.setSource("m4d_pep");
             ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
             report.setReport(rep);
-            rep.setGuid(getGuidFromXml(m4dXml));
+            rep.setGuid(m4dRegistryResponseDto.getGuid());
             rep.setStatus(getStatusM4d(m4d.getId()));
-            rep.setStartDate(getStartDateM4dFromXml(m4dXml));
-            rep.setEndDate(getEndDateM4dFromXml(m4dXml));
-            rep.setCredentials(getCredentialM4dFromXml(m4dXml));
+            rep.setErrorDetail(m4dRegistryResponseDto.getErrorDetail());
+            rep.setStartDate(m4dRegistryResponseDto.getStartDate());
+            rep.setEndDate(m4dRegistryResponseDto.getEndDate());
+            rep.setCredentials(convertCredentialDtoToReportCredential(getCredentialByMrpaRegistryId(m4d.getId())));
             if (m4dRegistryResponseDto.getSigFile() != null) {
                 ReportCheckStatusM4dDto.Report.SigFileDto sigFile = new ReportCheckStatusM4dDto.Report.SigFileDto();
                 sigFile.setId(m4dRegistryResponseDto.getSigFile().getId());
@@ -1135,6 +1203,16 @@ public class M4dServiceImpl implements M4dService {
 
     private M4dRegistryResponseDto.RepresentativeDetailDto convertRepresentativePassportToDto(RepresentativeDetail representativeDetail) {
         return modelMapper.map(representativeDetail, M4dRegistryResponseDto.RepresentativeDetailDto.class);
+    }
+
+    private List<ReportCheckStatusM4dDto.Report.Credential> convertCredentialDtoToReportCredential(List<M4dRegistryResponseDto.CredentialDto> credentialDtoList) {
+        List<ReportCheckStatusM4dDto.Report.Credential> credentialList = new ArrayList<>();
+        for (M4dRegistryResponseDto.CredentialDto credentialDto : credentialDtoList) {
+            ReportCheckStatusM4dDto.Report.Credential credential;
+            credential = modelMapper.map(credentialDto, ReportCheckStatusM4dDto.Report.Credential.class);
+            credentialList.add(credential);
+        }
+        return credentialList;
     }
 
     private String getArgumentFromXml(M4dFile m4dFile) throws JAXBException {

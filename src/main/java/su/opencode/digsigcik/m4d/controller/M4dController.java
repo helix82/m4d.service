@@ -381,6 +381,34 @@ public class M4dController {
         }
     }
 
+    @Operation(summary = CONTROLLER_MRPA_CHECK_BY_GUID_SUMMARY, description = CONTROLLER_MRPA_CHECK_BY_GUID_SUMMARY)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PostMapping(value = "/check-by-guid/{guid}", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> checkByGuid(Authentication authentication, @PathVariable @Parameter(name = "guid",
+            description = PARAMETER_MRPA_GUID_DESCRIPTION) String guid) throws Exception {
+        if (guid == null || guid.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Не передан номер доверенности"), HttpStatus.BAD_REQUEST);
+        }
+// - поиск МЧД в ПЭП по номеру
+        ReportCheckStatusM4dDto reportM4d = m4dService.checkM4dInPepByGuid(authentication, guid);
+        if (reportM4d != null) { //мчд в пэп найдена
+            return new ResponseEntity<>(reportM4d, HttpStatus.OK);
+        } else { //мчд в пэп не найдена
+// - поиск ранее сформированного запроса в РР МЧД на проверку статуса МЧД (по номеру)
+            ReportCheckStatusM4dDto reportM4dRequestSearch = m4dService.getReportM4dRequestSearchForFindPepByGuid(guid);
+            if (reportM4dRequestSearch != null) { // запрос найден, возвращаем отчёт
+                return new ResponseEntity<>(reportM4dRequestSearch, HttpStatus.OK);
+            } else { //ранее запрос не формировался, создаем новый запрос
+                ReportCheckStatusM4dDto reportCreateM4dRequestSearch = m4dService.createM4dRequestSearchForFindRRByGuid(guid);
+                return new ResponseEntity<>(reportCreateM4dRequestSearch, HttpStatus.OK);
+            }
+        }
+    }
+
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION)
     @ApiResponses(value = {
