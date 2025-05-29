@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 
 public interface M4dRequestService {
     M4dRequestSearch findM4dRequestByGuidAndHash(@NotNull String guid, @NotNull String hash);
+    M4dRequestSearch findM4dRequestByGuid(@NotNull String guid);
     M4dRequestSearchDetail findM4dRequestDetailByM4dRequestId(@NotNull Long id);
     M4dRequestSearch saveM4dRequestSearch(M4dRequestSearch m4dRequestSearch);
     M4dRequestSearchDetail saveM4dRequestSearchDetail(M4dRequestSearchDetail m4dRequestSearchDetail);

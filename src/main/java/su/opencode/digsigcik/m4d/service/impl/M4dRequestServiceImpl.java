@@ -28,6 +28,10 @@ public class M4dRequestServiceImpl implements M4dRequestService {
         return repository.findByGuidAndHashXml(guid, hash);
     }
 
+    public M4dRequestSearch findM4dRequestByGuid(@NotNull String guid) {
+        return repository.findByGuid(guid);
+    }
+
     public M4dRequestSearchDetail findM4dRequestDetailByM4dRequestId(@NotNull Long id) {
         return detailRepository.findByRequestSearchId(id);
     }
