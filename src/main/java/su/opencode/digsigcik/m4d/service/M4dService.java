@@ -31,8 +31,11 @@ public interface M4dService {
     String getStatusM4d(Long id) throws ParseException;
     M4dRegistryResponseDto convertM4dToM4dResponseDto(Authentication authentication, M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile, Boolean withM4dXmlFile, Boolean withRecallXmlFile) throws ParseException;
     ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml);
+    ReportCheckStatusM4dDto createM4dRequestSearchForFindRRByGuid(String guidXml);
     ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPep(M4dXml m4dXml, String HashXml);
+    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPepByGuid(String guidXml);
     ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, M4dXml m4dXml) throws ParseException;
+    ReportCheckStatusM4dDto checkM4dInPepByGuid(Authentication authentication, String guidXml) throws ParseException;
     M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException;
     Long uploadSig(Long mrpaId, MultipartFile signature) throws IOException;
     M4dFullXML convertM4dRequestDtoToFullXml(M4dRegistryRequestDto m4DRegistryRequestDto) throws ParseException;
