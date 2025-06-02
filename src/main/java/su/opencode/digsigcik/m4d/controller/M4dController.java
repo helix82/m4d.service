@@ -90,7 +90,6 @@ public class M4dController {
         m4dSaveFullDto.setCreateDate(DateUtils.getCurrentDate());
         M4d m4d = convertMrpaRegistryToEntity(m4dSaveFullDto.mrpaRegistry);
         m4d.setCreateDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
-        m4d.setStatus("DRAFT");
         OrganizationDto organisation = convertOrganisationToEntity(m4dSaveFullDto.organisation);
         Principal principal = convertPrincipalToEntity(m4dSaveFullDto.principal);
         PrincipalDetail principalDetail = convertPrincipalDetailToEntity(m4dSaveFullDto.principalDetail);
@@ -101,7 +100,7 @@ public class M4dController {
         Long m4dSaved;
         try {
             m4dSaved = this.m4dService.saveAllDataMrpaRegistry(authentication, m4d, organisation, principal, principalDetail, representative, representativeDetail, null, List.of(m4dSaveFullDto.getCredentials()), xmlString);
-        } catch (ConstraintViolationException | IOException e) {
+        } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         return findMrpaRegistryById(authentication, m4dSaved);
@@ -278,15 +277,15 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString("Signature is null"), HttpStatus.BAD_REQUEST);
         }
         String extension = FilenameUtils.getExtension(signature.getOriginalFilename());
-        if(!Objects.equals(extension, "sig") || !Objects.equals(extension, "dscp")) {
+        if(!Objects.equals(extension, "sig") && !Objects.equals(extension, "dscp")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
         if (Objects.equals(extension, "dscp")) {
             M4d m4d = this.m4dService.findById(id);
             M4dFile m4dFile = this.m4dFileService.findM4dFileById(m4d.getXmlFile().getId());
             MultipartFile sigFile = this.containerService.getSignatureFromContainer(authentication, signature, m4dFile.getFilename());
-            Long sigFileId = this.m4dService.uploadSig(id, sigFile);
-        } else { Long sigFileId = this.m4dService.uploadSig(id, signature); }
+            Long sigFileId = this.m4dService.uploadSig(authentication, id, sigFile);
+        } else { Long sigFileId = this.m4dService.uploadSig(authentication, id, signature); }
         // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
         String res = this.m4dService.sendM4dToRR(authentication, id);
 
@@ -460,7 +459,7 @@ public class M4dController {
         if (sourceSig != null){
             //upload sig for m4d !!!!!!!!!!!!!!!!!!!!!!
             try {
-                var result = this.m4dService.uploadSig(m4dId, sourceSig);
+                var result = this.m4dService.uploadSig(authentication, m4dId, sourceSig);
 
                 if (result == null) {
                     log.error("Загрузка подписи МЧД не вернула результат");

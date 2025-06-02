@@ -52,7 +52,9 @@ public class M4dRequestServiceImpl implements M4dRequestService {
     @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_DELETE, deleteByIdRepository = M4dRequestRepository.class)
     public void deleteM4dRequestSearch(@NotNull String guid) {
         M4dRequestSearch requestSearch = repository.findByGuid(guid);
-        detailRepository.deleteByRequestSearchId(requestSearch.getId());
-        repository.deleteById(requestSearch.getId());
+        if (requestSearch != null) {
+            detailRepository.deleteByRequestSearchId(requestSearch.getId());
+            repository.deleteById(requestSearch.getId());
+        }
     }
 }

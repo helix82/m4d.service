@@ -111,7 +111,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_CREATE)
-    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) throws JAXBException, IOException {
+    public Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativeDetail, List<CredentialDto> credentialList, List<Long> credentials, String xmlString) {
         String bearerToken = getTokenValue(authentication);
         String orgInn;
         Long principId;
@@ -280,8 +280,6 @@ public class M4dServiceImpl implements M4dService {
                 }
             }
         }
-        String internalNumber = XMLUtil.getSubstringFromXml(xmlString, "ВнНомДовер=\"");
-        M4dConfirm m4dConfirm = this.m4dConfirmService.createAndSignedM4dConfirm(authentication, m4d, idFile, m4dSaved.getGuid(), internalNumber, m4dSaved.getStartDate().toString().substring(0, 10), m4dSaved.getEndDate().toString().substring(0, 10));
         return m4dSaved.getId();
     }
 
@@ -966,7 +964,6 @@ public class M4dServiceImpl implements M4dService {
             m4d.setGuid(m4dXml.document.powerAttorneys.mrpa.getGuid());
             String dateCreate = m4dXml.getIdFile().substring(9, 17);
             m4d.setCreateDate(DateUtils.convertStringToLocalDateTime(dateCreate));
-            m4d.setStatus("DRAFT");
             m4d.setStartDate(DateUtils.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getStartDate()));
             m4d.setEndDate(DateUtils.convertStringToLocalDateTime(m4dXml.document.powerAttorneys.mrpa.getEndDate()));
 
@@ -1028,7 +1025,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_SIGNATURE)
-    public Long uploadSig(Long mrpaId, MultipartFile signature) throws IOException {
+    public Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile signature) throws IOException, ParseException, JAXBException {
         M4d m4d;
         try {
             m4d = this.findById(mrpaId);
@@ -1048,6 +1045,13 @@ public class M4dServiceImpl implements M4dService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
+        // формирование и автоподписание подтверждения регистрации мчд в ПЭП
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, true, false, true, false);
+        String xmlString = m4DRegistryResponseDto.getXmlFile().getContent();
+        String idFile = XMLUtil.getSubstringFromXml(xmlString, "ИдФайл=\"");
+        String internalNumber = XMLUtil.getSubstringFromXml(xmlString, "ВнНомДовер=\"");
+        M4dConfirm m4dConfirm = this.m4dConfirmService.createAndSignedM4dConfirm(authentication, m4d, idFile, m4d.getGuid(), internalNumber, m4d.getStartDate().toString().substring(0, 10), m4d.getEndDate().toString().substring(0, 10));
+
         return m4dSaved.getSigFile().getId();
     }
 
