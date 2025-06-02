@@ -23,12 +23,12 @@ import su.opencode.digsigcik.m4d.repository.M4dRecallRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
+import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.m4d.util.Constants.MRPA_RECALL_IS_NULL;
+import static su.opencode.digsigcik.m4d.util.Constants.MRPA_REGISTRY_IS_NULL;
 
 @Service
 @Primary
@@ -46,39 +47,21 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     private final M4dFileService m4dFileService;
     private final UserCertificateService userCertificateService;
     private final M4dRecallConfirmService m4dRecallConfirmService;
-    private final M4dRequestService m4dRequestService;
 
     public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository,
-                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, M4dRecallConfirmService m4dRecallConfirmService, M4dRequestService m4dRequestService) {
+                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, M4dRecallConfirmService m4dRecallConfirmService) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
         this.userCertificateService = userCertificateService;
         this.m4dRecallConfirmService = m4dRecallConfirmService;
-        this.m4dRequestService = m4dRequestService;
     }
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_CREATE)
-    public M4dRecall saveM4dRecall(Authentication authentication, M4dRecall m4dRecall, String xmlString) throws Exception {
-
-        String idFile="";
-        String start = "НомДовер=\"";
-        int startIndex = xmlString.indexOf(start);
-        if (startIndex != -1) {
-            startIndex += start.length();
-            int endIndex = xmlString.indexOf("\"", startIndex);
-            if (endIndex != -1) {
-                idFile = xmlString.substring(startIndex, endIndex);
-                System.out.println("Найдена подстрока: " + idFile);
-            } else {
-                System.out.println("Закрывающая кавычка не найдена.");
-            }
-        } else {
-            System.out.println("Подстрока не найдена.");
-        }
-
+    public M4dRecall saveM4dRecall(Authentication authentication, M4dRecall m4dRecall, String xmlString) {
+        String idFile = XMLUtil.getSubstringFromXml(xmlString, "НомДовер=\"");
         M4dFile m4dFile = new M4dFile();
         m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.DOCUMENT);
@@ -98,8 +81,6 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        String hash = this.getHashFromXmlString(xmlString);
-        M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(authentication, m4dRecall, idFile, hash);
         return m4dRecallSaved;
     }
 
@@ -200,7 +181,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_SIGNATURE)
-    public Long uploadSig(Long id, MultipartFile signature) throws IOException {
+    public Long uploadSig(Authentication authentication, Long id, MultipartFile signature) throws Exception {
         M4dRecall mrpaRecall = this.findById(id);
         if (mrpaRecall==null) {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
@@ -226,6 +207,22 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
+        // формирование и автоподписание подтверждения регистрации заявления на отзыв мчд в ПЭП
+        M4d m4d;
+        try {
+            m4d = this.m4dService.findById(mrpaRecall.getM4d().getId());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        if (m4d == null) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, false, true, false, true);
+        String xmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent();
+        String idFile = XMLUtil.getSubstringFromXml(xmlString, "НомДовер=\"");
+        String hash = this.getHashFromXmlString(xmlString);
+        M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(authentication, mrpaRecall, idFile, hash);
+
         return fileId;
     }
 
