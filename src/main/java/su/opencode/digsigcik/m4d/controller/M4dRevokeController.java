@@ -19,11 +19,14 @@ import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeRequestDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
+import su.opencode.digsigcik.m4d.enums.StatusM4dRevokeTypeEnum;
+import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
 import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.persistence.EntityNotFoundException;
@@ -31,7 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
@@ -132,12 +134,12 @@ public class M4dRevokeController {
         }
         M4d mrpaRegistry = this.m4dService.findById(mrpaRegistryId);
         mrpaRecall.setM4d(mrpaRegistry);
-        mrpaRecall.setCreateDate(LocalDateTime.now());
-        mrpaRecall.setStatus("NEW");
+        mrpaRecall.setCreateDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
+        mrpaRecall.setStatus(StatusM4dRevokeTypeEnum.NEW.toString());
         M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, mrpaRegistry, false, true, false, true);
         M4dRegistryResponseDto.RecallDto recallDto = new M4dRegistryResponseDto.RecallDto();
         recallDto.setArgument(mrpaRecallRequestDto.getArgument());
-        recallDto.setCreateDate(String.valueOf(LocalDateTime.now()));
+        recallDto.setCreateDate(DateUtils.getCurrentDate());
         m4DRegistryResponseDto.setRecall(recallDto);
         M4dRevokeXml mrpaRecallXml = this.m4dRecallService.convertMrpaRecallToXml(m4DRegistryResponseDto);
         String xmlRecallString = XMLUtil.marshall(mrpaRecallXml, M4dRevokeXml.class);
@@ -253,8 +255,8 @@ public class M4dRevokeController {
             Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, sigFile);
         } else { Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, signature); }
         // TODO: @helix82 Отправляем архив с xml-файлом отзыва мчд и подписью на РР МЧД для отзыва
-        this.m4dRecallService.updateStatusMrpaRecallById(id, "ONCHECK");
-        this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), "ONCANCEL");
+        this.m4dRecallService.updateStatusMrpaRecallById(id, StatusM4dRevokeTypeEnum.ACTIVE.toString());
+        this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), StatusM4dTypeEnum.REVOKED.toString());
         return findMrpaRecallById(authentication, id);
     }
 

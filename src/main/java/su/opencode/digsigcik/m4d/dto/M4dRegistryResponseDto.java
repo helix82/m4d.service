@@ -92,8 +92,11 @@ public class M4dRegistryResponseDto {
     @JsonProperty("status")
     private String status;
 
-    @JsonProperty("errorDetail")
-    private String errorDetail;
+    @JsonProperty("statusInRr")
+    private String statusInRr;
+
+    @JsonProperty("errorInRrDetail")
+    private String errorInRrDetail;
 
     @JsonProperty("sigFile")
     private SigFileDto sigFile;
@@ -147,8 +150,10 @@ public class M4dRegistryResponseDto {
         private String argument;
         @JsonProperty("status")
         private String status;
-        @JsonProperty("errorDetail")
-        private String errorDetail;
+        @JsonProperty("statusInRr")
+        private String statusInRr;
+        @JsonProperty("errorInRrDetail")
+        private String errorInRrDetail;
         @JsonProperty("createDate")
         private String createDate;
 

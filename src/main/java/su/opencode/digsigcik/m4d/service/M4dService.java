@@ -32,8 +32,8 @@ public interface M4dService {
     M4dRegistryResponseDto convertM4dToM4dResponseDto(Authentication authentication, M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile, Boolean withM4dXmlFile, Boolean withRecallXmlFile) throws ParseException;
     ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml);
     ReportCheckStatusM4dDto createM4dRequestSearchForFindRRByGuid(String guidXml);
-    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPep(M4dXml m4dXml, String HashXml);
-    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindPepByGuid(String guidXml);
+    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRR(M4dXml m4dXml, String HashXml);
+    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRRByGuid(String guidXml);
     ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, M4dXml m4dXml) throws ParseException;
     ReportCheckStatusM4dDto checkM4dInPepByGuid(Authentication authentication, String guidXml) throws ParseException;
     M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException;
@@ -49,9 +49,8 @@ public interface M4dService {
     String getNameOrganizationFromXml(M4dXml m4dXml);
     String getHashXmlM4d(MultipartFile sourceFile) throws Exception;
     ReportValidSchemeDto validXmlM4dScheme(MultipartFile sourceFile, String reqScheme) throws IOException, SAXException;
-    ReportCheckStatusM4dDto updateStatusM4dRequestSearch(MultipartFile zipFile) throws ParseException, IOException;
-    String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo) throws ParseException;
-    MultipartFile getMultipartFileByM4dId(Authentication authentication, Long id) throws ParseException, IOException;
+    ReportCheckStatusM4dDto updateStatusM4dRequestSearch(MultipartFile zipFile) throws IOException;
+    String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo);
     M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile);
     String sendM4dToRR(Authentication authentication, Long m4dId) throws IOException;
 }
