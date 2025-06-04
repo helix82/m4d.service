@@ -762,10 +762,10 @@ public class M4dServiceImpl implements M4dService {
         // - формирование запроса в РР МЧД на проверку статуса МЧД (если результаты предыдущего отрицательные)
         M4dRequestSearch m4dRequestSearchNew = new M4dRequestSearch();
         m4dRequestSearchNew.setGuid(guidXml);
-        m4dRequestSearchNew.setCreateDate(LocalDateTime.now());
+        m4dRequestSearchNew.setCreateDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
         m4dRequestSearchNew.setHashXml(hashXml);
         m4dRequestSearchNew.setStatus(StatusRequestTypeEnum.ONCHECK.toString());
-        m4dRequestSearchNew.setStatusDate(LocalDateTime.now());
+        m4dRequestSearchNew.setStatusDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
         m4dRequestSearchNew.setStartDate(DateUtils.convertStringToLocalDateTime(getStartDateM4dFromXml(m4dXml)));
         m4dRequestSearchNew.setEndDate(DateUtils.convertStringToLocalDateTime(getEndDateM4dFromXml(m4dXml)));
         M4dRequestSearch m4dRequestSearchSaved = this.m4dRequestService.saveM4dRequestSearch(m4dRequestSearchNew);
