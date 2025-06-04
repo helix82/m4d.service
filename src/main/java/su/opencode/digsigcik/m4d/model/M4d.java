@@ -79,11 +79,17 @@ public class M4d {
     @AllowAudit
     private String status;
 
-    @Column(name = "error_detail")
+    @Column(name = "status_in_rr")
     @Schema(example = "")
-    @JsonProperty("errorDetail")
+    @JsonProperty("statusInRr")
     @AllowAudit
-    private String errorDetail;
+    private String statusInRr;
+
+    @Column(name = "error_in_rr_detail")
+    @Schema(example = "")
+    @JsonProperty("errorInRrDetail")
+    @AllowAudit
+    private String errorInRrDetail;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "sig_file_id", referencedColumnName = "id")

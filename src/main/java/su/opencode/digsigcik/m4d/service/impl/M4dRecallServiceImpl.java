@@ -113,6 +113,10 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_DELETE)
     public void deleteMrpaRecallById(Long id) {
+        M4dRecall m4dRecall = this.m4dRevokeRepository.findM4dRecallById(id);
+        if (m4dRecall.getSigFile() != null) {
+            throw new BadRequestException("Удаление не возможно! Заявление на отзыв МЧД уже подписано.");
+        }
         this.m4dRevokeRepository.deleteById(id);
     }
 
@@ -187,7 +191,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
         }
         if (mrpaRecall.getSigFile()!=null) {
-            throw new BadRequestException("Заявление на отзыв МЧД уже подписано");
+            throw new BadRequestException("Заявление на отзыв МЧД было подписано ранее");
         }
         M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.getBytes());
         M4dFile m4dFileSaved;
@@ -263,8 +267,8 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             if (m4dRecall == null) {
                 return "Ошибка загрузки результата регистрации отзыва мчд в рр: Заявление на отзыв МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " не найдена в ПЭП";
             }
-            m4dRecall.setStatus("ERROR");
-            m4dRecall.setErrorDetail(error);
+            m4dRecall.setStatusInRr("ERROR");
+            m4dRecall.setErrorInRrDetail(error);
             M4dRecall m4dRecallSaved;
             m4dRecallSaved = this.updateMrpaRecall(m4dRecall);
             if (m4dRecallSaved == null) {
