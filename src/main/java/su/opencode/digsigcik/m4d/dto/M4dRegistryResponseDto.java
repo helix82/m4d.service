@@ -252,7 +252,8 @@ public class M4dRegistryResponseDto {
                                   String principalDetailName, String principalDetailSurname, String principalDetailPatronymic,
                                   Long representativeId, String representativeInn, String representativeSnils,
                                   LocalDateTime representative_birthDate, String representativeName, String representativeSurname,
-                                  String representativePatronymic, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate, Long recallId, String recallStatus) {
+                                  String representativePatronymic, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
+                                  Long recallId, String recallStatus, String recallStatusInRr, String recallErrorInRrDetail) {
 
         this.id = id;
         this.guid = guid;
@@ -287,5 +288,7 @@ public class M4dRegistryResponseDto {
         this.recall = new RecallDto();
         this.recall.setId(recallId);
         this.recall.setStatus(recallStatus);
+        this.recall.setStatusInRr(recallStatusInRr);
+        this.recall.setErrorInRrDetail(recallErrorInRrDetail);
     }
 }
