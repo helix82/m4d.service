@@ -10,6 +10,7 @@ import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
+import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
@@ -22,12 +23,12 @@ import su.opencode.digsigcik.m4d.repository.M4dRecallRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
+import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -35,6 +36,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.m4d.util.Constants.MRPA_RECALL_IS_NULL;
+import static su.opencode.digsigcik.m4d.util.Constants.MRPA_REGISTRY_IS_NULL;
 
 @Service
 @Primary
@@ -58,24 +60,8 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_CREATE)
-    public M4dRecall saveM4dRecall(Authentication authentication, M4dRecall m4dRecall, String xmlString) throws Exception {
-
-        String idFile="";
-        String start = "НомДовер=\"";
-        int startIndex = xmlString.indexOf(start);
-        if (startIndex != -1) {
-            startIndex += start.length();
-            int endIndex = xmlString.indexOf("\"", startIndex);
-            if (endIndex != -1) {
-                idFile = xmlString.substring(startIndex, endIndex);
-                System.out.println("Найдена подстрока: " + idFile);
-            } else {
-                System.out.println("Закрывающая кавычка не найдена.");
-            }
-        } else {
-            System.out.println("Подстрока не найдена.");
-        }
-
+    public M4dRecall saveM4dRecall(Authentication authentication, M4dRecall m4dRecall, String xmlString) {
+        String idFile = XMLUtil.getSubstringFromXml(xmlString, "НомДовер=\"");
         M4dFile m4dFile = new M4dFile();
         m4dFile.setFileMimeType(FileMimeTypeEnum.XML);
         m4dFile.setFileLogicalType(FileLogicalTypeEnum.DOCUMENT);
@@ -95,8 +81,6 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
-        String hash = this.getHashFromXmlString(xmlString);
-        M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(authentication, m4dRecall, idFile, hash);
         return m4dRecallSaved;
     }
 
@@ -129,6 +113,10 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_DELETE)
     public void deleteMrpaRecallById(Long id) {
+        M4dRecall m4dRecall = this.m4dRevokeRepository.findM4dRecallById(id);
+        if (m4dRecall.getSigFile() != null) {
+            throw new BadRequestException("Удаление не возможно! Заявление на отзыв МЧД уже подписано.");
+        }
         this.m4dRevokeRepository.deleteById(id);
     }
 
@@ -197,13 +185,13 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_SIGNATURE)
-    public Long uploadSig(Long id, MultipartFile signature) throws IOException {
+    public Long uploadSig(Authentication authentication, Long id, MultipartFile signature) throws Exception {
         M4dRecall mrpaRecall = this.findById(id);
         if (mrpaRecall==null) {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
         }
         if (mrpaRecall.getSigFile()!=null) {
-            throw new BadRequestException("Заявление на отзыв МЧД уже подписано");
+            throw new BadRequestException("Заявление на отзыв МЧД было подписано ранее");
         }
         M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.getBytes());
         M4dFile m4dFileSaved;
@@ -223,6 +211,22 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
+        // формирование и автоподписание подтверждения регистрации заявления на отзыв мчд в ПЭП
+        M4d m4d;
+        try {
+            m4d = this.m4dService.findById(mrpaRecall.getM4d().getId());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        if (m4d == null) {
+            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+        }
+        M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, false, true, false, true);
+        String xmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent();
+        String idFile = XMLUtil.getSubstringFromXml(xmlString, "НомДовер=\"");
+        String hash = this.getHashFromXmlString(xmlString);
+        M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(authentication, mrpaRecall, idFile, hash);
+
         return fileId;
     }
 
@@ -246,5 +250,31 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             f.delete();
         }
         return hash;
+    }
+
+    @Override
+    public String uploadResultSendM4dRevokeToRR(M4dRevokeResponseInfo m4dRevokeResponseInfo) {
+        if (m4dRevokeResponseInfo.getTitle() != null) {
+            String error = "Код: " + m4dRevokeResponseInfo.getStatus() + ", Ошибка: " + m4dRevokeResponseInfo.getTitle();
+            if (m4dRevokeResponseInfo.getDetail() != null) {
+                error = error  + ", Детали: " + m4dRevokeResponseInfo.getDetail();
+            }
+            M4d m4d = this.m4dRepository.findByGuid(m4dRevokeResponseInfo.getPoaNumber());
+            if (m4d == null) {
+                return "Ошибка загрузки результата регистрации отзыва мчд в рр: МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " не найдена в ПЭП";
+            }
+            M4dRecall m4dRecall = this.m4dRevokeRepository.findM4dRecallByM4dId(m4d.getId());
+            if (m4dRecall == null) {
+                return "Ошибка загрузки результата регистрации отзыва мчд в рр: Заявление на отзыв МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " не найдена в ПЭП";
+            }
+            m4dRecall.setStatusInRr("ERROR");
+            m4dRecall.setErrorInRrDetail(error);
+            M4dRecall m4dRecallSaved;
+            m4dRecallSaved = this.updateMrpaRecall(m4dRecall);
+            if (m4dRecallSaved == null) {
+                return "Ошибка загрузки результата регистрации отзыва мчд в рр: не удалось обновить статус заявления на отзыв МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " в ПЭП";
+            }
+        }
+        return null;
     }
 }

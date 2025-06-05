@@ -63,3 +63,9 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/create_table_m4d_confirm.sql
   - include:
       file: db/changelog/migrations/v1.0/create_table_m4d_revoke_confirm.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_registry_2.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_revoke_2.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_request_search.sql

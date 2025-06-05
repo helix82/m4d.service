@@ -18,15 +18,15 @@ import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeRequestDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
-import su.opencode.digsigcik.m4d.dto.ReportCheckStatusM4dDto;
-import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
+import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
+import su.opencode.digsigcik.m4d.enums.StatusM4dRevokeTypeEnum;
+import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
 import su.opencode.digsigcik.m4d.model.M4d;
+import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
-import su.opencode.digsigcik.m4d.service.M4dFileService;
-import su.opencode.digsigcik.m4d.service.M4dRecallConfirmService;
-import su.opencode.digsigcik.m4d.service.M4dRecallService;
-import su.opencode.digsigcik.m4d.service.M4dService;
+import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.persistence.EntityNotFoundException;
@@ -35,11 +35,9 @@ import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
-import static su.opencode.digsigcik.m4d.util.EncodingUtils.isBase64;
 
 @RestController
 @M4dExceptionHandler
@@ -51,13 +49,15 @@ public class M4dRevokeController {
     private final M4dRecallService m4dRecallService;
     private final M4dRecallConfirmService m4dRecallConfirmService;
     private final M4dFileService m4dFileService;
+    private final ContainerService containerService;
 
-    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dRecallConfirmService m4dRecallConfirmService, M4dFileService m4dFileService) {
+    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dRecallConfirmService m4dRecallConfirmService, M4dFileService m4dFileService, ContainerService containerService) {
         this.modelMapper = modelMapper;
         this.m4dService = m4dService;
         this.m4dRecallService = m4dRecallService;
         this.m4dRecallConfirmService = m4dRecallConfirmService;
         this.m4dFileService = m4dFileService;
+        this.containerService = containerService;
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY,
@@ -134,14 +134,13 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         M4d mrpaRegistry = this.m4dService.findById(mrpaRegistryId);
-        mrpaRegistry.setStatus("ONCANCEL");
         mrpaRecall.setM4d(mrpaRegistry);
-        mrpaRecall.setCreateDate(LocalDateTime.now());
-        mrpaRecall.setStatus("ONCANCEL");
+        mrpaRecall.setCreateDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
+        mrpaRecall.setStatus(StatusM4dRevokeTypeEnum.NEW.toString());
         M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, mrpaRegistry, false, true, false, true);
         M4dRegistryResponseDto.RecallDto recallDto = new M4dRegistryResponseDto.RecallDto();
         recallDto.setArgument(mrpaRecallRequestDto.getArgument());
-        recallDto.setCreateDate(String.valueOf(LocalDateTime.now()));
+        recallDto.setCreateDate(DateUtils.getCurrentDate());
         m4DRegistryResponseDto.setRecall(recallDto);
         M4dRevokeXml mrpaRecallXml = this.m4dRecallService.convertMrpaRecallToXml(m4DRegistryResponseDto);
         String xmlRecallString = XMLUtil.marshall(mrpaRecallXml, M4dRevokeXml.class);
@@ -152,22 +151,6 @@ public class M4dRevokeController {
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-
-        String xmlString;
-        if (isBase64(m4dRecallSaved.getM4d().getXmlFile().getContent())) {
-            xmlString = new String(Base64.getDecoder().decode(m4dRecallSaved.getM4d().getXmlFile().getContent()));
-        } else {
-            xmlString = m4dRecallSaved.getM4d().getXmlFile().getContent();
-        }
-        String hash = this.m4dRecallService.getHashFromXmlString(xmlString);
-        M4dFnsDataResponse m4dFnsDataResponse = new M4dFnsDataResponse();
-        m4dFnsDataResponse.setGuid(m4dRecallSaved.getM4d().getGuid());
-        m4dFnsDataResponse.setId(hash);
-        m4dFnsDataResponse.setStatus("ONCANCEL");
-        m4dFnsDataResponse.setStatusDateTime(LocalDateTime.now().toString());
-        m4dFnsDataResponse.setStartDateTime(m4dRecallSaved.getM4d().getStartDate().toString());
-        m4dFnsDataResponse.setEndDateTime(m4dRecallSaved.getM4d().getEndDate().toString());
-        ReportCheckStatusM4dDto report = this.m4dService.updateStatusM4dRequestSearch(m4dFnsDataResponse);
         return findMrpaRecallById(authentication, m4dRecallSaved.getId());
     }
 
@@ -229,7 +212,6 @@ public class M4dRevokeController {
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), "ACTIVE");
         Map<String, String> body = new HashMap<>();
         body.put("result", "true");
 
@@ -256,7 +238,7 @@ public class M4dRevokeController {
     })
     @PutMapping(value = "{id}/upload-dscp", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadSigRecall(Authentication authentication, @PathVariable @Parameter(name = "id",
-            description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile signature) throws ParseException, IOException {
+            description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id, @RequestPart("container") MultipartFile signature) throws Exception {
         if (id == null){
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -264,14 +246,18 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString("Signature is null"), HttpStatus.BAD_REQUEST);
         }
         String extension = FilenameUtils.getExtension(signature.getOriginalFilename());
-        if(!Objects.equals(extension, "sig")) {
+        if(!Objects.equals(extension, "sig") && !Objects.equals(extension, "dscp")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
-        Long sigFileId = this.m4dRecallService.uploadSig(id, signature);
         M4dRecall mrpaRecall = this.m4dRecallService.findById(id);
+        if (Objects.equals(extension, "dscp")) {
+            M4dFile m4dFile = this.m4dFileService.findM4dFileById(mrpaRecall.getXmlFile().getId());
+            MultipartFile sigFile = this.containerService.getSignatureFromContainer(authentication, signature, m4dFile.getFilename());
+            Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, sigFile);
+        } else { Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, signature); }
         // TODO: @helix82 Отправляем архив с xml-файлом отзыва мчд и подписью на РР МЧД для отзыва
-        this.m4dRecallService.updateStatusMrpaRecallById(id, "ONCHECK");
-        this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), "ONCANCEL");
+        this.m4dRecallService.updateStatusMrpaRecallById(id, StatusM4dRevokeTypeEnum.ACTIVE.toString());
+        this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), StatusM4dTypeEnum.REVOKED.toString());
         return findMrpaRecallById(authentication, id);
     }
 
@@ -353,7 +339,28 @@ public class M4dRevokeController {
                 return ResponseEntity.noContent().build();
             }
         }
+    }
 
+    @Operation(summary = CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION, description = CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PutMapping(value = "/upload-result-sending-to-rr", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> uploadResultSendM4dRevokeToRR(@RequestBody M4dRevokeResponseInfo m4dRevokeResponseInfo) {
+        String error;
+        try {
+            error = m4dRecallService.uploadResultSendM4dRevokeToRR(m4dRevokeResponseInfo);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if ( error != null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
+        }
+        Map<String, String> body = new HashMap<>();
+        body.put("result", "Результат отправки отзыва МЧД на регистрацию в РР МЧД обработан.");
+        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {

@@ -20,18 +20,27 @@ public class ReportCheckStatusM4dDto {
         @JsonProperty("guid")
         @AllowAudit
         private String guid;
+
         @JsonProperty("startDate")
         @AllowAudit
         private String startDate;
+
         @JsonProperty("endDate")
         @AllowAudit
         private String endDate;
+
         @JsonProperty("status")
         @AllowAudit
         private String status;
-        @JsonProperty("errorDetail")
+
+        @JsonProperty("statusInRr")
         @AllowAudit
-        private String errorDetail;
+        private String statusInRr;
+
+        @JsonProperty("errorInRrDetail")
+        @AllowAudit
+        private String errorInRrDetail;
+
         @JsonProperty("representative")
         @AllowAudit
         public List<Representative> representative;
@@ -41,6 +50,7 @@ public class ReportCheckStatusM4dDto {
             @JsonProperty("inn")
             @AllowAudit
             public String inn;
+
             @JsonProperty("fio")
             @AllowAudit
             private String fio;
@@ -55,6 +65,7 @@ public class ReportCheckStatusM4dDto {
             @JsonProperty("inn")
             @AllowAudit
             private String inn;
+
             @JsonProperty("fio")
             @AllowAudit
             private String fio;
@@ -63,9 +74,11 @@ public class ReportCheckStatusM4dDto {
         @JsonProperty("innOrganisation")
         @AllowAudit
         private String innOrganisation;
+
         @JsonProperty("nameOrganisation")
         @AllowAudit
         private String nameOrganisation;
+
         @JsonProperty("credentials")
         @AllowAudit
         public List<Credential> credentials;
@@ -75,6 +88,7 @@ public class ReportCheckStatusM4dDto {
             @JsonProperty("code")
             @AllowAudit
             private String code;
+
             @JsonProperty("name")
             @AllowAudit
             private String name;
@@ -89,15 +103,19 @@ public class ReportCheckStatusM4dDto {
             @JsonProperty("id")
             @AllowAudit
             private Long id;
+
             @JsonProperty("fileLogicalType")
             @AllowAudit
             private String fileLogicalType;
+
             @JsonProperty("fileMimeType")
             @AllowAudit
             private String fileMimeType;
+
             @JsonProperty("filename")
             @AllowAudit
             private String filename;
+
             @JsonProperty("content")
             private String content;
         }

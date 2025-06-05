@@ -148,7 +148,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         m4dRevokeConfirmDto.setTypeConfirm("ПодтвЗаявлОтмена");
         m4dRevokeConfirmDto.setIdFile("Квит003_ФНС_ЗаявОтм_"+guidConfirm); //Квит003_ФНС_ЗаявОтм_eecbffec-e37f-4aa4-a135-896241dd8d71
         m4dRevokeConfirmDto.setGuid(guidConfirm);
-        m4dRevokeConfirmDto.setRegisteredDate(DateUtils.getCreatedDate());
+        m4dRevokeConfirmDto.setRegisteredDate(DateUtils.getCurrentDate());
         m4dRevokeConfirmDto.setOperatorId("4M2EFnszPAT1yr45SgWVDLxfYCa4AYvDGns");
         M4dRevokeConfirmDto.Organisation organisation = new M4dRevokeConfirmDto.Organisation();
         organisation.setId(orgId);
@@ -172,14 +172,15 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         String xmlConfirmString = XMLUtil.marshall(m4dRevokeConfirmDto, M4dRevokeConfirmDto.class);
         M4dRecallConfirm m4dRecallConfirm = new M4dRecallConfirm();
         m4dRecallConfirm.setM4dRecall(m4dRecall);
-        m4dRecallConfirm.setRegisteredPepDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCreatedDate()));
+        m4dRecallConfirm.setRegisteredPepDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
 
         String filenameXml = m4dRevokeConfirmDto.getIdFile()+".xml";
         M4dFile m4dFileXml = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlConfirmString.getBytes());
         m4dRecallConfirm.setXmlFileRegisteredPep(m4dFileXml);
         //автоподписание
-        MultipartFile sourceFile = FileUtils.mapStringToMultipart(m4dFileXml.getContent(), m4dFileXml.getFilename());
-        String resource = cryptoProCloudSignatureService.initializeSignature(authentication, sourceFile, 0L, USER_LOGIN, PINCODE, Boolean.parseBoolean(IS_DETACHED), SIG_TYPE, HashAlgorithm.GOST3411_2012_256);
+        MultipartFile sourceFile = FileUtils.mapStringToMultipart(xmlConfirmString, m4dFileXml.getFilename());
+        String resource = cryptoProCloudSignatureService.initializeSignature(authentication, sourceFile,
+                0L, USER_LOGIN, PINCODE, Boolean.parseBoolean(IS_DETACHED), SIG_TYPE, HashAlgorithm.GOST3411_2012_256);
 
         String filenameSig = null;
         if (Boolean.parseBoolean(IS_DETACHED)) {
@@ -196,5 +197,4 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         }
         return m4dRecallConfirmSaved;
     }
-
 }
