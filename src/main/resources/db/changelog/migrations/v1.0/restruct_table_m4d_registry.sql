@@ -15,7 +15,7 @@ UPDATE m4d_registry r
     );
 --changeset Helix:3
 UPDATE m4d_registry r
-    SET status = 'NEW';
+    SET status = 'CREATED';
 --changeset Helix:4
 ALTER TABLE m4d_registry
     DROP CONSTRAINT m4d_registry_organisation_id_fkey,
