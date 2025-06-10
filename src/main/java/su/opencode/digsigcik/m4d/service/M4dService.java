@@ -52,5 +52,4 @@ public interface M4dService {
     ReportCheckStatusM4dDto updateStatusM4dRequestSearch(MultipartFile zipFile) throws IOException;
     String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo);
     M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile);
-    String sendM4dToRR(Authentication authentication, Long m4dId) throws IOException;
 }

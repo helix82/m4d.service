@@ -5,9 +5,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,13 +36,17 @@ import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.util.*;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 
+
+@Slf4j
 @RestController
 @M4dExceptionHandler
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/m4d/revoke")
 @Tag(name = "M4d Revoke Controller")
 public class M4dRevokeController {
@@ -49,15 +56,7 @@ public class M4dRevokeController {
     private final M4dRecallConfirmService m4dRecallConfirmService;
     private final M4dFileService m4dFileService;
     private final ContainerService containerService;
-
-    public M4dRevokeController(ModelMapper modelMapper, M4dService m4dService, M4dRecallService m4dRecallService, M4dRecallConfirmService m4dRecallConfirmService, M4dFileService m4dFileService, ContainerService containerService) {
-        this.modelMapper = modelMapper;
-        this.m4dService = m4dService;
-        this.m4dRecallService = m4dRecallService;
-        this.m4dRecallConfirmService = m4dRecallConfirmService;
-        this.m4dFileService = m4dFileService;
-        this.containerService = containerService;
-    }
+    private final PvvService pvvService;
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY,
             description = CONTROLLER_MRPA_RECALL_FIND_ALL_DESCRIPTION)
@@ -107,7 +106,7 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         if (m4d == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.NOT_FOUND);
         }
         M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, false, true, false, true);
         return new ResponseEntity<>(m4DRegistryResponseDto, HttpStatus.OK);
@@ -171,7 +170,7 @@ public class M4dRevokeController {
         }
         M4dRecall existsMrpaRecall = this.m4dRecallService.findById(mrpaRecall.getId());
         if (existsMrpaRecall == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("M4d Recall %s", NOT_FOUND)), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.NOT_FOUND);
         }
         if(mrpaRecall.getSigFile() != null) {
             if (!mrpaRecall.getSigFile().getId().equals(existsMrpaRecall.getSigFile().getId())) {
@@ -201,7 +200,7 @@ public class M4dRevokeController {
         }
         M4dRecall mrpaRecall = this.m4dRecallService.findById(id);
         if (mrpaRecall == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(String.format("M4d Recall %s", NOT_FOUND)), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.NOT_FOUND);
         }
         if (mrpaRecall.getSigFile() != null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_SIGN_CANNOT_DELETE), HttpStatus.BAD_REQUEST);
@@ -254,10 +253,13 @@ public class M4dRevokeController {
             MultipartFile sigFile = this.containerService.getSignatureFromContainer(authentication, signature, m4dFile.getFilename());
             Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, sigFile);
         } else { Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, signature); }
-        // TODO: @helix82 Отправляем архив с xml-файлом отзыва мчд и подписью на РР МЧД для отзыва
+        // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
+        String res = this.pvvService.sendM4dRevokeToRR(authentication, mrpaRecall.getId());
         this.m4dRecallService.updateStatusMrpaRecallById(id, StatusM4dRevokeTypeEnum.ACTIVE.toString());
         this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), StatusM4dTypeEnum.REVOKED.toString());
-        return findMrpaRecallById(authentication, id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Request-ID", res);
+        return new ResponseEntity<>(findMrpaRecallById(authentication, id).getBody(), headers, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY, description = CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY)
@@ -288,7 +290,7 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         if (m4d == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.NOT_FOUND);
         }
         M4dRecallConfirm m4dRecallConfirm;
         try {
@@ -323,7 +325,7 @@ public class M4dRevokeController {
                 if (m4dRecallConfirm.getXmlFileRegisteredPep()!=null) { longList.add(m4dRecallConfirm.getXmlFileRegisteredPep().getId()); }
                 if (m4dRecallConfirm.getSigFileRegisteredPep()!=null) { longList.add(m4dRecallConfirm.getSigFileRegisteredPep().getId()); }
             }
-             ByteArrayResource resp = this.m4dFileService.createArchive(authentication, filenameSource, longList);
+            ByteArrayResource resp = new ByteArrayResource(Files.readAllBytes((this.m4dFileService.createArchive(authentication, filenameSource, longList)).toPath()));
             if (resp == null) {
                 return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
             }
