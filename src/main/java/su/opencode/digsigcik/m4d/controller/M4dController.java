@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
@@ -43,6 +44,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 @Slf4j
 @RestController
 @M4dExceptionHandler
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/m4d")
 @Tag(name = "M4d Controller")
 public class M4dController {
@@ -50,18 +52,9 @@ public class M4dController {
     private final ModelMapper modelMapper;
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
-    private final M4dRequestService m4dRequestService;
     private final M4dConfirmService m4dConfirmService;
     private final ContainerService containerService;
-
-    public M4dController(ModelMapper modelMapper, M4dService m4dService, M4dFileService m4dFileService, M4dRequestService m4dRequestService, M4dConfirmService m4dConfirmService, ContainerService containerService) {
-        this.modelMapper = modelMapper;
-        this.m4dService = m4dService;
-        this.m4dFileService = m4dFileService;
-        this.m4dRequestService = m4dRequestService;
-        this.m4dConfirmService = m4dConfirmService;
-        this.containerService = containerService;
-    }
+    private final PvvService pvvService;
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION)
@@ -129,7 +122,7 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         if (m4d == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.NOT_FOUND);
         }
         M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, true, false, true, false);
         return new ResponseEntity<>(m4DRegistryResponseDto, HttpStatus.OK);
@@ -155,7 +148,7 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         if (m4d == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.NOT_FOUND);
         }
         M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, true, false, true, false);
         return new ResponseEntity<>(m4DRegistryResponseDto, HttpStatus.OK);
@@ -181,7 +174,7 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         if (m4d == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.NOT_FOUND);
         }
         List<M4dRegistryResponseDto> m4DRegistryResponseDtoList = new ArrayList<>();
         for (M4d m : m4d) {
@@ -231,7 +224,7 @@ public class M4dController {
         try {
             m4dUpdated = m4dService.updateAllDataMrpaRegistry(authentication, m4d, organisation, principal, principalDetail, representative, representativeDetail, null, List.of(m4dSaveFullDto.getCredentials()));
         } catch (ConstraintViolationException e) {
-            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+            throw new BadRequestException(MRPA_IS_NULL);
         }
         return findMrpaRegistryById(authentication, m4dUpdated);
     }
@@ -293,7 +286,7 @@ public class M4dController {
             Long sigFileId = this.m4dService.uploadSig(authentication, id, sigFile);
         } else { Long sigFileId = this.m4dService.uploadSig(authentication, id, signature); }
         // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
-        String res = this.m4dService.sendM4dToRR(authentication, id);
+        String res = this.pvvService.sendM4dToRR(authentication, id);
         m4d.setStatus(StatusM4dTypeEnum.ACTIVE.toString());
         m4d.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
         M4d m4dSaved;
@@ -323,7 +316,7 @@ public class M4dController {
         }
         M4d mrpaRegistry = this.m4dService.findById(id);
         if (mrpaRegistry == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         if (mrpaRegistry.getSigFile() != null) {
             Long fileId = mrpaRegistry.getSigFile().getId();
@@ -370,7 +363,13 @@ public class M4dController {
                 return new ResponseEntity<>(reportM4dRequestSearch, HttpStatus.OK);
             } else { //ранее запрос не формировался, создаем новый запрос
                 ReportCheckStatusM4dDto reportCreateM4dRequestSearch = m4dService.createM4dRequestSearchForFindRR(m4dXml, hashXml);
-                return new ResponseEntity<>(reportCreateM4dRequestSearch, HttpStatus.OK);
+                // отправка запроса на получение статуса мчд в РР МЧД
+                String res = this.pvvService.sendRequestStatusM4dToRR(m4dXml.document.powerAttorneys.mrpa.getGuid());
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("X-Request-ID", res);
+
+                return new ResponseEntity<>(reportCreateM4dRequestSearch, headers, HttpStatus.OK);
             }
         }
     }
@@ -398,9 +397,36 @@ public class M4dController {
                 return new ResponseEntity<>(reportM4dRequestSearch, HttpStatus.OK);
             } else { //ранее запрос не формировался, создаем новый запрос
                 ReportCheckStatusM4dDto reportCreateM4dRequestSearch = m4dService.createM4dRequestSearchForFindRRByGuid(guid);
-                return new ResponseEntity<>(reportCreateM4dRequestSearch, HttpStatus.OK);
+                // отправка запроса на получение статуса мчд в РР МЧД
+                String res = this.pvvService.sendRequestStatusM4dToRR(guid);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.set("X-Request-ID", res);
+
+                return new ResponseEntity<>(reportCreateM4dRequestSearch, headers, HttpStatus.OK);
             }
         }
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_SEND_REQUEST_IN_PVV_SUMMARY, description = CONTROLLER_MRPA_SEND_REQUEST_IN_PVV_SUMMARY)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PostMapping(value = "/send-request-status-in-pvv/{guid}", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> sendRequestStatusM4dInPvv(Authentication authentication, @PathVariable @Parameter(name = "guid",
+            description = PARAMETER_MRPA_GUID_DESCRIPTION) String guid) throws Exception {
+        if (guid == null || guid.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("Не передан номер доверенности"), HttpStatus.BAD_REQUEST);
+        }
+            // отправка запроса на получение статуса мчд в РР МЧД
+            String res = this.pvvService.sendRequestStatusM4dToRR(guid);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Request-ID", res);
+
+            return new ResponseEntity<>(SEND_REQUEST_IN_PVV, headers, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY,
@@ -461,7 +487,7 @@ public class M4dController {
                     return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД"), HttpStatus.BAD_REQUEST);
                 }
                 // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
-                res = this.m4dService.sendM4dToRR(authentication, m4dId);
+                res = this.pvvService.sendM4dToRR(authentication, m4dId);
                 M4d m4d = this.m4dService.findById(m4dId);
                 if (m4d == null) {
                     return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
@@ -509,7 +535,7 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         if (m4d == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IS_NULL), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.NOT_FOUND);
         }
         M4dConfirm m4dConfirm;
         try {

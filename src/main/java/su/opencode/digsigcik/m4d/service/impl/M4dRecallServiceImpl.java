@@ -35,8 +35,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static su.opencode.digsigcik.m4d.util.Constants.MRPA_IS_NULL;
 import static su.opencode.digsigcik.m4d.util.Constants.MRPA_RECALL_IS_NULL;
-import static su.opencode.digsigcik.m4d.util.Constants.MRPA_REGISTRY_IS_NULL;
 
 @Service
 @Primary
@@ -219,7 +219,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             throw new BadRequestException(e.getMessage());
         }
         if (m4d == null) {
-            throw new BadRequestException(MRPA_REGISTRY_IS_NULL);
+            throw new BadRequestException(MRPA_IS_NULL);
         }
         M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, false, true, false, true);
         String xmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent();
