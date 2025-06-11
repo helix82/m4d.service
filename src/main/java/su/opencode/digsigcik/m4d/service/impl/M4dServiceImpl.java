@@ -203,6 +203,9 @@ public class M4dServiceImpl implements M4dService {
         if (m4d.getStatus()==null){
             m4d.setStatus(StatusM4dTypeEnum.NEW.toString());
         }
+        if (m4d.getIsSubTrust()==null){
+            m4d.setIsSubTrust(false);
+        }
 
         String idFile = XMLUtil.getSubstringFromXml(xmlString, "ИдФайл=\"");
 
@@ -636,6 +639,7 @@ public class M4dServiceImpl implements M4dService {
         m4DRegistryResponseDto.setErrorInRrDetail(m4d.getErrorInRrDetail());
         m4DRegistryResponseDto.setId(m4d.getId());
         m4DRegistryResponseDto.setCreateDate(m4d.getCreateDate().toString());
+        m4DRegistryResponseDto.setIsSubTrust(m4d.getIsSubTrust());
         if (m4d.getSigFile() != null) {
             M4dFile sigFile;
             try {

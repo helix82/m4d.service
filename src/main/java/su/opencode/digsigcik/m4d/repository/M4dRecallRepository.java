@@ -18,7 +18,7 @@ public interface M4dRecallRepository extends JpaRepository<M4dRecall, Long> {
     @Query("SELECT new su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto("
             + "m4d.id, m4d.guid, p.id, p.inn, p.snils, pd.id, pd.jobTitle, pd.name, pd.surname, pd.patronymic, "
             + "r.id, r.inn, r.snils, r.birthDate, rd.name, rd.surname, rd.patronymic, "
-            + "m4d.startDate, m4d.endDate, m4d.createDate, m4drc.id, m4drc.status, m4drc.statusInRr, m4drc.errorInRrDetail) "
+            + "m4d.startDate, m4d.endDate, m4d.createDate, m4d.isSubTrust, m4drc.id, m4drc.status, m4drc.statusInRr, m4drc.errorInRrDetail) "
             + "from M4dRecall m4drc "
             + "join M4d m4d on m4d.id = m4drc.m4d.id "
             + "join Principal p on p.id = m4d.principalId "

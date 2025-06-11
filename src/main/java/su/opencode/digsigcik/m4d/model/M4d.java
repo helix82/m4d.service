@@ -107,6 +107,12 @@ public class M4d {
     @AllowAudit
     private LocalDateTime createDate;
 
+    @Column(name = "is_sub_trust")
+    @Schema(example = "")
+    @JsonProperty("isSubTrust")
+    @AllowAudit
+    private Boolean isSubTrust;
+
     public void setGuid() {
         this.guid = UUID.randomUUID()
                 .toString();
