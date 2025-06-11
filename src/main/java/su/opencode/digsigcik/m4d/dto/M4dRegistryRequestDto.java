@@ -94,6 +94,9 @@ public class M4dRegistryRequestDto {
     @JsonProperty("createDate")
     private String createDate;
 
+    @JsonProperty("isSubTrust")
+    private Boolean isSubTrust;
+
     public void setGuid() {
         this.mrpaRegistry.guid = UUID.randomUUID()
                 .toString();
