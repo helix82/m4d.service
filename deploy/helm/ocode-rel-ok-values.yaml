@@ -158,3 +158,6 @@ imagePullSecrets:
   - registrypullsecret
 
 resources: {}
+
+liquibase:
+  contexts: test

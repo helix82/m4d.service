@@ -143,3 +143,6 @@ imagePullSecrets:
   - registrypullsecret
 
 resources: {}
+
+liquibase:
+  contexts: prod
