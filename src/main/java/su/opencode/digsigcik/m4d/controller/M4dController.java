@@ -609,7 +609,7 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping(value = "/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateStatusM4dRequestSearch(@RequestParam("file") MultipartFile zipFile) throws ParseException, IOException {
+    public ResponseEntity<?> updateStatusM4dRequestSearch(@RequestParam("file") MultipartFile zipFile) throws IOException {
         String fileName = zipFile.getOriginalFilename();
         if (fileName != null && !fileName.toLowerCase().endsWith(".zip")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Переданный файл не является архивом.");
@@ -629,14 +629,15 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping(value = "/status/{messageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateStatusM4dRequestSearchByMessageId(@PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws ParseException, IOException {
+    public ResponseEntity<?> updateStatusM4dRequestSearchByMessageId(@PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws IOException {
         if (messageId == null || messageId.isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         // получение zip-архива по messageId
         Resource res = this.pvvService.receiveResponseM4dToRR(messageId);
 
-        MultipartFile zipFile = new CustomMultipartFile(res);
+        //File zipFile = FileUtils.convertResourceToFile(res);
+        MultipartFile zipFile = new CustomMultipartFile(res.getFile());
 
         String fileName = zipFile.getOriginalFilename();
         if (fileName != null && !fileName.toLowerCase().endsWith(".zip")) {
