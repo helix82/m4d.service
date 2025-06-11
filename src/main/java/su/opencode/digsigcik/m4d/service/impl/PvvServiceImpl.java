@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -47,6 +49,8 @@ public class PvvServiceImpl implements PvvService {
     private URI FNS_SEND_REVOKE_REQUEST_M4D_URI;
     @Value("${pvv.fns-send-status-request-m4d}")
     private URI FNS_SEND_STATUS_REQUEST_M4D_URI;
+    @Value("${pvv.fns-receive-response-m4d}")
+    private URI FNS_RECEIVE_RESPONSE_M4D_URI;
 
     @Override
     public String sendM4dToRR(Authentication authentication, Long m4dId) throws IOException {
@@ -166,4 +170,27 @@ public class PvvServiceImpl implements PvvService {
         }
         return null;
     }
+
+    public Resource receiveResponseM4dToRR(String messageId) {
+        ByteArrayResource res = receiveResponseFnsViaPvv(messageId, FNS_RECEIVE_RESPONSE_M4D_URI);
+        log.info(messageId);
+        log.info(String.valueOf(res));
+        return res;
+    }
+
+    private ByteArrayResource receiveResponseFnsViaPvv(String messageId, URI uri) {
+        try {
+            log.debug("Получение ответа {}...", messageId);
+            return restTemplate.getForEntity(
+                            uri,
+                            ByteArrayResource.class
+                    )
+                    .getBody();
+        } catch (Exception ex) {
+            log.error("Ошибка при получении ответа для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
+                    uri);
+        }
+        return null;
+    }
+
 }

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +27,7 @@ import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
@@ -608,6 +610,34 @@ public class M4dController {
     })
     @PutMapping(value = "/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateStatusM4dRequestSearch(@RequestParam("file") MultipartFile zipFile) throws ParseException, IOException {
+        String fileName = zipFile.getOriginalFilename();
+        if (fileName != null && !fileName.toLowerCase().endsWith(".zip")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Переданный файл не является архивом.");
+        }
+        ReportCheckStatusM4dDto report;
+        report = m4dService.updateStatusM4dRequestSearch(zipFile);
+        if (report == null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString("В ПЭП не найдена МЧД или не найден запрос на получение статуса о МЧД в РР МЧД"), HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(report, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY, description = CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PutMapping(value = "/status/{messageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateStatusM4dRequestSearchByMessageId(@PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws ParseException, IOException {
+        if (messageId == null || messageId.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        // получение zip-архива по messageId
+        Resource res = this.pvvService.receiveResponseM4dToRR(messageId);
+
+        MultipartFile zipFile = new CustomMultipartFile(res);
+
         String fileName = zipFile.getOriginalFilename();
         if (fileName != null && !fileName.toLowerCase().endsWith(".zip")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Переданный файл не является архивом.");

@@ -152,6 +152,7 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY = "Обновить статус МЧД по MessageId";
     String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД";
     String CONTROLLER_MRPA_UPDATE_STATUS_DESCRIPTION = "Возвращает данные о статусе МЧД";
     String CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION = "Обработать результат отправки МЧД на регистрацию в РР МЧД";
@@ -215,6 +216,7 @@ public interface Constants {
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
 
     String ID_IS_NULL = "ИД не указано";
+    String MESSAGE_ID_IS_NULL = "messageId не указан";
     String GUID_IS_NULL = "Номер доверенности (GUID) не указан";
     String INN_IS_NULL = "ИНН не указан";
     String MRPA_IS_NULL = "МЧД не найдена";
