@@ -214,6 +214,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.AUTOSIGN_SIG_TYPE }}
+            - name: SPRING_LIQUIBASE_CONTEXTS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SPRING_LIQUIBASE_CONTEXTS }}
             - name: FNS_SEND_REGISTRATION_REQUEST_M4D_URI
               valueFrom:
                 secretKeyRef:
