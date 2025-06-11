@@ -88,6 +88,7 @@ secret:
     RPD_READ_TIMEOUT: MTAwMDA=
     #true
     DISABLE_TLS_CHECK: dHJ1ZQ==
+    SPRING_LIQUIBASE_CONTEXTS: dGVzdA==
 
 hostAliases:
   - ip: "10.2.176.204"
@@ -142,6 +143,7 @@ env:
   AUTOSIGN_IS_DETACHED: AUTOSIGN_IS_DETACHED
   AUTOSIGN_SIG_TYPE: AUTOSIGN_SIG_TYPE
   FNS_SEND_REGISTRATION_REQUEST_M4D_URI: FNS_SEND_REGISTRATION_REQUEST_M4D_URI
+  SPRING_LIQUIBASE_CONTEXTS: SPRING_LIQUIBASE_CONTEXTS
 
 appName: m4d
 
@@ -158,6 +160,3 @@ imagePullSecrets:
   - registrypullsecret
 
 resources: {}
-
-liquibase:
-  contexts: test
