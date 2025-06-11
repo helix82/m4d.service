@@ -31,7 +31,7 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
     M4d findByGuid(String guid);
 
     @Query(value = "SELECT new su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto(m4d.id, m4d.guid, "
-            + " m4d.startDate, m4d.endDate, m4d.createDate, "
+            + " m4d.startDate, m4d.endDate, m4d.createDate, m4d.isSubTrust, "
             + " p.id, p.inn, p.snils, pd.id, pd.jobTitle, pd.name, pd.surname, pd.patronymic, r.id, r.inn, r.snils, r.birthDate,"
             + " rd.name, rd.surname, rd.patronymic)"
             + " from M4d m4d"

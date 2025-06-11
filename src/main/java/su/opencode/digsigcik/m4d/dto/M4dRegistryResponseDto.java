@@ -98,6 +98,9 @@ public class M4dRegistryResponseDto {
     @JsonProperty("errorInRrDetail")
     private String errorInRrDetail;
 
+    @JsonProperty("isSubTrust")
+    private Boolean isSubTrust;
+
     @JsonProperty("sigFile")
     private SigFileDto sigFile;
 
@@ -208,7 +211,7 @@ public class M4dRegistryResponseDto {
         private String name;
     }
 
-    public M4dRegistryResponseDto(Long id, String guid, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
+    public M4dRegistryResponseDto(Long id, String guid, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate, Boolean isSubTrust,
                                   Long principal_id, String principal_inn, String principal_snils, Long principal_detail_id, String principal_detail_jobTitle,
                                   String principal_detail_name, String principal_detail_surname, String principal_detail_patronymic,
                                   Long representative_id, String representative_inn, String representative_snils, LocalDateTime representative_birthDate,
@@ -218,6 +221,7 @@ public class M4dRegistryResponseDto {
         this.startDate = startDate.toString();
         this.endDate = endDate.toString();
         this.createDate = createDate.toString();
+        this.isSubTrust = isSubTrust;
 
         PrincipalDto principalDTO = new PrincipalDto();
         principalDTO.id = principal_id;
@@ -252,7 +256,7 @@ public class M4dRegistryResponseDto {
                                   String principalDetailName, String principalDetailSurname, String principalDetailPatronymic,
                                   Long representativeId, String representativeInn, String representativeSnils,
                                   LocalDateTime representative_birthDate, String representativeName, String representativeSurname,
-                                  String representativePatronymic, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate,
+                                  String representativePatronymic, LocalDateTime startDate, LocalDateTime endDate, LocalDateTime createDate, Boolean isSubTrust,
                                   Long recallId, String recallStatus, String recallStatusInRr, String recallErrorInRrDetail) {
 
         this.id = id;
@@ -260,6 +264,7 @@ public class M4dRegistryResponseDto {
         this.startDate = startDate.toString();
         this.endDate = endDate.toString();
         this.createDate = createDate.toString();
+        this.isSubTrust = isSubTrust;
 
 
         this.principal = new PrincipalDto();
