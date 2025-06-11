@@ -158,5 +158,6 @@ imagePullSecrets:
 
 resources: {}
 
-liquibase:
-  contexts: prod
+spring:
+  liquibase:
+    contexts: prod
