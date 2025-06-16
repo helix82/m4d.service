@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,6 +28,7 @@ import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.ConvertUtils;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
@@ -629,13 +631,15 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping(value = "/status/{messageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> updateStatusM4dRequestSearchByMessageId(@PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws IOException {
+    public ResponseEntity<?> updateStatusM4dRequestSearchByMessageId
+            (@PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws IOException {
         if (messageId == null || messageId.isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         // получение zip-архива по messageId
         Resource res = this.pvvService.receiveResponseM4dToRR(messageId);
 
+        // НАДО ТЕСТИРОВАТЬ!!!!!
         //File zipFile = FileUtils.convertResourceToFile(res);
         MultipartFile zipFile = new CustomMultipartFile(res.getFile());
 
@@ -659,6 +663,37 @@ public class M4dController {
     })
     @PutMapping(value = "/upload-result-sending-to-rr", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadResultSendM4dToRR(@RequestBody M4dResponseInfo m4dResponseInfo) {
+        String error;
+        try {
+            error = m4dService.uploadResultSendM4dToRR(m4dResponseInfo);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if ( error != null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
+        }
+        Map<String, String> body = new HashMap<>();
+        body.put("result", "Результат отправки МЧД на регистрацию в РР МЧД обработан.");
+        return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION,
+            description = CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PutMapping(value = "/upload-result-sending-to-rr/{messageId}", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> uploadResultSendM4dToRRByMessageId(
+            @PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws JsonProcessingException {
+        if (messageId == null || messageId.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        M4dResponseInfo m4dResponseInfo;
+        // получение json-ответа по messageId
+        String res = this.pvvService.receiveJsonResponseM4dToRR(messageId);
+        m4dResponseInfo = ConvertUtils.convertStringToClass(res, M4dResponseInfo.class);
         String error;
         try {
             error = m4dService.uploadResultSendM4dToRR(m4dResponseInfo);

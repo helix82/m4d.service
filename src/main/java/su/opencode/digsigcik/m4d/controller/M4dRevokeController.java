@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,6 +30,7 @@ import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
 import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.util.ConvertUtils;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
@@ -350,6 +352,36 @@ public class M4dRevokeController {
     })
     @PutMapping(value = "/upload-result-sending-to-rr", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadResultSendM4dRevokeToRR(@RequestBody M4dRevokeResponseInfo m4dRevokeResponseInfo) {
+        String error;
+        try {
+            error = m4dRecallService.uploadResultSendM4dRevokeToRR(m4dRevokeResponseInfo);
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        if ( error != null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
+        }
+        Map<String, String> body = new HashMap<>();
+        body.put("result", "Результат отправки отзыва МЧД на регистрацию в РР МЧД обработан.");
+        return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION, description = CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PutMapping(value = "/upload-result-sending-to-rr/{messageId}", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> uploadResultSendM4dRevokeToRRByMessageId(
+            @PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws JsonProcessingException {
+        if (messageId == null || messageId.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        M4dRevokeResponseInfo m4dRevokeResponseInfo;
+        // получение json-ответа по messageId
+        String res = this.pvvService.receiveJsonResponseM4dToRR(messageId);
+        m4dRevokeResponseInfo = ConvertUtils.convertStringToClass(res, M4dRevokeResponseInfo.class);
         String error;
         try {
             error = m4dRecallService.uploadResultSendM4dRevokeToRR(m4dRevokeResponseInfo);

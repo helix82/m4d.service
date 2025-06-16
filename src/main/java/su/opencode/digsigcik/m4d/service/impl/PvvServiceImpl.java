@@ -51,6 +51,8 @@ public class PvvServiceImpl implements PvvService {
     private URI FNS_SEND_STATUS_REQUEST_M4D_URI;
     @Value("${pvv.fns-receive-response-m4d}")
     private URI FNS_RECEIVE_RESPONSE_M4D_URI;
+    @Value("${pvv.fns-receive-json-response-m4d}")
+    private URI FNS_RECEIVE_JSON_RESPONSE_M4D_URI;
 
     @Override
     public String sendM4dToRR(Authentication authentication, Long m4dId) throws IOException {
@@ -178,6 +180,13 @@ public class PvvServiceImpl implements PvvService {
         return res;
     }
 
+    public String receiveJsonResponseM4dToRR(String messageId) {
+        String res = receiveJsonResponseFnsViaPvv(messageId, FNS_RECEIVE_JSON_RESPONSE_M4D_URI);
+        log.info(messageId);
+        log.info(res);
+        return res;
+    }
+
     private ByteArrayResource receiveResponseFnsViaPvv(String messageId, URI uri) {
         try {
             log.debug("Получение ответа {}...", messageId);
@@ -188,6 +197,21 @@ public class PvvServiceImpl implements PvvService {
                     .getBody();
         } catch (Exception ex) {
             log.error("Ошибка при получении ответа для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
+                    uri);
+        }
+        return null;
+    }
+
+    private String receiveJsonResponseFnsViaPvv(String messageId, URI uri) {
+        try {
+            log.debug("Получение json-ответа {}...", messageId);
+            return restTemplate.getForEntity(
+                            uri,
+                            String.class
+                    )
+                    .getBody();
+        } catch (Exception ex) {
+            log.error("Ошибка при получении json-ответа для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
                     uri);
         }
         return null;

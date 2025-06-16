@@ -10,4 +10,5 @@ public interface PvvService {
     String sendM4dRevokeToRR(Authentication authentication, Long m4dRevokeId) throws IOException;
     String sendRequestStatusM4dToRR(String guid);
     Resource receiveResponseM4dToRR(String messageId);
+    String receiveJsonResponseM4dToRR(String messageId);
 }
