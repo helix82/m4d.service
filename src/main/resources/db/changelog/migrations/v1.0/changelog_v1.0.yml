@@ -74,3 +74,5 @@ databaseChangeLog:
   - include:
       file: db/changelog/migrations/v1.0/delete_data_in_prod.sql
       context: prod
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_user_permissions.sql
