@@ -276,4 +276,9 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         }
         return null;
     }
+
+    @Override
+    public long countM4dRevokeByInnsAndStatus(Set<String> inns, String status) {
+        return m4dRevokeRepository.countM4dRecallByStatusAndPrincipalInns(inns, status);
+    }
 }
