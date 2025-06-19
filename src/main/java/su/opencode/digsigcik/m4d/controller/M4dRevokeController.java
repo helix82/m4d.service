@@ -1,6 +1,5 @@
 package su.opencode.digsigcik.m4d.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,7 +29,6 @@ import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
 import su.opencode.digsigcik.m4d.service.*;
-import su.opencode.digsigcik.m4d.util.ConvertUtils;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
@@ -166,10 +164,6 @@ public class M4dRevokeController {
         if (mrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_ERROR_CONVERT), HttpStatus.BAD_REQUEST);
         }
-        Long mrpaRecallId = mrpaRecall.getId();
-        if(mrpaRecallId == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Can`t update M4d recall, because id null!"), HttpStatus.BAD_REQUEST);
-        }
         M4dRecall existsMrpaRecall = this.m4dRecallService.findById(mrpaRecall.getId());
         if (existsMrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.NOT_FOUND);
@@ -243,7 +237,7 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         if (signature == null || signature.isEmpty()){
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Signature is null"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(SIG_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         String extension = FilenameUtils.getExtension(signature.getOriginalFilename());
         if(!Objects.equals(extension, "sig") && !Objects.equals(extension, "dscp")) {
@@ -328,9 +322,6 @@ public class M4dRevokeController {
                 if (m4dRecallConfirm.getSigFileRegisteredPep()!=null) { longList.add(m4dRecallConfirm.getSigFileRegisteredPep().getId()); }
             }
             ByteArrayResource resp = new ByteArrayResource(Files.readAllBytes((this.m4dFileService.createArchive(authentication, filenameSource, longList)).toPath()));
-            if (resp == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
-            }
             try {
                 response.setHeader("Content-Disposition", "attachment; filename=\"" + filenameSource + ".zip\"");
 
@@ -362,7 +353,7 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
         }
         Map<String, String> body = new HashMap<>();
-        body.put("result", "Результат отправки отзыва МЧД на регистрацию в РР МЧД обработан.");
+        body.put("result", MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA);
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
@@ -374,14 +365,13 @@ public class M4dRevokeController {
     })
     @PutMapping(value = "/upload-result-sending-to-rr/{messageId}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadResultSendM4dRevokeToRRByMessageId(
-            @PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws JsonProcessingException {
+            @PathVariable @Parameter(name = "messageId", description = PARAMETER_MESSAGE_ID_DESCRIPTION, example = "1") String messageId) {
         if (messageId == null || messageId.isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         M4dRevokeResponseInfo m4dRevokeResponseInfo;
         // получение json-ответа по messageId
-        String res = this.pvvService.receiveJsonResponseM4dToRR(messageId);
-        m4dRevokeResponseInfo = ConvertUtils.convertStringToClass(res, M4dRevokeResponseInfo.class);
+        m4dRevokeResponseInfo = this.pvvService.receiveJsonResponseM4dRevokeToRR(messageId);
         String error;
         try {
             error = m4dRecallService.uploadResultSendM4dRevokeToRR(m4dRevokeResponseInfo);
@@ -392,7 +382,7 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
         }
         Map<String, String> body = new HashMap<>();
-        body.put("result", "Результат отправки отзыва МЧД на регистрацию в РР МЧД обработан.");
+        body.put("result", MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA);
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
@@ -406,7 +396,6 @@ public class M4dRevokeController {
         if (mrpaRecallRequestDto.getSignature() == null || Objects.equals(mrpaRecallRequestDto.getSignature().trim(), "")) {
             mrpaRecallRequestDto.setSignature(null);
         }
-        M4dRecall mrpaRecall = modelMapper.map(mrpaRecallRequestDto, M4dRecall.class);
-        return mrpaRecall;
+        return modelMapper.map(mrpaRecallRequestDto, M4dRecall.class);
     }
 }

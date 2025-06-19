@@ -15,6 +15,9 @@ import su.opencode.digsigcik.m4d.service.RestTemplateService;
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
+import static su.opencode.digsigcik.m4d.util.Constants.ORGANISATION_READ_ERROR;
+import static su.opencode.digsigcik.m4d.util.Constants.ORGANISATION_SAVE_ERROR;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,10 +44,10 @@ public class RefBookClientServiceImpl implements RefBookClientService {
             return Optional.of(responseEntity)
                     .filter(ResponseEntity::hasBody)
                     .map(ResponseEntity::getBody)
-                    .orElseThrow(() -> new BadRequestException("Ошибка добавления организации"));
+                    .orElseThrow(() -> new BadRequestException(ORGANISATION_SAVE_ERROR));
 
         } catch (HttpClientErrorException ex) {
-            throw new BadRequestException("Ошибка добавления организации");
+            throw new BadRequestException(ORGANISATION_SAVE_ERROR);
         }
     }
 
@@ -63,13 +66,13 @@ public class RefBookClientServiceImpl implements RefBookClientService {
             return Optional.of(responseEntity)
                     .filter(ResponseEntity::hasBody)
                     .map(ResponseEntity::getBody)
-                    .orElseThrow(() -> new BadRequestException("Ошибка получения организации"));
+                    .orElseThrow(() -> new BadRequestException(ORGANISATION_READ_ERROR));
 
         } catch (HttpClientErrorException ex) {
             if (ex.getStatusCode().value() == 400) {
                 return null;
             } else
-                throw new BadRequestException("Ошибка получения организации");
+                throw new BadRequestException(ORGANISATION_READ_ERROR);
         }
     }
 }

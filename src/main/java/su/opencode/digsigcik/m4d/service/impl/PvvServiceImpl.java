@@ -5,13 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
+import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dConfirm;
@@ -27,8 +30,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import static su.opencode.digsigcik.m4d.util.Constants.MRPA_IS_NULL;
-import static su.opencode.digsigcik.m4d.util.Constants.MRPA_RECALL_IS_NULL;
+import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Slf4j
 @Service
@@ -85,7 +87,7 @@ public class PvvServiceImpl implements PvvService {
         }
         File resp = this.m4dFileService.createArchive(authentication, filenameSource, longList);
         if (resp == null) {
-            throw new BadRequestException("Ошибка создания архива");
+            throw new BadRequestException(ZIP_CREATE_ERROR);
         }
 
         MultipartFile requestTempFile = new CustomMultipartFile(resp);
@@ -125,7 +127,7 @@ public class PvvServiceImpl implements PvvService {
         }
         File resp = this.m4dFileService.createArchive(authentication, filenameSource, longList);
         if (resp == null) {
-            throw new BadRequestException("Ошибка создания архива");
+            throw new BadRequestException(ZIP_CREATE_ERROR);
         }
 
         MultipartFile requestTempFile = new CustomMultipartFile(resp);
@@ -160,9 +162,14 @@ public class PvvServiceImpl implements PvvService {
         String body = "{\"guid\":\"" + guid + "\"}";
         try {
             log.debug("Отправка запроса на получение статуса МЧД {}...", guid);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Accept", "application/json");
+            headers.setContentType(MediaType.APPLICATION_JSON); // если тело JSON
+
+            HttpEntity<String> entity = new HttpEntity<>(body, headers);
             return restTemplate.postForEntity(
                             uri,
-                            new HttpEntity<>(body),
+                            entity,
                             String.class
                     )
                     .getBody();
@@ -173,17 +180,24 @@ public class PvvServiceImpl implements PvvService {
         return null;
     }
 
-    public Resource receiveResponseM4dToRR(String messageId) {
+    public ByteArrayResource receiveResponseM4dToRR(String messageId) {
         ByteArrayResource res = receiveResponseFnsViaPvv(messageId, FNS_RECEIVE_RESPONSE_M4D_URI);
         log.info(messageId);
         log.info(String.valueOf(res));
         return res;
     }
 
-    public String receiveJsonResponseM4dToRR(String messageId) {
-        String res = receiveJsonResponseFnsViaPvv(messageId, FNS_RECEIVE_JSON_RESPONSE_M4D_URI);
+    public M4dResponseInfo receiveJsonResponseM4dToRR(String messageId) {
+        M4dResponseInfo res = receiveJsonResponseM4dFnsViaPvv(messageId, FNS_RECEIVE_JSON_RESPONSE_M4D_URI);
         log.info(messageId);
-        log.info(res);
+        log.info(String.valueOf(res));
+        return res;
+    }
+
+    public M4dRevokeResponseInfo receiveJsonResponseM4dRevokeToRR(String messageId) {
+        M4dRevokeResponseInfo res = receiveJsonResponseM4dRevokeFnsViaPvv(messageId, FNS_RECEIVE_JSON_RESPONSE_M4D_URI);
+        log.info(messageId);
+        log.info(String.valueOf(res));
         return res;
     }
 
@@ -191,7 +205,7 @@ public class PvvServiceImpl implements PvvService {
         try {
             log.debug("Получение ответа {}...", messageId);
             return restTemplate.getForEntity(
-                            uri,
+                            uri+messageId,
                             ByteArrayResource.class
                     )
                     .getBody();
@@ -202,12 +216,27 @@ public class PvvServiceImpl implements PvvService {
         return null;
     }
 
-    private String receiveJsonResponseFnsViaPvv(String messageId, URI uri) {
+    private M4dResponseInfo receiveJsonResponseM4dFnsViaPvv(String messageId, URI uri) {
         try {
             log.debug("Получение json-ответа {}...", messageId);
             return restTemplate.getForEntity(
-                            uri,
-                            String.class
+                            uri+messageId,
+                            M4dResponseInfo.class
+                    )
+                    .getBody();
+        } catch (Exception ex) {
+            log.error("Ошибка при получении json-ответа для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
+                    uri);
+        }
+        return null;
+    }
+
+    private M4dRevokeResponseInfo receiveJsonResponseM4dRevokeFnsViaPvv(String messageId, URI uri) {
+        try {
+            log.debug("Получение json-ответа {}...", messageId);
+            return restTemplate.getForEntity(
+                            uri+messageId,
+                            M4dRevokeResponseInfo.class
                     )
                     .getBody();
         } catch (Exception ex) {

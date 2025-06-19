@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,15 +27,16 @@ import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
 import su.opencode.digsigcik.m4d.exception.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.*;
-import su.opencode.digsigcik.m4d.util.ConvertUtils;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.DateUtils;
+import su.opencode.digsigcik.m4d.util.FileUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.ParseException;
@@ -274,7 +274,7 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         if (signature == null || signature.isEmpty()) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Signature is null"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(SIG_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         String extension = FilenameUtils.getExtension(signature.getOriginalFilename());
         if(!Objects.equals(extension, "sig") && !Objects.equals(extension, "dscp")) {
@@ -335,7 +335,7 @@ public class M4dController {
             }
             return findMrpaRegistryById(authentication, mrpaRegistrySaved.getId());
         }
-        return new ResponseEntity<>(getCustomErrorJsonFromString("Signature not found"), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(getCustomErrorJsonFromString(SIG_NOT_FOUND), HttpStatus.BAD_REQUEST);
     }
 
     @Operation(summary = CONTROLLER_MRPA_CHECK_XML_SUMMARY, description = CONTROLLER_MRPA_CHECK_XML_DESCRIPTION)
@@ -346,13 +346,12 @@ public class M4dController {
     })
     @PostMapping(value = "/check", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> check(Authentication authentication, @RequestPart("srcFile") MultipartFile sourceFile) throws Exception {
-        String extension = FilenameUtils.getExtension(sourceFile.getOriginalFilename());
-        if (!Objects.equals(extension, "xml")) {
-            throw new BadRequestException("Ошибка: Формат файла не XML");
+        if (!FileUtils.isXmlFile(sourceFile)) {
+            throw new BadRequestException(NO_XML);
         }
         ReportValidSchemeDto reportValidSchemeDto = m4dService.validXmlM4dScheme(sourceFile, "EMCHD_1");
         if (Objects.equals(reportValidSchemeDto.getResult(), "false")) {
-            throw new BadRequestException("XML файл не соответствует схеме EMCHD_1");
+            throw new BadRequestException(XML_NOT_SCHEMA_EMCHD_1);
         }
         M4dXml m4dXml = this.m4dService.convertM4dFileToM4dXml(sourceFile);
         String hashXml = this.m4dService.getHashXmlM4d(sourceFile);
@@ -388,7 +387,7 @@ public class M4dController {
     public ResponseEntity<?> checkByGuid(Authentication authentication, @PathVariable @Parameter(name = "guid",
             description = PARAMETER_MRPA_GUID_DESCRIPTION) String guid) throws Exception {
         if (guid == null || guid.isEmpty()) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Не передан номер доверенности"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(GUID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
 // - поиск МЧД в ПЭП по номеру
         ReportCheckStatusM4dDto reportM4d = m4dService.checkM4dInPepByGuid(authentication, guid);
@@ -420,9 +419,9 @@ public class M4dController {
     })
     @PostMapping(value = "/send-request-status-in-pvv/{guid}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> sendRequestStatusM4dInPvv(Authentication authentication, @PathVariable @Parameter(name = "guid",
-            description = PARAMETER_MRPA_GUID_DESCRIPTION) String guid) throws Exception {
+            description = PARAMETER_MRPA_GUID_DESCRIPTION) String guid) {
         if (guid == null || guid.isEmpty()) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Не передан номер доверенности"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(GUID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
             // отправка запроса на получение статуса мчд в РР МЧД
             String res = this.pvvService.sendRequestStatusM4dToRR(guid);
@@ -454,9 +453,12 @@ public class M4dController {
     public ResponseEntity<?> importMrpa(
             Authentication authentication,
             @RequestPart("srcFile") MultipartFile sourceFile,
-            @RequestPart(value="sigFile", required = false) MultipartFile sourceSig) throws ParseException {
+            @RequestPart(value="sigFile", required = false) MultipartFile sourceSig) throws ParseException, IOException {
         if (sourceFile.isEmpty()){
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Обязательный xml-файл МЧД не указан"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(XML_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        if (!FileUtils.isXmlFile(sourceFile)) {
+            throw new BadRequestException(NO_XML);
         }
         Long m4dId = null;
         //upload m4d !!!!!!!!!!!!!!!!!!!!!!!!
@@ -473,12 +475,12 @@ public class M4dController {
             }
 
         } catch (Exception e) {
-            log.error("Ошибка импорта МЧД: " + e.getMessage());
+            log.error(MRPA_REGISTRY_IMPORT_ERROR + ": " + e.getMessage());
             e.printStackTrace();
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка импорта МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IMPORT_ERROR + ": " + e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         if (m4dId == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка импорта МЧД"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IMPORT_ERROR), HttpStatus.BAD_REQUEST);
         }
         String res = null;
         if (sourceSig != null){
@@ -488,7 +490,7 @@ public class M4dController {
 
                 if (result == null) {
                     log.error("Загрузка подписи МЧД не вернула результат");
-                    return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД"), HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_UPLOAD_SIG_ERROR), HttpStatus.BAD_REQUEST);
                 }
                 // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
                 res = this.pvvService.sendM4dToRR(authentication, m4dId);
@@ -505,9 +507,9 @@ public class M4dController {
                     throw new BadRequestException(e.getMessage());
                 }
             } catch (Exception e) {
-                log.error("Ошибка при загрузке подписи МЧД: " + e.getMessage());
+                log.error(MRPA_REGISTRY_UPLOAD_SIG_ERROR + ": " + e.getMessage());
                 e.printStackTrace();
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка при загрузке подписи МЧД: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_UPLOAD_SIG_ERROR + ": " + e.getMessage()), HttpStatus.BAD_REQUEST);
             }
         }
         if (res != null) {
@@ -575,9 +577,6 @@ public class M4dController {
                 if (m4dConfirm.getSigFileRegisteredPep() != null) { longList.add(m4dConfirm.getSigFileRegisteredPep().getId()); }
             }
             ByteArrayResource resp = new ByteArrayResource(Files.readAllBytes((this.m4dFileService.createArchive(authentication, filenameSource, longList)).toPath()));
-            if (resp == null) {
-                return new ResponseEntity<>(getCustomErrorJsonFromString("Ошибка создания архива"), HttpStatus.NOT_FOUND);
-            }
             try {
                 response.setHeader("Content-Disposition", "attachment; filename=\"" + filenameSource + ".zip\"");
 
@@ -612,14 +611,13 @@ public class M4dController {
     })
     @PutMapping(value = "/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateStatusM4dRequestSearch(@RequestParam("file") MultipartFile zipFile) throws IOException {
-        String fileName = zipFile.getOriginalFilename();
-        if (fileName != null && !fileName.toLowerCase().endsWith(".zip")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Переданный файл не является архивом.");
+        if (!FileUtils.isXmlFile(zipFile)) {
+            throw new BadRequestException(NO_ZIP);
         }
         ReportCheckStatusM4dDto report;
         report = m4dService.updateStatusM4dRequestSearch(zipFile);
         if (report == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("В ПЭП не найдена МЧД или не найден запрос на получение статуса о МЧД в РР МЧД"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_UPDATE_STATUS_ERROR), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(report, HttpStatus.OK);
     }
@@ -630,27 +628,24 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "/status/{messageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/status/{messageId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateStatusM4dRequestSearchByMessageId
-            (@PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws IOException {
+            (@PathVariable @Parameter(name = "messageId", description = PARAMETER_MESSAGE_ID_DESCRIPTION, example = "1") String messageId) throws IOException {
         if (messageId == null || messageId.isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         // получение zip-архива по messageId
-        Resource res = this.pvvService.receiveResponseM4dToRR(messageId);
+        ByteArrayResource res = this.pvvService.receiveResponseM4dToRR(messageId);
+        File tempZipFile = FileUtils.byteArrayResourceToTempFile(res, messageId, ".zip");
+        MultipartFile zipFile = new CustomMultipartFile(tempZipFile);
 
-        // НАДО ТЕСТИРОВАТЬ!!!!!
-        //File zipFile = FileUtils.convertResourceToFile(res);
-        MultipartFile zipFile = new CustomMultipartFile(res.getFile());
-
-        String fileName = zipFile.getOriginalFilename();
-        if (fileName != null && !fileName.toLowerCase().endsWith(".zip")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Переданный файл не является архивом.");
+        if (!FileUtils.isZipFile(tempZipFile)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NO_ZIP);
         }
         ReportCheckStatusM4dDto report;
         report = m4dService.updateStatusM4dRequestSearch(zipFile);
         if (report == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("В ПЭП не найдена МЧД или не найден запрос на получение статуса о МЧД в РР МЧД"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_UPDATE_STATUS_ERROR), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(report, HttpStatus.OK);
     }
@@ -673,7 +668,7 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
         }
         Map<String, String> body = new HashMap<>();
-        body.put("result", "Результат отправки МЧД на регистрацию в РР МЧД обработан.");
+        body.put("result", MRPA_REGISTRY_UPLOAD_RESULT_SEND_RR_MRPA);
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
@@ -686,14 +681,13 @@ public class M4dController {
     })
     @PutMapping(value = "/upload-result-sending-to-rr/{messageId}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> uploadResultSendM4dToRRByMessageId(
-            @PathVariable @Parameter(name = "messageId", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") String messageId) throws JsonProcessingException {
+            @PathVariable @Parameter(name = "messageId", description = PARAMETER_MESSAGE_ID_DESCRIPTION, example = "1") String messageId) throws JsonProcessingException {
         if (messageId == null || messageId.isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         M4dResponseInfo m4dResponseInfo;
         // получение json-ответа по messageId
-        String res = this.pvvService.receiveJsonResponseM4dToRR(messageId);
-        m4dResponseInfo = ConvertUtils.convertStringToClass(res, M4dResponseInfo.class);
+        m4dResponseInfo = this.pvvService.receiveJsonResponseM4dToRR(messageId);
         String error;
         try {
             error = m4dService.uploadResultSendM4dToRR(m4dResponseInfo);
@@ -704,7 +698,7 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
         }
         Map<String, String> body = new HashMap<>();
-        body.put("result", "Результат отправки МЧД на регистрацию в РР МЧД обработан.");
+        body.put("result", MRPA_REGISTRY_UPLOAD_RESULT_SEND_RR_MRPA);
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 

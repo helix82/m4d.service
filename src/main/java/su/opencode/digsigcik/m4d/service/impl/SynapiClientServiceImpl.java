@@ -16,6 +16,8 @@ import su.opencode.digsigcik.m4d.service.SynapiClientService;
 
 import java.util.Optional;
 
+import static su.opencode.digsigcik.m4d.util.Constants.CONTAINER_READ_EXCEPTION;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,10 +45,10 @@ public class SynapiClientServiceImpl implements SynapiClientService {
             return Optional.of(responseEntity)
                     .filter(ResponseEntity::hasBody)
                     .map(ResponseEntity::getBody)
-                    .orElseThrow(() -> new BadRequestException("Ошибка получения данных"));
+                    .orElseThrow(() -> new BadRequestException(CONTAINER_READ_EXCEPTION));
 
         } catch (HttpClientErrorException ex) {
-            throw new BadRequestException("Ошибка получения данных");
+            throw new BadRequestException(CONTAINER_READ_EXCEPTION);
         }
     }
 }

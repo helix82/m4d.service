@@ -71,7 +71,16 @@ secret:
     AUTOSIGN_PINCODE: MTIzNA==
     AUTOSIGN_IS_DETACHED: dHJ1ZQ==
     AUTOSIGN_SIG_TYPE: Q0FkRVNfQkVT
-    FNS_SEND_REGISTRATION_REQUEST_M4D_URI: aHR0cHM6Ly9wdnYtYWRhcHRlci5yZWwuemsuZXNzb2NvZGUucnUvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJlZ2lzdHJhdGlvbi1yZXF1ZXN0LWZpbGU=
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-registration-request-file
+    FNS_SEND_REGISTRATION_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJlZ2lzdHJhdGlvbi1yZXF1ZXN0LWZpbGU=
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-status-request-json
+    FNS_SEND_STATUS_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXN0YXR1cy1yZXF1ZXN0LWpzb24=
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-revocation-request-file
+    FNS_SEND_REVOKE_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJldm9jYXRpb24tcmVxdWVzdC1maWxl
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/inbox/
+    FNS_RECEIVE_RESPONSE_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9pbmJveC8=
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/inbox/json/
+    FNS_RECEIVE_JSON_RESPONSE_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9pbmJveC9qc29uLw==
 
     RESOURCE_ACCESS: cGVw
     RPD_LIFESPAN_CACHE: MzA=
@@ -129,6 +138,10 @@ env:
   AUTOSIGN_IS_DETACHED: AUTOSIGN_IS_DETACHED
   AUTOSIGN_SIG_TYPE: AUTOSIGN_SIG_TYPE
   FNS_SEND_REGISTRATION_REQUEST_M4D_URI: FNS_SEND_REGISTRATION_REQUEST_M4D_URI
+  FNS_SEND_STATUS_REQUEST_M4D_URI: FNS_SEND_STATUS_REQUEST_M4D_URI
+  FNS_SEND_REVOKE_REQUEST_M4D_URI: FNS_SEND_REVOKE_REQUEST_M4D_URI
+  FNS_RECEIVE_RESPONSE_M4D_URI: FNS_RECEIVE_RESPONSE_M4D_URI
+  FNS_RECEIVE_JSON_RESPONSE_M4D_URI: FNS_RECEIVE_JSON_RESPONSE_M4D_URI
   SPRING_LIQUIBASE_CONTEXTS: SPRING_LIQUIBASE_CONTEXTS
 
 appName: m4d

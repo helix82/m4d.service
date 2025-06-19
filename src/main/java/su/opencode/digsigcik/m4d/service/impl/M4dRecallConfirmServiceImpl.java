@@ -26,7 +26,7 @@ import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.UUID;
 
-import static su.opencode.digsigcik.m4d.util.Constants.MRPA_RECALL_CONFIRM_IS_NULL;
+import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Service
 @Primary
@@ -76,7 +76,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
             throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
         }
         if (m4dRecallConfirm.getSigFileRegisteredPep()!=null) {
-            throw new BadRequestException("Подтверждение регистрации отзыва МЧД в ПЭП уже подписано");
+            throw new BadRequestException(MRPA_RECALL_CONFIRM_PEP_SIG);
         }
         String filename = signature.getOriginalFilename();
         M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.getBytes());
@@ -97,7 +97,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
             throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
         }
         if (m4dRecallConfirm.getSigFileRegisteredRr()!=null) {
-            throw new BadRequestException("Подтверждение регистрации отзыва МЧД в РР уже подписано");
+            throw new BadRequestException(MRPA_RECALL_CONFIRM_RR_SIG);
         }
         String filename = signature.getOriginalFilename();
         M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.getBytes());

@@ -105,7 +105,7 @@ public class M4dCredentialController {
     public ResponseEntity<?> findCredentialByCodeOrName(@PathVariable @Parameter(name = "codeOrName",
             description = PARAMETER_CREDENTIAL_CODE_OR_NAME_DESCRIPTION, example = "EMPOWER") String codeOrName) {
         if (codeOrName == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("CodeOrName is null"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(STRING_FIND_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         List<Credential> response;
         try {
@@ -124,7 +124,7 @@ public class M4dCredentialController {
     @GetMapping("mrpa-id/{mrpaId}")
     public ResponseEntity<?> findCredentialByMrpaId(@PathVariable @Parameter(name = "mrpaId") Long mrpaId) {
         if (mrpaId == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("mrpaId is null"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         List<Credential> response;
         try {
@@ -144,10 +144,10 @@ public class M4dCredentialController {
     public ResponseEntity<?> updateCredential(@RequestBody CredentialDto credentialDTO) {
         Credential credential = convertToEntity(credentialDTO);
         if (credential == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("Credential is null"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(CREDENTIAL_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         if (credential.getId() == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString("ID credential is null"), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(CREDENTIAL_ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
         Credential response;
         try {
