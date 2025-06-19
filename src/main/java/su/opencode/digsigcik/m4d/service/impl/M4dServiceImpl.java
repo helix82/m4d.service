@@ -18,6 +18,7 @@ import org.xml.sax.SAXParseException;
 import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.response.M4dCountAndRevokeCountResponseDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.enums.*;
@@ -200,10 +201,10 @@ public class M4dServiceImpl implements M4dService {
         m4d.setPrincipalDetailId(principDetailId);
         m4d.setRepresentativeId(represId);
         m4d.setRepresentativeDetailId(represDetailId);
-        if (m4d.getStatus()==null){
+        if (m4d.getStatus() == null) {
             m4d.setStatus(StatusM4dTypeEnum.NEW.toString());
         }
-        if (m4d.getIsSubTrust()==null){
+        if (m4d.getIsSubTrust() == null) {
             m4d.setIsSubTrust(false);
         }
 
@@ -340,10 +341,10 @@ public class M4dServiceImpl implements M4dService {
             existsPrincipalDetail = this.principalDetailService.findByPrincipalDetailId(m4d.getPrincipalDetailId());
             if (existsPrincipalDetail != null && existsPrincipalDetail.isActive()) {
                 if (!existsPrincipalDetail.getJobTitle().equals(principalDetail.getJobTitle()) || !existsPrincipalDetail.getName().equals(principalDetail.getName()) ||
-                !existsPrincipalDetail.getSurname().equals(principalDetail.getSurname()) || !existsPrincipalDetail.getPatronymic().equals(principalDetail.getPatronymic())) {
+                        !existsPrincipalDetail.getSurname().equals(principalDetail.getSurname()) || !existsPrincipalDetail.getPatronymic().equals(principalDetail.getPatronymic())) {
                     PrincipalDetail respPrincipalDetail;
                     try {
-                        principalDetail.setVersion(existsPrincipalDetail.getVersion()+1);
+                        principalDetail.setVersion(existsPrincipalDetail.getVersion() + 1);
                         principalDetail.setActive(true);
                         principalDetail.setPrincipalId(principId);
                         respPrincipalDetail = this.principalDetailService.savePrincipalDetail(principalDetail);
@@ -402,10 +403,10 @@ public class M4dServiceImpl implements M4dService {
                 if (!existsRepresentativeDetail.getName().equals(representativeDetail.getName()) || !existsRepresentativeDetail.getSurname().equals(representativeDetail.getSurname())
                         || !existsRepresentativeDetail.getPatronymic().equals(representativeDetail.getPatronymic()) || !existsRepresentativeDetail.getSeriesNumber().equals(representativeDetail.getSeriesNumber())
                         || !existsRepresentativeDetail.getDateIssue().equals(representativeDetail.getDateIssue()) || !existsRepresentativeDetail.getWhoIssue().equals(representativeDetail.getWhoIssue())
-                        || !existsRepresentativeDetail.getDepartmentCode().equals(representativeDetail.getDepartmentCode())){
+                        || !existsRepresentativeDetail.getDepartmentCode().equals(representativeDetail.getDepartmentCode())) {
                     RepresentativeDetail respRepresentativeDetail;
                     try {
-                        representativeDetail.setVersion(existsRepresentativeDetail.getVersion()+1);
+                        representativeDetail.setVersion(existsRepresentativeDetail.getVersion() + 1);
                         representativeDetail.setActive(true);
                         representativeDetail.setRepresentativeId(represId);
                         respRepresentativeDetail = this.representativeDetailService.saveRepresentativeDetail(representativeDetail);
@@ -532,12 +533,12 @@ public class M4dServiceImpl implements M4dService {
             }
             this.m4dRepository.deleteById(id);
             List<M4d> m4ds = this.m4dRepository.findByPrincipalId(m4d.getPrincipalId());
-            if(m4ds.isEmpty()){
+            if (m4ds.isEmpty()) {
                 this.principalService.deletePrincipal(m4d.getPrincipalId());
                 this.principalDetailService.deletePrincipalDetailByPrincipalId(m4d.getPrincipalId());
             }
             List<M4d> m4ds1 = this.m4dRepository.findByRepresentativeId(m4d.getRepresentativeId());
-            if(m4ds1.isEmpty()){
+            if (m4ds1.isEmpty()) {
                 this.representativeService.deleteRepresentative(m4d.getRepresentativeId());
                 this.representativeDetailService.deleteRepresentativeDetailByRepresId(m4d.getRepresentativeId());
             }
@@ -551,7 +552,7 @@ public class M4dServiceImpl implements M4dService {
     public List<M4dRegistryResponseDto.CredentialDto> getCredentialByMrpaRegistryId(Long mrpaId) {
         List<Credential> credentials = this.credentialService.findCredentialByMrpaId(mrpaId);
         List<M4dRegistryResponseDto.CredentialDto> credentialDTOList = new ArrayList<>();
-        if (!credentials.isEmpty()){
+        if (!credentials.isEmpty()) {
             for (Credential c : credentials) {
                 M4dRegistryResponseDto.CredentialDto credentialDTO = new M4dRegistryResponseDto.CredentialDto();
                 credentialDTO.setId(c.getId());
@@ -610,6 +611,15 @@ public class M4dServiceImpl implements M4dService {
                     }
                 })
                 .orElseThrow(() -> new BadRequestException(String.format(M4D_EXCEPRION_NOT_FOUND, id)));
+    }
+
+    @Override
+    public M4dCountAndRevokeCountResponseDto countM4dAndRevoke(Authentication authentication, String status) {
+        Set<String> setINNs = userCertificateService.getUserCertificateINNs(authentication);
+        long m4dCount = m4dRepository.countM4dByStatusAndPrincipalInns(setINNs, status);
+        long m4dRevokeCount = m4dRecallService.countM4dRevokeByInnsAndStatus(setINNs, status);
+
+        return new M4dCountAndRevokeCountResponseDto(m4dCount, m4dRevokeCount);
     }
 
     public String getStatusM4d(Long id) throws ParseException {
@@ -690,38 +700,38 @@ public class M4dServiceImpl implements M4dService {
                 recallDto.setStatusInRr(m4dRecall.getStatusInRr());
                 recallDto.setErrorInRrDetail(m4dRecall.getErrorInRrDetail());
                 m4DRegistryResponseDto.setRecall(recallDto);
-                if (m4dRecall.getSigFile() != null){
+                if (m4dRecall.getSigFile() != null) {
                     M4dFile m4dFileRecall;
-                        m4dFileRecall = this.m4dFileService.findM4dFileById(m4dRecall.getSigFile().getId());
-                        if (m4dFileRecall != null) {
-                            M4dRegistryResponseDto.RecallDto.SigFileRecallDto sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
-                            if (isBase64(sigFileDTO.getContent())) {
-                                sigFileDTO.setContent(new String(Base64.getDecoder().decode(sigFileDTO.getContent())));
-                            } else {
-                                sigFileDTO.setContent(sigFileDTO.getContent());
-                            }
-                            if (!withRecallSigFile) {
-                                sigFileDTO.setContent(null);
-                            }
-                            m4DRegistryResponseDto.recall.setSigFile(sigFileDTO);
+                    m4dFileRecall = this.m4dFileService.findM4dFileById(m4dRecall.getSigFile().getId());
+                    if (m4dFileRecall != null) {
+                        M4dRegistryResponseDto.RecallDto.SigFileRecallDto sigFileDTO = convertSigFileRecallToDto(m4dFileRecall);
+                        if (isBase64(sigFileDTO.getContent())) {
+                            sigFileDTO.setContent(new String(Base64.getDecoder().decode(sigFileDTO.getContent())));
+                        } else {
+                            sigFileDTO.setContent(sigFileDTO.getContent());
                         }
+                        if (!withRecallSigFile) {
+                            sigFileDTO.setContent(null);
+                        }
+                        m4DRegistryResponseDto.recall.setSigFile(sigFileDTO);
+                    }
                 }
                 if (m4dRecall.getXmlFile() != null) {
                     M4dFile xmlFile;
-                        xmlFile = this.m4dFileService.findM4dFileById(m4dRecall.getXmlFile().getId());
-                        if (xmlFile != null) {
-                            M4dRegistryResponseDto.RecallDto.XmlFileRecallDto xmlFileDTO = convertXmlFileRecallToDto(xmlFile);
-                            if (isBase64(xmlFileDTO.getContent())) {
-                                xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
-                            } else {
-                                xmlFileDTO.setContent(xmlFileDTO.getContent());
-                            }
-                            if (!withRecallXmlFile) {
-                                xmlFileDTO.setContent(null);
-                            }
-                            m4DRegistryResponseDto.recall.setXmlFile(xmlFileDTO);
-                            m4DRegistryResponseDto.recall.setArgument(getArgumentFromXml(xmlFile));
+                    xmlFile = this.m4dFileService.findM4dFileById(m4dRecall.getXmlFile().getId());
+                    if (xmlFile != null) {
+                        M4dRegistryResponseDto.RecallDto.XmlFileRecallDto xmlFileDTO = convertXmlFileRecallToDto(xmlFile);
+                        if (isBase64(xmlFileDTO.getContent())) {
+                            xmlFileDTO.setContent(new String(Base64.getDecoder().decode(xmlFileDTO.getContent())));
+                        } else {
+                            xmlFileDTO.setContent(xmlFileDTO.getContent());
                         }
+                        if (!withRecallXmlFile) {
+                            xmlFileDTO.setContent(null);
+                        }
+                        m4DRegistryResponseDto.recall.setXmlFile(xmlFileDTO);
+                        m4DRegistryResponseDto.recall.setArgument(getArgumentFromXml(xmlFile));
+                    }
                 }
             }
         } catch (Exception e) {
@@ -968,7 +978,7 @@ public class M4dServiceImpl implements M4dService {
             }
             Representative representative = new Representative();
             RepresentativeDetail represDetail = new RepresentativeDetail();
-            for (M4dXml.Document.PowerAttorneys.InfoRepresentative c: m4dXml.document.powerAttorneys.infoRepresentative) {
+            for (M4dXml.Document.PowerAttorneys.InfoRepresentative c : m4dXml.document.powerAttorneys.infoRepresentative) {
                 if (Objects.equals(c.getTypeRepresentative(), "3")) {
                     if (c.representative.detailRepresentative != null) {
                         representative.setInn(c.representative.detailRepresentative.getInn());
@@ -1013,7 +1023,7 @@ public class M4dServiceImpl implements M4dService {
         if (m4d == null) {
             throw new BadRequestException(MRPA_IS_NULL);
         }
-        if (m4d.getSigFile()!=null) {
+        if (m4d.getSigFile() != null) {
             throw new BadRequestException(MRPA_REGISTRY_SIG);
         }
         M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.getBytes());
@@ -1469,7 +1479,7 @@ public class M4dServiceImpl implements M4dService {
                 m4d.setStatusInRr(StatusM4dInRrTypeEnum.ERROR.toString());
                 String error = String.format(RESULT_SEND_ERROR_CODE_TITLE, m4dFnsDataResponse.getError().getStatus(), m4dFnsDataResponse.getError().getTitle());
                 if (m4dFnsDataResponse.getError().getDetail() != null && !m4dFnsDataResponse.getError().getDetail().isEmpty()) {
-                    error = error  + String.format(RESULT_SEND_ERROR_DETAIL, m4dFnsDataResponse.getError().getDetail());
+                    error = error + String.format(RESULT_SEND_ERROR_DETAIL, m4dFnsDataResponse.getError().getDetail());
                 }
                 m4d.setErrorInRrDetail(error);
                 M4d m4dSaved = null;
@@ -1503,7 +1513,7 @@ public class M4dServiceImpl implements M4dService {
                 rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
                 return report;
             } else {
-                if (m4dFnsDataResponse.getStatus().equals(StatusRequestTypeEnum.ACTIVE.toString()) || m4dFnsDataResponse.getStatus().equals(StatusRequestTypeEnum.CREATED.toString()) || m4dFnsDataResponse.getStatus().equals(StatusRequestTypeEnum.EXPIRED.toString()) ) {
+                if (m4dFnsDataResponse.getStatus().equals(StatusRequestTypeEnum.ACTIVE.toString()) || m4dFnsDataResponse.getStatus().equals(StatusRequestTypeEnum.CREATED.toString()) || m4dFnsDataResponse.getStatus().equals(StatusRequestTypeEnum.EXPIRED.toString())) {
                     m4d.setStatusInRr(StatusM4dInRrTypeEnum.REGISTERED.toString());
                 } else if (m4dFnsDataResponse.getStatus().equals(StatusRequestTypeEnum.REVOKED.toString())) {
                     m4d.setStatusInRr(StatusM4dInRrTypeEnum.REVOKED.toString());
@@ -1601,7 +1611,7 @@ public class M4dServiceImpl implements M4dService {
                     m4dRequestSearch.setStatus(StatusRequestTypeEnum.ERROR.toString());
                     String error = String.format(RESULT_SEND_ERROR_CODE_TITLE, m4dFnsDataResponse.getError().getStatus(), m4dFnsDataResponse.getError().getTitle());
                     if (m4dFnsDataResponse.getError().getDetail() != null) {
-                        error = error  + String.format(RESULT_SEND_ERROR_DETAIL, m4dFnsDataResponse.getError().getDetail());
+                        error = error + String.format(RESULT_SEND_ERROR_DETAIL, m4dFnsDataResponse.getError().getDetail());
                     }
                     m4dRequestSearch.setErrorDetail(error);
                     m4dRequestSearch.setStatusDate(DateUtils.convertStringToLocalDateTime(DateUtils.getCurrentDate()));
@@ -1648,7 +1658,7 @@ public class M4dServiceImpl implements M4dService {
                     }
                     M4dRequestSearch m4dRequestSearchSaved;
                     m4dRequestSearchSaved = this.m4dRequestService.updateM4dRequestSearch(m4dRequestSearch);
-                    if(m4dRequestSearchSaved == null) {
+                    if (m4dRequestSearchSaved == null) {
                         throw new BadRequestException(MRPA_REGISTRY_STATUS_UPDATE_ERROR + m4dFnsDataResponse.getGuid());
                     }
                     ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
@@ -1672,11 +1682,11 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
-    public String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo){
+    public String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo) {
         if (m4dResponseInfo.getError() != null) {
             String error = String.format(RESULT_SEND_ERROR_CODE_TITLE, m4dResponseInfo.getError().getStatus(), m4dResponseInfo.getError().getTitle());
             if (m4dResponseInfo.getError().getDetail() != null) {
-                error = error  + String.format(RESULT_SEND_ERROR_DETAIL, m4dResponseInfo.getError().getDetail());
+                error = error + String.format(RESULT_SEND_ERROR_DETAIL, m4dResponseInfo.getError().getDetail());
             }
             M4d m4d = this.m4dRepository.findByGuid(m4dResponseInfo.getPoaNumber());
             if (m4d == null) {
