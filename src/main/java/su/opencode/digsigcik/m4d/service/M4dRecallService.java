@@ -9,6 +9,7 @@ import su.opencode.digsigcik.m4d.model.M4dRecall;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Set;
 
 public interface M4dRecallService {
     M4dRecall saveM4dRecall(Authentication authentication, M4dRecall m4dRecall, String xmlString);
@@ -25,4 +26,5 @@ public interface M4dRecallService {
     Long uploadSig(Authentication authentication, Long id, MultipartFile container) throws Exception;
     String getHashFromXmlString(String xmlString) throws Exception;
     String uploadResultSendM4dRevokeToRR(M4dRevokeResponseInfo m4dRevokeResponseInfo);
+    long countM4dRevokeByInnsAndStatus(Set<String> inns, String status);
 }

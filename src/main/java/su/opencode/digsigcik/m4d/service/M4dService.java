@@ -4,6 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
 import su.opencode.digsigcik.m4d.dto.*;
+import su.opencode.digsigcik.m4d.dto.response.M4dCountAndRevokeCountResponseDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.model.*;
 
@@ -52,4 +53,5 @@ public interface M4dService {
     ReportCheckStatusM4dDto updateStatusM4dRequestSearch(MultipartFile zipFile) throws IOException;
     String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo);
     M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile);
+    M4dCountAndRevokeCountResponseDto countM4dAndRevoke(Authentication authentication, String status);
 }
