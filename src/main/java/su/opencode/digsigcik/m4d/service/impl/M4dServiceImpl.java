@@ -783,7 +783,7 @@ public class M4dServiceImpl implements M4dService {
             report.setReport(rep);
             rep.setGuid(guidXml);
             rep.setStatusInRr(m4dRequestSearchSaved.getStatus());
-            rep.setErrorInRrDetail("Для проверки статуса обратитесь к ПВВ адаптеру");
+            rep.setErrorInRrDetail(CHECK_STATUS_IN_PVV_ADAPTER);
             rep.setStartDate(getStartDateM4dFromXml(m4dXml));
             rep.setEndDate(getEndDateM4dFromXml(m4dXml));
             rep.setCredentials(getCredentialM4dFromXml(m4dXml));

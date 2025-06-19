@@ -35,8 +35,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static su.opencode.digsigcik.m4d.util.Constants.MRPA_IS_NULL;
-import static su.opencode.digsigcik.m4d.util.Constants.MRPA_RECALL_IS_NULL;
+import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Service
 @Primary
@@ -115,7 +114,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     public void deleteMrpaRecallById(Long id) {
         M4dRecall m4dRecall = this.m4dRevokeRepository.findM4dRecallById(id);
         if (m4dRecall.getSigFile() != null) {
-            throw new BadRequestException("Удаление не возможно! Заявление на отзыв МЧД уже подписано.");
+            throw new BadRequestException(MRPA_RECALL_SIGN_CANNOT_DELETE);
         }
         this.m4dRevokeRepository.deleteById(id);
     }
@@ -191,7 +190,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
         }
         if (mrpaRecall.getSigFile()!=null) {
-            throw new BadRequestException("Заявление на отзыв МЧД было подписано ранее");
+            throw new BadRequestException(MRPA_RECALL_SIG);
         }
         M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.getBytes());
         M4dFile m4dFileSaved;
@@ -255,24 +254,24 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     @Override
     public String uploadResultSendM4dRevokeToRR(M4dRevokeResponseInfo m4dRevokeResponseInfo) {
         if (m4dRevokeResponseInfo.getTitle() != null) {
-            String error = "Код: " + m4dRevokeResponseInfo.getStatus() + ", Ошибка: " + m4dRevokeResponseInfo.getTitle();
+            String error = String.format(RESULT_SEND_ERROR_CODE_TITLE, m4dRevokeResponseInfo.getStatus(), m4dRevokeResponseInfo.getTitle());
             if (m4dRevokeResponseInfo.getDetail() != null) {
-                error = error  + ", Детали: " + m4dRevokeResponseInfo.getDetail();
+                error = error  + String.format(RESULT_SEND_ERROR_DETAIL, m4dRevokeResponseInfo.getDetail());
             }
             M4d m4d = this.m4dRepository.findByGuid(m4dRevokeResponseInfo.getPoaNumber());
             if (m4d == null) {
-                return "Ошибка загрузки результата регистрации отзыва мчд в рр: МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " не найдена в ПЭП";
+                return String.format(MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA_NOT_FOUND, m4dRevokeResponseInfo.getPoaNumber());
             }
             M4dRecall m4dRecall = this.m4dRevokeRepository.findM4dRecallByM4dId(m4d.getId());
             if (m4dRecall == null) {
-                return "Ошибка загрузки результата регистрации отзыва мчд в рр: Заявление на отзыв МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " не найдена в ПЭП";
+                return String.format(MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA_RECALL_NOT_FOUND, m4dRevokeResponseInfo.getPoaNumber());
             }
             m4dRecall.setStatusInRr("ERROR");
             m4dRecall.setErrorInRrDetail(error);
             M4dRecall m4dRecallSaved;
             m4dRecallSaved = this.updateMrpaRecall(m4dRecall);
             if (m4dRecallSaved == null) {
-                return "Ошибка загрузки результата регистрации отзыва мчд в рр: не удалось обновить статус заявления на отзыв МЧД с GUID=" + m4dRevokeResponseInfo.getPoaNumber() + " в ПЭП";
+                return String.format(MRPA_RECALL_UPLOAD_RESULT_SEND_RR_UPDATE_STATUS_ERROR, m4dRevokeResponseInfo.getPoaNumber());
             }
         }
         return null;

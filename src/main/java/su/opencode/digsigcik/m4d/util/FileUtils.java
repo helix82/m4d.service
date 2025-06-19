@@ -13,7 +13,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.w3c.dom.Document;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +27,7 @@ import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.zip.ZipFile;
 
 import static java.util.Objects.requireNonNull;
 
@@ -173,6 +177,35 @@ public class FileUtils {
             };
         } catch (IOException e) {
             throw new IllegalStateException("Не удалось прочитать файл", e);
+        }
+    }
+
+    public static File byteArrayResourceToTempFile(ByteArrayResource resource, String prefix, String suffix) throws IOException {
+        File tempFile = File.createTempFile(prefix, suffix);
+        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+            out.write(resource.getByteArray());
+        }
+        return tempFile;
+    }
+
+    public static boolean isZipFile(File file) {
+        try (ZipFile zipFile = new ZipFile(file)) {
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public static boolean isXmlFile(MultipartFile file) throws IOException {
+        File tempFile = FileUtils.byteArrayResourceToTempFile(new ByteArrayResource(file.getBytes()), file.getOriginalFilename(), ".tmp");
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(tempFile);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 }

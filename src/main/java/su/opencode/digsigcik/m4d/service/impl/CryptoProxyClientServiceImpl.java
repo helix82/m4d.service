@@ -14,7 +14,7 @@ import su.opencode.digsigcik.m4d.service.RestTemplateService;
 
 import java.util.Optional;
 
-import static su.opencode.digsigcik.m4d.util.Constants.CRYPTO_PROXY_EXCEPTION;
+import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Slf4j
 @Service
@@ -53,11 +53,11 @@ public class CryptoProxyClientServiceImpl implements CryptoProxyClientService {
         log.error("Ошибка при подписании документа облачной подписью: {}", responseBody, ex);
 
         if (responseBody.contains("invalid_grant")) {
-            return "Вы не зарегистрированы в КриптоПро Ключ";
+            return CRYPTO_PROXY_INVALID_GRANT;
         } else if (responseBody.contains("invalid_pin")) {
-            return "Неверный пин-код";
+            return CRYPTO_PROXY_INVALID_PIN;
         } else if (responseBody.contains("certificate_not_found_id")) {
-            return "Сертификат не был найден в КриптоПро Ключ";
+            return CRYPTO_PROXY_CERTIFICATE_NOT_FOUND;
         }
 
         return CRYPTO_PROXY_EXCEPTION;
