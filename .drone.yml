@@ -98,7 +98,7 @@ steps:
 #      - run
 
 
-  - name: create-helm-template
+  - name: create-helm-template-dev
     image: alpine/helm:3.12.3
     commands:
       - helm template m4d ./deploy/helm --namespace dev --values ./deploy/helm/ocode-dev-values.yaml --set image.tag=${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT} > ./deploy/helm/k8s-m4d.yaml
@@ -108,15 +108,23 @@ steps:
       branch:
         - master
 
-  - name: deploy
-    image: ghcr.io/bh90210/dron8s:latest
-    settings:
-      yaml: ./deploy/helm/k8s-m4d.yaml
-      tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
-      kubeconfig:
+  - name: deploy-dev
+    image: alpine/k8s:1.32.2
+    environment:
+      KUBECONFIG_CONTENT:
         from_secret: kubeconfig
+    commands:
+      - export KUBE_TMP_DIR=$(mktemp -d)
+      - echo "$KUBECONFIG_CONTENT" > $KUBE_TMP_DIR/config
+      - chmod 600 $KUBE_TMP_DIR/config
+      - echo "File permissions:"
+      - ls -la $KUBE_TMP_DIR/
+      - echo "Kubectl version:"
+      - kubectl version --client
+      - cat ./deploy/helm/k8s-m4d.yaml
+      - kubectl --kubeconfig=$KUBE_TMP_DIR/config apply -f ./deploy/helm/k8s-m4d.yaml
     depends_on:
-      - create-helm-template
+      - create-helm-template-dev
     when:
       branch:
         - master
@@ -142,12 +150,20 @@ steps:
         - rel
 
   - name: deploy-release
-    image: ghcr.io/bh90210/dron8s:latest
-    settings:
-      yaml: ./deploy/helm/k8s-m4d-combined.yaml
-      tag: ${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT}
-      kubeconfig:
+    image: alpine/k8s:1.32.2
+    environment:
+      KUBECONFIG_CONTENT:
         from_secret: kubeconfig
+    commands:
+      - export KUBE_TMP_DIR=$(mktemp -d)
+      - echo "$KUBECONFIG_CONTENT" > $KUBE_TMP_DIR/config
+      - chmod 600 $KUBE_TMP_DIR/config
+      - echo "File permissions:"
+      - ls -la $KUBE_TMP_DIR/
+      - echo "Kubectl version:"
+      - kubectl version --client
+      - cat ./deploy/helm/k8s-m4d-combined.yaml
+      - kubectl --kubeconfig=$KUBE_TMP_DIR/config apply -f ./deploy/helm/k8s-m4d-combined.yaml
     depends_on:
       - create-helm-template-release
     when:
@@ -272,7 +288,8 @@ steps:
     when:
       status: [ success ]
     depends_on:
-      - deploy
+      - deploy-dev
+      - deploy-release
 
   - name: notify-deploy-failure
     image: appleboy/drone-telegram
@@ -290,7 +307,8 @@ steps:
     when:
       status: [ failure ]
     depends_on:
-      - deploy
+      - deploy-dev
+      - deploy-release
 
   - name: notify-build-status
     image: appleboy/drone-telegram

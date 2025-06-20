@@ -54,4 +54,32 @@ public class M4dFnsDataResponse {
     @JsonProperty("issuerOgrnHash")
     @AllowAudit
     private String issuerOgrnHash;
+    @JsonProperty("error")
+    @AllowAudit
+    private Error error;
+
+    @Data
+    public static class Error {
+        @JsonProperty("detail")
+        @AllowAudit
+        private String detail; // текст ошибки
+        @JsonProperty("instance")
+        @AllowAudit
+        private String instance; // URL, идентифицирующий ошибку
+        @JsonProperty("meta")
+        @AllowAudit
+        private String meta; // Метаданные ошибки
+        @JsonProperty("status")
+        @AllowAudit
+        private Integer status; // HTTP статус
+        @JsonProperty("title")
+        @AllowAudit
+        private String title; // заголовок ошибки
+        @JsonProperty("type")
+        @AllowAudit
+        private String type; // код ошибки
+        @JsonProperty("dictionary_code")
+        @AllowAudit
+        private String dictionary_code; // Код ошибки в справочнике ERROR-кодов
+    }
 }

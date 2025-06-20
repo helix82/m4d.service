@@ -92,6 +92,8 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+  liquibase:
+    contexts: test
 
 #Swagger
 springdoc:
@@ -151,3 +153,5 @@ pvv:
   fns-send-registration-request-m4d: ${FNS_SEND_REGISTRATION_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-registration-request-file}
   fns-send-status-request-m4d: ${FNS_SEND_STATUS_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-status-request-json}
   fns-send-revoke-request-m4d: ${FNS_SEND_REVOKE_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-revocation-request-file}
+  fns-receive-response-m4d: ${FNS_RECEIVE_RESPONSE_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/inbox/}
+  fns-receive-json-response-m4d: ${FNS_RECEIVE_JSON_RESPONSE_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/inbox/json/}

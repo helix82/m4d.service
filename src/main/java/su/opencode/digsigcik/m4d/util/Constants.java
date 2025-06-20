@@ -5,8 +5,6 @@ package su.opencode.digsigcik.m4d.util;
  */
 
 public interface Constants {
-    String API_V_1_SES_FILES = "/api/v1/sesFiles";
-    String GET_CONTAINER = "/getContainer";
     // namespaces
     String XML_ELEMENT_MCHD = "Доверенность";
     String XML_ATTRIBUTE_MCHD_XSI = "xmlns:xsi";
@@ -134,6 +132,7 @@ public interface Constants {
     String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_INFO_GUID = "НомДовер";
 
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
+    String PARAMETER_MESSAGE_ID_DESCRIPTION = "MessageId";
     String PARAMETER_MRPA_GUID_DESCRIPTION = "GUID МЧД";
     String PARAMETER_REPRESENTATIVE_INN_DESCRIPTION = "ИНН представителя";
     String PARAMETER_MRPA_RECALL_ID_DESCRIPTION = "ИД заявления на отзыв МЧД";
@@ -154,20 +153,19 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
-    String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД в запросе РР МЧД";
+    String CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY = "Обновить статус МЧД по MessageId";
+    String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД";
     String CONTROLLER_MRPA_UPDATE_STATUS_DESCRIPTION = "Возвращает данные о статусе МЧД";
+    String CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION = "Обработать результат отправки МЧД на регистрацию в РР МЧД";
+    String CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION = "Обработать результат отправки МЧД на регистрацию в РР МЧД по MessageId";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
     String CONTROLLER_MRPA_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
     String CONTROLLER_MRPA_UPLOAD_SUMMARY = "Загрузить ЭП";
     String CONTROLLER_MRPA_UPLOAD_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
-    String CONTROLLER_MRPA_UPLOAD_XML_SUMMARY = "Импорт МЧД";
-    String CONTROLLER_MRPA_UPLOAD_XML_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
-    String CONTROLLER_MRPA_VERIFY_XML_SUMMARY = "Проверка МЧД в ПЭП или на РР ФНС";
-    String CONTROLLER_MRPA_VERIFY_XML_DESCRIPTION = "Возвращает результат проверки";
+    String CONTROLLER_MRPA_SEND_REQUEST_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на получение статуса МЧД в РР МЧД";
+    String CONTROLLER_MRPA_CHECK_BY_GUID_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС по Номеру доверенности (GUID)";
     String CONTROLLER_MRPA_CHECK_XML_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС";
     String CONTROLLER_MRPA_CHECK_XML_DESCRIPTION = "Возвращает отчёт результата проверки";
-    String CONTROLLER_MRPA_STATUS_VERIFY_XML_SUMMARY = "Получить статус проверки МЧД через РР ФНС";
-    String CONTROLLER_MRPA_STATUS_VERIFY_XML_DESCRIPTION = "Возвращает запись статуса проверки МЧД";
     String CONTROLLER_MRPA_CLEAR_SIG_SUMMARY = "Удалить ЭП МЧД";
     String CONTROLLER_MRPA_CLEAR_SIG_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY = "Получить список МЧД пользователя";
@@ -191,6 +189,8 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY = "Загрузить ЭП заявления на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY = "Получить XML отзыв МЧД и открепленную подпись в zip-архиве";
+    String CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION = "Обработать результат отправки отзыва МЧД на регистрацию в РР МЧД";
+    String CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION = "Обработать результат отправки отзыва МЧД на регистрацию в РР МЧД по MessageId";
     String CONTROLLER_MRPA_VALID_SCHEME_SUMMARY = "Проверить соответствие МЧД схеме";
     String CONTROLLER_MRPA_VALID_SCHEME_DESCRIPTION = "Возвращает JSON ответ результата проверки";
 
@@ -218,46 +218,97 @@ public interface Constants {
     String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
 
-    String NULL = "null";
-    String NOT_FOUND = "not found!";
-    String ID_IS_NULL = String.format("ID is %s", NULL);
-    String GUID_IS_NULL = String.format("GUID is %s", NULL);
-    String INN_IS_NULL = String.format("INN is %s", NULL);
+    String STRING_FIND_IS_NULL = "Строка поиска не указана";
+    String ID_IS_NULL = "ИД не указано";
+    String SIG_IS_NULL = "ЭП не передана";
+    String SIG_NOT_FOUND = "ЭП не передана";
+    String MESSAGE_ID_IS_NULL = "messageId не указан";
+    String GUID_IS_NULL = "Номер доверенности (GUID) не указан";
+    String INN_IS_NULL = "ИНН не указан";
     String MRPA_IS_NULL = "МЧД не найдена";
-    String MRPA_RECALL_IS_NULL = String.format("MRPA recall is %s", NULL);
+    String MRPA_RECALL_IS_NULL = "Заявление на отзыв МЧД не найдено";
     String MRPA_CONFIRM_IS_NULL = "Подтверждения МЧД не найдены";
+    String MRPA_CONFIRM_PEP_SIG = "Подтверждение регистрации МЧД в ПЭП уже подписано";
+    String MRPA_RECALL_CONFIRM_PEP_SIG = "Подтверждение регистрации отзыва МЧД в ПЭП уже подписано";
+    String MRPA_CONFIRM_RR_SIG = "Подтверждение регистрации МЧД в РР уже подписано";
+    String MRPA_RECALL_CONFIRM_RR_SIG = "Подтверждение регистрации отзыва МЧД в РР уже подписано";
     String MRPA_RECALL_CONFIRM_IS_NULL = "Подтверждения отзыва МЧД не найдены";
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
     String MRPA_RECALL_SIGN_CANNOT_DELETE = "Невозможно удалить! Заявление на отзыв МЧД уже подписано и отправлено в РР МЧД.";
-    String NULL_OR_EMPTY_ERROR_MESSAGE = String.format("%s or empty!", NULL);
-    String MRPA_REGISTRY_IS_NULL = String.format("Mrpa registry is %s!", NULL);
     String MRPA_REGISTRY_IS_EXISTS = "Добавляемая МЧД уже существует в базе";
     String MRPA_REGISTRY_NOT_FULL = "Недостаточно данных для сохранения МЧД";
-    String MRPA_REGISTRY_CREDENTIAL_IS_NULL = String.format("Assign Credential to Mrpa registry is %s!", NULL);
-    String MRPA_REGISTRY_XML_IS_NULL = "XML МЧД не найден";
     String MRPA_REGISTRY_WRONG_FORMAT = "Не верный формат ЭП";
     String MRPA_REGISTRY_WRONG_FORMAT_XML = "Не верный формат XML";
-    String MRPA_REGISTRY_XML_NOT_VERIFY = "XML не прошел проверку";
-    String MRPA_REGISTRY_NOT_VERIFY_REPORT = "Контейнер не прошел проверку (по отчёту верификации)";
-    String MRPA_REGISTRY_NOT_VERIFY_CONTENT = "Контейнер не прошел проверку (данные МЧД и контент контейнера не совпадают)";
-    String MRPA_RECALL_NOT_VERIFY_CONTENT = "Контейнер не прошел проверку (данные заявления МЧД и контент контейнера не совпадают)";
-    String MRPA_VERIFY_STATUS_IS_NULL = String.format("Mrpa verify status is %s!", NULL);
-    String ORGANISATION_IS_NULL = String.format("Organisation is %s!", NULL);
-    String PRINCIPAL_IS_NULL = String.format("Principal is %s!", NULL);
-    String REPRESENTATIVE_IS_NULL = String.format("Representative is %s!", NULL);
-    String CREDENTIAL_NOT_FOUND = String.format("Credential %s!", NOT_FOUND);
+    String MRPA_REGISTRY_SIG = "МЧД была подписана ранее";
+    String MRPA_RECALL_SIG = "Заявление на отзыв МЧД было подписано ранее";
+    String MRPA_REGISTRY_UPDATE_STATUS_ERROR = "В ПЭП не найдена МЧД или не найден запрос на получение статуса о МЧД в РР МЧД";
+    String MRPA_REGISTRY_UPLOAD_SIG_ERROR = "Ошибка при загрузке подписи МЧД";
+    String MRPA_REGISTRY_HASH_FILE_ERROR = "Хэш файла МЧД с GUID = %s не совпадает с хэшом файла МЧД полученного из РР";
+    String MRPA_REGISTRY_STATUS_UPDATE_ERROR = "Ошибка обновления статуса МЧД с GUID=";
+    String MRPA_REGISTRY_CONFIRM_SAVE_ERROR = "Ошибка сохранения квитанции и подписи регистрации МЧД в РР (МЧД GUID = %s )";
+    String MRPA_REGISTRY_IMPORT_ERROR = "Ошибка импорта МЧД";
+    String MRPA_RECALL_CONFIRM_SAVE_ERROR = "Ошибка сохранения квитанции и подписи регистрации заявления на отзыв МЧД в РР (МЧД GUID = %s )";
+    String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA = "Результат отправки отзыва МЧД на регистрацию в РР МЧД обработан";
+    String MRPA_REGISTRY_UPLOAD_RESULT_SEND_RR_MRPA = "Результат отправки МЧД на регистрацию в РР МЧД обработан";
+    String MRPA_REGISTRY_UPLOAD_RESULT_SEND_RR_MRPA_NOT_FOUND = "Ошибка загрузки результата регистрации мчд в рр: МЧД с GUID = %s не найдена в ПЭП";
+    String MRPA_REGISTRY_UPLOAD_RESULT_SEND_RR_UPDATE_STATUS_ERROR = "Ошибка загрузки результата регистрации мчд в рр: не удалось обновить статус МЧД с GUID = %s в ПЭП";
+    String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA_NOT_FOUND = "Ошибка загрузки результата регистрации отзыва мчд в рр: МЧД с GUID = %s не найдена в ПЭП";
+    String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA_RECALL_NOT_FOUND = "Ошибка загрузки результата регистрации отзыва мчд в рр: Заявление на отзыв МЧД с GUID = %s не найдено в ПЭП";
+    String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_UPDATE_STATUS_ERROR = "Ошибка загрузки результата регистрации отзыва мчд в рр: не удалось обновить статус заявления на отзыв МЧД с GUID = %s в ПЭП";
+    String MRPA_REQUEST_SEARCH_NOT_FOUND = "Не найден запрос на проверку статуса в РР";
+    String SEND_REQUEST_IN_PVV = "Запрос в ПВВ на получение статуса МЧД в РР МЧД отправлен";
+    String ORGANISATION_IS_NULL = "Указанная организация не найдена в справочнике организаций ПЭП";
+    String ORGANISATION_SAVE_ERROR = "Ошибка добавления организации";
+    String ORGANISATION_READ_ERROR = "Ошибка получения организации";
+    String PRINCIPAL_IS_NULL = "Запись о доверителе не найдена";
+    String REPRESENTATIVE_IS_NULL = "Запись о представителе не найдена";
+    String CREDENTIAL_NOT_FOUND = "Полномочие не найдено";
+    String CREDENTIAL_IS_NULL = "Полномочие не указано";
+    String CREDENTIAL_ID_IS_NULL = "ИД полномочия не указано";
     String CREDENTIAL_CODE_EXISTS = "Запись полномочия с таким кодом уже существует в базе";
+    String ORGANIZATION_INN_IS_NULL = "Не указано ИНН организации";
+    String PRINCIPAL_INN_IS_NULL = "Не указано ИНН доверителя";
+    String PRINCIPAL_SAVE_ERROR = "Ошибка сохранения основных данных доверителя в ПЭП";
+    String REPRESENTATIVE_SAVE_ERROR = "Ошибка сохранения основных данных представителя в ПЭП";
+    String PRINCIPAL_DETAIL_SAVE_ERROR = "Ошибка сохранения дополнительных данных доверителя в ПЭП";
+    String REPRESENTATIVE_DETAIL_SAVE_ERROR = "Ошибка сохранения дополнительных данных представителя в ПЭП";
+    String REPRESENTATIVE_INN_IS_NULL = "Не указано ИНН представителя";
+    String REPRESENTATIVE_SERIAL_NUMBER_IS_NULL = "Не указаны серия и номер паспорта представителя";
+    String CONVERT_FILE_TO_DOCUMENT_ERROR = "Ошибка конвертации Файла в тип Document";
+    String UNMARSHALING_ERROR = "ошибка унмаршалинга";
+    String XML_MRPA_NOT_FOUND = "не найдена запись о доверенности в xml-файле";
+    String XML_MRPA_GUID_NOT_FOUND = "не найден номер доверенности (guid) в xml-файле";
+    String TEMP_DIR_CREATE_ERROR = "Не удалось создать временную директорию";
+    String ZIP_UNPACK_ERROR = "Ошибка распаковки ZIP файла";
+    String ZIP_CREATE_ERROR = "Ошибка создания архива";
+    String ZIP_JSON_NOT_FOUND = "JSON-файл не найден в ZIP архиве";
+    String ZIP_JSON_FOUND_MORE_ONE = "В архиве найдено более одного JSON-файла";
+    String ZIP_XML_FOUND_MORE_TWO = "В архиве найдено более двух XML-файлов";
+    String ZIP_SIG_FOUND_MORE_TWO = "В архиве найдено более двух SIG-файлов";
+    String JSON_READ_ERROR = "Ошибка чтения JSON-файла";
+    String RESULT_SEND_ERROR_CODE_TITLE = "Код: %s, Ошибка: %s";
+    String RESULT_SEND_ERROR_DETAIL = ", Детали: %s";
+    String CHECK_STATUS_IN_PVV_ADAPTER = "Для проверки статуса обратитесь к ПВВ адаптеру";
+    //КриптоПро
+    String CRYPTO_PROXY_INVALID_GRANT = "Вы не зарегистрированы в КриптоПро Ключ";
+    String CRYPTO_PROXY_INVALID_PIN = "Неверный пин-код";
+    String CRYPTO_PROXY_CERTIFICATE_NOT_FOUND = "Сертификат не был найден в КриптоПро Ключ";
+    String CRYPTO_PROXY_EXCEPTION = "Ошибка на Крипто-Прокси";
+
 
     String M4D_EXCEPRION_NOT_FOUND = "МЧД с данным id = %s не найден";
-    String CRYPTO_PROXY_EXCEPTION = "Ошибка на Крипто-Прокси";
     String SIG = "sig";
 
     //Ошибки с файлами
     String FILE_CONVERT_BASE64_EXCEPTION = "Содержимое файла не было закодировано в Base64";
-    String SOURCE_SIG_CREATE_EXCEPTION = "Ошибка при создании файла с подписью/подписи";
     String MAX_SIZE_CONTENT_EXCEPTION = "Размер закодированного файла превышает %s";
     String DETACHED_CONTENT_EXCEPTION = "Исходный файл для открепленной подписи отсутствует или пуст.";
+    String NO_XML = "Переданный файл не является XML-файлом";
+    String NO_ZIP = "Переданный файл не является ZIP-архивом";
+    String XML_NOT_SCHEMA_EMCHD_1 = "XML файл не соответствует схеме EMCHD_1";
+    String XML_IS_NULL = "XML-файл не указан";
 
     //Ошибки с контейнерами
     String CONTAINER_CREATE_EXCEPTION = "Ошибка при создании контейнера";
+    String CONTAINER_READ_EXCEPTION = "Ошибка получения данных";
 }

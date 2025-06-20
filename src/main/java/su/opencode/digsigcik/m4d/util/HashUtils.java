@@ -4,7 +4,6 @@ import lombok.experimental.UtilityClass;
 import org.bitcoinj.core.Base58;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Base64;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -13,13 +12,10 @@ import java.security.Security;
 
 @UtilityClass
 public class HashUtils {
-    @Value("${m4d.soul}")
-    private static String M4D_SOUL;
-    public static String getHash(byte[] origin) throws NoSuchAlgorithmException {
+
+    public static String getHash(byte[] origin, String salt) throws NoSuchAlgorithmException {
         String base64Encoded = Base64.toBase64String(origin);
-        // TODO: @helix82 вынести соль во внешний параметр
-        //String saltedBase64 = M4D_SOUL + base64Encoded + M4D_SOUL;
-        String saltedBase64 = '"' + base64Encoded + '"';
+        String saltedBase64 = salt + base64Encoded + salt;
         byte[] hash = hashGOST3411_2012_256(saltedBase64.getBytes(StandardCharsets.UTF_8));
         return Base58.encode(hash);
     }

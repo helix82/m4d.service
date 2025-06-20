@@ -6,14 +6,12 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum StatusRequestTypeEnum {
-    ONCHECK("Проверка"),
+    ONCHECK("Идет проверка в РР"),
     ERROR("Ошибка"),
-    PROCESSING("Обрабатывается"),
-    REJECTED("Отклонена"),
-    CREATED("Создана"),
+    CREATED("Не наступил срок действия"),
     ACTIVE("Действует"),
     EXPIRED("Действие истекло"),
-    REVOKED("Действие прекращено");
+    REVOKED("Отозвана");
 
     private final String title;
 }

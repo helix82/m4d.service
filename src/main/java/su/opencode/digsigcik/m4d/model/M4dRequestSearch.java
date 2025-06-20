@@ -46,4 +46,40 @@ public class M4dRequestSearch {
     @JsonProperty("modifyDate")
     @AllowAudit
     private LocalDateTime modifyDate;
+
+    @Column(name = "status")
+    @Schema(example = "")
+    @JsonProperty("status")
+    @AllowAudit
+    private String status;
+
+    @Column(name = "error_detail")
+    @Schema(example = "")
+    @JsonProperty("errorDetail")
+    @AllowAudit
+    private String errorDetail;
+
+    @Column(name = "status_date")
+    @Schema(example = "")
+    @JsonProperty("statusDate")
+    @AllowAudit
+    private LocalDateTime statusDate;
+
+    @Column(name = "registration_date")
+    @Schema(example = "")
+    @JsonProperty("registrationDate")
+    @AllowAudit
+    private LocalDateTime registrationDate;
+
+    @Column(name = "start_date")
+    @Schema(example = "")
+    @JsonProperty("startDate")
+    @AllowAudit
+    private LocalDateTime startDate;
+
+    @Column(name = "end_date")
+    @Schema(example = "")
+    @JsonProperty("endDate")
+    @AllowAudit
+    private LocalDateTime endDate;
 }

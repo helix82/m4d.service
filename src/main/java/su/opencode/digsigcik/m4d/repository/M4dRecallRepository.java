@@ -13,12 +13,13 @@ import java.util.Set;
 
 public interface M4dRecallRepository extends JpaRepository<M4dRecall, Long> {
     M4dRecall findM4dRecallById(Long id);
+
     M4dRecall findM4dRecallByM4dId(Long m4dId);
 
     @Query("SELECT new su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto("
             + "m4d.id, m4d.guid, p.id, p.inn, p.snils, pd.id, pd.jobTitle, pd.name, pd.surname, pd.patronymic, "
             + "r.id, r.inn, r.snils, r.birthDate, rd.name, rd.surname, rd.patronymic, "
-            + "m4d.startDate, m4d.endDate, m4d.createDate, m4drc.id, m4drc.status) "
+            + "m4d.startDate, m4d.endDate, m4d.createDate, m4d.isSubTrust, m4drc.id, m4drc.status, m4drc.statusInRr, m4drc.errorInRrDetail) "
             + "from M4dRecall m4drc "
             + "join M4d m4d on m4d.id = m4drc.m4d.id "
             + "join Principal p on p.id = m4d.principalId "
@@ -36,5 +37,12 @@ public interface M4dRecallRepository extends JpaRepository<M4dRecall, Long> {
     @Modifying
     @Transactional
     @Query(value = "UPDATE m4d_revoke SET status = :status WHERE id = :id", nativeQuery = true)
-    void updateStatusMrpaRecallById(@Param("id") Long id, @Param("status")  String status);
+    void updateStatusMrpaRecallById(@Param("id") Long id, @Param("status") String status);
+
+    @Query("SELECT COUNT(*) " +
+            "FROM M4dRecall mr JOIN M4d m ON m.id=mr.m4d.id " +
+            "JOIN Principal r ON r.id=m.principalId " +
+            "WHERE r.inn IN :inns " +
+            "AND mr.status=:status")
+    long countM4dRecallByStatusAndPrincipalInns(Set<String> inns, String status);
 }

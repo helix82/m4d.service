@@ -63,3 +63,20 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/create_table_m4d_confirm.sql
   - include:
       file: db/changelog/migrations/v1.0/create_table_m4d_revoke_confirm.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_registry_2.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_revoke_2.sql
+  - include:
+      file: db/changelog/migrations/v1.0/restruct_table_m4d_request_search.sql
+  - include:
+      file: db/changelog/migrations/v1.0/add_field_issubtrust_in_table_m4d_registry.sql
+  - include:
+      file: db/changelog/migrations/v1.0/delete_data_in_prod.sql
+      context: prod
+  - include:
+      file: db/changelog/migrations/v1.0/create_table_user_permissions.sql
+  - include:
+      file: db/changelog/migrations/v1.0/delete_unique_from_table_m4d_confirm.sql
+  - include:
+      file: db/changelog/migrations/v1.0/delete_unique_from_table_m4d_revoke_confirm.sql
