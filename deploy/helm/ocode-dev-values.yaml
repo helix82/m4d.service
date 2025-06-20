@@ -97,6 +97,12 @@ secret:
     DISABLE_TLS_CHECK: ZmFsc2U=
     SPRING_LIQUIBASE_CONTEXTS: dGVzdA==
 
+tlsConfig:
+  name: tls-config-m4d
+
+scriptConfig:
+  name: script-config-m4d
+
 jvmOptions:
   xms: 512m
   xmx: 750m

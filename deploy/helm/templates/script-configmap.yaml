@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.scriptConfig.name }}
+  namespace: {{ .Values.namespace }}
+data:
+  setup-certs.sh: |
+       #!/bin/sh
+       set -e
+       
+       # 1. Копируем дефолтный truststore в workdir
+       cp $JAVA_HOME/lib/security/cacerts /workdir/cacerts
+       # 2. Создаем директорию для дополнительных сертификатов
+       mkdir -p /workdir/additional-certs
+       # 3. Копируем сертификаты из ConfigMap
+       cp /etc/ssl/certs/* /workdir/additional-certs/ || echo "No certs in ConfigMap"
+       # 4. Импортируем все .crt и .pem файлы
+       find /workdir/additional-certs -type f \( -name "*.crt" -o -name "*.pem" \) | while read cert_file; do
+         alias_name=$(basename "$cert_file" | sed 's/\.[^.]*$//')
+         echo "Adding certificate: $alias_name from $cert_file"
+
+         if grep -q "BEGIN CERTIFICATE" "$cert_file"; then
+           # Добавляем в Java truststore
+           if ! keytool -importcert -noprompt -trustcacerts \
+               -alias "$alias_name" \
+               -file "$cert_file" \
+               -keystore /workdir/cacerts \
+               -storepass changeit >/dev/null 2>&1; then
+             echo "WARNING: Failed to add to Java truststore: $cert_file"
+           fi
+
+           ln -sf "$cert_file" /usr/local/share/ca-certificates/
+         fi
+       done
+
+       update-ca-certificates >/dev/null 2>&1 || true
+       echo "Certificates imported successfully!"
+
+  start-app.sh: |
+    #!/bin/sh
+    set -e
+    
+    export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+    echo "Detected JAVA_HOME: $JAVA_HOME"
+    
+    mkdir -p $(dirname "$JAVA_HOME/lib/security/cacerts")
+    ln -sf /workdir/cacerts "$JAVA_HOME/lib/security/cacerts"
+    
+    exec java \
+      "-Dcom.sun.management.jmxremote" \
+      "-Dcom.sun.management.jmxremote.port={{ .Values.jvmOptions.portJMX }}" \
+      "-Dcom.sun.management.jmxremote.authenticate={{ .Values.jvmOptions.authenticateJMX }}" \
+      "-Dcom.sun.management.jmxremote.ssl={{ .Values.jvmOptions.sslJMX }}" \
+      "-Djava.rmi.server.hostname={{ .Values.jvmOptions.hostnameJMX }}" \
+      "-Dcom.sun.management.jmxremote.local.only={{ .Values.jvmOptions.localOnlyJMX }}" \
+      "-Xms{{ .Values.jvmOptions.xms }}" \
+      "-Xmx{{ .Values.jvmOptions.xmx }}" \
+      "{{ .Values.jvmOptions.gc }}" \
+      "-Duser.timezone={{ .Values.jvmOptions.timezone }}" \
+      "-Dfile.encoding={{ .Values.jvmOptions.encoding }}" \
+      "-XX:MinHeapFreeRatio={{ .Values.jvmOptions.minHeapFreeRatio }}" \
+      "-XX:MaxHeapFreeRatio={{ .Values.jvmOptions.maxHeapFreeRatio }}" \
+      -jar "{{ .Values.jarFile }}"
