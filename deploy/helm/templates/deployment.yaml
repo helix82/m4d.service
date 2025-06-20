@@ -32,6 +32,18 @@ spec:
         {{- end }}
       {{- end }}
       terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: setup-certs
+          image: openjdk:11-jre
+          command: [ "/bin/sh", "/scripts/setup-certs.sh" ]
+          volumeMounts:
+            - name: tls-volume
+              mountPath: /etc/ssl/certs
+              readOnly: true
+            - name: workdir
+              mountPath: /workdir
+            - name: setup-script
+              mountPath: /scripts
       containers:
         - name: {{ .Values.appName }}-dev
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -43,23 +55,12 @@ spec:
             limits:
               cpu: {{ .Values.deployment.container.limits.cpu }}
               memory: {{ .Values.deployment.container.limits.memory }}
-          command:
-            - java
-            - "-Xms{{ .Values.jvmOptions.xms }}"
-            - "-Xmx{{ .Values.jvmOptions.xmx }}"
-            - "{{ .Values.jvmOptions.gc }}"
-            - "-Duser.timezone={{ .Values.jvmOptions.timezone }}"
-            - "-Dfile.encoding={{ .Values.jvmOptions.encoding }}"
-            - "-Dcom.sun.management.jmxremote"
-            - "-Dcom.sun.management.jmxremote.port={{ .Values.jvmOptions.portJMX }}"
-            - "-Dcom.sun.management.jmxremote.authenticate={{ .Values.jvmOptions.authenticateJMX }}"
-            - "-Dcom.sun.management.jmxremote.ssl={{ .Values.jvmOptions.sslJMX }}"
-            - "-Djava.rmi.server.hostname={{ .Values.jvmOptions.hostnameJMX }}"
-            - "-Dcom.sun.management.jmxremote.local.only={{ .Values.jvmOptions.localOnlyJMX }}"
-            - "-XX:MinHeapFreeRatio={{ .Values.jvmOptions.minHeapFreeRatio }}"
-            - "-XX:MaxHeapFreeRatio={{ .Values.jvmOptions.maxHeapFreeRatio }}"
-            - -jar
-            - "{{ .Values.jarFile }}"
+          command: [ "/bin/sh", "/scripts/start-app.sh" ]
+          volumeMounts:
+            - name: workdir
+              mountPath: /workdir
+            - name: setup-script
+              mountPath: /scripts
           ports:
             - containerPort: {{ .Values.service.port }}
             - containerPort: {{ .Values.service.portJMX }}
@@ -244,6 +245,15 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.FNS_RECEIVE_JSON_RESPONSE_M4D_URI }}
+      volumes:
+        - name: tls-volume
+          configMap:
+            name: {{ .Values.tlsConfig.name }}
+        - name: workdir
+          emptyDir: { }
+        - name: setup-script
+          configMap:
+            name: {{ .Values.scriptConfig.name }}
       imagePullSecrets:
         {{- range .Values.imagePullSecrets }}
         - name: {{ . }}

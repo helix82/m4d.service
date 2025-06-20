@@ -98,6 +98,12 @@ secret:
     DISABLE_TLS_CHECK: dHJ1ZQ==
     SPRING_LIQUIBASE_CONTEXTS: cHJvZA==
 
+tlsConfig:
+  name: tls-config-m4d
+
+scriptConfig:
+  name: script-config-m4d
+
 hostAliases:
   - ip: "10.2.180.209"
     hostnames:

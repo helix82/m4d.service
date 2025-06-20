@@ -2,7 +2,7 @@
 namespace: master
 
 image:
-  repository: 10.0.182.84:5000/sep/m4d.service
+  repository: 10.0.182.116:5000/sep/m4d.service
   tag: latest
   pullPolicy: Always
 
@@ -15,34 +15,35 @@ service:
 
 replicaCount: 1
 
+
 ingress:
   enabled: true
   annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
   tlsEnabled: false  # New parameter to control TLS
   hosts:
-    - host: m4d.sep.ok.test.st
+    - host: m4d.sep.zk.test.st
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
     - secretName: m4d-tls
       hosts:
-        - m4d.sep.ok.test.st
+        - m4d.sep.zk.test.st
 
 secret:
   enabled: true
   name: m4d-back-cred
   data:
-    #jdbc:postgresql://db-pgsql-n01.sep.ok.test.st:5432/m4d_db
-    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vZGItcGdzcWwtbjAxLnNlcC5vay50ZXN0LnN0OjU0MzIvbTRkX2Ri
+    #jdbc:postgresql://db-pgsql-n01.sep.zk.test.st:5432/m4d_db
+    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vZGItcGdzcWwtbjAxLnNlcC56ay50ZXN0LnN0OjU0MzIvbTRkX2Ri
     SPRING_DATASOURCE_USERNAME: cGVw
     SPRING_DATASOURCE_PASSWORD: NTFWeGM5akJzODd6bFM=
-    RPD_AUTHORIZATION_URI: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLm9rLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
-    OAUTH2_ISSUER_URL: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLm9rLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdA==
-    RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLm9rLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
+    RPD_AUTHORIZATION_URI: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLnprLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
+    OAUTH2_ISSUER_URL: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLnprLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdA==
+    RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLnprLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
     KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
-    SWAGGER_URL: aHR0cDovL200ZC5zZXAub2sudGVzdC5zdA==
+    SWAGGER_URL: aHR0cDovL200ZC5zZXAuemsudGVzdC5zdA==
     #http://synapi-service.master.svc.cluster.local/api/v1
     M4D_HANDBOOK_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjE=
     #http://synapi-service.master.svc.cluster.local/api/v1/user-certificate/me
@@ -70,16 +71,16 @@ secret:
     AUTOSIGN_PINCODE: MTIzNA==
     AUTOSIGN_IS_DETACHED: dHJ1ZQ==
     AUTOSIGN_SIG_TYPE: Q0FkRVNfQkVT
-    # http://pvv-adapter-service.master.svc.cluster.local:8078/api/v1/manual/rrm4d/send-registration-request-file
-    FNS_SEND_REGISTRATION_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzgvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJlZ2lzdHJhdGlvbi1yZXF1ZXN0LWZpbGU=
-    # http://pvv-adapter-service.master.svc.cluster.local:8078/api/v1/manual/rrm4d/send-status-request-json
-    FNS_SEND_STATUS_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzgvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXN0YXR1cy1yZXF1ZXN0LWpzb24=
-    # http://pvv-adapter-service.master.svc.cluster.local:8078/api/v1/manual/rrm4d/send-revocation-request-file
-    FNS_SEND_REVOKE_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzgvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJldm9jYXRpb24tcmVxdWVzdC1maWxl
-    # http://pvv-adapter-service.master.svc.cluster.local:8078/api/v1/manual/inbox/
-    FNS_RECEIVE_RESPONSE_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzgvYXBpL3YxL21hbnVhbC9pbmJveC8=
-    # http://pvv-adapter-service.master.svc.cluster.local:8078/api/v1/manual/inbox/json/
-    FNS_RECEIVE_JSON_RESPONSE_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzgvYXBpL3YxL21hbnVhbC9pbmJveC9qc29uLw==
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-registration-request-file
+    FNS_SEND_REGISTRATION_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJlZ2lzdHJhdGlvbi1yZXF1ZXN0LWZpbGU=
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-status-request-json
+    FNS_SEND_STATUS_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXN0YXR1cy1yZXF1ZXN0LWpzb24=
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-revocation-request-file
+    FNS_SEND_REVOKE_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJldm9jYXRpb24tcmVxdWVzdC1maWxl
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/inbox/
+    FNS_RECEIVE_RESPONSE_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9pbmJveC8=
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/inbox/json/
+    FNS_RECEIVE_JSON_RESPONSE_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9pbmJveC9qc29uLw==
 
     RESOURCE_ACCESS: cGVw
     RPD_LIFESPAN_CACHE: MzA=
@@ -88,6 +89,12 @@ secret:
     RPD_READ_TIMEOUT: MTAwMDA=
     DISABLE_TLS_CHECK: dHJ1ZQ==
     SPRING_LIQUIBASE_CONTEXTS: cHJvZA==
+
+tlsConfig:
+  name: tls-config-m4d
+
+scriptConfig:
+  name: script-config-m4d
 
 jvmOptions:
   xms: 512m
@@ -118,8 +125,8 @@ env:
   USER_CERTS_ME_URI: USER_CERTS_ME_URI
   CONTAINER_PART_URI: CONTAINER_PART_URI
   CONTAINER_PART_JSON_URI: CONTAINER_PART_JSON_URI
-  M4D_API_RR_FNS_URI: M4D_API_RR_FNS_URI
   CONTAINER_CREATE_URI: CONTAINER_CREATE_URI
+  M4D_API_RR_FNS_URI: M4D_API_RR_FNS_URI
   AUDIT_URL: AUDIT_URL
   SERVER_PORT: SERVER_PORT
   RESOURCE_ACCESS: RESOURCE_ACCESS
