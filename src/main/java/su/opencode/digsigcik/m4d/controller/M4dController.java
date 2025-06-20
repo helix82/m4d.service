@@ -619,7 +619,7 @@ public class M4dController {
     })
     @PutMapping(value = "/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateStatusM4dRequestSearch(@RequestParam("file") MultipartFile zipFile) throws IOException {
-        if (!FileUtils.isXmlFile(zipFile)) {
+        if (!FileUtils.isZipFile(zipFile)) {
             throw new BadRequestException(NO_ZIP);
         }
         ReportCheckStatusM4dDto report;
@@ -647,7 +647,7 @@ public class M4dController {
         File tempZipFile = FileUtils.byteArrayResourceToTempFile(res, messageId, ".zip");
         MultipartFile zipFile = new CustomMultipartFile(tempZipFile);
 
-        if (!FileUtils.isZipFile(tempZipFile)) {
+        if (!FileUtils.isZipFile(zipFile)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(NO_ZIP);
         }
         ReportCheckStatusM4dDto report;

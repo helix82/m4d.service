@@ -188,8 +188,9 @@ public class FileUtils {
         return tempFile;
     }
 
-    public static boolean isZipFile(File file) {
-        try (ZipFile zipFile = new ZipFile(file)) {
+    public static boolean isZipFile(MultipartFile file) throws IOException {
+        File tempFile = FileUtils.byteArrayResourceToTempFile(new ByteArrayResource(file.getBytes()), file.getOriginalFilename(), ".tmp");
+        try (ZipFile zipFile = new ZipFile(tempFile)) {
             return true;
         } catch (IOException e) {
             return false;
