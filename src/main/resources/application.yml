@@ -92,6 +92,7 @@ springdoc:
   server:
     url: ${SWAGGER_URL:http://localhost:8051}
     token-uri: ${RPD_SWAGGER_TOKEN_URI:https://sso.rpd.zk.test.st/realms/test/protocol/openid-connect/token}
+  show-actuator: true
 
 synapi:
   user-certs-me:
