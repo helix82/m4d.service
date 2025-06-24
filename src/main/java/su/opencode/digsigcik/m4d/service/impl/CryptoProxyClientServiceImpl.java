@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import su.opencode.digsigcik.dtos.cryptoproxy.sign.CAdESSignEvent;
-import su.opencode.digsigcik.m4d.exception.BadRequestException;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.service.CryptoProxyClientService;
 import su.opencode.digsigcik.m4d.service.RestTemplateService;
 

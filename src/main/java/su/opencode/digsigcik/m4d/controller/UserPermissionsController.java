@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
 import su.opencode.digsigcik.m4d.model.UserPermissions;
 import su.opencode.digsigcik.m4d.service.UserPermissionsService;
@@ -16,11 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.Constants.API_RESPONSE_CODE_200_MESSAGE;
+import static su.opencode.digsigcik.m4d.util.Constants.API_RESPONSE_CODE_400_MESSAGE;
 
 @RestController
 @RequiredArgsConstructor
-@M4dExceptionHandler
 @Tag(name = "User Permissions Controller")
 @RequestMapping("/api/v1/m4d/user-permissions")
 public class UserPermissionsController {

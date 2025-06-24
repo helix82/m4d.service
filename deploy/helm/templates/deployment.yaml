@@ -245,6 +245,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.FNS_RECEIVE_JSON_RESPONSE_M4D_URI }}
+            - name: WHITE_LIST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.WHITE_LIST }}
+            - name: ACTUATOR_ENDPOINTS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.ACTUATOR_ENDPOINTS }}
       volumes:
         - name: tls-volume
           configMap:
