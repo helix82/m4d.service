@@ -289,6 +289,7 @@ public interface Constants {
     String RESULT_SEND_ERROR_CODE_TITLE = "Код: %s, Ошибка: %s";
     String RESULT_SEND_ERROR_DETAIL = ", Детали: %s";
     String CHECK_STATUS_IN_PVV_ADAPTER = "Для проверки статуса обратитесь к ПВВ адаптеру";
+    String PVV_MESSAGE_ID_NOT_FOUND = "Не найден пакет обмена между контурами с messageId = ";
     //КриптоПро
     String CRYPTO_PROXY_INVALID_GRANT = "Вы не зарегистрированы в КриптоПро Ключ";
     String CRYPTO_PROXY_INVALID_PIN = "Неверный пин-код";

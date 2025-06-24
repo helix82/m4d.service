@@ -17,12 +17,12 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dCountAndRevokeCountResponseDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.enums.*;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
@@ -865,8 +865,12 @@ public class M4dServiceImpl implements M4dService {
             rep.setGuid(guidXml);
             rep.setStatusInRr(m4dRequestSearch.getStatus());
             rep.setErrorInRrDetail(m4dRequestSearch.getErrorDetail());
-            rep.setStartDate(m4dRequestSearch.getStartDate().toString());
-            rep.setEndDate(m4dRequestSearch.getEndDate().toString());
+            if (m4dRequestSearch.getStartDate() != null) {
+                rep.setStartDate(m4dRequestSearch.getStartDate().toString());
+            }
+            if (m4dRequestSearch.getEndDate() != null) {
+                rep.setEndDate(m4dRequestSearch.getEndDate().toString());
+            }
             return report;
         }
         return null;
