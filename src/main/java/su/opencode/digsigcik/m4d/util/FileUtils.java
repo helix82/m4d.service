@@ -184,6 +184,7 @@ public class FileUtils {
         String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String tempSourceFile = "/tmp/" + formattedDateTime + "/" + prefix + suffix;
         File file = new File(tempSourceFile);
+        file.getParentFile().mkdirs();
         try (FileOutputStream out = new FileOutputStream(file)) {
             out.write(resource.getByteArray());
         }
@@ -194,6 +195,7 @@ public class FileUtils {
         String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String tempSourceFile = "/tmp/" + formattedDateTime + "/" + multipartFile.getOriginalFilename();
         File file = new File(tempSourceFile);
+        file.getParentFile().mkdirs();
         multipartFile.transferTo(file);
         return file;
     }

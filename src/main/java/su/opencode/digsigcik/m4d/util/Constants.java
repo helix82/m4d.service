@@ -307,6 +307,7 @@ public interface Constants {
     String NO_ZIP = "Переданный файл не является ZIP-архивом";
     String XML_NOT_SCHEMA_EMCHD_1 = "XML файл не соответствует схеме EMCHD_1";
     String XML_IS_NULL = "XML-файл не указан";
+    String CREATE_TEMP_FOLDER_ERROR = "Не удалось создать временную директорию";
 
     //Ошибки с контейнерами
     String CONTAINER_CREATE_EXCEPTION = "Ошибка при создании контейнера";
