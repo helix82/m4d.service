@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
-import su.opencode.digsigcik.m4d.exception.BadRequestException;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.service.RestTemplateService;
 import su.opencode.digsigcik.m4d.service.SynapiClientService;
 

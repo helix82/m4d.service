@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeRequestDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
@@ -45,7 +44,6 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Slf4j
 @RestController
-@M4dExceptionHandler
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/m4d/revoke")
 @Tag(name = "M4d Revoke Controller")

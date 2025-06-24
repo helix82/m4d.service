@@ -2,7 +2,7 @@ package su.opencode.digsigcik.m4d.util;
 
 import lombok.experimental.UtilityClass;
 import org.springframework.web.multipart.MultipartFile;
-import su.opencode.digsigcik.m4d.exception.BadRequestException;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
