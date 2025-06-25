@@ -181,15 +181,25 @@ public class FileUtils {
     }
 
     public static File byteArrayResourceToTempFile(ByteArrayResource resource, String prefix, String suffix) throws IOException {
-        File tempFile = File.createTempFile(prefix, suffix);
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+        String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String tempSourceFile = "/tmp/" + formattedDateTime + "/" + prefix + suffix;
+        File file = new File(tempSourceFile);
+        try (FileOutputStream out = new FileOutputStream(file)) {
             out.write(resource.getByteArray());
         }
-        return tempFile;
+        return file;
+    }
+
+    public static File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
+        String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String tempSourceFile = "/tmp/" + formattedDateTime + "/" + multipartFile.getOriginalFilename();
+        File file = new File(tempSourceFile);
+        multipartFile.transferTo(file);
+        return file;
     }
 
     public static boolean isZipFile(MultipartFile file) throws IOException {
-        File tempFile = FileUtils.byteArrayResourceToTempFile(new ByteArrayResource(file.getBytes()), file.getOriginalFilename(), ".tmp");
+        File tempFile = FileUtils.convertMultipartFileToFile(file);
         try (ZipFile zipFile = new ZipFile(tempFile)) {
             return true;
         } catch (IOException e) {
@@ -198,7 +208,7 @@ public class FileUtils {
     }
 
     public static boolean isXmlFile(MultipartFile file) throws IOException {
-        File tempFile = FileUtils.byteArrayResourceToTempFile(new ByteArrayResource(file.getBytes()), file.getOriginalFilename(), ".tmp");
+        File tempFile = FileUtils.convertMultipartFileToFile(file);
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);

@@ -3,8 +3,6 @@ package su.opencode.digsigcik.m4d.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import su.opencode.digsigcik.m4d.exception.BadRequestException;
-import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.Representative;
 import su.opencode.digsigcik.m4d.repository.RepresentativeRepository;
 import su.opencode.digsigcik.m4d.service.RepresentativeService;

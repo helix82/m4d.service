@@ -66,18 +66,7 @@ web:
     refresh-time-cache: ${RPD_REFRESH_TIME_CACHE:1350}
     connection-timeout: ${RPD_CONNECTION_TIMEOUT:10000}
     read-timeout: ${RPD_READ_TIMEOUT:10000}
-    white-list-all-methods:
-      - /v3/api-docs/**
-      - /configuration/ui
-      - /swagger-resources/**
-      - /configuration/security
-      - /swagger-ui.html
-      - /swagger-ui/**
-      - /webjars/**
-      - /.well-known/acme-challenge/**
-      - /favicon.ico
-      - /api/v1/m4d/verify
-      - /health
+    white-list-all-methods: ${WHITE_LIST:/v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings}
     trust-all: ${DISABLE_TLS_CHECK:true}
 ---
 
@@ -103,6 +92,7 @@ springdoc:
   server:
     url: ${SWAGGER_URL:http://localhost:8051}
     token-uri: ${RPD_SWAGGER_TOKEN_URI:https://sso.rpd.zk.test.st/realms/test/protocol/openid-connect/token}
+  show-actuator: true
 
 synapi:
   user-certs-me:
@@ -155,3 +145,13 @@ pvv:
   fns-send-revoke-request-m4d: ${FNS_SEND_REVOKE_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-revocation-request-file}
   fns-receive-response-m4d: ${FNS_RECEIVE_RESPONSE_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/inbox/}
   fns-receive-json-response-m4d: ${FNS_RECEIVE_JSON_RESPONSE_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/inbox/json/}
+
+#actuator
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: ${ACTUATOR_ENDPOINTS:*}

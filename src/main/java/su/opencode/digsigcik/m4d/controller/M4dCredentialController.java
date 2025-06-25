@@ -10,7 +10,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import su.opencode.digsigcik.m4d.annotation.M4dExceptionHandler;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.model.Credential;
 import su.opencode.digsigcik.m4d.service.CredentialService;
@@ -24,7 +23,6 @@ import java.util.stream.Collectors;
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @RestController
-@M4dExceptionHandler
 @RequestMapping("/api/v1/m4d/credential")
 @AllArgsConstructor
 @Tag(name = "M4d Credential Controller")

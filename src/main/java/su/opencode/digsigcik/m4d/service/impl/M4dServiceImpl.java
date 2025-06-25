@@ -22,7 +22,7 @@ import su.opencode.digsigcik.m4d.dto.response.M4dCountAndRevokeCountResponseDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dFnsDataResponse;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.enums.*;
-import su.opencode.digsigcik.m4d.exception.BadRequestException;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
@@ -1370,7 +1370,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             tempDir = Files.createTempDirectory("M4dRequestSearchZip");
         } catch (IOException e) {
-            throw new BadRequestException(TEMP_DIR_CREATE_ERROR, e);
+            throw new BadRequestException(TEMP_DIR_CREATE_ERROR);
         }
         File jsonFile = null;
         File xmlFileKvitM4d = null;
@@ -1443,7 +1443,7 @@ public class M4dServiceImpl implements M4dService {
             }
         } catch (IOException e) {
             cleanupDirectory(tempDir);
-            throw new BadRequestException(ZIP_UNPACK_ERROR + ": " + e.getMessage(), e);
+            throw new BadRequestException(ZIP_UNPACK_ERROR + ": " + e.getMessage());
         }
 
         if (jsonCount == 0) {
