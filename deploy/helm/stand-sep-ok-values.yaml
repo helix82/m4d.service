@@ -4,6 +4,9 @@ namespace: master
 image:
   repository: 10.0.182.84:5000/sep/m4d.service
   tag: latest
+  libericaImage:
+    repository: 10.0.182.84:5000/sep/bellsoft/liberica-openjdk-debian
+    tag: "11"
   pullPolicy: Always
 
 service:

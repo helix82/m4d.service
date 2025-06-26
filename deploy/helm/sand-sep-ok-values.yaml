@@ -4,6 +4,9 @@ namespace: master
 image:
   repository: dockerhub.cifro.tech/sep/m4d.service
   tag: latest
+  libericaImage:
+    repository: dockerhub.cifro.tech/sep/bellsoft/liberica-openjdk-debian
+    tag: "11"
   pullPolicy: Always
 
 service:

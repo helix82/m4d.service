@@ -34,7 +34,7 @@ spec:
       terminationGracePeriodSeconds: 30
       initContainers:
         - name: setup-certs
-          image: openjdk:11-jre
+          image: "{{ .Values.image.libericaImage.repository }}:{{ .Values.image.libericaImage.tag }}"
           command: [ "/bin/sh", "/scripts/setup-certs.sh" ]
           volumeMounts:
             - name: tls-volume

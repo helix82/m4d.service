@@ -4,6 +4,9 @@ namespace: release-zk
 image:
   repository: nexus.essocode.ru/ess/m4d
   tag: "{{.tag}}"
+  libericaImage:
+    repository: nexus.essocode.ru/bellsoft/liberica-openjdk-debian
+    tag: "11"
   pullPolicy: Always
 
 service:
