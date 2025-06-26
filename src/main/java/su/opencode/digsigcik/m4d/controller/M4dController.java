@@ -18,12 +18,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.xml.sax.SAXException;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dCountAndRevokeCountResponseDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.enums.StatusM4dInRrTypeEnum;
 import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.*;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
@@ -642,6 +642,9 @@ public class M4dController {
         }
         // получение zip-архива по messageId
         ByteArrayResource res = this.pvvService.receiveResponseM4dToRR(messageId);
+        if (res == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(PVV_MESSAGE_ID_NOT_FOUND+messageId);
+        }
         File tempZipFile = FileUtils.byteArrayResourceToTempFile(res, messageId, ".zip");
         MultipartFile zipFile = new CustomMultipartFile(tempZipFile);
 
@@ -694,6 +697,9 @@ public class M4dController {
         M4dResponseInfo m4dResponseInfo;
         // получение json-ответа по messageId
         m4dResponseInfo = this.pvvService.receiveJsonResponseM4dToRR(messageId);
+        if (m4dResponseInfo == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(PVV_MESSAGE_ID_NOT_FOUND+messageId);
+        }
         String error;
         try {
             error = m4dService.uploadResultSendM4dToRR(m4dResponseInfo);

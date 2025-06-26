@@ -184,6 +184,7 @@ public class FileUtils {
         String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String tempSourceFile = "/tmp/" + formattedDateTime + "/" + prefix + suffix;
         File file = new File(tempSourceFile);
+        file.getParentFile().mkdirs();
         try (FileOutputStream out = new FileOutputStream(file)) {
             out.write(resource.getByteArray());
         }
@@ -192,10 +193,14 @@ public class FileUtils {
 
     public static File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
         String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        String tempSourceFile = "/tmp/" + formattedDateTime + "/" + multipartFile.getOriginalFilename();
-        File file = new File(tempSourceFile);
-        multipartFile.transferTo(file);
-        return file;
+        String tempPath = "/tmp/" + formattedDateTime;
+        createDirectoryIfSheNotExist(tempPath);
+        String tempSourceFile = tempPath + "/" + multipartFile.getOriginalFilename();
+        FileOutputStream fo1;
+        fo1 = new FileOutputStream(tempSourceFile);
+        fo1.write(multipartFile.getBytes());
+        fo1.close();
+        return new File(tempSourceFile);
     }
 
     public static boolean isZipFile(MultipartFile file) throws IOException {

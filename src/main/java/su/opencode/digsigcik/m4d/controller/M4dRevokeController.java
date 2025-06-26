@@ -370,6 +370,9 @@ public class M4dRevokeController {
         M4dRevokeResponseInfo m4dRevokeResponseInfo;
         // получение json-ответа по messageId
         m4dRevokeResponseInfo = this.pvvService.receiveJsonResponseM4dRevokeToRR(messageId);
+        if (m4dRevokeResponseInfo == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(PVV_MESSAGE_ID_NOT_FOUND+messageId);
+        }
         String error;
         try {
             error = m4dRecallService.uploadResultSendM4dRevokeToRR(m4dRevokeResponseInfo);
