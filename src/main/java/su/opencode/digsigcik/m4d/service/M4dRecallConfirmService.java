@@ -13,7 +13,7 @@ public interface M4dRecallConfirmService {
     M4dRecallConfirm saveM4dRecallConfirm(M4dRecallConfirm m4dConfirm);
     M4dRecallConfirm findM4dRecallConfirmByM4dRecallId(Long m4dRecallId);
     M4dRecallConfirm updateM4dRecallConfirm(M4dRecallConfirm m4dConfirm);
-    void deleteM4dRecallConfirmById(Long id);
+    void deleteM4dRecallConfirmByM4dRevokeId(Long m4dRevokeId);
     Long uploadSigRegisteredPep(Long m4dRecallId, MultipartFile signature) throws IOException;
     Long uploadSigRegisteredRr(Long m4dRecallId, MultipartFile signature) throws IOException;
     Long uploadXmlRegisteredRr(Long m4dRecallId, String xmlContent);

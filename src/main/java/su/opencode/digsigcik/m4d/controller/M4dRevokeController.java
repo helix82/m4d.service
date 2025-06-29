@@ -93,7 +93,7 @@ public class M4dRevokeController {
         }
         M4dRecall m4dRecall;
         try {
-            m4dRecall = this.m4dRecallService.findMrpaRecallById(id);
+            m4dRecall = this.m4dRecallService.findById(id);
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
@@ -242,13 +242,15 @@ public class M4dRevokeController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
         }
         M4dRecall mrpaRecall = this.m4dRecallService.findById(id);
+        M4dRecall m4dRecall;
         if (Objects.equals(extension, "dscp")) {
             M4dFile m4dFile = this.m4dFileService.findM4dFileById(mrpaRecall.getXmlFile().getId());
             MultipartFile sigFile = this.containerService.getSignatureFromContainer(authentication, signature, m4dFile.getFilename());
-            Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, sigFile);
-        } else { Long sigFileId = this.m4dRecallService.uploadSig(authentication, id, signature); }
+            m4dRecall = this.m4dRecallService.uploadSig(authentication, id, sigFile);
+        } else { m4dRecall = this.m4dRecallService.uploadSig(authentication, id, signature); }
         // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
-        String res = this.pvvService.sendM4dRevokeToRR(authentication, mrpaRecall.getId());
+        M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.findM4dRecallConfirmByM4dRecallId(id);
+        String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecall, m4dRecallConfirm);
         this.m4dRecallService.updateStatusMrpaRecallById(id, StatusM4dRevokeTypeEnum.ACTIVE.toString());
         this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), StatusM4dTypeEnum.REVOKED.toString());
         HttpHeaders headers = new HttpHeaders();

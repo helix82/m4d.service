@@ -38,7 +38,7 @@ public interface M4dService {
     ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, M4dXml m4dXml) throws ParseException;
     ReportCheckStatusM4dDto checkM4dInPepByGuid(Authentication authentication, String guidXml) throws ParseException;
     M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException;
-    Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile signature) throws IOException, ParseException, JAXBException;
+    M4d uploadSig(Authentication authentication, Long mrpaId, MultipartFile signature) throws IOException, ParseException, JAXBException;
     M4dFullXML convertM4dRequestDtoToFullXml(M4dRegistryRequestDto m4DRegistryRequestDto) throws ParseException;
     String getGuidFromXml(M4dXml m4dXml);
     String getStartDateM4dFromXml(M4dXml m4dXml);
