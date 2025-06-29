@@ -11,26 +11,29 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dConfirm;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
-import su.opencode.digsigcik.m4d.service.*;
+import su.opencode.digsigcik.m4d.service.M4dFileService;
+import su.opencode.digsigcik.m4d.service.PvvService;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 
-import javax.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import static su.opencode.digsigcik.m4d.util.Constants.*;
+import static su.opencode.digsigcik.m4d.util.Constants.MRPA_RECALL_IS_NULL;
+import static su.opencode.digsigcik.m4d.util.Constants.ZIP_CREATE_ERROR;
 
 @Slf4j
 @Service
@@ -38,10 +41,6 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 @RequiredArgsConstructor
 @EnableTransactionManagement
 public class PvvServiceImpl implements PvvService {
-    private final M4dService m4dService;
-    private final M4dRecallService m4dRecallService;
-    private final M4dRecallConfirmService m4dRecallConfirmService;
-    private final M4dConfirmService m4dConfirmService;
     private final M4dFileService m4dFileService;
     private final RestTemplate restTemplate;
 
@@ -57,22 +56,8 @@ public class PvvServiceImpl implements PvvService {
     private URI FNS_RECEIVE_JSON_RESPONSE_M4D_URI;
 
     @Override
-    public String sendM4dToRR(Authentication authentication, Long m4dId) throws IOException {
-        M4d m4d;
-        try {
-            m4d = this.m4dService.findById(m4dId);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        if (m4d == null) {
-            throw new BadRequestException(MRPA_IS_NULL);
-        }
-        M4dConfirm m4dConfirm;
-        try {
-            m4dConfirm = this.m4dConfirmService.findM4dConfirmByM4dId(m4d.getId());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
+    @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
+    public String sendM4dToRR(Authentication authentication, M4d m4d, M4dConfirm m4dConfirm) throws IOException {
         String filenameSource = m4d.getXmlFile().getFilename();
         int lastDotIndex = filenameSource.lastIndexOf('.');
         if (lastDotIndex > 0) {
@@ -97,21 +82,10 @@ public class PvvServiceImpl implements PvvService {
     }
 
     @Override
-    public String sendM4dRevokeToRR(Authentication authentication, Long m4dRevokeId) throws IOException {
-        M4dRecall m4dRecall;
-        try {
-            m4dRecall = this.m4dRecallService.findById(m4dRevokeId);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
+    @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
+    public String sendM4dRevokeToRR(Authentication authentication, M4dRecall m4dRecall, M4dRecallConfirm m4dRecallConfirm) throws IOException {
         if (m4dRecall == null) {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
-        }
-        M4dRecallConfirm m4dRecallConfirm;
-        try {
-            m4dRecallConfirm = this.m4dRecallConfirmService.findM4dRecallConfirmByM4dRecallId(m4dRecall.getId());
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
         }
         String filenameSource = m4dRecall.getXmlFile().getFilename();
         int lastDotIndex = filenameSource.lastIndexOf('.');
@@ -129,7 +103,6 @@ public class PvvServiceImpl implements PvvService {
         if (resp == null) {
             throw new BadRequestException(ZIP_CREATE_ERROR);
         }
-
         MultipartFile requestTempFile = new CustomMultipartFile(resp);
         String res = registrationRequestM4dFnsViaPvv(requestTempFile, FNS_SEND_REVOKE_REQUEST_M4D_URI);
         log.info(res);

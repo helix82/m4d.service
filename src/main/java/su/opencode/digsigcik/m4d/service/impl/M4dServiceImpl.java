@@ -1016,8 +1016,9 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
+    @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_SIGNATURE)
-    public Long uploadSig(Authentication authentication, Long mrpaId, MultipartFile signature) throws IOException, ParseException, JAXBException {
+    public M4d uploadSig(Authentication authentication, Long mrpaId, MultipartFile signature) throws IOException, ParseException, JAXBException {
         M4d m4d;
         try {
             m4d = this.findById(mrpaId);
@@ -1046,8 +1047,7 @@ public class M4dServiceImpl implements M4dService {
         String idFile = XMLUtil.getSubstringFromXml(xmlString, "ИдФайл=\"");
         String internalNumber = XMLUtil.getSubstringFromXml(xmlString, "ВнНомДовер=\"");
         M4dConfirm m4dConfirm = this.m4dConfirmService.createAndSignedM4dConfirm(authentication, m4d, idFile, m4d.getGuid(), internalNumber, m4d.getStartDate().toString().substring(0, 10), m4d.getEndDate().toString().substring(0, 10));
-
-        return m4dSaved.getSigFile().getId();
+        return m4dSaved;
     }
 
     @Override

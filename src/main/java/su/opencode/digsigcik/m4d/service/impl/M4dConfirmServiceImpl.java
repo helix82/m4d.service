@@ -5,11 +5,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.M4dConfirmDto;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dConfirm;
 import su.opencode.digsigcik.m4d.model.M4dFile;
@@ -65,8 +65,8 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     }
 
     @Override
-    public void deleteM4dConfirmById(Long id) {
-        this.m4dConfirmRepository.deleteById(id);
+    public void deleteM4dConfirmByM4dId(Long m4dId) {
+        this.m4dConfirmRepository.deleteM4dConfirmsByM4dId(m4dId);
     }
 
     @Override
@@ -194,6 +194,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
 
         M4dConfirm m4dConfirmSaved;
         try {
+            this.deleteM4dConfirmByM4dId(m4d.getId());
             m4dConfirmSaved = this.saveM4dConfirm(m4dConfirm);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());

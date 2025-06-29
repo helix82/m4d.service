@@ -5,11 +5,11 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeConfirmDto;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.HashAlgorithm;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
@@ -65,8 +65,8 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     }
 
     @Override
-    public void deleteM4dRecallConfirmById(Long id) {
-        this.m4dRecallConfirmRepository.deleteById(id);
+    public void deleteM4dRecallConfirmByM4dRevokeId(Long m4dRevokeId) {
+        this.m4dRecallConfirmRepository.deleteM4dRecallConfirmByM4dRecallId(m4dRevokeId);
     }
 
     @Override
@@ -191,6 +191,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
 
         M4dRecallConfirm m4dRecallConfirmSaved;
         try {
+            this.deleteM4dRecallConfirmByM4dRevokeId(m4dRecall.getId());
             m4dRecallConfirmSaved = this.saveM4dRecallConfirm(m4dRecallConfirm);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());

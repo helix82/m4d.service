@@ -282,15 +282,17 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
         }
+        M4d m4dUpdate;
         if (Objects.equals(extension, "dscp")) {
             M4dFile m4dFile = this.m4dFileService.findM4dFileById(m4d.getXmlFile().getId());
             MultipartFile sigFile = this.containerService.getSignatureFromContainer(authentication, signature, m4dFile.getFilename());
-            Long sigFileId = this.m4dService.uploadSig(authentication, id, sigFile);
+            m4dUpdate = this.m4dService.uploadSig(authentication, id, sigFile);
         } else {
-            Long sigFileId = this.m4dService.uploadSig(authentication, id, signature);
+            m4dUpdate = this.m4dService.uploadSig(authentication, id, signature);
         }
         // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
-        String res = this.pvvService.sendM4dToRR(authentication, id);
+        M4dConfirm m4dConfirm = this.m4dConfirmService.findM4dConfirmByM4dId(id);
+        String res = this.pvvService.sendM4dToRR(authentication, m4dUpdate, m4dConfirm);
         m4d.setStatus(StatusM4dTypeEnum.ACTIVE.toString());
         m4d.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
         M4d m4dSaved;
@@ -475,7 +477,7 @@ public class M4dController {
             }
 
         } catch (Exception e) {
-            log.error(MRPA_REGISTRY_IMPORT_ERROR + ": " + e.getMessage());
+            log.error(MRPA_REGISTRY_IMPORT_ERROR + ": {}", e.getMessage());
             e.printStackTrace();
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IMPORT_ERROR + ": " + e.getMessage()), HttpStatus.BAD_REQUEST);
         }
@@ -483,17 +485,14 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_IMPORT_ERROR), HttpStatus.BAD_REQUEST);
         }
         String res = null;
+        M4d m4dUpdate;
         if (sourceSig != null) {
             //upload sig for m4d !!!!!!!!!!!!!!!!!!!!!!
             try {
-                var result = this.m4dService.uploadSig(authentication, m4dId, sourceSig);
-
-                if (result == null) {
-                    log.error("Загрузка подписи МЧД не вернула результат");
-                    return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_UPLOAD_SIG_ERROR), HttpStatus.BAD_REQUEST);
-                }
+                m4dUpdate = this.m4dService.uploadSig(authentication, m4dId, sourceSig);
                 // отправка архива с xml-файлом мчд и подписью на регистрацию в РР МЧД
-                res = this.pvvService.sendM4dToRR(authentication, m4dId);
+                M4dConfirm m4dConfirm = this.m4dConfirmService.findM4dConfirmByM4dId(m4dId);
+                res = this.pvvService.sendM4dToRR(authentication, m4dUpdate, m4dConfirm);
                 M4d m4d = this.m4dService.findById(m4dId);
                 if (m4d == null) {
                     return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.BAD_REQUEST);
@@ -507,7 +506,7 @@ public class M4dController {
                     throw new BadRequestException(e.getMessage());
                 }
             } catch (Exception e) {
-                log.error(MRPA_REGISTRY_UPLOAD_SIG_ERROR + ": " + e.getMessage());
+                log.error(MRPA_REGISTRY_UPLOAD_SIG_ERROR + ": {}", e.getMessage());
                 e.printStackTrace();
                 return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_REGISTRY_UPLOAD_SIG_ERROR + ": " + e.getMessage()), HttpStatus.BAD_REQUEST);
             }

@@ -4,16 +4,17 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.audit.AuditLogEventEnum;
 import su.opencode.digsigcik.audit.AuditLogThis;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dFile;
@@ -95,11 +96,6 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
-    public M4dRecall findMrpaRecallById(@NotNull Long id) {
-        return this.m4dRevokeRepository.findM4dRecallById(id);
-    }
-
-    @Override
     public M4dRecall findMrpaRecallByM4dId(@NotNull Long m4dId) {
         return this.m4dRevokeRepository.findM4dRecallByM4dId(m4dId);
     }
@@ -117,11 +113,6 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             throw new BadRequestException(MRPA_RECALL_SIGN_CANNOT_DELETE);
         }
         this.m4dRevokeRepository.deleteById(id);
-    }
-
-    @Override
-    public void updateMrpaRecallById(Long id, Long fileId) {
-        this.m4dRevokeRepository.updateMrpaRecallById(id, fileId);
     }
 
     @Override
@@ -183,8 +174,9 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
+    @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_SIGNATURE)
-    public Long uploadSig(Authentication authentication, Long id, MultipartFile signature) throws Exception {
+    public M4dRecall uploadSig(Authentication authentication, Long id, MultipartFile signature) throws Exception {
         M4dRecall mrpaRecall = this.findById(id);
         if (mrpaRecall==null) {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
@@ -202,11 +194,15 @@ public class M4dRecallServiceImpl implements M4dRecallService {
                 throw new BadRequestException(e.getMessage());
             }
             fileId = m4dFileSaved.getId();
+            mrpaRecall.setSigFile(m4dFileSaved);
         } else {
             fileId = m4dFile.getId();
+            mrpaRecall.setSigFile(m4dFile);
         }
+
+        M4dRecall m4dRecallSaved;
         try {
-            this.updateMrpaRecallById(id, fileId);
+            m4dRecallSaved = this.updateMrpaRecall(mrpaRecall);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -225,8 +221,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         String idFile = XMLUtil.getSubstringFromXml(xmlString, "НомДовер=\"");
         String hash = this.getHashFromXmlString(xmlString);
         M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(authentication, mrpaRecall, idFile, hash);
-
-        return fileId;
+        return m4dRecallSaved;
     }
 
     @Override
