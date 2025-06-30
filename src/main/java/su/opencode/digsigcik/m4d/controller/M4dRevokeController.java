@@ -127,7 +127,11 @@ public class M4dRevokeController {
         }
         Long mrpaRegistryId = mrpaRecallRequestDto.getMrpaRegistryId();
         if (mrpaRegistryId == null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        M4dRecall m4dRecall = this.m4dRecallService.findMrpaRecallByM4dId(mrpaRegistryId);
+        if (m4dRecall != null) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_EXISTS), HttpStatus.BAD_REQUEST);
         }
         M4d mrpaRegistry = this.m4dService.findById(mrpaRegistryId);
         mrpaRecall.setM4d(mrpaRegistry);
