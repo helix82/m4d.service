@@ -813,7 +813,7 @@ public class M4dServiceImpl implements M4dService {
             ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
             report.setReport(rep);
             rep.setGuid(guidXml);
-            rep.setStatus(m4dRequestSearchSaved.getStatus());
+            rep.setStatusInRr(m4dRequestSearchSaved.getStatus());
             rep.setErrorInRrDetail(CHECK_STATUS_IN_PVV_ADAPTER);
             return report;
         }
