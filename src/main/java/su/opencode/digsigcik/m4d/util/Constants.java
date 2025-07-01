@@ -230,6 +230,8 @@ public interface Constants {
     String GUID_IS_NULL = "Номер доверенности (GUID) не указан";
     String INN_IS_NULL = "ИНН не указан";
     String MRPA_IS_NULL = "МЧД не найдена";
+    String MRPA_NOT_DELETE = "Можно удалить только черновик МЧД";
+    String MRPA_RECALL_NOT_DELETE = "Можно удалить только черновик заявления на отзыв МЧД";
     String MRPA_ID_IS_NULL = "ИД МЧД не указано";
     String MRPA_RECALL_IS_NULL = "Заявление на отзыв МЧД не найдено";
     String MRPA_CONFIRM_IS_NULL = "Подтверждения МЧД не найдены";
@@ -240,7 +242,6 @@ public interface Constants {
     String MRPA_RECALL_CONFIRM_IS_NULL = "Подтверждения отзыва МЧД не найдены";
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
     String MRPA_RECALL_IS_EXISTS = "Для данного МЧД уже добавлено заявление на отзыв";
-    String MRPA_RECALL_SIGN_CANNOT_DELETE = "Невозможно удалить! Заявление на отзыв МЧД уже подписано и отправлено в РР МЧД.";
     String MRPA_REGISTRY_IS_EXISTS = "Добавляемая МЧД уже существует в базе";
     String MRPA_REGISTRY_NOT_FULL = "Недостаточно данных для сохранения МЧД";
     String MRPA_REGISTRY_WRONG_FORMAT = "Не верный формат ЭП";

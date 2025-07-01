@@ -137,10 +137,6 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_DELETE)
     public void deleteMrpaRecallById(Long id) {
-        M4dRecall m4dRecall = this.m4dRevokeRepository.findM4dRecallById(id);
-        if (m4dRecall.getSigFile() != null) {
-            throw new BadRequestException(MRPA_RECALL_SIGN_CANNOT_DELETE);
-        }
         this.m4dRevokeRepository.deleteById(id);
     }
 

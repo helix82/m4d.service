@@ -235,8 +235,8 @@ public class M4dRevokeController {
         if (mrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_IS_NULL), HttpStatus.NOT_FOUND);
         }
-        if (mrpaRecall.getSigFile() != null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_SIGN_CANNOT_DELETE), HttpStatus.BAD_REQUEST);
+        if (!mrpaRecall.getStatus().equals("NEW")) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_NOT_DELETE), HttpStatus.BAD_REQUEST);
         }
         try {
             this.m4dRecallService.deleteMrpaRecallById(id);
