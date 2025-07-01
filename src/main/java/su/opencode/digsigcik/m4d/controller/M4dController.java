@@ -272,6 +272,9 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_IS_NULL), HttpStatus.NOT_FOUND);
         }
+        if (!m4d.getStatus().equals("NEW")){
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_NOT_DELETE), HttpStatus.NOT_FOUND);
+        }
         try {
             this.m4dService.deleteMrpaRegistry(id);
         } catch (ConstraintViolationException e) {
