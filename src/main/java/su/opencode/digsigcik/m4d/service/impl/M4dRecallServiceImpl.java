@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
@@ -25,6 +26,9 @@ import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
 import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
+import su.opencode.digsigcik.specification.SpecificationRequest;
+import su.opencode.digsigcik.specification.SpecificationResponse;
+import su.opencode.digsigcik.specification.service.SpecificationService;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
@@ -35,27 +39,34 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Service
 @Primary
 public class M4dRecallServiceImpl implements M4dRecallService {
+
     private final M4dRecallRepository m4dRevokeRepository;
     private final M4dRepository m4dRepository;
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
     private final UserCertificateService userCertificateService;
     private final M4dRecallConfirmService m4dRecallConfirmService;
+    private final SpecificationService specificationService;
 
     public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository,
-                                @Lazy M4dService m4dService, UserCertificateService userCertificateService, M4dFileService m4dFileService, M4dRecallConfirmService m4dRecallConfirmService) {
+                                @Lazy M4dService m4dService, UserCertificateService userCertificateService,
+                                M4dFileService m4dFileService, M4dRecallConfirmService m4dRecallConfirmService,
+                                SpecificationService specificationService
+    ) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
         this.m4dService = m4dService;
         this.m4dFileService = m4dFileService;
         this.userCertificateService = userCertificateService;
         this.m4dRecallConfirmService = m4dRecallConfirmService;
+        this.specificationService = specificationService;
     }
 
     @Override
@@ -86,13 +97,31 @@ public class M4dRecallServiceImpl implements M4dRecallService {
 
     @Override
     public List<M4dRegistryResponseDto> findAllMrpaRegistriesWithRecall(Authentication authentication) throws ParseException {
-        List<M4dRecall> m4dRecalls = m4dRevokeRepository.findAll().stream().filter(c -> c.getM4d() != null).collect(Collectors.toList());
+        List<M4dRecall> m4dRecalls = StreamSupport.stream(m4dRevokeRepository.findAll().spliterator(), false).filter(c -> c.getM4d() != null).collect(Collectors.toList());
         List<M4dRegistryResponseDto> m4DRegistryResponseDtos = new ArrayList<>();
         for (M4dRecall x : m4dRecalls) {
             M4d m4d = m4dRepository.findM4dById(x.getM4d().getId());
             m4DRegistryResponseDtos.add(m4dService.convertM4dToM4dResponseDto(authentication,  m4d, false, false, false, false));
         }
         return m4DRegistryResponseDtos;
+    }
+
+    @Override
+    public SpecificationResponse<M4dRegistryResponseDto> findAllMrpaRegistriesWithRecall(Authentication authentication, SpecificationRequest request) throws ParseException {
+        var r = specificationService.getUsingSpecification(m4dRevokeRepository, request, M4dRecall.class);
+
+        List<M4dRegistryResponseDto> m4DRegistryResponseDtos = new ArrayList<>();
+        for (M4dRecall x : r.getData()) {
+            M4d m4d = m4dRepository.findM4dById(x.getM4d().getId());
+            m4DRegistryResponseDtos.add(m4dService.convertM4dToM4dResponseDto(authentication,  m4d, false, false, false, false));
+        }
+        return SpecificationResponse
+                .<M4dRegistryResponseDto> builder()
+                .data(m4DRegistryResponseDtos)
+                .filters(r.getFilters())
+                .sortBy(r.getSortBy())
+                .pagination(r.getPagination())
+                .build();
     }
 
     @Override
@@ -142,6 +171,13 @@ public class M4dRecallServiceImpl implements M4dRecallService {
                     }
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public SpecificationResponse<M4dRegistryResponseDto> findAllM4dRevokeUsers(Authentication authentication, SpecificationRequest request) {
+
+        // TODO: refactoring (Данияо) | see M4dServiceImpl#findAllM4dUsers
+        throw new NotImplementedException("await Refactoring");
     }
 
     @Override

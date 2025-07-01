@@ -2,6 +2,9 @@ package su.opencode.digsigcik.m4d.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
+import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,6 +34,7 @@ import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
 import su.opencode.digsigcik.m4d.service.*;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
+import su.opencode.digsigcik.specification.SpecificationRequest;
 
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
@@ -57,7 +62,8 @@ public class M4dRevokeController {
     private final PvvService pvvService;
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY,
-            description = CONTROLLER_MRPA_RECALL_FIND_ALL_DESCRIPTION)
+            description = CONTROLLER_MRPA_RECALL_FIND_ALL_DESCRIPTION,
+            deprecated = true)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
@@ -76,6 +82,33 @@ public class M4dRevokeController {
             m.setStatus(this.m4dService.getStatusM4d(m.getId()));
         }
         return new ResponseEntity<>(mrpaRegistryFindAllRecall, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_ALL_PAGINATED_SUMMARY)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @GetMapping(value = "/paginated", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> findAllMrpaRecallPaginated(
+            @Parameter(in = ParameterIn.QUERY, style = ParameterStyle.DEEPOBJECT, explode = Explode.TRUE, required = true)
+            @ParameterObject SpecificationRequest request,
+            Authentication authentication
+    ) {
+        try {
+            var response = m4dRecallService.findAllMrpaRegistriesWithRecall(authentication, request);
+
+            for (M4dRegistryResponseDto m : response.getData()) {
+                m.credentials = this.m4dService.getCredentialByMrpaRegistryId(m.getId());
+                m.setStatus(this.m4dService.getStatusM4d(m.getId()));
+            }
+
+            return ResponseEntity.ok(response);
+
+        } catch (ConstraintViolationException | ParseException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_BY_ID_SUMMARY,
@@ -214,6 +247,7 @@ public class M4dRevokeController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
+    // TODO: me paginated (Данияр)
     @Operation(summary = CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_SUMMARY,
             description = CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_DESCRIPTION)
     @ApiResponses(value = {

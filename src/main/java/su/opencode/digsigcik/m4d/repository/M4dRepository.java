@@ -1,6 +1,5 @@
 package su.opencode.digsigcik.m4d.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,13 +7,15 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.model.M4d;
+import su.opencode.digsigcik.specification.repository.ISpecificationRepository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface M4dRepository extends JpaRepository<M4d, Long> {
+public interface M4dRepository extends ISpecificationRepository<M4d> {
+
     M4d findM4dById(Long id);
 
     List<M4d> findByPrincipalId(Long id);
@@ -25,8 +26,6 @@ public interface M4dRepository extends JpaRepository<M4d, Long> {
     @Transactional
     @Query(value = "UPDATE m4d_registry SET status = :status WHERE id = :id", nativeQuery = true)
     void updateStatusM4d(@Param("id") Long id, @Param("status") String status);
-
-    List<M4d> findAll();
 
     Integer countByGuid(String guid);
 
