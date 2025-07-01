@@ -187,7 +187,7 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_UPDATE_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_DELETE_SUMMARY = "Удалить заявление на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
-    String CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_SUMMARY = "Получить список заявлени на отзыв МЧД пользователя";
+    String CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_SUMMARY = "Получить список заявлений на отзыв МЧД пользователя";
     String CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список заявлений на отзыв МЧД пользователя";
     String CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY = "Загрузить ЭП заявления на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_SEND_REGISTER_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на регистрацию заявления на отзыв МЧД в РР МЧД";
