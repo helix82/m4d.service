@@ -114,11 +114,13 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_UPDATE)
     public M4d updateM4d(@NotNull M4d m4d) {
         return this.m4dRepository.save(m4d);
     }
 
     @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_UPDATE)
     public M4d updateStatusM4d(Long id, String status) {
         this.m4dRepository.updateStatusM4d(id, status);
         return this.m4dRepository.findM4dById(id);

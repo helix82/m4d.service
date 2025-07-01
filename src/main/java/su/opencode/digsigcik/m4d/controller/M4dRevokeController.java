@@ -21,10 +21,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeRequestDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
+import su.opencode.digsigcik.m4d.enums.StatusM4dInRrTypeEnum;
 import su.opencode.digsigcik.m4d.enums.StatusM4dRevokeTypeEnum;
 import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
 import su.opencode.digsigcik.m4d.model.M4d;
@@ -289,7 +291,17 @@ public class M4dRevokeController {
         // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
         M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.findM4dRecallConfirmByM4dRecallId(id);
         String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecall, m4dRecallConfirm);
-        this.m4dRecallService.updateStatusMrpaRecallById(id, StatusM4dRevokeTypeEnum.ACTIVE.toString());
+        if (res.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(SENDING_RESPONSE_TO_PVV_ERROR), HttpStatus.BAD_REQUEST);
+        }
+        m4dRecall.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
+        m4dRecall.setStatus(StatusM4dRevokeTypeEnum.ACTIVE.toString());
+        M4dRecall m4dRecallSaved;
+        try {
+            m4dRecallSaved = this.m4dRecallService.updateMrpaRecall(m4dRecall);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
         this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), StatusM4dTypeEnum.REVOKED.toString());
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Request-ID", res);
@@ -425,6 +437,37 @@ public class M4dRevokeController {
         Map<String, String> body = new HashMap<>();
         body.put("result", MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA);
         return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_RECALL_SEND_REGISTER_IN_PVV_SUMMARY, description = CONTROLLER_MRPA_RECALL_SEND_REGISTER_IN_PVV_SUMMARY)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PutMapping(value = "send-register-in-rr/{id}", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> sendRegisterInRr(Authentication authentication, @PathVariable @Parameter(name = "id",
+            description = PARAMETER_MRPA_RECALL_ID_DESCRIPTION, example = "1") Long id) throws Exception {
+        if (id == null){
+            return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        M4dRecall m4dRecall = this.m4dRecallService.findById(id);
+        // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
+        M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.findM4dRecallConfirmByM4dRecallId(id);
+        String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecall, m4dRecallConfirm);
+        if (res.isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(SENDING_RESPONSE_TO_PVV_ERROR), HttpStatus.BAD_REQUEST);
+        }
+        m4dRecall.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
+        M4dRecall m4dRecallSaved;
+        try {
+            m4dRecallSaved = this.m4dRecallService.updateMrpaRecall(m4dRecall);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Request-ID", res);
+        return new ResponseEntity<>(findMrpaRecallById(authentication, id).getBody(), headers, HttpStatus.OK);
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {

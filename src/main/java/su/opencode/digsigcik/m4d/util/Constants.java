@@ -163,6 +163,7 @@ public interface Constants {
     String CONTROLLER_MRPA_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
     String CONTROLLER_MRPA_UPLOAD_SUMMARY = "Загрузить ЭП";
     String CONTROLLER_MRPA_UPLOAD_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_SEND_REGISTER_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на регистрацию МЧД в РР МЧД";
     String CONTROLLER_MRPA_SEND_REQUEST_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на получение статуса МЧД в РР МЧД";
     String CONTROLLER_MRPA_CHECK_BY_GUID_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС по Номеру доверенности (GUID)";
     String CONTROLLER_MRPA_CHECK_XML_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС";
@@ -189,6 +190,7 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_SUMMARY = "Получить список заявлени на отзыв МЧД пользователя";
     String CONTROLLER_MRPA_RECALL_FIND_ALL_FOR_USER_DESCRIPTION = "Возвращает список заявлений на отзыв МЧД пользователя";
     String CONTROLLER_MRPA_RECALL_UPLOAD_SUMMARY = "Загрузить ЭП заявления на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_SEND_REGISTER_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на регистрацию заявления на отзыв МЧД в РР МЧД";
     String CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY = "Получить XML отзыв МЧД и открепленную подпись в zip-архиве";
     String CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION = "Обработать результат отправки отзыва МЧД на регистрацию в РР МЧД";
@@ -294,6 +296,7 @@ public interface Constants {
     String RESULT_SEND_ERROR_DETAIL = ", Детали: %s";
     String CHECK_STATUS_IN_PVV_ADAPTER = "Для проверки статуса обратитесь к ПВВ адаптеру";
     String PVV_MESSAGE_ID_NOT_FOUND = "Не найден пакет обмена между контурами с messageId = ";
+    String SENDING_RESPONSE_TO_PVV_ERROR = "Возникли проблемы с отправкой запроса в ПВВ";
     //КриптоПро
     String CRYPTO_PROXY_INVALID_GRANT = "Вы не зарегистрированы в КриптоПро Ключ";
     String CRYPTO_PROXY_INVALID_PIN = "Неверный пин-код";
