@@ -1576,10 +1576,12 @@ public class M4dServiceImpl implements M4dService {
                     m4d.setStatusInRr(StatusM4dInRrTypeEnum.REVOKED.toString());
                     M4dRecall m4dRecall = this.m4dRecallService.findMrpaRecallByM4dId(m4d.getId());
                     m4dRecall.setStatusInRr(StatusM4dRevokeInRrTypeEnum.SUCCESS.toString());
+                    m4dRecall.setErrorInRrDetail(null);
                     M4dRecall m4dRecallUpdate = this.m4dRecallService.updateMrpaRecall(m4dRecall);
                 } else {
                     m4d.setStatusInRr(m4dFnsDataResponse.getStatus());
                 }
+                m4d.setErrorInRrDetail(null);
                 M4d m4dSaved = null;
                 try {
                     m4dSaved = this.updateM4d(m4d);
@@ -1699,6 +1701,7 @@ public class M4dServiceImpl implements M4dService {
                 M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dFnsDataResponse.getGuid(), m4dFnsDataResponse.getId());
                 if (m4dRequestSearch != null) {
                     m4dRequestSearch.setStatus(m4dFnsDataResponse.getStatus());
+                    m4dRequestSearch.setErrorDetail(null);
                     if (m4dFnsDataResponse.getStatusDateTime() != null) {
                         m4dRequestSearch.setStatusDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getStatusDateTime()));
                     } else {
