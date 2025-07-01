@@ -7,6 +7,8 @@ import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dCountAndRevokeCountResponseDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.model.*;
+import su.opencode.digsigcik.specification.SpecificationRequest;
+import su.opencode.digsigcik.specification.SpecificationResponse;
 
 import javax.validation.constraints.NotNull;
 import javax.xml.bind.JAXBException;
@@ -16,6 +18,7 @@ import java.util.List;
 
 public interface M4dService {
     List<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication) throws ParseException;
+    SpecificationResponse<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication, SpecificationRequest request) throws ParseException;
     M4d saveMrpaRegistry(@NotNull M4d m4d);
     M4d updateM4d(@NotNull M4d m4d);
     M4d updateStatusM4d(Long id, String status);
@@ -27,6 +30,7 @@ public interface M4dService {
     void deleteMrpaRegistry(@NotNull Long id);
     List<M4dRegistryResponseDto.CredentialDto> getCredentialByMrpaRegistryId(Long mrpaId);
     List<M4dRegistryResponseDto> findAllM4dUsers(Authentication authentication) throws ParseException;
+    SpecificationResponse<M4dRegistryResponseDto> findAllM4dUsers(Authentication authentication, SpecificationRequest request) throws ParseException;
     List<M4d> findM4dByRepresentativeInn(String inn);
     M4dRegistryResponseDto findM4dByIdAndRepresentativeInn(Authentication authentication, String inn, Long id);
     String getStatusM4d(Long id) throws ParseException;

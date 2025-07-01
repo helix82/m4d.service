@@ -1,17 +1,18 @@
 package su.opencode.digsigcik.m4d.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
+import su.opencode.digsigcik.specification.repository.ISpecificationRepository;
 
 import java.util.List;
 import java.util.Set;
 
-public interface M4dRecallRepository extends JpaRepository<M4dRecall, Long> {
+public interface M4dRecallRepository extends ISpecificationRepository<M4dRecall> {
+
     M4dRecall findM4dRecallById(Long id);
 
     M4dRecall findM4dRecallByM4dId(Long m4dId);

@@ -3,6 +3,7 @@ package su.opencode.digsigcik.m4d.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -29,6 +30,9 @@ import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dRepository;
 import su.opencode.digsigcik.m4d.service.*;
 import su.opencode.digsigcik.m4d.util.*;
+import su.opencode.digsigcik.specification.SpecificationRequest;
+import su.opencode.digsigcik.specification.SpecificationResponse;
+import su.opencode.digsigcik.specification.service.SpecificationService;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
@@ -74,15 +78,34 @@ public class M4dServiceImpl implements M4dService {
     private final RefBookClientService refBookClientService;
     private final M4dConfirmService m4dConfirmService;
     private final M4dRecallConfirmService m4dRecallConfirmService;
+    private final SpecificationService specificationService;
 
     @Override
     public List<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication) throws ParseException {
-        List<M4d> m4ds = m4dRepository.findAll();
+        Iterable<M4d> m4ds = m4dRepository.findAll();
         List<M4dRegistryResponseDto> m4DRegistryResponseDtoList = new ArrayList<>();
         for (M4d m4d : m4ds) {
             m4DRegistryResponseDtoList.add(convertM4dToM4dResponseDto(authentication, m4d, false, false, false, false));
         }
         return m4DRegistryResponseDtoList;
+    }
+
+    @Override
+    public SpecificationResponse<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication, SpecificationRequest request) throws ParseException {
+        var r = specificationService.getUsingSpecification(m4dRepository, request, M4d.class);
+
+        List<M4dRegistryResponseDto> m4DRegistryResponseDtoList = new ArrayList<>();
+        for (M4d m4d : r.getData()) {
+            m4DRegistryResponseDtoList.add(convertM4dToM4dResponseDto(authentication, m4d, false, false, false, false));
+        }
+
+        return SpecificationResponse
+                .<M4dRegistryResponseDto> builder()
+                .data(m4DRegistryResponseDtoList)
+                .filters(r.getFilters())
+                .sortBy(r.getSortBy())
+                .pagination(r.getPagination())
+                .build();
     }
 
     @Override
@@ -590,6 +613,33 @@ public class M4dServiceImpl implements M4dService {
                 }).collect(Collectors.toList());
     }
 
+    private static boolean containsAny(Set<String> set, String ... elements) {
+
+        for (String el : elements)
+            if (set.contains(el))
+                return true;
+
+        return false;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public SpecificationResponse<M4dRegistryResponseDto> findAllM4dUsers(Authentication authentication, SpecificationRequest request) throws ParseException {
+
+        // TODO: refactoring (Данияо)
+        throw new NotImplementedException("await Refactoring");
+
+        // Добавить фильтр по principal и representative
+//        request.getFilters().removeIf(f -> f.getFieldName().equals("login"));
+
+        // Получить пэджинированные данные
+//        var r = specificationService.getUsingSpecification(m4dRepository, request, M4d.class);
+
+
+        // замапить на M4dRegistryResponseDto
+//        return SpecificationResponse.<M4dRegistryResponseDto> builder().data(m4DRegistryResponseDtoList).filters(r.getFilters()).sortBy(r.getSortBy()).pagination(r.getPagination()).build();
+    }
+
     @Transactional(readOnly = true)
     @Override
     public List<M4d> findM4dByRepresentativeInn(String inn) {
@@ -741,6 +791,7 @@ public class M4dServiceImpl implements M4dService {
         if (organisation != null) {
             m4DRegistryResponseDto.setOrganization(convertOrganisationToDto(organisation));
         }
+        // TODO: fkey, или подготовить вьюшку, чтобы можно было фильтровать по этому полю (Данияр)
         Principal principal = this.principalService.findByPrincipalId(m4d.getPrincipalId());
         if (principal != null) {
             m4DRegistryResponseDto.setPrincipal(convertPrincipalToDto(principal));

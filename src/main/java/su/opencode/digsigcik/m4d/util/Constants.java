@@ -141,6 +141,7 @@ public interface Constants {
 
     String CONTROLLER_MRPA_FIND_ALL_SUMMARY = "Получить список МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_ALL_DESCRIPTION = "Возвращает список МЧД с ФИО представителя и ФИО доверителя";
+    String CONTROLLER_MRPA_FIND_ALL_PAGINATED_SUMMARY = "Получить список МЧД с ФИО представителя и ФИО доверителя (пэджинирован)";
     String CONTROLLER_MRPA_SAVE_SUMMARY = "Сохранить данные по МЧД с привязкой полномочий в БД";
     String CONTROLLER_MRPA_SAVE_DESCRIPTION = "Возвращает созданную МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_FIND_BY_ID_SUMMARY = "Получить МЧД по ИД МЧД";
@@ -176,6 +177,7 @@ public interface Constants {
     String CONTROLLER_MRPA_AS_ARCHIVE_DESCRIPTION = "Возвращает zip-архив с МЧД и подписью";
     String CONTROLLER_MRPA_RECALL_FIND_ALL_SUMMARY = "Получить список заявлений на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_FIND_ALL_DESCRIPTION = "Возвращает список заявлений на отзыв МЧД";
+    String CONTROLLER_MRPA_RECALL_FIND_ALL_PAGINATED_SUMMARY = "Получить список заявлений на отзыв МЧД (пэджинирован)";
     String CONTROLLER_MRPA_RECALL_FIND_BY_ID_SUMMARY = "Получить заявление на отзыв МЧД по ИД";
     String CONTROLLER_MRPA_RECALL_FIND_BY_ID_DESCRIPTION = "Возвращает заявление на отзыв МЧД по ИД";
     String CONTROLLER_MRPA_RECALL_SAVE_SUMMARY = "Сохранить заявление на отзыв МЧД";

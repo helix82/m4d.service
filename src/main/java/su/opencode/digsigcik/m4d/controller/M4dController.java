@@ -2,6 +2,9 @@ package su.opencode.digsigcik.m4d.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
+import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,6 +34,7 @@ import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.FileUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
+import su.opencode.digsigcik.specification.SpecificationRequest;
 
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
@@ -59,7 +64,8 @@ public class M4dController {
     private final PvvService pvvService;
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
-            description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION)
+            description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION,
+            deprecated = true)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
@@ -74,6 +80,25 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(mrpaRegistryFindAll, HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_MRPA_FIND_ALL_PAGINATED_SUMMARY)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @GetMapping(value = "/paginated", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> findAllMrpaRegistryPaginated(
+            @Parameter(in = ParameterIn.QUERY, style = ParameterStyle.DEEPOBJECT, explode = Explode.TRUE, required = true)
+            @ParameterObject SpecificationRequest request,
+            Authentication authentication
+    ) {
+        try {
+            return ResponseEntity.ok(m4dService.findAllMrpaRegistry(authentication, request));
+        } catch (ConstraintViolationException | ParseException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Operation(summary = CONTROLLER_MRPA_SAVE_SUMMARY, description = CONTROLLER_MRPA_SAVE_DESCRIPTION)
@@ -434,6 +459,7 @@ public class M4dController {
             return new ResponseEntity<>(SEND_REQUEST_IN_PVV, headers, HttpStatus.OK);
     }
 
+    // TODO: me paginated (Данияр)
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION)
     @ApiResponses(value = {
