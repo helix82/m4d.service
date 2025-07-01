@@ -29,6 +29,16 @@ public class M4dRequestSearch {
     @AllowAudit
     private String guid;
 
+    @Column(name = "principal_inn", columnDefinition = "VARCHAR(255)")
+    @JsonProperty("principalInn")
+    @AllowAudit
+    private String principalInn;
+
+    @Column(name = "representative_inn", columnDefinition = "VARCHAR(255)")
+    @JsonProperty("representativeInn")
+    @AllowAudit
+    private String representativeInn;
+
     @Column(name = "hash_xml", columnDefinition = "TEXT")
     @Schema(example = "")
     @JsonProperty("hashXml")
@@ -82,4 +92,9 @@ public class M4dRequestSearch {
     @JsonProperty("endDate")
     @AllowAudit
     private LocalDateTime endDate;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "zip_file_id", referencedColumnName = "id")
+    @AllowAudit
+    private M4dFile zipFile;
 }

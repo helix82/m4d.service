@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.common.exception.custom.BadRequestException;
+import su.opencode.digsigcik.m4d.dto.CheckByGuidRequestDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
 import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
 import su.opencode.digsigcik.m4d.model.M4d;
@@ -115,6 +116,12 @@ public class PvvServiceImpl implements PvvService {
         return res;
     }
 
+    public String sendRequestStatusM4dToRRByGuidAndInns(CheckByGuidRequestDto requestDto) {
+        String res = sendRequestFullM4dFnsViaPvv(requestDto, FNS_SEND_STATUS_REQUEST_M4D_URI);
+        log.info(res);
+        return res;
+    }
+
     private String registrationRequestM4dFnsViaPvv(MultipartFile file, URI uri) {
         try {
             log.debug("Отправка файла {}...", file);
@@ -135,6 +142,28 @@ public class PvvServiceImpl implements PvvService {
         String body = "{\"guid\":\"" + guid + "\"}";
         try {
             log.debug("Отправка запроса на получение статуса МЧД {}...", guid);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Accept", "application/json");
+            headers.setContentType(MediaType.APPLICATION_JSON); // если тело JSON
+
+            HttpEntity<String> entity = new HttpEntity<>(body, headers);
+            return restTemplate.postForEntity(
+                            uri,
+                            entity,
+                            String.class
+                    )
+                    .getBody();
+        } catch (Exception ex) {
+            log.error("Ошибка при отправке запроса на получение статуса МЧД для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
+                    uri);
+        }
+        return null;
+    }
+
+    private String sendRequestFullM4dFnsViaPvv(CheckByGuidRequestDto requestDto, URI uri) {
+        String body = requestDto.toString();
+        try {
+            log.debug("Отправка запроса на получение статуса МЧД {}...", body);
             HttpHeaders headers = new HttpHeaders();
             headers.set("Accept", "application/json");
             headers.setContentType(MediaType.APPLICATION_JSON); // если тело JSON
