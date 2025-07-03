@@ -165,6 +165,7 @@ public interface Constants {
     String CONTROLLER_MRPA_UPLOAD_DESCRIPTION = "Возвращает МЧД с ФИО представителя и ФИО доверителя";
     String CONTROLLER_MRPA_SEND_REGISTER_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на регистрацию МЧД в РР МЧД";
     String CONTROLLER_MRPA_SEND_REQUEST_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на получение статуса МЧД в РР МЧД";
+    String CONTROLLER_MRPA_UPDATE_STATUS_IN_RR_SUMMARY = "Обновить статус МЧД в РР для всех МЧД";
     String CONTROLLER_MRPA_CHECK_BY_GUID_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС по Номеру доверенности (GUID)";
     String CONTROLLER_MRPA_CHECK_XML_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС";
     String CONTROLLER_MRPA_CHECK_XML_DESCRIPTION = "Возвращает отчёт результата проверки";
@@ -264,6 +265,7 @@ public interface Constants {
     String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_UPDATE_STATUS_ERROR = "Ошибка загрузки результата регистрации отзыва мчд в рр: не удалось обновить статус заявления на отзыв МЧД с GUID = %s в ПЭП";
     String MRPA_REQUEST_SEARCH_NOT_FOUND = "Не найден запрос на проверку статуса в РР";
     String SEND_REQUEST_IN_PVV = "Запрос в ПВВ на получение статуса МЧД в РР МЧД отправлен";
+    String COUNT_SEND_REQUEST_IN_PVV = "Отправлено %s запросов в ПВВ на получение статуса МЧД в РР МЧД";
     String ORGANISATION_IS_NULL = "Указанная организация не найдена в справочнике организаций ПЭП";
     String ORGANISATION_SAVE_ERROR = "Ошибка добавления организации";
     String ORGANISATION_READ_ERROR = "Ошибка получения организации";
