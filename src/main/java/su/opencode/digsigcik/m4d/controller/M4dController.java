@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
@@ -30,10 +31,7 @@ import su.opencode.digsigcik.m4d.enums.StatusM4dInRrTypeEnum;
 import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.*;
-import su.opencode.digsigcik.m4d.util.CustomMultipartFile;
-import su.opencode.digsigcik.m4d.util.DateUtils;
-import su.opencode.digsigcik.m4d.util.FileUtils;
-import su.opencode.digsigcik.m4d.util.XMLUtil;
+import su.opencode.digsigcik.m4d.util.*;
 import su.opencode.digsigcik.specification.SpecificationRequest;
 
 import javax.persistence.EntityNotFoundException;
@@ -655,7 +653,7 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> updateStatusM4dRequestSearch(@RequestParam("file") MultipartFile zipFile) throws IOException {
         if (!FileUtils.isZipFile(zipFile)) {
             throw new BadRequestException(NO_ZIP);
@@ -705,8 +703,10 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "/upload-result-sending-to-rr", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> uploadResultSendM4dToRR(@RequestBody M4dResponseInfo m4dResponseInfo) {
+    @PostMapping(value = "/upload-result-sending-to-rr", produces = "application/json; charset=UTF-8")
+    //public ResponseEntity<?> uploadResultSendM4dToRR(@RequestBody M4dResponseInfo m4dResponseInfo) {
+    public ResponseEntity<?> uploadResultSendM4dToRR(@RequestBody String json) throws JsonProcessingException {
+        M4dResponseInfo m4dResponseInfo = ConvertUtils.convertStringToClass(json, M4dResponseInfo.class);
         String error;
         try {
             error = m4dService.uploadResultSendM4dToRR(m4dResponseInfo);
