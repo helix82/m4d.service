@@ -704,7 +704,6 @@ public class M4dController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping(value = "/upload-result-sending-to-rr", produces = "application/json; charset=UTF-8")
-    //public ResponseEntity<?> uploadResultSendM4dToRR(@RequestBody M4dResponseInfo m4dResponseInfo) {
     public ResponseEntity<?> uploadResultSendM4dToRR(@RequestBody String json) throws JsonProcessingException {
         M4dResponseInfo m4dResponseInfo = ConvertUtils.convertStringToClass(json, M4dResponseInfo.class);
         String error;
