@@ -66,7 +66,7 @@ web:
     refresh-time-cache: ${RPD_REFRESH_TIME_CACHE:1350}
     connection-timeout: ${RPD_CONNECTION_TIMEOUT:10000}
     read-timeout: ${RPD_READ_TIMEOUT:10000}
-    white-list-all-methods: ${WHITE_LIST:/v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings}
+    white-list-all-methods: ${WHITE_LIST:/v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings,/api/v1/m4d/upload-result-sending-to-rr,/api/v1/m4d/status,/api/v1/m4d/revoke/upload-result-sending-to-rr}
     trust-all: ${DISABLE_TLS_CHECK:true}
 ---
 
