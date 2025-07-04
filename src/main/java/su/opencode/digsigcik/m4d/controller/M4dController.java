@@ -653,7 +653,7 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PostMapping(value = "/status", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/status")
     public ResponseEntity<?> updateStatusM4dRequestSearch(@RequestParam("file") MultipartFile zipFile) throws IOException {
         if (!FileUtils.isZipFile(zipFile)) {
             throw new BadRequestException(NO_ZIP);
