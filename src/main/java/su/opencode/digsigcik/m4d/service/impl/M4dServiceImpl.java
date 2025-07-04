@@ -1698,7 +1698,7 @@ public class M4dServiceImpl implements M4dService {
                     throw new BadRequestException(MRPA_REGISTRY_STATUS_UPDATE_ERROR + m4dFnsDataResponse.getGuid() + ". " + MRPA_REQUEST_SEARCH_NOT_FOUND);
                 }
             } else { // нет ошибки
-                M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(m4dFnsDataResponse.getGuid(), m4dFnsDataResponse.getId());
+                M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuid(m4dFnsDataResponse.getGuid());
                 if (m4dRequestSearch != null) {
                     m4dRequestSearch.setStatus(m4dFnsDataResponse.getStatus());
                     m4dRequestSearch.setErrorDetail(null);
