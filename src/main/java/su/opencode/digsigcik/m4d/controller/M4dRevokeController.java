@@ -393,7 +393,7 @@ public class M4dRevokeController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PostMapping(value = "/upload-result-sending-to-rr", produces = "application/json; charset=UTF-8")
+    @PostMapping(value = "/upload-result-sending-to-rr")
     public ResponseEntity<?> uploadResultSendM4dRevokeToRR(@RequestBody String json) throws JsonProcessingException {
         M4dRevokeResponseInfo m4dRevokeResponseInfo = ConvertUtils.convertStringToClass(json, M4dRevokeResponseInfo.class);
         String error;
