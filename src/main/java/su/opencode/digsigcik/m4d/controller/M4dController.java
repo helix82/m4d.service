@@ -475,7 +475,7 @@ public class M4dController {
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
-    @PutMapping(value = "/update-status-in-rr", produces = "application/json; charset=UTF-8")
+    @PostMapping(value = "/update-status-in-rr", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> updateStatusM4dInRR(Authentication authentication) {
         List<M4dRegistryResponseDto> mrpaRegistryFindAll;
         try {
