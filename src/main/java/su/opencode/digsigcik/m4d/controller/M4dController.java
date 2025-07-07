@@ -469,6 +469,34 @@ public class M4dController {
             return new ResponseEntity<>(SEND_REQUEST_IN_PVV, headers, HttpStatus.OK);
     }
 
+    @Operation(summary = CONTROLLER_MRPA_UPDATE_STATUS_IN_RR_SUMMARY, description = CONTROLLER_MRPA_UPDATE_STATUS_IN_RR_SUMMARY)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
+            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
+    })
+    @PutMapping(value = "/update-status-in-rr", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<?> updateStatusM4dInRR(Authentication authentication) {
+        List<M4dRegistryResponseDto> mrpaRegistryFindAll;
+        try {
+            mrpaRegistryFindAll = this.m4dService.findAllMrpaRegistry(authentication);
+        } catch (ConstraintViolationException | ParseException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+        Integer count = 0;
+        for (M4dRegistryResponseDto m4dRegistryResponseDto : mrpaRegistryFindAll) {
+            if (m4dRegistryResponseDto.getGuid() != null &&  (m4dRegistryResponseDto.getStatusInRr().equals("ONCHECK") || m4dRegistryResponseDto.getStatusInRr().equals("ERROR"))) {
+                this.sendRequestStatusM4dInPvv(authentication, m4dRegistryResponseDto.getGuid());
+                count++;
+            }
+        }
+        Map<String, String> body = new HashMap<>();
+        body.put("result", String.format(COUNT_SEND_REQUEST_IN_PVV, count));
+
+        return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+
     // TODO: me paginated (Данияр)
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_FOR_USER_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_FOR_USER_DESCRIPTION)
