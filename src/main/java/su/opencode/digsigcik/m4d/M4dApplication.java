@@ -11,12 +11,14 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
+import su.opencode.digsigcik.specification.annotation.EnableSpecificationHandling;
 
 import javax.net.ssl.SSLContext;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
 @SpringBootApplication
+@EnableSpecificationHandling
 public class M4dApplication {
     public static void main(String[] args) {
         System.setProperty("javax.net.ssl.trustStore", System.getenv("JAVA_HOME")+"/lib/security/cacerts");
