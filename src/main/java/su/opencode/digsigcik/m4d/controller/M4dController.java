@@ -666,7 +666,8 @@ public class M4dController {
         return new ResponseEntity<>(report, HttpStatus.OK);
     }
 
-    @Operation(summary = CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY, description = CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY)
+    @Operation(summary = CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY, description = CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY,
+            deprecated = true)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
@@ -721,7 +722,8 @@ public class M4dController {
     }
 
     @Operation(summary = CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION,
-            description = CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION)
+            description = CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION,
+            deprecated = true)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
