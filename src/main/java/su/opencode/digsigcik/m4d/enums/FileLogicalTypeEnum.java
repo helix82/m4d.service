@@ -8,9 +8,10 @@ public enum FileLogicalTypeEnum {
     CONTAINER("container"),
     SIGNATURE("signature"),
     CERTIFICATE("certificate"),
-    DOCUMENT("document");
+    DOCUMENT("document"),
+    ARCHIVE("archive");
 
-    private String value;
+    private final String value;
 
     FileLogicalTypeEnum(String value) {
         this.value = value;

@@ -31,6 +31,12 @@ public interface M4dRepository extends ISpecificationRepository<M4d> {
 
     M4d findByGuid(String guid);
 
+    @Query(value = "SELECT mr from M4d mr"
+            + " join Principal p on p.id = mr.principalId"
+            + " join Representative r on r.id = mr.representativeId "
+            + " where p.inn=:principalInn and r.inn=:represInn and mr.guid=:guid")
+    M4d findM4dByGuidAndPrincipalInnAndRepresentativeInn(@Param("guid") String guid, @Param("principalInn") String principalInn, @Param("represInn") String represInn);
+
     @Query(value = "SELECT new su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto(m4d.id, m4d.guid, "
             + " m4d.startDate, m4d.endDate, m4d.createDate, m4d.isSubTrust, "
             + " p.id, p.inn, p.snils, pd.id, pd.jobTitle, pd.name, pd.surname, pd.patronymic, r.id, r.inn, r.snils, r.birthDate,"

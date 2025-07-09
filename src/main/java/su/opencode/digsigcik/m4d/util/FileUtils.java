@@ -203,25 +203,25 @@ public class FileUtils {
         return new File(tempSourceFile);
     }
 
-    public static boolean isZipFile(MultipartFile file) throws IOException {
+    public static boolean isNotZipFile(MultipartFile file) throws IOException {
         File tempFile = FileUtils.convertMultipartFileToFile(file);
         try (ZipFile zipFile = new ZipFile(tempFile)) {
-            return true;
-        } catch (IOException e) {
             return false;
+        } catch (IOException e) {
+            return true;
         }
     }
 
-    public static boolean isXmlFile(MultipartFile file) throws IOException {
+    public static boolean isNotXmlFile(MultipartFile file) throws IOException {
         File tempFile = FileUtils.convertMultipartFileToFile(file);
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(tempFile);
-            return true;
-        } catch (Exception e) {
             return false;
+        } catch (Exception e) {
+            return true;
         }
     }
 }

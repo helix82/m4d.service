@@ -40,11 +40,13 @@ import javax.xml.bind.JAXBException;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -52,6 +54,8 @@ import java.util.zip.ZipInputStream;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 import static su.opencode.digsigcik.m4d.util.EncodingUtils.isBase64;
+import static su.opencode.digsigcik.m4d.util.FileUtils.createDirectoryIfSheNotExist;
+import static su.opencode.digsigcik.m4d.util.FileUtils.mapFileToMultipart;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 import static su.opencode.digsigcik.m4d.util.XMLUtil.convertStringToDocument;
 
@@ -874,17 +878,60 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_CREATE)
+    public ReportCheckStatusM4dDto createM4dRequestSearchForFindRRByGuidAndInns(CheckByGuidRequestDto requestDto) {
+        this.m4dRequestService.deleteM4dRequestSearch(requestDto.getGuid());
+        // - формирование запроса в РР МЧД на проверку статуса МЧД (если результаты предыдущего отрицательные)
+        M4dRequestSearch m4dRequestSearchNew = new M4dRequestSearch();
+        m4dRequestSearchNew.setGuid(requestDto.getGuid());
+        m4dRequestSearchNew.setPrincipalInn(requestDto.getPrincipalInn());
+        m4dRequestSearchNew.setRepresentativeInn(requestDto.getRepresentativeInn());
+        m4dRequestSearchNew.setCreateDate(LocalDateTime.now());
+        m4dRequestSearchNew.setStatus(StatusRequestTypeEnum.ONCHECK.toString());
+        m4dRequestSearchNew.setStatusDate(LocalDateTime.now());
+        M4dRequestSearch m4dRequestSearchSaved = this.m4dRequestService.saveM4dRequestSearch(m4dRequestSearchNew);
+        if (m4dRequestSearchSaved != null) {
+            ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+            report.setSource("m4d_rr");
+            ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+            report.setReport(rep);
+            rep.setGuid(requestDto.getGuid());
+            if (requestDto.getPrincipalInn() != null) {
+                rep.setPrincipal(
+                    Collections.singletonList(
+                        new ReportCheckStatusM4dDto.Report.Principal() {{
+                            setInn(requestDto.getPrincipalInn());
+                        }}
+                    )
+                );
+            }
+            if (requestDto.getRepresentativeInn() != null) {
+                rep.setRepresentative(
+                    Collections.singletonList(
+                        new ReportCheckStatusM4dDto.Report.Representative() {{
+                            setInn(requestDto.getRepresentativeInn());
+                        }}
+                    )
+                );
+            }
+            rep.setStatusInRr(m4dRequestSearchSaved.getStatus());
+            rep.setErrorInRrDetail(CHECK_STATUS_IN_PVV_ADAPTER);
+            return report;
+        }
+        return null;
+    }
+
+    @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_CHECK_IN_REQUEST_SEARCH)
-    public ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) {
+    public ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml) throws IOException {
         String guidXml = this.getGuidFromXml(m4dXml);
-        M4dRequestSearch m4dRequestSearch;
-        m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuidAndHash(guidXml, hashXml);
+        M4dRequestSearch m4dRequestSearch= this.m4dRequestService.findM4dRequestByGuidAndHash(guidXml, hashXml);
         if (m4dRequestSearch != null) {
             ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
             report.setSource("m4d_rr");
             ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
             report.setReport(rep);
-            rep.setGuid(guidXml);
+            rep.setGuid(m4dRequestSearch.getGuid());
             rep.setStatusInRr(m4dRequestSearch.getStatus());
             rep.setErrorInRrDetail(m4dRequestSearch.getErrorDetail());
             rep.setStartDate(getStartDateM4dFromXml(m4dXml));
@@ -905,26 +952,133 @@ public class M4dServiceImpl implements M4dService {
         return null;
     }
 
+    private MultipartFile getM4dFromArchiveRequest(Long m4dFileId) throws IOException {
+        M4dFile m4dFile;
+        try {
+            m4dFile = this.m4dFileService.findM4dFileById(m4dFileId);
+        } catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        String tempZipFile;
+        FileOutputStream fo;
+        String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String tempPath = "/tmp/" + formattedDateTime;
+        createDirectoryIfSheNotExist(tempPath);
+        tempZipFile = tempPath + "/" + m4dFile.getFilename();
+        fo = new FileOutputStream(tempZipFile);
+        byte[] bytes = Base64.getDecoder().decode(m4dFile.getContent());
+        fo.write(bytes);
+        fo.close();
+        MultipartFile zipFile = mapFileToMultipart(tempZipFile);
+        // Создаем временную директорию для распаковки ZIP
+        Path tempDir;
+        try {
+            tempDir = Files.createTempDirectory("mchdZip");
+        } catch (IOException e) {
+            throw new RuntimeException(CREATE_TEMP_FOLDER_ERROR, e);
+        }
+
+        File xmlFile = null;
+        int xmlCount = 0;
+        // Распаковка ZIP-архива и сохранение всех файлов
+        try (InputStream is = zipFile.getInputStream();
+             ZipInputStream zis = new ZipInputStream(new BufferedInputStream(is))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (!entry.isDirectory()) {
+                    File outFile = new File(tempDir.toFile(), entry.getName());
+                    try (OutputStream os = new FileOutputStream(outFile)) {
+                        byte[] buffer = new byte[4096];
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            os.write(buffer, 0, len);
+                        }
+                    }
+                    // Если расширение xml – увеличиваем счетчик и запоминаем файл
+                    if (entry.getName()
+                            .toLowerCase()
+                            .endsWith(".xml")) {
+                        if (entry.getName()
+                                .toLowerCase()
+                                .startsWith("on_emchd")) {
+                            xmlCount++;
+                            xmlFile = outFile;
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            cleanupDirectory(tempDir);
+            throw new RuntimeException(ZIP_UNPACK_ERROR + ": " + e.getMessage(), e);
+        }
+
+        if (xmlCount == 0) {
+            cleanupDirectory(tempDir);
+            throw new RuntimeException(ZIP_XML_NOT_FOUND);
+        } else if (xmlCount > 1) {
+            cleanupDirectory(tempDir);
+            throw new RuntimeException(ZIP_XML_FOUND_MORE_ONE);
+        }
+        return mapFileToMultipart(String.valueOf(Paths.get(xmlFile.getPath())));
+    }
+
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_CHECK_IN_REQUEST_SEARCH)
-    public ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRRByGuid(String guidXml) {
-        M4dRequestSearch m4dRequestSearch;
-        m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuid(guidXml);
+    public ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRRByGuid(String guidXml) throws IOException {
+        M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuid(guidXml);
         if (m4dRequestSearch != null) {
-            ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
-            report.setSource("m4d_rr");
-            ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
-            report.setReport(rep);
-            rep.setGuid(guidXml);
-            rep.setStatusInRr(m4dRequestSearch.getStatus());
-            rep.setErrorInRrDetail(m4dRequestSearch.getErrorDetail());
-            if (m4dRequestSearch.getStartDate() != null) {
-                rep.setStartDate(m4dRequestSearch.getStartDate().toString());
+            if (m4dRequestSearch.getZipFile() != null) {
+                MultipartFile file = getM4dFromArchiveRequest(m4dRequestSearch.getZipFile().getId());
+                M4dXml m4dXml = this.convertM4dFileToM4dXml(file);
+                ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+                report.setSource("m4d_rr");
+                ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+                report.setReport(rep);
+                rep.setGuid(m4dRequestSearch.getGuid());
+                rep.setStatusInRr(m4dRequestSearch.getStatus());
+                rep.setErrorInRrDetail(m4dRequestSearch.getErrorDetail());
+                rep.setStartDate(getStartDateM4dFromXml(m4dXml));
+                rep.setEndDate(getEndDateM4dFromXml(m4dXml));
+                rep.setCredentials(getCredentialM4dFromXml(m4dXml));
+                rep.setRepresentative(getRepresentativeM4dFromXml(m4dXml));
+                rep.setPrincipal(getPrincipalM4dFromXml(m4dXml));
+                rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
+                rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
+                return report;
+            } else {
+                ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+                report.setSource("m4d_rr");
+                ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+                report.setReport(rep);
+                rep.setGuid(m4dRequestSearch.getGuid());
+                if (m4dRequestSearch.getPrincipalInn() != null) {
+                    rep.setPrincipal(
+                            Collections.singletonList(
+                                    new ReportCheckStatusM4dDto.Report.Principal() {{
+                                        setInn(m4dRequestSearch.getPrincipalInn());
+                                    }}
+                            )
+                    );
+                }
+                if (m4dRequestSearch.getRepresentativeInn() != null) {
+                    rep.setRepresentative(
+                            Collections.singletonList(
+                                    new ReportCheckStatusM4dDto.Report.Representative() {{
+                                        setInn(m4dRequestSearch.getRepresentativeInn());
+                                    }}
+                            )
+                    );
+                }
+                rep.setStatusInRr(m4dRequestSearch.getStatus());
+                rep.setErrorInRrDetail(m4dRequestSearch.getErrorDetail());
+                if (m4dRequestSearch.getStartDate() != null) {
+                    rep.setStartDate(m4dRequestSearch.getStartDate().toString());
+                }
+                if (m4dRequestSearch.getEndDate() != null) {
+                    rep.setEndDate(m4dRequestSearch.getEndDate().toString());
+                }
+                return report;
             }
-            if (m4dRequestSearch.getEndDate() != null) {
-                rep.setEndDate(m4dRequestSearch.getEndDate().toString());
-            }
-            return report;
         }
         return null;
     }
@@ -977,6 +1131,63 @@ public class M4dServiceImpl implements M4dService {
             representativeList.add(representative);
             rep.setRepresentative(representativeList);
 
+
+            List<ReportCheckStatusM4dDto.Report.Principal> principalList = new ArrayList<>();
+            ReportCheckStatusM4dDto.Report.Principal principal = new ReportCheckStatusM4dDto.Report.Principal();
+            String fioPrincipal = m4dRegistryResponseDto.principalDetail.getSurname() + " "
+                    + m4dRegistryResponseDto.principalDetail.getName() + " "
+                    + m4dRegistryResponseDto.principalDetail.getPatronymic();
+            principal.setInn(m4dRegistryResponseDto.principal.getInn());
+            principal.setFio(fioPrincipal);
+            principalList.add(principal);
+            rep.setPrincipal(principalList);
+
+            rep.setInnOrganisation(m4dRegistryResponseDto.organization.getInn());
+            rep.setNameOrganisation(m4dRegistryResponseDto.organization.getName());
+            return report;
+        }
+        return null;
+    }
+
+    @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_CHECK_IN_PEP)
+    public ReportCheckStatusM4dDto checkM4dInPepByGuidAndInns(Authentication authentication, CheckByGuidRequestDto requestDto) throws ParseException {
+        M4d m4d;
+        try {
+            m4d = this.m4dRepository.findM4dByGuidAndPrincipalInnAndRepresentativeInn(requestDto.getGuid(), requestDto.getPrincipalInn(), requestDto.getRepresentativeInn());
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        if (m4d != null) { //мчд в пэп найдено
+            ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
+            M4dRegistryResponseDto m4dRegistryResponseDto = this.convertM4dToM4dResponseDto(authentication, m4d, true, false, false, false);
+            report.setSource("m4d_pep");
+            ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
+            report.setReport(rep);
+            rep.setGuid(m4dRegistryResponseDto.getGuid());
+            rep.setStatus(getStatusM4d(m4d.getId()));
+            rep.setStatusInRr(m4dRegistryResponseDto.getStatusInRr());
+            rep.setErrorInRrDetail(m4dRegistryResponseDto.getErrorInRrDetail());
+            rep.setStartDate(m4dRegistryResponseDto.getStartDate());
+            rep.setEndDate(m4dRegistryResponseDto.getEndDate());
+            rep.setCredentials(convertCredentialDtoToReportCredential(getCredentialByMrpaRegistryId(m4d.getId())));
+            if (m4dRegistryResponseDto.getSigFile() != null) {
+                ReportCheckStatusM4dDto.Report.SigFileDto sigFile = new ReportCheckStatusM4dDto.Report.SigFileDto();
+                sigFile.setId(m4dRegistryResponseDto.getSigFile().getId());
+                sigFile.setFileLogicalType(m4dRegistryResponseDto.getSigFile().getFileLogicalType().getValue());
+                sigFile.setFileMimeType(m4dRegistryResponseDto.getSigFile().getFileMimeType().getValue());
+                sigFile.setFilename(m4dRegistryResponseDto.getSigFile().getFilename());
+                rep.setSigFile(sigFile);
+            }
+            List<ReportCheckStatusM4dDto.Report.Representative> representativeList = new ArrayList<>();
+            ReportCheckStatusM4dDto.Report.Representative representative = new ReportCheckStatusM4dDto.Report.Representative();
+            String fioRepres = m4dRegistryResponseDto.representativeDetail.getSurname() + " "
+                    + m4dRegistryResponseDto.representativeDetail.getName() + " "
+                    + m4dRegistryResponseDto.representativeDetail.getPatronymic();
+            representative.setInn(m4dRegistryResponseDto.representative.getInn());
+            representative.setFio(fioRepres);
+            representativeList.add(representative);
+            rep.setRepresentative(representativeList);
 
             List<ReportCheckStatusM4dDto.Report.Principal> principalList = new ArrayList<>();
             ReportCheckStatusM4dDto.Report.Principal principal = new ReportCheckStatusM4dDto.Report.Principal();
@@ -1421,7 +1632,7 @@ public class M4dServiceImpl implements M4dService {
 
     @Override
     @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_UPDATE_STATUS)
-    public ReportCheckStatusM4dDto updateStatusM4dRequestSearch(MultipartFile zipFile) throws IOException {
+    public ReportCheckStatusM4dDto updateStatusM4dRequestSearch(MultipartFile resource) throws IOException {
         // Создаем временную директорию для распаковки ZIP
         Path tempDir;
         try {
@@ -1438,11 +1649,14 @@ public class M4dServiceImpl implements M4dService {
         String sigFileKvitM4d_filename = null;
         File sigFileKvitM4dRevoke = null;
         String sigFileKvitM4dRevoke_filename = null;
+        File zipFile = null;
+        String zipFile_filename = null;
         int jsonCount = 0;
         int xmlCount = 0;
         int sigCount = 0;
+        int zipCount = 0;
         // Распаковка ZIP-архива и сохранение всех файлов
-        try (InputStream is = zipFile.getInputStream();
+        try (InputStream is = resource.getInputStream();
              ZipInputStream zis = new ZipInputStream(new BufferedInputStream(is))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -1461,6 +1675,14 @@ public class M4dServiceImpl implements M4dService {
                             .endsWith(".json")) {
                         jsonCount++;
                         jsonFile = outFile;
+                    }
+                    // Если расширение zip – увеличиваем счетчик и запоминаем файл
+                    if (entry.getName()
+                            .toLowerCase()
+                            .endsWith(".zip")) {
+                        zipCount++;
+                        zipFile = outFile;
+                        zipFile_filename = entry.getName();
                     }
                     // Если расширение xml – увеличиваем счетчик и запоминаем файл
                     if (entry.getName()
@@ -1716,24 +1938,32 @@ public class M4dServiceImpl implements M4dService {
                     if (m4dFnsDataResponse.getEndDateTime() != null) {
                         m4dRequestSearch.setEndDate(DateUtils.convertStringToLocalDateTime(m4dFnsDataResponse.getEndDateTime()));
                     }
+                    // сохранить в бд архив с данными о мчд из рр
+                    M4dFile m4dFileZip = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.ZIP, FileLogicalTypeEnum.ARCHIVE, zipFile_filename, FileUtils.getFileContentByPath(zipFile.getPath()));
+                    m4dRequestSearch.setZipFile(m4dFileZip);
+
                     M4dRequestSearch m4dRequestSearchSaved;
                     m4dRequestSearchSaved = this.m4dRequestService.updateM4dRequestSearch(m4dRequestSearch);
                     if (m4dRequestSearchSaved == null) {
                         throw new BadRequestException(MRPA_REGISTRY_STATUS_UPDATE_ERROR + m4dFnsDataResponse.getGuid());
                     }
+                    //формируем отчет
+                    MultipartFile file = getM4dFromArchiveRequest(m4dRequestSearchSaved.getZipFile().getId());
+                    M4dXml m4dXml = this.convertM4dFileToM4dXml(file);
                     ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
                     report.setSource("m4d_rr");
                     ReportCheckStatusM4dDto.Report rep = new ReportCheckStatusM4dDto.Report();
                     report.setReport(rep);
-                    rep.setGuid(m4dFnsDataResponse.getGuid());
+                    rep.setGuid(m4dRequestSearchSaved.getGuid());
                     rep.setStatusInRr(m4dRequestSearchSaved.getStatus());
-                    rep.setStartDate(m4dRequestSearchSaved.getStartDate().toString());
-                    rep.setEndDate(m4dRequestSearchSaved.getEndDate().toString());
-//                rep.setCredentials(getCredentialM4dFromXml(sourceFile));
-//                rep.setRepresentative(getRepresentativeM4dFromXml(sourceFile));
-//                rep.setPrincipal(getPrincipalM4dFromXml(sourceFile));
-//                rep.setInnOrganisation(getInnOrganizationFromXml(sourceFile));
-//                rep.setNameOrganisation(getNameOrganizationFromXml(sourceFile));
+                    rep.setErrorInRrDetail(m4dRequestSearchSaved.getErrorDetail());
+                    rep.setStartDate(getStartDateM4dFromXml(m4dXml));
+                    rep.setEndDate(getEndDateM4dFromXml(m4dXml));
+                    rep.setCredentials(getCredentialM4dFromXml(m4dXml));
+                    rep.setRepresentative(getRepresentativeM4dFromXml(m4dXml));
+                    rep.setPrincipal(getPrincipalM4dFromXml(m4dXml));
+                    rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
+                    rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
                     return report;
                 }
             }

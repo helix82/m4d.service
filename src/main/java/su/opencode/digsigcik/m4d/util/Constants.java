@@ -166,7 +166,9 @@ public interface Constants {
     String CONTROLLER_MRPA_SEND_REGISTER_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на регистрацию МЧД в РР МЧД";
     String CONTROLLER_MRPA_SEND_REQUEST_IN_PVV_SUMMARY = "Отправить запрос в ПВВ на получение статуса МЧД в РР МЧД";
     String CONTROLLER_MRPA_UPDATE_STATUS_IN_RR_SUMMARY = "Обновить статус МЧД в РР для всех МЧД";
+    String CONTROLLER_MRPA_UPDATE_REQUEST_STATUS_IN_RR_SUMMARY = "Обновить статусы запросов сторонних МЧД в РР МЧД";
     String CONTROLLER_MRPA_CHECK_BY_GUID_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС по Номеру доверенности (GUID)";
+    String CONTROLLER_MRPA_CHECK_BY_GUID_FULL_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС по Номеру доверенности (GUID), ИНН доверителя и ИНН представителя";
     String CONTROLLER_MRPA_CHECK_XML_SUMMARY = "Получение статуса МЧД в ПЭП или в РР ФНС";
     String CONTROLLER_MRPA_CHECK_XML_DESCRIPTION = "Возвращает отчёт результата проверки";
     String CONTROLLER_MRPA_CLEAR_SIG_SUMMARY = "Удалить ЭП МЧД";
@@ -229,6 +231,7 @@ public interface Constants {
     String SIG_NOT_FOUND = "ЭП не передана";
     String MESSAGE_ID_IS_NULL = "messageId не указан";
     String GUID_IS_NULL = "Номер доверенности (GUID) не указан";
+    String CHECK_REQUEST_IS_NULL = "Данные для проверки МЧД по Номеру доверенности, ИНН доверителя и ИНН представителя не указаны";
     String INN_IS_NULL = "ИНН не указан";
     String MRPA_IS_NULL = "МЧД не найдена";
     String MRPA_NOT_DELETE = "Можно удалить только черновик МЧД";
@@ -265,6 +268,8 @@ public interface Constants {
     String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_UPDATE_STATUS_ERROR = "Ошибка загрузки результата регистрации отзыва мчд в рр: не удалось обновить статус заявления на отзыв МЧД с GUID = %s в ПЭП";
     String MRPA_REQUEST_SEARCH_NOT_FOUND = "Не найден запрос на проверку статуса в РР";
     String SEND_REQUEST_IN_PVV = "Запрос в ПВВ на получение статуса МЧД в РР МЧД отправлен";
+    String SEND_REQUEST_DATA_IN_PVV = "Запрос в ПВВ на получение данных по МЧД в РР МЧД отправлен";
+    String COUNT_SEND_REQUEST_DATA_IN_PVV = "Отправлено %s запросов в ПВВ на получение данных по МЧД в РР МЧД";
     String COUNT_SEND_REQUEST_IN_PVV = "Отправлено %s запросов в ПВВ на получение статуса МЧД в РР МЧД";
     String ORGANISATION_IS_NULL = "Указанная организация не найдена в справочнике организаций ПЭП";
     String ORGANISATION_SAVE_ERROR = "Ошибка добавления организации";
@@ -294,6 +299,8 @@ public interface Constants {
     String ZIP_JSON_FOUND_MORE_ONE = "В архиве найдено более одного JSON-файла";
     String ZIP_XML_FOUND_MORE_TWO = "В архиве найдено более двух XML-файлов";
     String ZIP_SIG_FOUND_MORE_TWO = "В архиве найдено более двух SIG-файлов";
+    String ZIP_XML_NOT_FOUND = "XML-файл не найден в ZIP архиве";
+    String ZIP_XML_FOUND_MORE_ONE = "В архиве найдено более одного XML-файла";
     String JSON_READ_ERROR = "Ошибка чтения JSON-файла";
     String RESULT_SEND_ERROR_CODE_TITLE = "Код: %s, Ошибка: %s";
     String RESULT_SEND_ERROR_DETAIL = ", Детали: %s";

@@ -12,6 +12,7 @@ import su.opencode.digsigcik.m4d.repository.M4dRequestRepository;
 import su.opencode.digsigcik.m4d.service.M4dRequestService;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -21,12 +22,20 @@ import javax.validation.constraints.NotNull;
 public class M4dRequestServiceImpl implements M4dRequestService {
     private final M4dRequestRepository repository;
 
+    public List<M4dRequestSearch> findAllM4dRequestSearch() {
+        return repository.findAll();
+    }
+
     public M4dRequestSearch findM4dRequestByGuidAndHash(@NotNull String guid, @NotNull String hash) {
         return repository.findByGuidAndHashXml(guid, hash);
     }
 
     public M4dRequestSearch findM4dRequestByGuid(@NotNull String guid) {
         return repository.findByGuid(guid);
+    }
+
+    public M4dRequestSearch findM4dRequestByGuidAndInns(@NotNull String guid, @NotNull String principalInn, @NotNull String representativeInn) {
+        return repository.findByGuidAndPrincipalInnAndRepresentativeInn(guid, principalInn, representativeInn);
     }
 
     public M4dRequestSearch saveM4dRequestSearch(M4dRequestSearch m4dRequestSearch) {
