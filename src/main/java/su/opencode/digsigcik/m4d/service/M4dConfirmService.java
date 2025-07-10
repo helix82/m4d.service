@@ -7,6 +7,7 @@ import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dConfirm;
 
 import javax.xml.bind.JAXBException;
+import java.io.File;
 import java.io.IOException;
 
 public interface M4dConfirmService {
@@ -19,4 +20,5 @@ public interface M4dConfirmService {
     Long uploadXmlRegisteredRr(Long m4dId, String xmlContent);
     M4dConfirmDto getXml(String idFile, String guid, String internalNumber, String startDate, String endDate);
     M4dConfirm createAndSignedM4dConfirm(Authentication authentication, M4d m4d, String idFile, String guid, String internalNumber, String startDate, String endDate) throws JAXBException, IOException;
+    M4dConfirm saveConfirmAndSignatureRr(Long m4dId, File xmlFileKvitM4d, File sigFileKvitM4d);
 }

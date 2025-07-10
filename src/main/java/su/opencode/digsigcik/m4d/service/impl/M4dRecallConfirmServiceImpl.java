@@ -23,6 +23,7 @@ import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
+import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -197,5 +198,23 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
             throw new BadRequestException(e.getMessage());
         }
         return m4dRecallConfirmSaved;
+    }
+
+    @Override
+    public M4dRecallConfirm saveConfirmAndSignatureRr(Long m4dRevokeId, File xmlFileKvitM4dRevoke, File sigFileKvitM4dRevoke) {
+        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRevokeId);
+        M4dFile m4dFileXmlKvitM4dRevoke = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, xmlFileKvitM4dRevoke.getName(), FileUtils.getFileContentByPath(xmlFileKvitM4dRevoke.getPath()));
+        M4dFile m4dFileSigKvitM4dRevoke = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, sigFileKvitM4dRevoke.getName(), FileUtils.getFileContentByPath(sigFileKvitM4dRevoke.getPath()));
+        String datetimeRevokeRegisteredRR = XMLUtil.getSubstringFromXml(new String(FileUtils.getFileContentByPath(xmlFileKvitM4dRevoke.getPath())), "ДатаВремВыдПодтв=\"");
+        m4dRecallConfirm.setRegisteredRrDate(DateUtils.convertStringToLocalDateTime(datetimeRevokeRegisteredRR));
+        m4dRecallConfirm.setXmlFileRegisteredRr(m4dFileXmlKvitM4dRevoke);
+        m4dRecallConfirm.setSigFileRegisteredRr(m4dFileSigKvitM4dRevoke);
+        M4dRecallConfirm m4dRecallConfirmUpdate = null;
+        try {
+            m4dRecallConfirmUpdate = this.updateM4dRecallConfirm(m4dRecallConfirm);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return m4dRecallConfirmUpdate;
     }
 }

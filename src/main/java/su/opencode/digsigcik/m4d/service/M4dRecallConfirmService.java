@@ -7,6 +7,7 @@ import su.opencode.digsigcik.m4d.model.M4dRecall;
 import su.opencode.digsigcik.m4d.model.M4dRecallConfirm;
 
 import javax.xml.bind.JAXBException;
+import java.io.File;
 import java.io.IOException;
 
 public interface M4dRecallConfirmService {
@@ -19,4 +20,5 @@ public interface M4dRecallConfirmService {
     Long uploadXmlRegisteredRr(Long m4dRecallId, String xmlContent);
     M4dRevokeConfirmDto getXml(String guid, String hashFile);
     M4dRecallConfirm createAndSignedM4dRecallConfirm(Authentication authentication, M4dRecall m4dRecall, String guid, String hashFile) throws JAXBException, IOException;
+    M4dRecallConfirm saveConfirmAndSignatureRr(Long m4dRevokeId, File xmlFileKvitM4dRevoke, File sigFileKvitM4dRevoke);
 }

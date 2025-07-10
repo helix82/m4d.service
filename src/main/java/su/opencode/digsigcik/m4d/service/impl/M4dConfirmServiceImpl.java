@@ -23,6 +23,7 @@ import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
+import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
@@ -200,5 +201,23 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
             throw new BadRequestException(e.getMessage());
         }
         return m4dConfirmSaved;
+    }
+
+    @Override
+    public M4dConfirm saveConfirmAndSignatureRr(Long m4dId, File xmlFileKvitM4d, File sigFileKvitM4d) {
+        M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
+        M4dFile m4dFileXmlKvitM4d = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, xmlFileKvitM4d.getName(), FileUtils.getFileContentByPath(xmlFileKvitM4d.getPath()));
+        M4dFile m4dFileSigKvitM4d = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, sigFileKvitM4d.getName(), FileUtils.getFileContentByPath(sigFileKvitM4d.getPath()));
+        String datetimeRegisteredRR = XMLUtil.getSubstringFromXml(new String(FileUtils.getFileContentByPath(xmlFileKvitM4d.getPath())), "ДатаВремВыдПодтв=\"");
+        m4dConfirm.setRegisteredRrDate(DateUtils.convertStringToLocalDateTime(datetimeRegisteredRR));
+        m4dConfirm.setXmlFileRegisteredRr(m4dFileXmlKvitM4d);
+        m4dConfirm.setSigFileRegisteredRr(m4dFileSigKvitM4d);
+        M4dConfirm m4dConfirmUpdate = null;
+        try {
+            m4dConfirmUpdate = this.updateM4dConfirm(m4dConfirm);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return m4dConfirmUpdate;
     }
 }

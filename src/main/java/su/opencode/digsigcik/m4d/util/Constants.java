@@ -296,7 +296,9 @@ public interface Constants {
     String ZIP_UNPACK_ERROR = "Ошибка распаковки ZIP файла";
     String ZIP_CREATE_ERROR = "Ошибка создания архива";
     String ZIP_JSON_NOT_FOUND = "JSON-файл не найден в ZIP архиве";
+    String ZIP_ZIP_NOT_FOUND = "ZIP-файл не найден в ZIP архиве";
     String ZIP_JSON_FOUND_MORE_ONE = "В архиве найдено более одного JSON-файла";
+    String ZIP_ZIP_FOUND_MORE_ONE = "В архиве найдено более одного ZIP-файла";
     String ZIP_XML_FOUND_MORE_TWO = "В архиве найдено более двух XML-файлов";
     String ZIP_SIG_FOUND_MORE_TWO = "В архиве найдено более двух SIG-файлов";
     String ZIP_XML_NOT_FOUND = "XML-файл не найден в ZIP архиве";
