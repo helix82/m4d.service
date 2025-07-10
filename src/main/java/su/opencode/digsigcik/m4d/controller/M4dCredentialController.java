@@ -19,6 +19,7 @@ import su.opencode.digsigcik.m4d.model.Credential;
 import su.opencode.digsigcik.m4d.service.CredentialService;
 import su.opencode.digsigcik.specification.SpecificationRequest;
 import su.opencode.digsigcik.specification.SpecificationResponse;
+import su.opencode.digsigcik.specification.annotation.EnablePagination;
 
 import javax.validation.ConstraintViolationException;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import java.util.stream.StreamSupport;
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @RestController
+@EnablePagination
 @RequestMapping("/api/v1/m4d/credential")
 @AllArgsConstructor
 @Tag(name = "M4d Credential Controller")
@@ -51,7 +53,7 @@ public class M4dCredentialController {
         }
     }
 
-    @Operation(summary = CONTROLLER_CREDENTIAL_FIND_ALL_PAGINATED_SUMMARY, deprecated = true)
+    @Operation(summary = CONTROLLER_CREDENTIAL_FIND_ALL_PAGINATED_SUMMARY)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
