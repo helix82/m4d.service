@@ -4,21 +4,28 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.model.Credential;
 import su.opencode.digsigcik.m4d.service.CredentialService;
+import su.opencode.digsigcik.specification.SpecificationRequest;
+import su.opencode.digsigcik.specification.SpecificationResponse;
 
 import javax.validation.ConstraintViolationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 
@@ -30,20 +37,36 @@ public class M4dCredentialController {
     private final CredentialService service;
     private final ModelMapper modelMapper;
 
-    @Operation(summary = CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY, description = CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION)
+    @Operation(summary = CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY, description = CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION, deprecated = true)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
             @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
     })
-    @GetMapping()
+    @GetMapping
     public ResponseEntity<?> findAllCredential() {
-        List<Credential> response;
         try {
-            response = service.findAllCredential();
+            return ResponseEntity.ok(convertToDto(service.findAllCredential()));
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(response.stream().map(this::convertToDto).collect(Collectors.toList()), HttpStatus.OK);
+    }
+
+    @Operation(summary = CONTROLLER_CREDENTIAL_FIND_ALL_PAGINATED_SUMMARY, deprecated = true)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @GetMapping("/paginated")
+    public ResponseEntity<?> findAllCredentialPaginated(
+            @Parameter(in = ParameterIn.QUERY, style = ParameterStyle.DEEPOBJECT, explode = Explode.TRUE, required = true)
+            @ParameterObject SpecificationRequest request
+    ) {
+
+        try {
+            return ResponseEntity.ok(convertToDto(service.findAllCredential(request)));
+        } catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Operation(summary = CONTROLLER_CREDENTIAL_SAVE_SUMMARY, description = CONTROLLER_CREDENTIAL_SAVE_DESCRIPTION)
@@ -176,6 +199,21 @@ public class M4dCredentialController {
         body.put("result", "true");
 
         return new ResponseEntity<>(body, HttpStatus.OK);
+    }
+
+    private SpecificationResponse<CredentialDto> convertToDto(SpecificationResponse<Credential> credentials) {
+        return SpecificationResponse
+                .<CredentialDto> builder()
+                .data(convertToDto(credentials.getData()))
+                .filters(credentials.getFilters())
+                .sortBy(credentials.getSortBy())
+                .pagination(credentials.getPagination())
+                .build();
+    }
+
+    // TODO: вынести в сервисный слой?
+    private List<CredentialDto> convertToDto(Iterable<Credential> credentials) {
+        return StreamSupport.stream(credentials.spliterator(), false).map(this::convertToDto).collect(Collectors.toList());
     }
 
     private CredentialDto convertToDto(Credential credential) {

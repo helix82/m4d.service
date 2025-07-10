@@ -2,11 +2,14 @@ package su.opencode.digsigcik.m4d.service;
 
 import org.jetbrains.annotations.NotNull;
 import su.opencode.digsigcik.m4d.model.Credential;
+import su.opencode.digsigcik.specification.SpecificationRequest;
+import su.opencode.digsigcik.specification.SpecificationResponse;
 
 import java.util.List;
 
 public interface CredentialService {
-    List<Credential> findAllCredential();
+    Iterable<Credential> findAllCredential();
+    SpecificationResponse<Credential> findAllCredential(SpecificationRequest request);
     Credential saveCredential(@NotNull Credential credential);
     Credential findByCredentialId(@NotNull Long id);
     List<Credential> findCredentialByCodeOrName(@NotNull String codeOrName);
