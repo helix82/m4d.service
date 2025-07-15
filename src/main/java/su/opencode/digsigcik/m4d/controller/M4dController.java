@@ -530,7 +530,7 @@ public class M4dController {
         }
         Integer count = 0;
         for (M4dRegistryResponseDto m4dRegistryResponseDto : mrpaRegistryFindAll) {
-            if (m4dRegistryResponseDto.getGuid() != null &&  (m4dRegistryResponseDto.getStatusInRr().equals("ONCHECK") || m4dRegistryResponseDto.getStatusInRr().equals("ERROR"))) {
+            if (m4dRegistryResponseDto.getGuid() != null && m4dRegistryResponseDto.getStatusInRr() != null && (m4dRegistryResponseDto.getStatusInRr().equals("ONCHECK") || m4dRegistryResponseDto.getStatusInRr().equals("ERROR"))) {
                 this.sendRequestStatusM4dInPvv(authentication, m4dRegistryResponseDto.getGuid());
                 count++;
             }
