@@ -1715,10 +1715,7 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(ZIP_UNPACK_ERROR + ": " + e.getMessage());
         }
 
-        if (zipCount == 0) {
-            cleanupDirectory(tempDir);
-            throw new BadRequestException(ZIP_ZIP_NOT_FOUND);
-        } else if (zipCount > 1) {
+        if (zipCount > 1) {
             cleanupDirectory(tempDir);
             throw new BadRequestException(ZIP_ZIP_FOUND_MORE_ONE);
         }
