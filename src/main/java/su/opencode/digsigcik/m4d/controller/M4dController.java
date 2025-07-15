@@ -916,6 +916,7 @@ public class M4dController {
             return new ResponseEntity<>(getCustomErrorJsonFromString(SENDING_RESPONSE_TO_PVV_ERROR), HttpStatus.BAD_REQUEST);
         }
         m4d.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
+        m4d.setErrorInRrDetail(null);
         M4d m4dSaved;
         try {
             m4dSaved = this.m4dService.updateM4d(m4d);
