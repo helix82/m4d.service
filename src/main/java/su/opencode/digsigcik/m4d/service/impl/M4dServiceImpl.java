@@ -1809,7 +1809,7 @@ public class M4dServiceImpl implements M4dService {
             if (m4dFnsDataResponse.getError() != null) { //ошибка
                 M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuid(m4dFnsDataResponse.getGuid());
                 if (m4dRequestSearch != null) {
-                    if (m4dRequestSearch.getHashXml() != null && !m4dRequestSearch.getHashXml().equals(m4dFnsDataResponse.getId())) {
+                    if (m4dRequestSearch.getHashXml() != null && m4dFnsDataResponse.getId() != null && !m4dRequestSearch.getHashXml().equals(m4dFnsDataResponse.getId())) {
                         throw new BadRequestException(String.format(MRPA_REGISTRY_HASH_FILE_ERROR, m4dFnsDataResponse.getGuid()));
                     } else if (m4dRequestSearch.getHashXml() == null && m4dFnsDataResponse.getId() != null) {
                         m4dRequestSearch.setHashXml(m4dFnsDataResponse.getId());
