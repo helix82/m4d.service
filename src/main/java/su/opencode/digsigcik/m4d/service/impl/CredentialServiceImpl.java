@@ -9,6 +9,9 @@ import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.m4d.model.Credential;
 import su.opencode.digsigcik.m4d.repository.CredentialRepository;
 import su.opencode.digsigcik.m4d.service.CredentialService;
+import su.opencode.digsigcik.specification.SpecificationRequest;
+import su.opencode.digsigcik.specification.SpecificationResponse;
+import su.opencode.digsigcik.specification.service.SpecificationService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +20,18 @@ import java.util.List;
 @Primary
 @RequiredArgsConstructor
 public class CredentialServiceImpl implements CredentialService {
+
     private final CredentialRepository repository;
+    private final SpecificationService specificationService;
 
     @Override
-    public List<Credential> findAllCredential() {
+    public Iterable<Credential> findAllCredential() {
         return this.repository.findAll();
+    }
+
+    @Override
+    public SpecificationResponse<Credential> findAllCredential(SpecificationRequest request) {
+        return specificationService.getUsingSpecification(repository, request, Credential.class);
     }
 
     @Override
