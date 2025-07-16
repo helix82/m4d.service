@@ -14,6 +14,7 @@ public enum FileMimeTypeEnum {
     ZIP("application/x-zip-compressed"),
     XML("text/xml"),
     PDF("application/pdf"),
+    JSON("application/json"),
 // Microsoft Office
     DOC("application/msword"),
     DOT("application/msword"),

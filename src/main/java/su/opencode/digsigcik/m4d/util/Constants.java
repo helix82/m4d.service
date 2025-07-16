@@ -212,6 +212,8 @@ public interface Constants {
     String CONTROLLER_CREDENTIAL_UPDATE_DESCRIPTION = "Возвращает измененную запись полномочия";
     String CONTROLLER_CREDENTIAL_DELETE_SUMMARY = "Удалить запись полномочия по ИД";
     String CONTROLLER_CREDENTIAL_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
+    String CONTROLLER_CREDENTIAL_UPLOAD_SUMMARY = "Загрузить полномочия из файла";
+    String CONTROLLER_CREDENTIAL_UPLOAD_DESCRIPTION = "Возвращает количество загруженных полномочий";
 
     String CONTROLLER_TEST_KAFKA_SUMMARY = "Отправляет логин пользователя через брокер сообщений в другой микросервис";
     String CONTROLLER_TEST_KAFKA_DESCRIPTION = "Возвращает логин, если отправилось";
@@ -317,6 +319,8 @@ public interface Constants {
     String XML_NOT_SCHEMA_EMCHD_1 = "XML файл не соответствует схеме EMCHD_1";
     String XML_IS_NULL = "XML-файл не указан";
     String CREATE_TEMP_FOLDER_ERROR = "Не удалось создать временную директорию";
+    String FILE_WRONG_FORMAT = "Не верный формат файла";
+    String FILE_IS_NULL = "Исходный файл не указан";
 
     //Ошибки с контейнерами
     String CONTAINER_CREATE_EXCEPTION = "Ошибка при создании контейнера";

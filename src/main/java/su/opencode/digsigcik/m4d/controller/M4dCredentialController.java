@@ -8,16 +8,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.m4d.dto.CredentialDto;
 import su.opencode.digsigcik.m4d.model.Credential;
 import su.opencode.digsigcik.m4d.service.CredentialService;
 
 import javax.validation.ConstraintViolationException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
@@ -179,18 +183,39 @@ public class M4dCredentialController {
     }
 
     private CredentialDto convertToDto(Credential credential) {
-        CredentialDto credentialDto = modelMapper.map(credential, CredentialDto.class);
-        return credentialDto;
+        return modelMapper.map(credential, CredentialDto.class);
     }
 
     private Credential convertToEntity(CredentialDto credentialDto) {
-        Credential credential = modelMapper.map(credentialDto, Credential.class);
-        return credential;
+        return modelMapper.map(credentialDto, Credential.class);
     }
 
     public Map<String, String> getCustomErrorJsonFromString(String text) {
         Map<String, String> body = new HashMap<>();
         body.put("error", text);
         return body;
+    }
+
+    @Operation(summary = CONTROLLER_CREDENTIAL_UPLOAD_SUMMARY, description = CONTROLLER_CREDENTIAL_UPLOAD_DESCRIPTION)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = API_RESPONSE_CODE_200_MESSAGE),
+            @ApiResponse(code = 404, message = API_RESPONSE_CODE_404_MESSAGE)
+    })
+    @PostMapping(value = "upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> upload(@RequestPart("srcFile") MultipartFile sourceFile) throws IOException {
+
+        if (sourceFile == null || sourceFile.isEmpty()){
+            return new ResponseEntity<>(getCustomErrorJsonFromString(FILE_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
+        if (!Objects.equals(sourceFile.getContentType(), "application/json")) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(FILE_WRONG_FORMAT), HttpStatus.BAD_REQUEST);
+        }
+
+        Integer credentials_import = this.service.uploadFromJson(sourceFile);
+
+        Map<String, String> body = new HashMap<>();
+        body.put("imported", Integer.toString(credentials_import));
+
+        return new ResponseEntity<>(body, HttpStatus.OK);
     }
 }
