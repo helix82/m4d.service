@@ -200,6 +200,7 @@ public interface Constants {
 
     String CONTROLLER_CREDENTIAL_FIND_ALL_SUMMARY = "Получить список полномочий";
     String CONTROLLER_CREDENTIAL_FIND_ALL_DESCRIPTION = "Возвращает список полномочий";
+    String CONTROLLER_CREDENTIAL_FIND_ALL_PAGINATED_SUMMARY = "Получить список полномочий (пэджинирован)";
     String CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_SUMMARY = "Получить список полномочий с фильтром по коду или наименованию";
     String CONTROLLER_CREDENTIAL_FIND_BY_CODE_OR_NAME_DESCRIPTION = "Возвращает список полномочий с фильтром по коду или наименованию";
     String CONTROLLER_CREDENTIAL_FIND_BY_MRPA_ID_SUMMARY = "Получить список полномочий с фильтром по ИД МЧД";

@@ -21,6 +21,9 @@ import su.opencode.digsigcik.m4d.repository.CredentialRepository;
 import su.opencode.digsigcik.m4d.repository.M4dCredentialRepository;
 import su.opencode.digsigcik.m4d.service.CredentialService;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
+import su.opencode.digsigcik.specification.SpecificationRequest;
+import su.opencode.digsigcik.specification.SpecificationResponse;
+import su.opencode.digsigcik.specification.service.SpecificationService;
 
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
@@ -35,13 +38,20 @@ import static su.opencode.digsigcik.m4d.util.ConvertUtils.convertStringToClass;
 @Primary
 @RequiredArgsConstructor
 public class CredentialServiceImpl implements CredentialService {
+
     private final CredentialRepository repository;
+    private final SpecificationService specificationService;
     private final M4dFileService m4dFileService;
     private final M4dCredentialRepository m4dCredentialRepository;
 
     @Override
-    public List<Credential> findAllCredential() {
+    public Iterable<Credential> findAllCredential() {
         return this.repository.findAll();
+    }
+
+    @Override
+    public SpecificationResponse<Credential> findAllCredential(SpecificationRequest request) {
+        return specificationService.getUsingSpecification(repository, request, Credential.class);
     }
 
     @Override
