@@ -15,6 +15,7 @@ public interface M4dFileService {
     void deleteM4dFile(@NotNull Long id);
     M4dFile saveM4dFile(@NotNull M4dFile m4dFile);
     M4dFile findM4dFileByContent(@NotNull String content);
+    M4dFile findM4dFileByFilename(@NotNull String filename);
     M4dFile fillM4dFile(FileMimeTypeEnum fileMimeTypeEnum, FileLogicalTypeEnum fileLogicalTypeEnum, String filename, byte[] content);
     File createArchive(Authentication authentication, String filename, List<Long> values) throws IOException;
 }

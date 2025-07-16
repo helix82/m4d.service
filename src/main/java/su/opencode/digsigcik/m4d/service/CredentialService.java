@@ -1,10 +1,12 @@
 package su.opencode.digsigcik.m4d.service;
 
 import org.jetbrains.annotations.NotNull;
+import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.m4d.model.Credential;
 import su.opencode.digsigcik.specification.SpecificationRequest;
 import su.opencode.digsigcik.specification.SpecificationResponse;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface CredentialService {
@@ -17,4 +19,5 @@ public interface CredentialService {
     List<Credential> findCredentialByMrpaId(@NotNull Long mrpaId);
     Credential updateCredential(@NotNull Credential credential);
     void deleteCredential(@NotNull Long id);
+    Integer uploadFromJson(MultipartFile sourceFile) throws IOException;
 }

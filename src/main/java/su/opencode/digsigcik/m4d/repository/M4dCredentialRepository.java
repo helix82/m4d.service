@@ -7,10 +7,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.m4d.model.M4dCredential;
 
+import java.util.List;
+
 @Repository
 public interface M4dCredentialRepository extends JpaRepository<M4dCredential, Long> {
     @Modifying
     @Transactional
     @Query(value = "delete from m4d_registry_m4d_credential mrc where mrc.mrpa_registry_id=?1", nativeQuery = true)
     void deleteAllByMrpaRegistryId(Long mrpaRegistryId);
+
+    List<M4dCredential> findM4dCredentialByCredentialId(Long credentialId);
 }

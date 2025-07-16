@@ -5,9 +5,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
 import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.model.M4dFile;
 import su.opencode.digsigcik.m4d.repository.M4dFileRepository;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
@@ -54,6 +54,11 @@ public class M4dFileServiceImpl implements M4dFileService {
     @Override
     public M4dFile findM4dFileByContent(@NotNull String content) {
         return this.repository.findFirstByContent(content);
+    }
+
+    @Override
+    public M4dFile findM4dFileByFilename(@NotNull String filename) {
+        return this.repository.findM4dFileByFilename(filename);
     }
 
     @Override
