@@ -39,6 +39,7 @@ import su.opencode.digsigcik.m4d.util.ConvertUtils;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.XMLUtil;
 import su.opencode.digsigcik.specification.SpecificationRequest;
+import su.opencode.digsigcik.specification.annotation.EnablePagination;
 
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletResponse;
@@ -53,6 +54,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 
 @Slf4j
 @RestController
+@EnablePagination
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/m4d/revoke")
 @Tag(name = "M4d Revoke Controller")

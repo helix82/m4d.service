@@ -561,6 +561,7 @@ public class M4dServiceImpl implements M4dService {
                 this.m4dRecallService.deleteMrpaRecallById(m4dRecall.getId());
             }
             this.m4dRepository.deleteById(id);
+            this.m4dCredentialRepository.deleteAllByMrpaRegistryId(id);
             List<M4d> m4ds = this.m4dRepository.findByPrincipalId(m4d.getPrincipalId());
             if (m4ds.isEmpty()) {
                 this.principalService.deletePrincipal(m4d.getPrincipalId());
@@ -571,6 +572,7 @@ public class M4dServiceImpl implements M4dService {
                 this.representativeService.deleteRepresentative(m4d.getRepresentativeId());
                 this.representativeDetailService.deleteRepresentativeDetailByRepresId(m4d.getRepresentativeId());
             }
+
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }

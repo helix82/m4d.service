@@ -1,14 +1,14 @@
 package su.opencode.digsigcik.m4d.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import su.opencode.digsigcik.m4d.model.Credential;
+import su.opencode.digsigcik.specification.repository.ISpecificationRepository;
 
 import java.util.List;
 
 @Repository
-public interface CredentialRepository extends JpaRepository<Credential, Long> {
+public interface CredentialRepository extends ISpecificationRepository<Credential> {
     Credential findCredentialById(Long id);
     List<Credential> findCredentialByCodeIgnoreCase(String code);
     List<Credential> findCredentialByCodeContainingIgnoreCase(String code);
