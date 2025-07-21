@@ -145,6 +145,7 @@ pvv:
   fns-send-revoke-request-m4d: ${FNS_SEND_REVOKE_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-revocation-request-file}
   fns-receive-response-m4d: ${FNS_RECEIVE_RESPONSE_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/inbox/}
   fns-receive-json-response-m4d: ${FNS_RECEIVE_JSON_RESPONSE_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/inbox/json/}
+  enable-auto-sending-pvv: ${ENABLE_AUTO_SENDING_PVV:true}
 
 #actuator
 management:

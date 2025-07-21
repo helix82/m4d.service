@@ -255,6 +255,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.ACTUATOR_ENDPOINTS }}
+            - name: ENABLE_AUTO_SENDING_PVV
+              valueFrom:
+                secretKeyRef:
+                  name: { { .Values.secret.name } }
+                  key: { { .Values.env.ENABLE_AUTO_SENDING_PVV } }
       volumes:
         - name: tls-volume
           configMap:
