@@ -236,7 +236,7 @@ public interface Constants {
     String GUID_IS_NULL = "Номер доверенности (GUID) не указан";
     String CHECK_REQUEST_IS_NULL = "Данные для проверки МЧД по Номеру доверенности, ИНН доверителя и ИНН представителя не указаны";
     String INN_IS_NULL = "ИНН не указан";
-    String MRPA_IS_NULL = "МЧД не найдена";
+    String MRPA_NOT_FOUND = "МЧД не найдена";
     String MRPA_NOT_DELETE = "Можно удалить только черновик МЧД";
     String MRPA_RECALL_NOT_DELETE = "Можно удалить только черновик заявления на отзыв МЧД";
     String MRPA_ID_IS_NULL = "ИД МЧД не указано";
@@ -255,7 +255,7 @@ public interface Constants {
     String MRPA_REGISTRY_WRONG_FORMAT_XML = "Не верный формат XML";
     String MRPA_REGISTRY_SIG = "МЧД была подписана ранее";
     String MRPA_RECALL_SIG = "Заявление на отзыв МЧД было подписано ранее";
-    String MRPA_REGISTRY_UPDATE_STATUS_ERROR = "В ПЭП не найдена МЧД или не найден запрос на получение статуса о МЧД в РР МЧД";
+    String MRPA_REGISTRY_UPLOAD_STATUS_ERROR = "В ПЭП не найдена МЧД или не найден запрос на получение статуса о МЧД в РР МЧД";
     String MRPA_REGISTRY_UPLOAD_SIG_ERROR = "Ошибка при загрузке подписи МЧД";
     String MRPA_REGISTRY_HASH_FILE_ERROR = "Хэш файла МЧД с GUID = %s не совпадает с хэшом файла МЧД полученного из РР";
     String MRPA_REGISTRY_STATUS_UPDATE_ERROR = "Ошибка обновления статуса МЧД с GUID=";
@@ -269,11 +269,15 @@ public interface Constants {
     String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA_NOT_FOUND = "Ошибка загрузки результата регистрации отзыва мчд в рр: МЧД с GUID = %s не найдена в ПЭП";
     String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA_RECALL_NOT_FOUND = "Ошибка загрузки результата регистрации отзыва мчд в рр: Заявление на отзыв МЧД с GUID = %s не найдено в ПЭП";
     String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_UPDATE_STATUS_ERROR = "Ошибка загрузки результата регистрации отзыва мчд в рр: не удалось обновить статус заявления на отзыв МЧД с GUID = %s в ПЭП";
+    String MRPA_RECALL_UPDATE_STATUS_ERROR = "Ошибка обновления статуса заявления на отзыв МЧД с GUID = %s в ПЭП";
+    String MRPA_REGISTRY_UPDATE_STATUS_ERROR = "Ошибка обновления статуса МЧД с GUID = %s в ПЭП";
     String MRPA_REQUEST_SEARCH_NOT_FOUND = "Не найден запрос на проверку статуса в РР";
     String SEND_REQUEST_IN_PVV = "Запрос в ПВВ на получение статуса МЧД в РР МЧД отправлен";
     String SEND_REQUEST_DATA_IN_PVV = "Запрос в ПВВ на получение данных по МЧД в РР МЧД отправлен";
     String COUNT_SEND_REQUEST_DATA_IN_PVV = "Отправлено %s запросов в ПВВ на получение данных по МЧД в РР МЧД";
     String COUNT_SEND_REQUEST_IN_PVV = "Отправлено %s запросов в ПВВ на получение статуса МЧД в РР МЧД";
+    String COUNT_REGISTER_M4D_IN_PVV = "Отправлено %s запросов в ПВВ на регистрацию МЧД в РР МЧД";
+    String COUNT_REGISTER_M4D_REVOKE_IN_PVV = "Отправлено %s запросов в ПВВ на регистрацию заявления на отзыв МЧД в РР МЧД";
     String ORGANISATION_IS_NULL = "Указанная организация не найдена в справочнике организаций ПЭП";
     String ORGANISATION_SAVE_ERROR = "Ошибка добавления организации";
     String ORGANISATION_READ_ERROR = "Ошибка получения организации";
@@ -312,6 +316,8 @@ public interface Constants {
     String CHECK_STATUS_IN_PVV_ADAPTER = "Для проверки статуса обратитесь к ПВВ адаптеру";
     String PVV_MESSAGE_ID_NOT_FOUND = "Не найден пакет обмена между контурами с messageId = ";
     String SENDING_RESPONSE_TO_PVV_ERROR = "Возникли проблемы с отправкой запроса в ПВВ";
+    String SENDING_M4D_TO_PVV_ERROR = "Возникли проблемы с отправкой запроса в ПВВ для МЧД с GUID=%s";
+    String SENDING_M4D_REVOKE_TO_PVV_ERROR = "Возникли проблемы с отправкой запроса в ПВВ для заявления на отзыв МЧД с GUID=%s";
     //КриптоПро
     String CRYPTO_PROXY_INVALID_GRANT = "Вы не зарегистрированы в КриптоПро Ключ";
     String CRYPTO_PROXY_INVALID_PIN = "Неверный пин-код";

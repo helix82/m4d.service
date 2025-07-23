@@ -1,6 +1,8 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
@@ -14,8 +16,7 @@ import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.M4dRegistryResponseDto;
 import su.opencode.digsigcik.m4d.dto.M4dRevokeXml;
 import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
-import su.opencode.digsigcik.m4d.enums.FileLogicalTypeEnum;
-import su.opencode.digsigcik.m4d.enums.FileMimeTypeEnum;
+import su.opencode.digsigcik.m4d.enums.*;
 import su.opencode.digsigcik.m4d.exception.M4dException;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dFile;
@@ -34,6 +35,7 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -43,9 +45,12 @@ import java.util.stream.StreamSupport;
 
 import static su.opencode.digsigcik.m4d.util.Constants.*;
 
+@Slf4j
 @Service
 @Primary
 public class M4dRecallServiceImpl implements M4dRecallService {
+    @Value("${pvv.enable-auto-sending-pvv}")
+    private boolean ENABLE_AUTO_SENDING_PVV;
 
     private final M4dRecallRepository m4dRevokeRepository;
     private final M4dRepository m4dRepository;
@@ -54,12 +59,9 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     private final UserCertificateService userCertificateService;
     private final M4dRecallConfirmService m4dRecallConfirmService;
     private final SpecificationService specificationService;
+    private final PvvService pvvService;
 
-    public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository,
-                                @Lazy M4dService m4dService, UserCertificateService userCertificateService,
-                                M4dFileService m4dFileService, M4dRecallConfirmService m4dRecallConfirmService,
-                                SpecificationService specificationService
-    ) {
+    public M4dRecallServiceImpl(M4dRecallRepository m4dRevokeRepository, M4dRepository m4dRepository, @Lazy M4dService m4dService, M4dFileService m4dFileService, UserCertificateService userCertificateService, M4dRecallConfirmService m4dRecallConfirmService, SpecificationService specificationService, PvvService pvvService) {
         this.m4dRevokeRepository = m4dRevokeRepository;
         this.m4dRepository = m4dRepository;
         this.m4dService = m4dService;
@@ -67,6 +69,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         this.userCertificateService = userCertificateService;
         this.m4dRecallConfirmService = m4dRecallConfirmService;
         this.specificationService = specificationService;
+        this.pvvService = pvvService;
     }
 
     @Override
@@ -130,6 +133,11 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
+    public List<M4dRecall> findAllRecall() {
+        return StreamSupport.stream(m4dRevokeRepository.findAll().spliterator(), false).filter(c -> c.getM4d() != null).collect(Collectors.toList());
+    }
+
+    @Override
     public M4dRecall findById(Long id) {
         return this.m4dRevokeRepository.findM4dRecallById(id);
     }
@@ -138,11 +146,6 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_DELETE)
     public void deleteMrpaRecallById(Long id) {
         this.m4dRevokeRepository.deleteById(id);
-    }
-
-    @Override
-    public void updateStatusMrpaRecallById(Long id, String status) {
-        this.m4dRevokeRepository.updateStatusMrpaRecallById(id, status);
     }
 
     @Override
@@ -208,7 +211,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     @Override
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
     @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_SIGNATURE)
-    public M4dRecall uploadSig(Authentication authentication, Long id, MultipartFile signature) throws Exception {
+    public String uploadSig(Authentication authentication, Long id, MultipartFile signature) throws Exception {
         M4dRecall mrpaRecall = this.findById(id);
         if (mrpaRecall==null) {
             throw new BadRequestException(MRPA_RECALL_IS_NULL);
@@ -231,13 +234,15 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             fileId = m4dFile.getId();
             mrpaRecall.setSigFile(m4dFile);
         }
-
+        mrpaRecall.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
+        mrpaRecall.setStatus(StatusM4dRevokeTypeEnum.ACTIVE.toString());
         M4dRecall m4dRecallSaved;
         try {
             m4dRecallSaved = this.updateMrpaRecall(mrpaRecall);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
         }
+        this.m4dService.updateStatusM4d(mrpaRecall.getM4d().getId(), StatusM4dTypeEnum.REVOKED.toString());
         // формирование и автоподписание подтверждения регистрации заявления на отзыв мчд в ПЭП
         M4d m4d;
         try {
@@ -246,14 +251,23 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             throw new BadRequestException(e.getMessage());
         }
         if (m4d == null) {
-            throw new BadRequestException(MRPA_IS_NULL);
+            throw new BadRequestException(MRPA_NOT_FOUND);
         }
         M4dRegistryResponseDto m4DRegistryResponseDto = this.m4dService.convertM4dToM4dResponseDto(authentication, m4d, false, true, false, true);
         String xmlString = m4DRegistryResponseDto.recall.getXmlFile().getContent();
         String idFile = XMLUtil.getSubstringFromXml(xmlString, "НомДовер=\"");
         String hash = this.getHashFromXmlString(xmlString);
         M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(authentication, mrpaRecall, idFile, hash);
-        return m4dRecallSaved;
+        if (ENABLE_AUTO_SENDING_PVV) {
+            // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
+            String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecallSaved, m4dRecallConfirm);
+            if (res.isEmpty()) {
+                throw new BadRequestException(SENDING_RESPONSE_TO_PVV_ERROR);
+            }
+            return res;
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -302,6 +316,42 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             }
         }
         return null;
+    }
+
+    @Override
+    public String uploadResultSendM4dRevokeToRRByMessageId(String messageId) {
+        M4dRevokeResponseInfo m4dRevokeResponseInfo;
+        // получение json-ответа по messageId
+        m4dRevokeResponseInfo = this.pvvService.receiveJsonResponseM4dRevokeToRR(messageId);
+        if (m4dRevokeResponseInfo == null) {
+            throw new BadRequestException(PVV_MESSAGE_ID_NOT_FOUND+messageId);
+        }
+        String error;
+        try {
+            error = this.uploadResultSendM4dRevokeToRR(m4dRevokeResponseInfo);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        return error;
+    }
+
+    @Override
+    public String sendRegisterInRr(Authentication authentication, Long recallId) throws IOException {
+        M4dRecall m4dRecall = this.findById(recallId);
+        // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
+        M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.findM4dRecallConfirmByM4dRecallId(recallId);
+        String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecall, m4dRecallConfirm);
+        if (res.isEmpty()) {
+            throw new BadRequestException(SENDING_RESPONSE_TO_PVV_ERROR);
+        }
+        m4dRecall.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
+        M4dRecall m4dRecallSaved;
+        try {
+            m4dRecallSaved = this.updateMrpaRecall(m4dRecall);
+        } catch (ConstraintViolationException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+        return res;
     }
 
     @Override

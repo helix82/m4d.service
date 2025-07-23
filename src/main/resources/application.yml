@@ -156,3 +156,9 @@ management:
     web:
       exposure:
         include: ${ACTUATOR_ENDPOINTS:*}
+
+scheduler:
+  interval: 'PT60S'
+  delay15: 'PT15S'
+  delay30: 'PT30S'
+  delay45: 'PT45S'
