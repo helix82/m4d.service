@@ -22,30 +22,32 @@ import java.util.List;
 public class M4dRequestServiceImpl implements M4dRequestService {
     private final M4dRequestRepository repository;
 
+    @Override
     public List<M4dRequestSearch> findAllM4dRequestSearch() {
         return repository.findAll();
     }
 
+    @Override
     public M4dRequestSearch findM4dRequestByGuidAndHash(@NotNull String guid, @NotNull String hash) {
         return repository.findByGuidAndHashXml(guid, hash);
     }
 
+    @Override
     public M4dRequestSearch findM4dRequestByGuid(@NotNull String guid) {
         return repository.findByGuid(guid);
     }
 
-    public M4dRequestSearch findM4dRequestByGuidAndInns(@NotNull String guid, @NotNull String principalInn, @NotNull String representativeInn) {
-        return repository.findByGuidAndPrincipalInnAndRepresentativeInn(guid, principalInn, representativeInn);
-    }
-
+    @Override
     public M4dRequestSearch saveM4dRequestSearch(M4dRequestSearch m4dRequestSearch) {
         return repository.save(m4dRequestSearch);
     }
 
+    @Override
     public M4dRequestSearch updateM4dRequestSearch(M4dRequestSearch m4dRequestSearch) {
         return repository.save(m4dRequestSearch);
     }
 
+    @Override
     //TODO: @helix82 - Использование Aspect-Oriented Programming (AOP) для передачи в логи guid?
     @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_DELETE, deleteByIdRepository = M4dRequestRepository.class)
     public void deleteM4dRequestSearch(@NotNull String guid) {

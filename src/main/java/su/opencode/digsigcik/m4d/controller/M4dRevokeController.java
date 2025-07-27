@@ -284,7 +284,6 @@ public class M4dRevokeController {
         }
         M4dRecall mrpaRecall = this.m4dRecallService.findById(id);
         String res;
-        M4dRecall m4dRecall;
         if (Objects.equals(extension, "dscp")) {
             M4dFile m4dFile = this.m4dFileService.findM4dFileById(mrpaRecall.getXmlFile().getId());
             MultipartFile sigFile = this.containerService.getSignatureFromContainer(authentication, signature, m4dFile.getFilename());

@@ -7,7 +7,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class ConvertUtils {
     static ObjectMapper objectMapper = new ObjectMapper();
-
     public static <T> T convertStringToClass(String response, Class<T> clazz) throws JsonProcessingException {
         return objectMapper.readValue(response, clazz);
     }

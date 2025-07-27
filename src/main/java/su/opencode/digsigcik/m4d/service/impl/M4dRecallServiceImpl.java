@@ -2,7 +2,6 @@ package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
@@ -49,8 +48,6 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 @Service
 @Primary
 public class M4dRecallServiceImpl implements M4dRecallService {
-    @Value("${pvv.enable-auto-sending-pvv}")
-    private boolean ENABLE_AUTO_SENDING_PVV;
 
     private final M4dRecallRepository m4dRevokeRepository;
     private final M4dRepository m4dRepository;
@@ -221,17 +218,14 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         }
         M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, signature.getOriginalFilename(), signature.getBytes());
         M4dFile m4dFileSaved;
-        Long fileId;
         if (m4dFile.getId() == null){
             try {
                 m4dFileSaved = this.m4dFileService.saveM4dFile(m4dFile);
             } catch (ConstraintViolationException e) {
                 throw new BadRequestException(e.getMessage());
             }
-            fileId = m4dFileSaved.getId();
             mrpaRecall.setSigFile(m4dFileSaved);
         } else {
-            fileId = m4dFile.getId();
             mrpaRecall.setSigFile(m4dFile);
         }
         mrpaRecall.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
@@ -258,16 +252,12 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         String idFile = XMLUtil.getSubstringFromXml(xmlString, "НомДовер=\"");
         String hash = this.getHashFromXmlString(xmlString);
         M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(authentication, mrpaRecall, idFile, hash);
-        if (ENABLE_AUTO_SENDING_PVV) {
-            // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
-            String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecallSaved, m4dRecallConfirm);
-            if (res.isEmpty()) {
-                throw new BadRequestException(SENDING_RESPONSE_TO_PVV_ERROR);
-            }
-            return res;
-        } else {
-            return null;
+        // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
+        String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecallSaved, m4dRecallConfirm);
+        if (res.isEmpty()) {
+            throw new BadRequestException(SENDING_RESPONSE_TO_PVV_ERROR);
         }
+        return res;
     }
 
     @Override
@@ -287,7 +277,10 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         hash = this.m4dService.getHashXmlM4d(sourceFile);
         for (String fileName : tempFileNames) {
             File f = new File(fileName);
-            f.delete();
+            boolean res = f.delete();
+            if (!res) {
+                throw new BadRequestException(FILE_TEMP_DELETE_ERROR);
+            }
         }
         return hash;
     }
@@ -350,6 +343,9 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             m4dRecallSaved = this.updateMrpaRecall(m4dRecall);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
+        }
+        if (m4dRecallSaved == null) {
+            log.error(String.format(MRPA_REGISTRY_UPDATE_STATUS_RR_ERROR, m4dRecall.getM4d().getGuid()));
         }
         return res;
     }

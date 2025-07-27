@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -17,7 +18,7 @@ public class CustomMultipartFile implements MultipartFile {
     }
 
     @Override
-    public String getName() {
+    public @NotNull String getName() {
         return file.getName();
     }
 
@@ -45,7 +46,6 @@ public class CustomMultipartFile implements MultipartFile {
                     return "application/x-zip-compressed";
                 case "dscp":
                     return "application/octet-stream";
-                // Добавьте другие типы по мере необходимости
                 default:
                     return "application/octet-stream"; // Тип по умолчанию
             }
@@ -64,12 +64,12 @@ public class CustomMultipartFile implements MultipartFile {
     }
 
     @Override
-    public byte[] getBytes() throws IOException {
+    public byte @NotNull [] getBytes() throws IOException {
         return Files.readAllBytes(file.toPath());
     }
 
     @Override
-    public InputStream getInputStream() throws IOException {
+    public @NotNull InputStream getInputStream() throws IOException {
         return new FileInputStream(file);
     }
 

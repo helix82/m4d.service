@@ -223,7 +223,6 @@ public interface Constants {
     String CONTROLLER_TEST_KAFKA_DESCRIPTION = "Возвращает логин, если отправилось";
 
     String API_RESPONSE_CODE_200_MESSAGE = "Успешно"; //Successfully
-    String API_RESPONSE_CODE_201_MESSAGE = "Создано";
     String API_RESPONSE_CODE_204_MESSAGE = "Нет контента";
     String API_RESPONSE_CODE_400_MESSAGE = "Плохой запрос"; //Not found
     String API_RESPONSE_CODE_404_MESSAGE = "Не найдено"; //Not found
@@ -241,12 +240,6 @@ public interface Constants {
     String MRPA_RECALL_NOT_DELETE = "Можно удалить только черновик заявления на отзыв МЧД";
     String MRPA_ID_IS_NULL = "ИД МЧД не указано";
     String MRPA_RECALL_IS_NULL = "Заявление на отзыв МЧД не найдено";
-    String MRPA_CONFIRM_IS_NULL = "Подтверждения МЧД не найдены";
-    String MRPA_CONFIRM_PEP_SIG = "Подтверждение регистрации МЧД в ПЭП уже подписано";
-    String MRPA_RECALL_CONFIRM_PEP_SIG = "Подтверждение регистрации отзыва МЧД в ПЭП уже подписано";
-    String MRPA_CONFIRM_RR_SIG = "Подтверждение регистрации МЧД в РР уже подписано";
-    String MRPA_RECALL_CONFIRM_RR_SIG = "Подтверждение регистрации отзыва МЧД в РР уже подписано";
-    String MRPA_RECALL_CONFIRM_IS_NULL = "Подтверждения отзыва МЧД не найдены";
     String MRPA_RECALL_ERROR_CONVERT = "Ошибка конвертирования ДТО заявления на отзыв МЧД";
     String MRPA_RECALL_IS_EXISTS = "Для данного МЧД уже добавлено заявление на отзыв";
     String MRPA_REGISTRY_IS_EXISTS = "Добавляемая МЧД уже существует в базе";
@@ -258,7 +251,7 @@ public interface Constants {
     String MRPA_REGISTRY_UPLOAD_STATUS_ERROR = "В ПЭП не найдена МЧД или не найден запрос на получение статуса о МЧД в РР МЧД";
     String MRPA_REGISTRY_UPLOAD_SIG_ERROR = "Ошибка при загрузке подписи МЧД";
     String MRPA_REGISTRY_HASH_FILE_ERROR = "Хэш файла МЧД с GUID = %s не совпадает с хэшом файла МЧД полученного из РР";
-    String MRPA_REGISTRY_STATUS_UPDATE_ERROR = "Ошибка обновления статуса МЧД с GUID=";
+    String MRPA_REGISTRY_UPDATE_STATUS_ERROR = "Ошибка обновления статуса в ПЭП для МЧД с GUID=";
     String MRPA_REGISTRY_CONFIRM_SAVE_ERROR = "Ошибка сохранения квитанции и подписи регистрации МЧД в РР (МЧД GUID = %s )";
     String MRPA_REGISTRY_IMPORT_ERROR = "Ошибка импорта МЧД";
     String MRPA_RECALL_CONFIRM_SAVE_ERROR = "Ошибка сохранения квитанции и подписи регистрации заявления на отзыв МЧД в РР (МЧД GUID = %s )";
@@ -269,8 +262,8 @@ public interface Constants {
     String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA_NOT_FOUND = "Ошибка загрузки результата регистрации отзыва мчд в рр: МЧД с GUID = %s не найдена в ПЭП";
     String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA_RECALL_NOT_FOUND = "Ошибка загрузки результата регистрации отзыва мчд в рр: Заявление на отзыв МЧД с GUID = %s не найдено в ПЭП";
     String MRPA_RECALL_UPLOAD_RESULT_SEND_RR_UPDATE_STATUS_ERROR = "Ошибка загрузки результата регистрации отзыва мчд в рр: не удалось обновить статус заявления на отзыв МЧД с GUID = %s в ПЭП";
-    String MRPA_RECALL_UPDATE_STATUS_ERROR = "Ошибка обновления статуса заявления на отзыв МЧД с GUID = %s в ПЭП";
-    String MRPA_REGISTRY_UPDATE_STATUS_ERROR = "Ошибка обновления статуса МЧД с GUID = %s в ПЭП";
+    String MRPA_RECALL_UPDATE_STATUS_RR_ERROR = "Ошибка обновления статуса в РР для заявления на отзыв МЧД с GUID = %s в ПЭП";
+    String MRPA_REGISTRY_UPDATE_STATUS_RR_ERROR = "Ошибка обновления статуса в РР для МЧД с GUID = %s в ПЭП";
     String MRPA_REQUEST_SEARCH_NOT_FOUND = "Не найден запрос на проверку статуса в РР";
     String SEND_REQUEST_IN_PVV = "Запрос в ПВВ на получение статуса МЧД в РР МЧД отправлен";
     String SEND_REQUEST_DATA_IN_PVV = "Запрос в ПВВ на получение данных по МЧД в РР МЧД отправлен";
@@ -279,14 +272,12 @@ public interface Constants {
     String COUNT_REGISTER_M4D_IN_PVV = "Отправлено %s запросов в ПВВ на регистрацию МЧД в РР МЧД";
     String COUNT_REGISTER_M4D_REVOKE_IN_PVV = "Отправлено %s запросов в ПВВ на регистрацию заявления на отзыв МЧД в РР МЧД";
     String ORGANISATION_IS_NULL = "Указанная организация не найдена в справочнике организаций ПЭП";
-    String ORGANISATION_SAVE_ERROR = "Ошибка добавления организации";
     String ORGANISATION_READ_ERROR = "Ошибка получения организации";
-    String PRINCIPAL_IS_NULL = "Запись о доверителе не найдена";
-    String REPRESENTATIVE_IS_NULL = "Запись о представителе не найдена";
     String CREDENTIAL_NOT_FOUND = "Полномочие не найдено";
     String CREDENTIAL_IS_NULL = "Полномочие не указано";
     String CREDENTIAL_ID_IS_NULL = "ИД полномочия не указано";
     String CREDENTIAL_CODE_EXISTS = "Запись полномочия с таким кодом уже существует в базе";
+    String CREDENTIAL_SAVE_ERROR = "Ошибка сохранения полномочия";
     String ORGANIZATION_INN_IS_NULL = "Не указано ИНН организации";
     String PRINCIPAL_INN_IS_NULL = "Не указано ИНН доверителя";
     String PRINCIPAL_SAVE_ERROR = "Ошибка сохранения основных данных доверителя в ПЭП";
@@ -303,7 +294,6 @@ public interface Constants {
     String ZIP_UNPACK_ERROR = "Ошибка распаковки ZIP файла";
     String ZIP_CREATE_ERROR = "Ошибка создания архива";
     String ZIP_JSON_NOT_FOUND = "JSON-файл не найден в ZIP архиве";
-    String ZIP_ZIP_NOT_FOUND = "ZIP-файл не найден в ZIP архиве";
     String ZIP_JSON_FOUND_MORE_ONE = "В архиве найдено более одного JSON-файла";
     String ZIP_ZIP_FOUND_MORE_ONE = "В архиве найдено более одного ZIP-файла";
     String ZIP_XML_FOUND_MORE_TWO = "В архиве найдено более двух XML-файлов";
@@ -318,6 +308,8 @@ public interface Constants {
     String SENDING_RESPONSE_TO_PVV_ERROR = "Возникли проблемы с отправкой запроса в ПВВ";
     String SENDING_M4D_TO_PVV_ERROR = "Возникли проблемы с отправкой запроса в ПВВ для МЧД с GUID=%s";
     String SENDING_M4D_REVOKE_TO_PVV_ERROR = "Возникли проблемы с отправкой запроса в ПВВ для заявления на отзыв МЧД с GUID=%s";
+    String DUPLICATE_DELETE = "Удалена дублирующая запись с ID";
+    String DUPLICATE_DELETE_ERROR = "Ошибка удаления дублирующей записи";
     //КриптоПро
     String CRYPTO_PROXY_INVALID_GRANT = "Вы не зарегистрированы в КриптоПро Ключ";
     String CRYPTO_PROXY_INVALID_PIN = "Неверный пин-код";
@@ -326,12 +318,10 @@ public interface Constants {
 
 
     String M4D_EXCEPRION_NOT_FOUND = "МЧД с данным id = %s не найден";
-    String SIG = "sig";
 
     //Ошибки с файлами
     String FILE_CONVERT_BASE64_EXCEPTION = "Содержимое файла не было закодировано в Base64";
     String MAX_SIZE_CONTENT_EXCEPTION = "Размер закодированного файла превышает %s";
-    String DETACHED_CONTENT_EXCEPTION = "Исходный файл для открепленной подписи отсутствует или пуст.";
     String NO_XML = "Переданный файл не является XML-файлом";
     String NO_ZIP = "Переданный файл не является ZIP-архивом";
     String XML_NOT_SCHEMA_EMCHD_1 = "XML файл не соответствует схеме EMCHD_1";
@@ -339,8 +329,9 @@ public interface Constants {
     String CREATE_TEMP_FOLDER_ERROR = "Не удалось создать временную директорию";
     String FILE_WRONG_FORMAT = "Не верный формат файла";
     String FILE_IS_NULL = "Исходный файл не указан";
+    String FILE_SAVE_CREDENTIAL_ERROR = "Ошибка сохранения исходного файла справочника полномочий";
+    String FILE_TEMP_DELETE_ERROR = "Ошибка удаления временного файла";
 
     //Ошибки с контейнерами
-    String CONTAINER_CREATE_EXCEPTION = "Ошибка при создании контейнера";
     String CONTAINER_READ_EXCEPTION = "Ошибка получения данных";
 }

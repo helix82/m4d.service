@@ -1,18 +1,18 @@
 package su.opencode.digsigcik.m4d.util;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import lombok.experimental.UtilityClass;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@UtilityClass
 public class DateUtils {
-    private static final Map<String, String> DATE_FORMAT_REGEXPS = new HashMap<String, String>() {{
+    private static final Map<String, String> DATE_FORMAT_REGEXPS = new HashMap<>() {{
         put("^\\d{8}$", "yyyyMMdd");
         put("^\\d{1,2}-\\d{1,2}-\\d{4}$", "dd-MM-yyyy");
         put("^\\d{4}-\\d{1,2}-\\d{1,2}$", "yyyy-MM-dd");
@@ -47,25 +47,6 @@ public class DateUtils {
             }
         }
         return null; // Unknown format.
-    }
-
-    public static Date parse(String dateString) throws ParseException {
-        String dateFormat = determineDateFormat(dateString);
-        if (dateFormat == null) {
-            throw new ParseException("Unknown date format.", 0);
-        }
-        return parse(dateString, dateFormat);
-    }
-
-    public static Date parse(String dateString, String dateFormat) throws ParseException {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(dateFormat);
-        simpleDateFormat.setLenient(false); // Don't automatically convert invalid date.
-        return simpleDateFormat.parse(dateString);
-    }
-
-    public static String formatDate(LocalDateTime operationDate) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss.SSSSSSSSS");
-        return operationDate.format(formatter);
     }
 
     public static String getCurrentDate(){

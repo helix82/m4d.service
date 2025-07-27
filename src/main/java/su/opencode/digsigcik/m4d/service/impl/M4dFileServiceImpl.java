@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static su.opencode.digsigcik.m4d.util.Constants.FILE_TEMP_DELETE_ERROR;
 import static su.opencode.digsigcik.m4d.util.EncodingUtils.isBase64;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 
@@ -103,7 +104,7 @@ public class M4dFileServiceImpl implements M4dFileService {
                 fo.write(bytes);
                 fo.close();
                 ByteArrayResource resSig = this.synapiClientService.getPartContainer(tempContainerFile, "detachedSign", bearerToken);
-                String signatureData = "";
+                String signatureData;
                 if (!isBase64(resSig.toString())) {
                     signatureData = Base64.getEncoder().encodeToString(resSig.getByteArray()).replaceAll("\\s+", "");
                 } else {
@@ -136,7 +137,10 @@ public class M4dFileServiceImpl implements M4dFileService {
 
         for (String fileName : tempFileNames) {
             File f = new File(fileName);
-            f.delete();
+            boolean res = f.delete();
+            if (!res) {
+                throw new BadRequestException(FILE_TEMP_DELETE_ERROR);
+            }
         }
         return new File(tempZipFile);
     }

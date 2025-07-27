@@ -12,7 +12,6 @@ import su.opencode.digsigcik.m4d.mapper.CryptoProxyEventMapper;
 import su.opencode.digsigcik.m4d.service.CryptoProCloudSignatureService;
 import su.opencode.digsigcik.m4d.service.CryptoProxyClientService;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import static su.opencode.digsigcik.m4d.util.Constants.MAX_SIZE_CONTENT_EXCEPTION;
@@ -36,17 +35,16 @@ public class CryptoProCloudSignatureServiceImpl implements CryptoProCloudSignatu
                                                  String pinCode,
                                                  boolean isDetached,
                                                  String sigType,
-                                                 HashAlgorithm hashAlgorithm) throws IOException {
+                                                 HashAlgorithm hashAlgorithm) {
 
         log.info("Инициализация процесса облачной подписи для пользователя: {}", getAuthenticationUsername(authentication));
 
-        String response = cryptoProxyClientService.requestFileCadesSignature(
+        return cryptoProxyClientService.requestFileCadesSignature(
                 getTokenValue(authentication),
                 cryptoProxyEventMapper.mapToCAdESSignEvent(
                         new CryptoProCloudBufferDto(certificateId, userLogin, pinCode, isDetached),
                         sigType,
                         validateContentSize(encodeMultipartFileToBase64(sourceFile))));
-        return response;
     }
 
     private String validateContentSize(String content) {

@@ -2,6 +2,7 @@ package su.opencode.digsigcik.m4d.util;
 
 import lombok.NonNull;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @UtilityClass
 public class XMLUtil {
 
@@ -48,10 +50,9 @@ public class XMLUtil {
         try
         {
             builder = factory.newDocumentBuilder();
-            Document doc = builder.parse( new InputSource( new StringReader( xmlStr)));
-            return doc;
+            return builder.parse( new InputSource( new StringReader( xmlStr)));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
         return null;
     }
@@ -64,7 +65,6 @@ public class XMLUtil {
             int endIndex = content.indexOf("\"", startIndex);
             if (endIndex != -1) {
                 subString = content.substring(startIndex, endIndex);
-                System.out.println("Найдена подстрока: " + subString);
                 return subString;
             } else {
                 System.out.println("Закрывающая кавычка не найдена.");

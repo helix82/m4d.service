@@ -74,8 +74,6 @@ public class M4dServiceImpl implements M4dService {
     private String M4D_SOUL;
     @Value("${audit.default-user}")
     private String DEFAULT_USER_NAME;
-    @Value("${pvv.enable-auto-sending-pvv}")
-    private boolean ENABLE_AUTO_SENDING_PVV;
 
     private final ModelMapper modelMapper;
     private final M4dRepository m4dRepository;
@@ -849,12 +847,10 @@ public class M4dServiceImpl implements M4dService {
         m4dRequestSearchNew.setEndDate(DateUtils.convertStringToLocalDateTime(getEndDateM4dFromXml(m4dXml)));
         M4dRequestSearch m4dRequestSearchSaved = this.m4dRequestService.saveM4dRequestSearch(m4dRequestSearchNew);
         if (m4dRequestSearchSaved != null) {
-            String res = null;
-            if (ENABLE_AUTO_SENDING_PVV) {
-                res = this.pvvService.sendRequestStatusM4dToRR(m4dXml.document.powerAttorneys.mrpa.getGuid());
-                if (res.isEmpty()) {
-                    log.error(SENDING_RESPONSE_TO_PVV_ERROR);
-                }
+            String res;
+            res = this.pvvService.sendRequestStatusM4dToRR(m4dXml.document.powerAttorneys.mrpa.getGuid());
+            if (res.isEmpty()) {
+                log.error(SENDING_RESPONSE_TO_PVV_ERROR);
             }
             ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
             report.setSource("m4d_rr");
@@ -890,12 +886,10 @@ public class M4dServiceImpl implements M4dService {
         m4dRequestSearchNew.setStatusDate(LocalDateTime.now());
         M4dRequestSearch m4dRequestSearchSaved = this.m4dRequestService.saveM4dRequestSearch(m4dRequestSearchNew);
         if (m4dRequestSearchSaved != null) {
-            String res = null;
-            if (ENABLE_AUTO_SENDING_PVV) {
-                res = this.pvvService.sendRequestStatusM4dToRR(guidXml);
-                if (res.isEmpty()) {
-                    log.error(SENDING_RESPONSE_TO_PVV_ERROR);
-                }
+            String res;
+            res = this.pvvService.sendRequestStatusM4dToRR(guidXml);
+            if (res.isEmpty()) {
+                log.error(SENDING_RESPONSE_TO_PVV_ERROR);
             }
             ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
             report.setSource("m4d_rr");
@@ -926,12 +920,10 @@ public class M4dServiceImpl implements M4dService {
         m4dRequestSearchNew.setStatusDate(LocalDateTime.now());
         M4dRequestSearch m4dRequestSearchSaved = this.m4dRequestService.saveM4dRequestSearch(m4dRequestSearchNew);
         if (m4dRequestSearchSaved != null) {
-            String res = null;
-            if (ENABLE_AUTO_SENDING_PVV) {
-                res = this.pvvService.sendRequestStatusM4dToRRByGuidAndInns(requestDto);
-                if (res.isEmpty()) {
-                    log.error(SENDING_RESPONSE_TO_PVV_ERROR);
-                }
+            String res;
+            res = this.pvvService.sendRequestStatusM4dToRRByGuidAndInns(requestDto);
+            if (res.isEmpty()) {
+                log.error(SENDING_RESPONSE_TO_PVV_ERROR);
             }
             ReportCheckStatusM4dDto report = new ReportCheckStatusM4dDto();
             report.setSource("m4d_rr");
@@ -1364,14 +1356,11 @@ public class M4dServiceImpl implements M4dService {
         String idFile = XMLUtil.getSubstringFromXml(xmlString, "ИдФайл=\"");
         String internalNumber = XMLUtil.getSubstringFromXml(xmlString, "ВнНомДовер=\"");
         M4dConfirm m4dConfirm = this.m4dConfirmService.createAndSignedM4dConfirm(authentication, m4d, idFile, m4d.getGuid(), internalNumber, m4d.getStartDate().toString().substring(0, 10), m4d.getEndDate().toString().substring(0, 10));
-        if (ENABLE_AUTO_SENDING_PVV) {
             String res = this.pvvService.sendM4dToRR(authentication, m4dSaved, m4dConfirm);
             if (res.isEmpty()) {
                 throw new BadRequestException(SENDING_RESPONSE_TO_PVV_ERROR);
             }
             return res;
-        }
-        return null;
     }
 
     @Override
@@ -1802,7 +1791,7 @@ public class M4dServiceImpl implements M4dService {
         try {
             m4dFnsDataResponse = objectMapper.readValue(jsonFile, M4dFnsDataResponse.class);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
         if (m4dFnsDataResponse == null) {
             throw new BadRequestException(JSON_READ_ERROR);
@@ -1819,10 +1808,10 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     m4dSaved = this.updateM4d(m4d);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage());
                 }
                 if (m4dSaved == null) {
-                    throw new BadRequestException(MRPA_REGISTRY_STATUS_UPDATE_ERROR + m4d.getGuid());
+                    throw new BadRequestException(MRPA_REGISTRY_UPDATE_STATUS_ERROR + m4d.getGuid());
                 }
                 // сформировать отчет
                 return this.getReportCheckStatusM4dPep(m4dSaved);
@@ -1836,7 +1825,7 @@ public class M4dServiceImpl implements M4dService {
                     m4dRecall.setErrorInRrDetail(null);
                     M4dRecall m4dRecallUpdate = this.m4dRecallService.updateMrpaRecall(m4dRecall);
                     if (m4dRecallUpdate == null) {
-                        log.error(String.format(MRPA_RECALL_UPDATE_STATUS_ERROR, m4dRecall.getM4d().getGuid()));
+                        log.error(String.format(MRPA_RECALL_UPDATE_STATUS_RR_ERROR, m4dRecall.getM4d().getGuid()));
                     }
                 } else {
                     m4d.setStatusInRr(m4dFnsDataResponse.getStatus());
@@ -1846,10 +1835,10 @@ public class M4dServiceImpl implements M4dService {
                 try {
                     m4dSaved = this.updateM4d(m4d);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error(e.getMessage());
                 }
                 if (m4dSaved == null) {
-                    throw new BadRequestException(MRPA_REGISTRY_STATUS_UPDATE_ERROR + m4dFnsDataResponse.getGuid());
+                    throw new BadRequestException(MRPA_REGISTRY_UPDATE_STATUS_ERROR + m4dFnsDataResponse.getGuid());
                 }
                 // сохранить в бд квитанцию с подписью о регистрации мчд в рр
                 M4dConfirm m4dConfirmUpdate = this.m4dConfirmService.saveConfirmAndSignatureRr(m4d.getId(), xmlFileKvitM4d, sigFileKvitM4d);
@@ -1888,11 +1877,11 @@ public class M4dServiceImpl implements M4dService {
                     M4dRequestSearch m4dRequestSearchSaved;
                     m4dRequestSearchSaved = this.m4dRequestService.updateM4dRequestSearch(m4dRequestSearch);
                     if (m4dRequestSearchSaved == null) {
-                        throw new BadRequestException(MRPA_REGISTRY_STATUS_UPDATE_ERROR + m4dFnsDataResponse.getGuid());
+                        throw new BadRequestException(MRPA_REGISTRY_UPDATE_STATUS_ERROR + m4dFnsDataResponse.getGuid());
                     }
                     return this.getReportCheckStatusM4dRr(m4dRequestSearchSaved);
                 } else {
-                    throw new BadRequestException(MRPA_REGISTRY_STATUS_UPDATE_ERROR + m4dFnsDataResponse.getGuid() + ". " + MRPA_REQUEST_SEARCH_NOT_FOUND);
+                    throw new BadRequestException(MRPA_REGISTRY_UPDATE_STATUS_ERROR + m4dFnsDataResponse.getGuid() + ". " + MRPA_REQUEST_SEARCH_NOT_FOUND);
                 }
             } else { // нет ошибки
                 M4dRequestSearch m4dRequestSearch = this.m4dRequestService.findM4dRequestByGuid(m4dFnsDataResponse.getGuid());
@@ -1921,7 +1910,7 @@ public class M4dServiceImpl implements M4dService {
                     M4dRequestSearch m4dRequestSearchSaved;
                     m4dRequestSearchSaved = this.m4dRequestService.updateM4dRequestSearch(m4dRequestSearch);
                     if (m4dRequestSearchSaved == null) {
-                        throw new BadRequestException(MRPA_REGISTRY_STATUS_UPDATE_ERROR + m4dFnsDataResponse.getGuid());
+                        throw new BadRequestException(MRPA_REGISTRY_UPDATE_STATUS_ERROR + m4dFnsDataResponse.getGuid());
                     }
                     //формируем отчет
                     return this.getReportCheckStatusM4dRr(m4dRequestSearchSaved);
@@ -2098,7 +2087,7 @@ public class M4dServiceImpl implements M4dService {
                     continue;
                 }
                 if (m4dSaved == null) {
-                    log.error(String.format(MRPA_REGISTRY_UPDATE_STATUS_ERROR, m4d.getGuid()));
+                    log.error(String.format(MRPA_REGISTRY_UPDATE_STATUS_RR_ERROR, m4d.getGuid()));
                 }
                 count++;
             }
@@ -2138,7 +2127,7 @@ public class M4dServiceImpl implements M4dService {
                     continue;
                 }
                 if (m4dRecallSaved == null) {
-                    log.error(String.format(MRPA_RECALL_UPDATE_STATUS_ERROR, m4dRecall.getM4d().getGuid()));
+                    log.error(String.format(MRPA_RECALL_UPDATE_STATUS_RR_ERROR, m4dRecall.getM4d().getGuid()));
                 }
                 count++;
             }
@@ -2233,7 +2222,7 @@ public class M4dServiceImpl implements M4dService {
             throw new BadRequestException(e.getMessage());
         }
         if (m4dSaved == null) {
-            log.error(String.format(MRPA_REGISTRY_UPDATE_STATUS_ERROR, m4d.getGuid()));
+            log.error(String.format(MRPA_REGISTRY_UPDATE_STATUS_RR_ERROR, m4d.getGuid()));
         }
         return res;
     }

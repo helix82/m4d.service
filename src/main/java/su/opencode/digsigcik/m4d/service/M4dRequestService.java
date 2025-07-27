@@ -9,7 +9,6 @@ public interface M4dRequestService {
     List<M4dRequestSearch> findAllM4dRequestSearch();
     M4dRequestSearch findM4dRequestByGuidAndHash(@NotNull String guid, @NotNull String hash);
     M4dRequestSearch findM4dRequestByGuid(@NotNull String guid);
-    M4dRequestSearch findM4dRequestByGuidAndInns(@NotNull String guid, @NotNull String principalInn, @NotNull String representativeInn);
     M4dRequestSearch saveM4dRequestSearch(M4dRequestSearch m4dRequestSearch);
     M4dRequestSearch updateM4dRequestSearch(M4dRequestSearch m4dRequestSearch);
     void deleteM4dRequestSearch(@NotNull String guid);

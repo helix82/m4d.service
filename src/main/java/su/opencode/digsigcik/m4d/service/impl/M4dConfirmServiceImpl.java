@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
@@ -27,8 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-import static su.opencode.digsigcik.m4d.util.Constants.*;
-
+@Slf4j
 @Service
 @Primary
 public class M4dConfirmServiceImpl implements M4dConfirmService {
@@ -68,67 +68,6 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     @Override
     public void deleteM4dConfirmByM4dId(Long m4dId) {
         this.m4dConfirmRepository.deleteM4dConfirmsByM4dId(m4dId);
-    }
-
-    @Override
-    public Long uploadSigRegisteredPep(Long m4dId, MultipartFile signature) throws IOException {
-        M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
-        if (m4dConfirm==null) {
-            throw new BadRequestException(MRPA_CONFIRM_IS_NULL);
-        }
-        if (m4dConfirm.getSigFileRegisteredPep()!=null) {
-            throw new BadRequestException(MRPA_CONFIRM_PEP_SIG);
-        }
-        String filename = signature.getOriginalFilename();
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.getBytes());
-        m4dConfirm.setSigFileRegisteredPep(m4dFile);
-        M4dConfirm m4dConfirmSaved;
-        try {
-            m4dConfirmSaved = this.saveM4dConfirm(m4dConfirm);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        return m4dConfirmSaved.getSigFileRegisteredPep().getId();
-    }
-
-    @Override
-    public Long uploadSigRegisteredRr(Long m4dId, MultipartFile signature) throws IOException {
-        M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
-        if (m4dConfirm==null) {
-            throw new BadRequestException(MRPA_CONFIRM_IS_NULL);
-        }
-        if (m4dConfirm.getSigFileRegisteredRr()!=null) {
-            throw new BadRequestException(MRPA_CONFIRM_RR_SIG);
-        }
-        String filenameXml = signature.getOriginalFilename();
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filenameXml, signature.getBytes());
-        m4dConfirm.setSigFileRegisteredRr(m4dFile);
-        M4dConfirm m4dConfirmSaved;
-        try {
-            m4dConfirmSaved = this.saveM4dConfirm(m4dConfirm);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        return m4dConfirmSaved.getSigFileRegisteredRr().getId();
-    }
-
-    @Override
-    public Long uploadXmlRegisteredRr(Long m4dId, String xmlContent) {
-        M4dConfirm m4dConfirm = this.findM4dConfirmByM4dId(m4dId);
-        if (m4dConfirm==null) {
-            throw new BadRequestException(MRPA_CONFIRM_IS_NULL);
-        }
-
-        String filenameXml = XMLUtil.getSubstringFromXml(xmlContent, "ИдФайл=\"")+".xml";
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlContent.getBytes());
-        m4dConfirm.setXmlFileRegisteredRr(m4dFile);
-        M4dConfirm m4dConfirmSaved;
-        try {
-            m4dConfirmSaved = this.saveM4dConfirm(m4dConfirm);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        return m4dConfirmSaved.getSigFileRegisteredRr().getId();
     }
 
     @Override
@@ -186,7 +125,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         String resource = cryptoProCloudSignatureService.initializeSignature(authentication, sourceFile,
                 0L, USER_LOGIN, PINCODE, Boolean.parseBoolean(IS_DETACHED), SIG_TYPE, HashAlgorithm.GOST3411_2012_256);
 
-        String filenameSig = null;
+        String filenameSig;
         if (Boolean.parseBoolean(IS_DETACHED)) {
             filenameSig = m4dConfirmDto.getIdFile()+"_detached.sig";
         } else filenameSig = m4dConfirmDto.getIdFile()+".sig";
@@ -216,7 +155,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         try {
             m4dConfirmUpdate = this.updateM4dConfirm(m4dConfirm);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.getMessage());
         }
         return m4dConfirmUpdate;
     }
