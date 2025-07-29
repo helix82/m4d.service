@@ -289,13 +289,11 @@ public class M4dRevokeController {
             MultipartFile sigFile = this.containerService.getSignatureFromContainer(authentication, signature, m4dFile.getFilename());
             res = this.m4dRecallService.uploadSig(authentication, id, sigFile);
         } else { res = this.m4dRecallService.uploadSig(authentication, id, signature); }
+        HttpHeaders headers = new HttpHeaders();
         if (res != null) {
-            HttpHeaders headers = new HttpHeaders();
             headers.set("X-Request-ID", res);
-            return new ResponseEntity<>(findMrpaRecallById(authentication, id).getBody(), headers, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(findMrpaRecallById(authentication, id).getBody(), HttpStatus.OK);
         }
+        return new ResponseEntity<>(findMrpaRecallById(authentication, id).getBody(), headers, HttpStatus.OK);
     }
 
     @Operation(summary = CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY, description = CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY)
@@ -398,28 +396,6 @@ public class M4dRevokeController {
         return new ResponseEntity<>(body, HttpStatus.OK);
     }
 
-    @Operation(summary = CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION, description = CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION,
-            deprecated = true)
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
-            @ApiResponse(responseCode = "404", description = API_RESPONSE_CODE_404_MESSAGE),
-            @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
-    })
-    @PutMapping(value = "/upload-result-sending-to-rr/{messageId}", produces = "application/json; charset=UTF-8")
-    public ResponseEntity<?> uploadResultSendM4dRevokeToRRByMessageId(
-            @PathVariable @Parameter(name = "messageId", description = PARAMETER_MESSAGE_ID_DESCRIPTION, example = "1") String messageId) {
-        if (messageId == null || messageId.isEmpty()) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(MESSAGE_ID_IS_NULL), HttpStatus.BAD_REQUEST);
-        }
-        String error = this.m4dRecallService.uploadResultSendM4dRevokeToRRByMessageId(messageId);
-        if ( error != null) {
-            return new ResponseEntity<>(getCustomErrorJsonFromString(error), HttpStatus.BAD_REQUEST);
-        }
-        Map<String, String> body = new HashMap<>();
-        body.put("result", MRPA_RECALL_UPLOAD_RESULT_SEND_RR_MRPA);
-        return new ResponseEntity<>(body, HttpStatus.OK);
-    }
-
     @Operation(summary = CONTROLLER_MRPA_RECALL_SEND_REGISTER_IN_PVV_SUMMARY, description = CONTROLLER_MRPA_RECALL_SEND_REGISTER_IN_PVV_SUMMARY)
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = API_RESPONSE_CODE_200_MESSAGE),
@@ -434,7 +410,9 @@ public class M4dRevokeController {
         }
         String res = this.m4dRecallService.sendRegisterInRr(authentication, id);
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Request-ID", res);
+        if (res != null) {
+            headers.set("X-Request-ID", res);
+        }
         return new ResponseEntity<>(findMrpaRecallById(authentication, id).getBody(), headers, HttpStatus.OK);
     }
 

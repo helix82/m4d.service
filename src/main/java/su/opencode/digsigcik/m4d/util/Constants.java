@@ -132,7 +132,6 @@ public interface Constants {
     String XML_ATTRIBUTE_MCHD_REVOKE_CONFIRM_INFO_GUID = "НомДовер";
 
     String PARAMETER_MRPA_ID_DESCRIPTION = "ИД МЧД";
-    String PARAMETER_MESSAGE_ID_DESCRIPTION = "MessageId";
     String PARAMETER_MRPA_GUID_DESCRIPTION = "GUID МЧД";
     String PARAMETER_REPRESENTATIVE_INN_DESCRIPTION = "ИНН представителя";
     String PARAMETER_MRPA_RECALL_ID_DESCRIPTION = "ИД заявления на отзыв МЧД";
@@ -154,11 +153,9 @@ public interface Constants {
     String CONTROLLER_MRPA_FIND_BY_ID_AND_REPRESENTATIVE_ID_DESCRIPTION = "Возвращает список МЧД";
     String CONTROLLER_MRPA_UPDATE_SUMMARY = "Изменить данные по МЧД";
     String CONTROLLER_MRPA_UPDATE_DESCRIPTION = "Возвращает измененную МЧД с ФИО представителя и ФИО доверителя";
-    String CONTROLLER_MRPA_UPDATE_STATUS_BY_MESSAGE_ID_SUMMARY = "Обновить статус МЧД по MessageId";
     String CONTROLLER_MRPA_UPDATE_STATUS_SUMMARY = "Обновить статус МЧД";
     String CONTROLLER_MRPA_UPDATE_STATUS_DESCRIPTION = "Возвращает данные о статусе МЧД";
     String CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION = "Обработать результат отправки МЧД на регистрацию в РР МЧД";
-    String CONTROLLER_MRPA_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION = "Обработать результат отправки МЧД на регистрацию в РР МЧД по MessageId";
     String CONTROLLER_MRPA_DELETE_SUMMARY = "Удалить данные по МЧД";
     String CONTROLLER_MRPA_DELETE_DESCRIPTION = "Возвращает true при удачном удалении";
     String CONTROLLER_MRPA_UPLOAD_SUMMARY = "Загрузить ЭП";
@@ -197,7 +194,6 @@ public interface Constants {
     String CONTROLLER_MRPA_RECALL_UPLOAD_DESCRIPTION = "Возвращает заявление на отзыв МЧД";
     String CONTROLLER_MRPA_RECALL_AS_ARCHIVE_SUMMARY = "Получить XML отзыв МЧД и открепленную подпись в zip-архиве";
     String CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_DESCRIPTION = "Обработать результат отправки отзыва МЧД на регистрацию в РР МЧД";
-    String CONTROLLER_MRPA_RECALL_UPLOAD_RESULT_SENDING_TO_RR_BY_MESSAGE_ID_DESCRIPTION = "Обработать результат отправки отзыва МЧД на регистрацию в РР МЧД по MessageId";
     String CONTROLLER_MRPA_VALID_SCHEME_SUMMARY = "Проверить соответствие МЧД схеме";
     String CONTROLLER_MRPA_VALID_SCHEME_DESCRIPTION = "Возвращает JSON ответ результата проверки";
 
@@ -231,7 +227,6 @@ public interface Constants {
     String ID_IS_NULL = "ИД не указано";
     String SIG_IS_NULL = "ЭП не передана";
     String SIG_NOT_FOUND = "ЭП не передана";
-    String MESSAGE_ID_IS_NULL = "messageId не указан";
     String GUID_IS_NULL = "Номер доверенности (GUID) не указан";
     String CHECK_REQUEST_IS_NULL = "Данные для проверки МЧД по Номеру доверенности, ИНН доверителя и ИНН представителя не указаны";
     String INN_IS_NULL = "ИНН не указан";
@@ -296,8 +291,8 @@ public interface Constants {
     String ZIP_JSON_NOT_FOUND = "JSON-файл не найден в ZIP архиве";
     String ZIP_JSON_FOUND_MORE_ONE = "В архиве найдено более одного JSON-файла";
     String ZIP_ZIP_FOUND_MORE_ONE = "В архиве найдено более одного ZIP-файла";
-    String ZIP_XML_FOUND_MORE_TWO = "В архиве найдено более двух XML-файлов";
-    String ZIP_SIG_FOUND_MORE_TWO = "В архиве найдено более двух SIG-файлов";
+    String ZIP_XML_FOUND_MORE_FOUR = "В архиве найдено более четырёх XML-файлов";
+    String ZIP_SIG_FOUND_MORE_FOUR = "В архиве найдено более четырёх SIG-файлов";
     String ZIP_XML_NOT_FOUND = "XML-файл не найден в ZIP архиве";
     String ZIP_XML_FOUND_MORE_ONE = "В архиве найдено более одного XML-файла";
     String JSON_READ_ERROR = "Ошибка чтения JSON-файла";

@@ -1,6 +1,7 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.security.core.Authentication;
@@ -30,6 +31,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.FILE_TEMP_DELETE_ERROR;
 import static su.opencode.digsigcik.m4d.util.EncodingUtils.isBase64;
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 
+@Slf4j
 @Service
 @Primary
 @RequiredArgsConstructor
@@ -139,7 +141,7 @@ public class M4dFileServiceImpl implements M4dFileService {
             File f = new File(fileName);
             boolean res = f.delete();
             if (!res) {
-                throw new BadRequestException(FILE_TEMP_DELETE_ERROR);
+                log.warn(FILE_TEMP_DELETE_ERROR);
             }
         }
         return new File(tempZipFile);

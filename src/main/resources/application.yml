@@ -98,16 +98,10 @@ synapi:
   user-certs-me:
     uri: ${USER_CERTS_ME_URI:https://sp.dev.essocode.ru/api/v1/user-certificate/me}
 
-#  container:
-#    get-part:
-#      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
-#    get-part-json:
-#      uri: ${CONTAINER_PART_JSON_URI:https://sp.dev.essocode.ru/api/v1/container/get-part-json}
-#    create:
-#      uri: ${CONTAINER_CREATE_URI:https://sp.dev.essocode.ru/api/v1/container/create}
   container:
     get-part:
       uri: ${CONTAINER_PART_URI:http://localhost:8081/api/v1/container/get-part}
+#      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
 
 m4d:
   handbook:

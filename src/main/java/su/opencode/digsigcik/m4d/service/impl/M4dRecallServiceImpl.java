@@ -254,8 +254,8 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.createAndSignedM4dRecallConfirm(authentication, mrpaRecall, idFile, hash);
         // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
         String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecallSaved, m4dRecallConfirm);
-        if (res.isEmpty()) {
-            throw new BadRequestException(SENDING_RESPONSE_TO_PVV_ERROR);
+        if (res == null) {
+            log.error(SENDING_RESPONSE_TO_PVV_ERROR);
         }
         return res;
     }
@@ -279,7 +279,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
             File f = new File(fileName);
             boolean res = f.delete();
             if (!res) {
-                throw new BadRequestException(FILE_TEMP_DELETE_ERROR);
+                log.warn(FILE_TEMP_DELETE_ERROR);
             }
         }
         return hash;
@@ -312,30 +312,13 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
-    public String uploadResultSendM4dRevokeToRRByMessageId(String messageId) {
-        M4dRevokeResponseInfo m4dRevokeResponseInfo;
-        // получение json-ответа по messageId
-        m4dRevokeResponseInfo = this.pvvService.receiveJsonResponseM4dRevokeToRR(messageId);
-        if (m4dRevokeResponseInfo == null) {
-            throw new BadRequestException(PVV_MESSAGE_ID_NOT_FOUND+messageId);
-        }
-        String error;
-        try {
-            error = this.uploadResultSendM4dRevokeToRR(m4dRevokeResponseInfo);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        return error;
-    }
-
-    @Override
     public String sendRegisterInRr(Authentication authentication, Long recallId) throws IOException {
         M4dRecall m4dRecall = this.findById(recallId);
         // отправка архива с xml-файлом отзыва мчд и подписью на регистрацию в РР МЧД
         M4dRecallConfirm m4dRecallConfirm = this.m4dRecallConfirmService.findM4dRecallConfirmByM4dRecallId(recallId);
         String res = this.pvvService.sendM4dRevokeToRR(authentication, m4dRecall, m4dRecallConfirm);
-        if (res.isEmpty()) {
-            throw new BadRequestException(SENDING_RESPONSE_TO_PVV_ERROR);
+        if (res == null) {
+            log.error(SENDING_RESPONSE_TO_PVV_ERROR);
         }
         m4dRecall.setStatusInRr(StatusM4dInRrTypeEnum.ONCHECK.toString());
         M4dRecall m4dRecallSaved;

@@ -29,7 +29,6 @@ public interface M4dRecallService {
     String uploadSig(Authentication authentication, Long id, MultipartFile container) throws Exception;
     String getHashFromXmlString(String xmlString) throws Exception;
     String uploadResultSendM4dRevokeToRR(M4dRevokeResponseInfo m4dRevokeResponseInfo);
-    String uploadResultSendM4dRevokeToRRByMessageId(String messageId);
     long countM4dRevokeByInnsAndStatus(Set<String> inns, String status);
     String sendRegisterInRr(Authentication authentication, Long recallId) throws IOException;
 }
