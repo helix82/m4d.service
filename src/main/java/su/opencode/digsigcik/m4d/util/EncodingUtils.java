@@ -6,9 +6,6 @@ import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.regex.Matcher;
@@ -20,17 +17,7 @@ import static su.opencode.digsigcik.m4d.util.Constants.FILE_CONVERT_BASE64_EXCEP
 @UtilityClass
 public class EncodingUtils {
 
-    public static String encodeFileToBase64(String fileUri) throws IOException {
-        try (InputStream inputStream = Files.newInputStream(Path.of(fileUri))) {
-            return Base64.getEncoder().encodeToString(inputStream.readAllBytes());
-        }
-    }
-
-    public static String encodeFileToBase64(byte[] fileBytes) throws IOException {
-//        try (InputStream inputStream = new ByteArrayInputStream(fileBytes)) {
-//            return Base64.getEncoder().encodeToString(inputStream.readAllBytes());
-//        }
-
+    public static String encodeFileToBase64(byte[] fileBytes) {
         return Base64.getEncoder().encodeToString(fileBytes);
     }
 
@@ -66,10 +53,6 @@ public class EncodingUtils {
             throw new BadRequestException(FILE_CONVERT_BASE64_EXCEPTION);
         }
         return content;
-    }
-
-    public static String makeBasicAuthToken(String clientId, String secret) {
-        return Base64.getEncoder().encodeToString((clientId + ":" + secret).getBytes(StandardCharsets.UTF_8));
     }
 
     public static boolean isBase64(String str) {

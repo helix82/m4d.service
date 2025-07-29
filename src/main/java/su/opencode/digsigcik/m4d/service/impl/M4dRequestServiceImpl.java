@@ -12,6 +12,7 @@ import su.opencode.digsigcik.m4d.repository.M4dRequestRepository;
 import su.opencode.digsigcik.m4d.service.M4dRequestService;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -21,22 +22,32 @@ import javax.validation.constraints.NotNull;
 public class M4dRequestServiceImpl implements M4dRequestService {
     private final M4dRequestRepository repository;
 
+    @Override
+    public List<M4dRequestSearch> findAllM4dRequestSearch() {
+        return repository.findAll();
+    }
+
+    @Override
     public M4dRequestSearch findM4dRequestByGuidAndHash(@NotNull String guid, @NotNull String hash) {
         return repository.findByGuidAndHashXml(guid, hash);
     }
 
+    @Override
     public M4dRequestSearch findM4dRequestByGuid(@NotNull String guid) {
         return repository.findByGuid(guid);
     }
 
+    @Override
     public M4dRequestSearch saveM4dRequestSearch(M4dRequestSearch m4dRequestSearch) {
         return repository.save(m4dRequestSearch);
     }
 
+    @Override
     public M4dRequestSearch updateM4dRequestSearch(M4dRequestSearch m4dRequestSearch) {
         return repository.save(m4dRequestSearch);
     }
 
+    @Override
     //TODO: @helix82 - Использование Aspect-Oriented Programming (AOP) для передачи в логи guid?
     @AuditLogThis(event = AuditLogEventEnum.M4D_REQUEST_SEARCH_FIND_RR_DELETE, deleteByIdRepository = M4dRequestRepository.class)
     public void deleteM4dRequestSearch(@NotNull String guid) {

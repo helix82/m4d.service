@@ -37,7 +37,7 @@ public class ContainerServiceImpl implements ContainerService {
         fo.write(bytes);
         fo.close();
         ByteArrayResource resSig = this.synapiClientService.getPartContainer(tempContainerFile, "detachedSign", bearerToken);
-        String signatureData = "";
+        String signatureData;
         if (!isBase64(resSig.toString())) {
             signatureData = Base64.getEncoder().encodeToString(resSig.getByteArray()).replaceAll("\\s+", "");
         } else {

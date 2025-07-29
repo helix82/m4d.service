@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
@@ -23,11 +24,11 @@ import su.opencode.digsigcik.m4d.util.XMLUtil;
 
 import javax.validation.ConstraintViolationException;
 import javax.xml.bind.JAXBException;
+import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-import static su.opencode.digsigcik.m4d.util.Constants.*;
-
+@Slf4j
 @Service
 @Primary
 public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
@@ -39,6 +40,28 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     private String IS_DETACHED;
     @Value("${autosign.sig-type}")
     private String SIG_TYPE;
+
+    @Value("${confirm.version-format}")
+    private String CONFIRM_VERSION_FORMAT;
+    @Value("${confirm.legal-entity.id}")
+    private String CONFIRM_LEGAL_ENTITY_ID;
+    @Value("${confirm.legal-entity.name}")
+    private String CONFIRM_LEGAL_ENTITY_NAME;
+    @Value("${confirm.legal-entity.trade-name}")
+    private String CONFIRM_LEGAL_ENTITY_TRADE_NAME;
+    @Value("${confirm.legal-entity.inn}")
+    private String CONFIRM_LEGAL_ENTITY_INN;
+    @Value("${confirm.legal-entity.ogrn}")
+    private String CONFIRM_LEGAL_ENTITY_OGRN;
+    @Value("${confirm.operator.adr-nod}")
+    private String CONFIRM_OPERATOR_ADR_NOD;
+    @Value("${confirm.operator.product-url}")
+    private String CONFIRM_OPERATOR_PRODUCT_URL;
+    @Value("${confirm.operator.product-version}")
+    private String CONFIRM_OPERATOR_PRODUCT_VERSION;
+    @Value("${confirm.revoke.type}")
+    private String CONFIRM_REVOKE_TYPE;
+
     private final M4dRecallConfirmRepository m4dRecallConfirmRepository;
     private final M4dFileService m4dFileService;
     private final CryptoProCloudSignatureService cryptoProCloudSignatureService;
@@ -70,94 +93,23 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     }
 
     @Override
-    public Long uploadSigRegisteredPep(Long m4dRecallId, MultipartFile signature) throws IOException {
-        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
-        if (m4dRecallConfirm==null) {
-            throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
-        }
-        if (m4dRecallConfirm.getSigFileRegisteredPep()!=null) {
-            throw new BadRequestException(MRPA_RECALL_CONFIRM_PEP_SIG);
-        }
-        String filename = signature.getOriginalFilename();
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.getBytes());
-        m4dRecallConfirm.setSigFileRegisteredPep(m4dFile);
-        M4dRecallConfirm m4dRecallConfirmSaved;
-        try {
-            m4dRecallConfirmSaved = this.saveM4dRecallConfirm(m4dRecallConfirm);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        return m4dRecallConfirmSaved.getSigFileRegisteredPep().getId();
-    }
-
-    @Override
-    public Long uploadSigRegisteredRr(Long m4dRecallId, MultipartFile signature) throws IOException {
-        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
-        if (m4dRecallConfirm==null) {
-            throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
-        }
-        if (m4dRecallConfirm.getSigFileRegisteredRr()!=null) {
-            throw new BadRequestException(MRPA_RECALL_CONFIRM_RR_SIG);
-        }
-        String filename = signature.getOriginalFilename();
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, filename, signature.getBytes());
-        m4dRecallConfirm.setSigFileRegisteredRr(m4dFile);
-        M4dRecallConfirm m4dRecallConfirmSaved;
-        try {
-            m4dRecallConfirmSaved = this.saveM4dRecallConfirm(m4dRecallConfirm);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        return m4dRecallConfirmSaved.getSigFileRegisteredRr().getId();
-    }
-
-    @Override
-    public Long uploadXmlRegisteredRr(Long m4dRecallId, String xmlContent) {
-        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRecallId);
-        if (m4dRecallConfirm==null) {
-            throw new BadRequestException(MRPA_RECALL_CONFIRM_IS_NULL);
-        }
-
-        String filenameXml = XMLUtil.getSubstringFromXml(xmlContent, "ИдФайл=\"")+".xml";
-        M4dFile m4dFile = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, filenameXml, xmlContent.getBytes());
-        m4dRecallConfirm.setXmlFileRegisteredRr(m4dFile);
-
-        M4dRecallConfirm m4dRecallConfirmSaved;
-        try {
-            m4dRecallConfirmSaved = this.saveM4dRecallConfirm(m4dRecallConfirm);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        return m4dRecallConfirmSaved.getSigFileRegisteredRr().getId();
-    }
-
-    @Override
     public M4dRevokeConfirmDto getXml(String guid, String hashFile) {
-        //TODO: @helix82 предустановленные данные, надо вынести в параметры в хэлмы или устанавливать в качестве переменных в базу
-        String orgId = "de8d2875-283a-4f59-9246-e1879e256bc2";
-        String orgName = "ЦЕНТРАЛЬНАЯ ИЗБИРАТЕЛЬНАЯ КОМИССИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ";
-        String orgTradeName = "ЦИК РФ";
-        String orgInn = "7710010990";
-        String orgOgrn = "1027700466640";
-        String orgInfoSystem = "sep.cik";
-        String orgVersionSystem = "sep.cik 2.9";
-        //
         String guidConfirm = UUID.randomUUID().toString();
         M4dRevokeConfirmDto m4dRevokeConfirmDto = new M4dRevokeConfirmDto();
-        m4dRevokeConfirmDto.setVersionFormat("ПодтвФНС003");
-        m4dRevokeConfirmDto.setTypeConfirm("ПодтвЗаявлОтмена");
-        m4dRevokeConfirmDto.setIdFile("Квит003_ФНС_ЗаявОтм_"+guidConfirm); //Квит003_ФНС_ЗаявОтм_eecbffec-e37f-4aa4-a135-896241dd8d71
+        m4dRevokeConfirmDto.setVersionFormat(CONFIRM_VERSION_FORMAT);
+        m4dRevokeConfirmDto.setTypeConfirm(CONFIRM_REVOKE_TYPE);
+        m4dRevokeConfirmDto.setIdFile("Квит003_ФНС_ЗаявОтм_"+guidConfirm);
         m4dRevokeConfirmDto.setGuid(guidConfirm);
         m4dRevokeConfirmDto.setRegisteredDate(DateUtils.getCurrentDate());
-        m4dRevokeConfirmDto.setOperatorId("4M2EFnszPAT1yr45SgWVDLxfYCa4AYvDGns");
+        m4dRevokeConfirmDto.setOperatorId(CONFIRM_OPERATOR_ADR_NOD);
         M4dRevokeConfirmDto.Organisation organisation = new M4dRevokeConfirmDto.Organisation();
-        organisation.setId(orgId);
-        organisation.setName(orgName);
-        organisation.setTradeName(orgTradeName);
-        organisation.setInn(orgInn);
-        organisation.setOgrn(orgOgrn);
-        organisation.setInfoSystem(orgInfoSystem);
-        organisation.setVersionSystem(orgVersionSystem);
+        organisation.setId(CONFIRM_LEGAL_ENTITY_ID);
+        organisation.setName(CONFIRM_LEGAL_ENTITY_NAME);
+        organisation.setTradeName(CONFIRM_LEGAL_ENTITY_TRADE_NAME);
+        organisation.setInn(CONFIRM_LEGAL_ENTITY_INN);
+        organisation.setOgrn(CONFIRM_LEGAL_ENTITY_OGRN);
+        organisation.setInfoSystem(CONFIRM_OPERATOR_PRODUCT_URL);
+        organisation.setVersionSystem(CONFIRM_OPERATOR_PRODUCT_VERSION);
         m4dRevokeConfirmDto.setOrganisation(organisation);
         M4dRevokeConfirmDto.M4dRevoke m4d = new M4dRevokeConfirmDto.M4dRevoke();
         m4d.setHashFile(hashFile);
@@ -182,7 +134,7 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
         String resource = cryptoProCloudSignatureService.initializeSignature(authentication, sourceFile,
                 0L, USER_LOGIN, PINCODE, Boolean.parseBoolean(IS_DETACHED), SIG_TYPE, HashAlgorithm.GOST3411_2012_256);
 
-        String filenameSig = null;
+        String filenameSig;
         if (Boolean.parseBoolean(IS_DETACHED)) {
             filenameSig = m4dRevokeConfirmDto.getIdFile()+"_detached.sig";
         } else filenameSig = m4dRevokeConfirmDto.getIdFile()+".sig";
@@ -197,5 +149,23 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
             throw new BadRequestException(e.getMessage());
         }
         return m4dRecallConfirmSaved;
+    }
+
+    @Override
+    public M4dRecallConfirm saveConfirmAndSignatureRr(Long m4dRevokeId, File xmlFileKvitM4dRevoke, File sigFileKvitM4dRevoke) {
+        M4dRecallConfirm m4dRecallConfirm = this.findM4dRecallConfirmByM4dRecallId(m4dRevokeId);
+        M4dFile m4dFileXmlKvitM4dRevoke = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.XML, FileLogicalTypeEnum.DOCUMENT, xmlFileKvitM4dRevoke.getName(), FileUtils.getFileContentByPath(xmlFileKvitM4dRevoke.getPath()));
+        M4dFile m4dFileSigKvitM4dRevoke = this.m4dFileService.fillM4dFile(FileMimeTypeEnum.SIG, FileLogicalTypeEnum.SIGNATURE, sigFileKvitM4dRevoke.getName(), FileUtils.getFileContentByPath(sigFileKvitM4dRevoke.getPath()));
+        String datetimeRevokeRegisteredRR = XMLUtil.getSubstringFromXml(new String(FileUtils.getFileContentByPath(xmlFileKvitM4dRevoke.getPath())), "ДатаВремВыдПодтв=\"");
+        m4dRecallConfirm.setRegisteredRrDate(DateUtils.convertStringToLocalDateTime(datetimeRevokeRegisteredRR));
+        m4dRecallConfirm.setXmlFileRegisteredRr(m4dFileXmlKvitM4dRevoke);
+        m4dRecallConfirm.setSigFileRegisteredRr(m4dFileSigKvitM4dRevoke);
+        M4dRecallConfirm m4dRecallConfirmUpdate = null;
+        try {
+            m4dRecallConfirmUpdate = this.updateM4dRecallConfirm(m4dRecallConfirm);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        return m4dRecallConfirmUpdate;
     }
 }

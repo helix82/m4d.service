@@ -80,3 +80,7 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/delete_unique_from_table_m4d_confirm.sql
   - include:
       file: db/changelog/migrations/v1.0/delete_unique_from_table_m4d_revoke_confirm.sql
+  - include:
+      file: db/changelog/migrations/v1.0/add_field_zip_file_id_in_table_m4d_request_search.sql
+  - include:
+      file: db/changelog/migrations/v1.0/add_fields_principal_inn_and_repres_inn_in_table_m4d_request_search.sql

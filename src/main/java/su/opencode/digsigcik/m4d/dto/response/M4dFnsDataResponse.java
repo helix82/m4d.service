@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import su.opencode.digsigcik.audit.AllowAudit;
 
 @Data
@@ -54,6 +55,17 @@ public class M4dFnsDataResponse {
     @JsonProperty("issuerOgrnHash")
     @AllowAudit
     private String issuerOgrnHash;
+    @JsonProperty("principalInn")
+    @AllowAudit
+    private String principalInn;
+    @JsonProperty("representativeInn")
+    @AllowAudit
+    private String representativeInn;
+    @JsonProperty("file")
+    private ByteArrayResource file;
+    @JsonProperty("reqStatus")
+    @AllowAudit
+    private String reqStatus;
     @JsonProperty("error")
     @AllowAudit
     private Error error;
@@ -68,7 +80,7 @@ public class M4dFnsDataResponse {
         private String instance; // URL, идентифицирующий ошибку
         @JsonProperty("meta")
         @AllowAudit
-        private String meta; // Метаданные ошибки
+        private Object meta; // Метаданные ошибки
         @JsonProperty("status")
         @AllowAudit
         private Integer status; // HTTP статус

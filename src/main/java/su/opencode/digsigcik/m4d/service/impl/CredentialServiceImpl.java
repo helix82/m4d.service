@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static su.opencode.digsigcik.m4d.util.Constants.CREDENTIAL_NOT_FOUND;
+import static su.opencode.digsigcik.m4d.util.Constants.*;
 import static su.opencode.digsigcik.m4d.util.ConvertUtils.convertStringToClass;
 
 @Slf4j
@@ -124,9 +124,9 @@ public class CredentialServiceImpl implements CredentialService {
                                 }
                             }
                             this.repository.delete(credentialList.get(i));
-                            log.info("Удалена дублирующая запись с ID: {}", credentialList.get(i).getId());
+                            log.info(DUPLICATE_DELETE + ": {}", credentialList.get(i).getId());
                         } catch (Exception e) {
-                            log.error("Ошибка удаления дублирующей записи: {}", e.getMessage());
+                            log.error(DUPLICATE_DELETE_ERROR + ": {}", e.getMessage());
                         }
                     }
                     if (!firstCredential.getName().equals(credential.getDescription())) {
@@ -142,7 +142,7 @@ public class CredentialServiceImpl implements CredentialService {
                     this.repository.save(credentialNew);
                     credentials_import++;
                 } catch (Exception e) {
-                    log.error("Ошибка сохранения полномочия: {}", e.getMessage());
+                    log.error(CREDENTIAL_SAVE_ERROR + ": {}", e.getMessage());
                 }
             }
         }
@@ -151,7 +151,7 @@ public class CredentialServiceImpl implements CredentialService {
             this.saveJsonFile(sourceFile);
             //notificationService.notifyIokUpdateToPvv(sourceFile);
         } catch (Exception e) {
-            log.error("Ошибка сохранения исходного файла справочника полномочий: {}", e.getMessage());
+            log.error(FILE_SAVE_CREDENTIAL_ERROR + ": {}", e.getMessage());
         }
         return credentials_import;
     }
@@ -167,6 +167,9 @@ public class CredentialServiceImpl implements CredentialService {
             m4dFileSaved = this.m4dFileService.saveM4dFile(m4dFile);
         } catch (ConstraintViolationException e) {
             throw new BadRequestException(e.getMessage());
+        }
+        if (m4dFileSaved == null) {
+            log.error(FILE_SAVE_CREDENTIAL_ERROR);
         }
     }
 }

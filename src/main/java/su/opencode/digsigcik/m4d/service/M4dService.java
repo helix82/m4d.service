@@ -21,7 +21,7 @@ public interface M4dService {
     SpecificationResponse<M4dRegistryResponseDto> findAllMrpaRegistry(Authentication authentication, SpecificationRequest request) throws ParseException;
     M4d saveMrpaRegistry(@NotNull M4d m4d);
     M4d updateM4d(@NotNull M4d m4d);
-    M4d updateStatusM4d(Long id, String status);
+    void updateStatusM4d(Long id, String status);
     Long saveAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials, String xmlString);
     Long updateAllDataMrpaRegistry(Authentication authentication, M4d m4d, OrganizationDto organisation, Principal principal, PrincipalDetail principalDetail, Representative representative, RepresentativeDetail representativePassport, List<CredentialDto> credentialList, List<Long> credentials);
     Integer countM4dByGuid(@NotNull String guid);
@@ -35,14 +35,16 @@ public interface M4dService {
     M4dRegistryResponseDto findM4dByIdAndRepresentativeInn(Authentication authentication, String inn, Long id);
     String getStatusM4d(Long id) throws ParseException;
     M4dRegistryResponseDto convertM4dToM4dResponseDto(Authentication authentication, M4d m4d, Boolean withM4dSigFile, Boolean withRecallSigFile, Boolean withM4dXmlFile, Boolean withRecallXmlFile) throws ParseException;
-    ReportCheckStatusM4dDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml);
-    ReportCheckStatusM4dDto createM4dRequestSearchForFindRRByGuid(String guidXml);
-    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRR(M4dXml m4dXml, String HashXml);
-    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRRByGuid(String guidXml);
+    ReportCheckStatusM4dAndSendingPvvDto createM4dRequestSearchForFindRR(M4dXml m4dXml, String hashXml);
+    ReportCheckStatusM4dAndSendingPvvDto createM4dRequestSearchForFindRRByGuid(String guidXml);
+    ReportCheckStatusM4dAndSendingPvvDto createM4dRequestSearchForFindRRByGuidAndInns(CheckByGuidRequestDto requestDto);
+    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRR(M4dXml m4dXml, String HashXml) throws IOException;
+    ReportCheckStatusM4dDto getReportM4dRequestSearchForFindRRByGuid(String guidXml) throws IOException;
     ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, M4dXml m4dXml) throws ParseException;
     ReportCheckStatusM4dDto checkM4dInPepByGuid(Authentication authentication, String guidXml) throws ParseException;
+    ReportCheckStatusM4dDto checkM4dInPepByGuidAndInns(Authentication authentication, CheckByGuidRequestDto requestDto) throws ParseException;
     M4dParseResponseDto parse(MultipartFile sourceFile) throws IOException, SAXException;
-    M4d uploadSig(Authentication authentication, Long mrpaId, MultipartFile signature) throws IOException, ParseException, JAXBException;
+    String uploadSig(Authentication authentication, Long mrpaId, MultipartFile signature) throws IOException, ParseException, JAXBException;
     M4dFullXML convertM4dRequestDtoToFullXml(M4dRegistryRequestDto m4DRegistryRequestDto) throws ParseException;
     String getGuidFromXml(M4dXml m4dXml);
     String getStartDateM4dFromXml(M4dXml m4dXml);
@@ -58,4 +60,13 @@ public interface M4dService {
     String uploadResultSendM4dToRR(M4dResponseInfo m4dResponseInfo);
     M4dXml convertM4dFileToM4dXml(MultipartFile sourceFile);
     M4dCountAndRevokeCountResponseDto countM4dAndRevoke(Authentication authentication, String status);
+    Integer updateStatusM4dInRR();
+    Integer updateRequestStatusM4dInRR();
+    void sendM4dAllRegisterInRr() throws IOException;
+    void sendM4dRevokeAllRegisterInRr() throws IOException;
+    String sendRequestStatusM4dInPvv(String guid);
+    String sendRequestFullM4dInPvv(CheckByGuidRequestDto requestDto);
+    ReportCheckStatusM4dDto updateStatusM4dRequestSearchByMessageId(String messageId) throws IOException;
+    void uploadResultSendM4dToRRByMessageId(String messageId);
+    String sendM4dRegisterInRr(Authentication authentication, Long id) throws IOException;
 }

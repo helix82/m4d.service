@@ -2,7 +2,6 @@ package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -10,8 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import su.opencode.digsigcik.m4d.service.RestTemplateService;
-
-import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -41,17 +38,6 @@ public class RestTemplateServiceImpl implements RestTemplateService {
                 responseType
         );
     }
-
-    @Override
-    public <R> ResponseEntity<HashMap<String, String>> fetchServiceResponse(String url, ParameterizedTypeReference<HashMap<String, String>> responseType, String bearerToken, HttpMethod method, R requestBody) {
-        return restTemplate.exchange(
-                url,
-                method,
-                new HttpEntity<>(requestBody, createHttpHeaders(bearerToken)),
-                responseType
-        );
-    }
-
 
     private static @NotNull HttpHeaders createHttpHeaders(String bearerToken) {
         HttpHeaders headers = new HttpHeaders();

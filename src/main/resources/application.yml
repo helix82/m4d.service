@@ -66,7 +66,7 @@ web:
     refresh-time-cache: ${RPD_REFRESH_TIME_CACHE:1350}
     connection-timeout: ${RPD_CONNECTION_TIMEOUT:10000}
     read-timeout: ${RPD_READ_TIMEOUT:10000}
-    white-list-all-methods: ${WHITE_LIST:/v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings}
+    white-list-all-methods: ${WHITE_LIST:/v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings,/api/v1/m4d/upload-result-sending-to-rr,/api/v1/m4d/status,/api/v1/m4d/revoke/upload-result-sending-to-rr}
     trust-all: ${DISABLE_TLS_CHECK:true}
 ---
 
@@ -98,27 +98,41 @@ synapi:
   user-certs-me:
     uri: ${USER_CERTS_ME_URI:https://sp.dev.essocode.ru/api/v1/user-certificate/me}
 
-#  container:
-#    get-part:
-#      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
-#    get-part-json:
-#      uri: ${CONTAINER_PART_JSON_URI:https://sp.dev.essocode.ru/api/v1/container/get-part-json}
-#    create:
-#      uri: ${CONTAINER_CREATE_URI:https://sp.dev.essocode.ru/api/v1/container/create}
   container:
     get-part:
       uri: ${CONTAINER_PART_URI:http://localhost:8081/api/v1/container/get-part}
+#      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
 
 m4d:
-  handbook:
-    uri: ${M4D_HANDBOOK_URI:https://sp.dev.essocode.ru/api/v1}
-  api_rr_fns:
-    uri: ${M4D_API_RR_FNS_URI:https://operator.cprr-it.weintegrator.com/api/v0}
   soul: ${M4D_SOUL:"}
+  xml-version-format: ${M4D_XML_VERSION_FORMAT:EMCHD_1}
+  revoke:
+    xml-version-format: ${M4D_REVOKE_XML_VERSION_FORMAT:001}
+
+confirm:
+  version-format: ${CONFIRM_VERSION_FORMAT:ПодтвФНС003}
+  legal-entity:
+    id: ${CONFIRM_LEGAL_ENTITY_ID:de8d2875-283a-4f59-9246-e1879e256bc2}
+    name: ${CONFIRM_LEGAL_ENTITY_NAME:ЦЕНТРАЛЬНАЯ ИЗБИРАТЕЛЬНАЯ КОМИССИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ}
+    trade-name: ${CONFIRM_LEGAL_ENTITY_TRADE_NAME:ЦИК РФ}
+    inn: ${CONFIRM_LEGAL_ENTITY_INN:7710010990}
+    ogrn: ${CONFIRM_LEGAL_ENTITY_OGRN:1027700466640}
+  operator:
+    adr-nod: ${CONFIRM_OPERATOR_ADR_NOD:4M2EFnszPAT1yr45SgWVDLxfYCa4AYvDGns}
+    product-url: ${CONFIRM_OPERATOR_PRODUCT_URL:sep.cik}
+    product-version: ${CONFIRM_OPERATOR_PRODUCT_VERSION:sep.cik 2.11}
+  m4d:
+    type: ${CONFIRM_M4D_TYPE:ПодтвДовер}
+  revoke:
+    type: ${CONFIRM_REVOKE_TYPE:ПодтвЗаявлОтмена}
+
+autosign:
+  user-login: ${AUTOSIGN_USER_LOGIN:pep}
+  pincode: ${AUTOSIGN_PINCODE:1234}
+  is-detached: ${AUTOSIGN_IS_DETACHED:true}
+  sig-type: ${AUTOSIGN_SIG_TYPE:CAdES_BES}
 
 ref-book:
-  organization-create:
-    uri: ${ORGANIZATION_CREATE_URI:https://ref-book.dev.essocode.ru/api/v1/ref-book/organization}
   organization-find-by-inn:
     uri: ${ORGANIZATION_FIND_BY_INN_URI:https://ref-book.dev.essocode.ru/api/v1/ref-book/organization/inn}
 
@@ -130,12 +144,6 @@ audit:
 
 cryptopro:
   proxy-service: ${CRYPTO_PROXY_SIGN_URL:https://cp.dev.essocode.ru/api/v1/sign/cades/as-user}
-
-autosign:
-  user-login: ${AUTOSIGN_USER_LOGIN:pep}
-  pincode: ${AUTOSIGN_PINCODE:1234}
-  is-detached: ${AUTOSIGN_IS_DETACHED:true}
-  sig-type: ${AUTOSIGN_SIG_TYPE:CAdES_BES}
 
 pvv:
   use-gost: true
@@ -155,3 +163,9 @@ management:
     web:
       exposure:
         include: ${ACTUATOR_ENDPOINTS:*}
+
+scheduler:
+  interval: 'PT60S'
+  delay15: 'PT15S'
+  delay30: 'PT30S'
+  delay45: 'PT45S'
