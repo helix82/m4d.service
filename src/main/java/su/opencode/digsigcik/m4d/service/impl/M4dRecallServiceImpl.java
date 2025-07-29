@@ -2,6 +2,7 @@ package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.Authentication;
@@ -48,6 +49,8 @@ import static su.opencode.digsigcik.m4d.util.Constants.*;
 @Service
 @Primary
 public class M4dRecallServiceImpl implements M4dRecallService {
+    @Value("${m4d.revoke.xml-version-format}")
+    private String M4D_REVOKE_XML_VERSION_FORMAT;
 
     private final M4dRecallRepository m4dRevokeRepository;
     private final M4dRepository m4dRepository;
@@ -181,7 +184,7 @@ public class M4dRecallServiceImpl implements M4dRecallService {
         M4dRevokeXml mrpaRecallXml = new M4dRevokeXml();
         mrpaRecallXml.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
         mrpaRecallXml.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
-        mrpaRecallXml.setVersionFormat("001");
+        mrpaRecallXml.setVersionFormat(M4D_REVOKE_XML_VERSION_FORMAT);
 
         M4dRevokeXml.Document.RecallInfo recallInfo = new M4dRevokeXml.Document.RecallInfo();
         recallInfo.setGuid(mrpaRegistryResponseDto.getGuid());

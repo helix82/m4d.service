@@ -40,6 +40,28 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
     private String IS_DETACHED;
     @Value("${autosign.sig-type}")
     private String SIG_TYPE;
+
+    @Value("${confirm.version-format}")
+    private String CONFIRM_VERSION_FORMAT;
+    @Value("${confirm.legal-entity.id}")
+    private String CONFIRM_LEGAL_ENTITY_ID;
+    @Value("${confirm.legal-entity.name}")
+    private String CONFIRM_LEGAL_ENTITY_NAME;
+    @Value("${confirm.legal-entity.trade-name}")
+    private String CONFIRM_LEGAL_ENTITY_TRADE_NAME;
+    @Value("${confirm.legal-entity.inn}")
+    private String CONFIRM_LEGAL_ENTITY_INN;
+    @Value("${confirm.legal-entity.ogrn}")
+    private String CONFIRM_LEGAL_ENTITY_OGRN;
+    @Value("${confirm.operator.adr-nod}")
+    private String CONFIRM_OPERATOR_ADR_NOD;
+    @Value("${confirm.operator.product-url}")
+    private String CONFIRM_OPERATOR_PRODUCT_URL;
+    @Value("${confirm.operator.product-version}")
+    private String CONFIRM_OPERATOR_PRODUCT_VERSION;
+    @Value("${confirm.m4d.type}")
+    private String CONFIRM_M4D_TYPE;
+
     private final M4dConfirmRepository m4dConfirmRepository;
     private final M4dFileService m4dFileService;
     private final CryptoProCloudSignatureService cryptoProCloudSignatureService;
@@ -72,31 +94,22 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
 
     @Override
     public M4dConfirmDto getXml(String idFile, String guid,String internalNumber, String startDate, String endDate) {
-        //TODO: @helix82 предустановленные данные, надо вынести в параметры в хэлмы или устанавливать в качестве переменных в базу
-        String orgId = "de8d2875-283a-4f59-9246-e1879e256bc2";
-        String orgName = "ЦЕНТРАЛЬНАЯ ИЗБИРАТЕЛЬНАЯ КОМИССИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ";
-        String orgTradeName = "ЦИК РФ";
-        String orgInn = "7710010990";
-        String orgOgrn = "1027700466640";
-        String orgInfoSystem = "sep.cik";
-        String orgVersionSystem = "sep.cik 2.9";
-        //
         String guidConfirm = UUID.randomUUID().toString();
         M4dConfirmDto m4dConfirmDto = new M4dConfirmDto();
-        m4dConfirmDto.setVersionFormat("ПодтвФНС003");
-        m4dConfirmDto.setTypeConfirm("ПодтвДовер");
-        m4dConfirmDto.setIdFile("Квит003_ФНС_"+idFile); //Квит003_ФНС_ON_EMCHD_20240516_75655b80-cc58-4a2b-b244-8334eb895a2f
+        m4dConfirmDto.setVersionFormat(CONFIRM_VERSION_FORMAT);
+        m4dConfirmDto.setTypeConfirm(CONFIRM_M4D_TYPE);
+        m4dConfirmDto.setIdFile("Квит003_ФНС_"+idFile);
         m4dConfirmDto.setGuid(guidConfirm);
         m4dConfirmDto.setRegisteredDate(DateUtils.getCurrentDate());
-        m4dConfirmDto.setOperatorId("4M2EFnszPAT1yr45SgWVDLxfYCa4AYvDGns");
+        m4dConfirmDto.setOperatorId(CONFIRM_OPERATOR_ADR_NOD);
         M4dConfirmDto.Organisation organisation = new M4dConfirmDto.Organisation();
-        organisation.setId(orgId);
-        organisation.setName(orgName);
-        organisation.setTradeName(orgTradeName);
-        organisation.setInn(orgInn);
-        organisation.setOgrn(orgOgrn);
-        organisation.setInfoSystem(orgInfoSystem);
-        organisation.setVersionSystem(orgVersionSystem);
+        organisation.setId(CONFIRM_LEGAL_ENTITY_ID);
+        organisation.setName(CONFIRM_LEGAL_ENTITY_NAME);
+        organisation.setTradeName(CONFIRM_LEGAL_ENTITY_TRADE_NAME);
+        organisation.setInn(CONFIRM_LEGAL_ENTITY_INN);
+        organisation.setOgrn(CONFIRM_LEGAL_ENTITY_OGRN);
+        organisation.setInfoSystem(CONFIRM_OPERATOR_PRODUCT_URL);
+        organisation.setVersionSystem(CONFIRM_OPERATOR_PRODUCT_VERSION);
         m4dConfirmDto.setOrganisation(organisation);
         M4dConfirmDto.M4d m4d = new M4dConfirmDto.M4d();
         m4d.setIdFile(idFile);
@@ -104,7 +117,7 @@ public class M4dConfirmServiceImpl implements M4dConfirmService {
         m4d.setInternalNumber(internalNumber);
         m4d.setStartDate(startDate);
         m4d.setEndDate(endDate);
-        m4d.setInfoSystem(orgInfoSystem);
+        m4d.setInfoSystem(CONFIRM_OPERATOR_PRODUCT_URL);
         m4dConfirmDto.setM4d(m4d);
         return m4dConfirmDto;
     }

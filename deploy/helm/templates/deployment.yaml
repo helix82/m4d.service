@@ -115,11 +115,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.AUDIT_URL }}
-            - name: M4D_HANDBOOK_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: {{ .Values.env.M4D_HANDBOOK_URI }}
             - name: RESOURCE_ACCESS
               valueFrom:
                 secretKeyRef:
@@ -160,11 +155,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.CONTAINER_PART_URI }}
-            - name: M4D_API_RR_FNS_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: {{ .Values.env.M4D_API_RR_FNS_URI }}
             - name: ORGANIZATION_FIND_BY_INN_URI
               valueFrom:
                 secretKeyRef:
@@ -240,6 +230,71 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.ACTUATOR_ENDPOINTS }}
+            - name: M4D_XML_VERSION_FORMAT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.M4D_XML_VERSION_FORMAT }}
+            - name: M4D_REVOKE_XML_VERSION_FORMAT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.M4D_REVOKE_XML_VERSION_FORMAT }}
+            - name: CONFIRM_VERSION_FORMAT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_VERSION_FORMAT }}
+            - name: CONFIRM_LEGAL_ENTITY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_LEGAL_ENTITY_ID }}
+            - name: CONFIRM_LEGAL_ENTITY_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_LEGAL_ENTITY_NAME }}
+            - name: CONFIRM_LEGAL_ENTITY_TRADE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_LEGAL_ENTITY_TRADE_NAME }}
+            - name: CONFIRM_LEGAL_ENTITY_INN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_LEGAL_ENTITY_INN }}
+            - name: CONFIRM_LEGAL_ENTITY_OGRN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_LEGAL_ENTITY_OGRN }}
+            - name: CONFIRM_OPERATOR_ADR_NOD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_OPERATOR_ADR_NOD }}
+            - name: CONFIRM_OPERATOR_PRODUCT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_OPERATOR_PRODUCT_URL }}
+            - name: CONFIRM_OPERATOR_PRODUCT_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_OPERATOR_PRODUCT_VERSION }}
+            - name: CONFIRM_M4D_TYPE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_M4D_TYPE }}
+            - name: CONFIRM_REVOKE_TYPE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.CONFIRM_REVOKE_TYPE }}
       volumes:
         - name: tls-volume
           configMap:

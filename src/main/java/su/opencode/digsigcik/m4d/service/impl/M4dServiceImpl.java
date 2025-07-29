@@ -74,6 +74,8 @@ public class M4dServiceImpl implements M4dService {
     private String M4D_SOUL;
     @Value("${audit.default-user}")
     private String DEFAULT_USER_NAME;
+    @Value("${m4d.xml-version-format}")
+    private String M4D_XML_VERSION_FORMAT;
 
     private final ModelMapper modelMapper;
     private final M4dRepository m4dRepository;
@@ -1370,7 +1372,7 @@ public class M4dServiceImpl implements M4dService {
         m4dFullXML.setXmlnsXsi("http://www.w3.org/2001/XMLSchema-instance");
         m4dFullXML.setXmlnsXsd("http://www.w3.org/2001/XMLSchema");
         m4dFullXML.setXmlns("urn://x-artefacts/EMCHD_1");
-        m4dFullXML.setVersionFormat("EMCHD_1");
+        m4dFullXML.setVersionFormat(M4D_XML_VERSION_FORMAT);
         m4dFullXML.setElementsFormat("00000000");
         m4dFullXML.setIdFile(idFile); //ON_EMCHD_20240516_75655b80-cc58-4a2b-b244-8334eb895a2f
 

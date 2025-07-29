@@ -40,6 +40,28 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
     private String IS_DETACHED;
     @Value("${autosign.sig-type}")
     private String SIG_TYPE;
+
+    @Value("${confirm.version-format}")
+    private String CONFIRM_VERSION_FORMAT;
+    @Value("${confirm.legal-entity.id}")
+    private String CONFIRM_LEGAL_ENTITY_ID;
+    @Value("${confirm.legal-entity.name}")
+    private String CONFIRM_LEGAL_ENTITY_NAME;
+    @Value("${confirm.legal-entity.trade-name}")
+    private String CONFIRM_LEGAL_ENTITY_TRADE_NAME;
+    @Value("${confirm.legal-entity.inn}")
+    private String CONFIRM_LEGAL_ENTITY_INN;
+    @Value("${confirm.legal-entity.ogrn}")
+    private String CONFIRM_LEGAL_ENTITY_OGRN;
+    @Value("${confirm.operator.adr-nod}")
+    private String CONFIRM_OPERATOR_ADR_NOD;
+    @Value("${confirm.operator.product-url}")
+    private String CONFIRM_OPERATOR_PRODUCT_URL;
+    @Value("${confirm.operator.product-version}")
+    private String CONFIRM_OPERATOR_PRODUCT_VERSION;
+    @Value("${confirm.revoke.type}")
+    private String CONFIRM_REVOKE_TYPE;
+
     private final M4dRecallConfirmRepository m4dRecallConfirmRepository;
     private final M4dFileService m4dFileService;
     private final CryptoProCloudSignatureService cryptoProCloudSignatureService;
@@ -72,31 +94,22 @@ public class M4dRecallConfirmServiceImpl implements M4dRecallConfirmService {
 
     @Override
     public M4dRevokeConfirmDto getXml(String guid, String hashFile) {
-        //TODO: @helix82 предустановленные данные, надо вынести в параметры в хэлмы или устанавливать в качестве переменных в базу
-        String orgId = "de8d2875-283a-4f59-9246-e1879e256bc2";
-        String orgName = "ЦЕНТРАЛЬНАЯ ИЗБИРАТЕЛЬНАЯ КОМИССИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ";
-        String orgTradeName = "ЦИК РФ";
-        String orgInn = "7710010990";
-        String orgOgrn = "1027700466640";
-        String orgInfoSystem = "sep.cik";
-        String orgVersionSystem = "sep.cik 2.9";
-        //
         String guidConfirm = UUID.randomUUID().toString();
         M4dRevokeConfirmDto m4dRevokeConfirmDto = new M4dRevokeConfirmDto();
-        m4dRevokeConfirmDto.setVersionFormat("ПодтвФНС003");
-        m4dRevokeConfirmDto.setTypeConfirm("ПодтвЗаявлОтмена");
-        m4dRevokeConfirmDto.setIdFile("Квит003_ФНС_ЗаявОтм_"+guidConfirm); //Квит003_ФНС_ЗаявОтм_eecbffec-e37f-4aa4-a135-896241dd8d71
+        m4dRevokeConfirmDto.setVersionFormat(CONFIRM_VERSION_FORMAT);
+        m4dRevokeConfirmDto.setTypeConfirm(CONFIRM_REVOKE_TYPE);
+        m4dRevokeConfirmDto.setIdFile("Квит003_ФНС_ЗаявОтм_"+guidConfirm);
         m4dRevokeConfirmDto.setGuid(guidConfirm);
         m4dRevokeConfirmDto.setRegisteredDate(DateUtils.getCurrentDate());
-        m4dRevokeConfirmDto.setOperatorId("4M2EFnszPAT1yr45SgWVDLxfYCa4AYvDGns");
+        m4dRevokeConfirmDto.setOperatorId(CONFIRM_OPERATOR_ADR_NOD);
         M4dRevokeConfirmDto.Organisation organisation = new M4dRevokeConfirmDto.Organisation();
-        organisation.setId(orgId);
-        organisation.setName(orgName);
-        organisation.setTradeName(orgTradeName);
-        organisation.setInn(orgInn);
-        organisation.setOgrn(orgOgrn);
-        organisation.setInfoSystem(orgInfoSystem);
-        organisation.setVersionSystem(orgVersionSystem);
+        organisation.setId(CONFIRM_LEGAL_ENTITY_ID);
+        organisation.setName(CONFIRM_LEGAL_ENTITY_NAME);
+        organisation.setTradeName(CONFIRM_LEGAL_ENTITY_TRADE_NAME);
+        organisation.setInn(CONFIRM_LEGAL_ENTITY_INN);
+        organisation.setOgrn(CONFIRM_LEGAL_ENTITY_OGRN);
+        organisation.setInfoSystem(CONFIRM_OPERATOR_PRODUCT_URL);
+        organisation.setVersionSystem(CONFIRM_OPERATOR_PRODUCT_VERSION);
         m4dRevokeConfirmDto.setOrganisation(organisation);
         M4dRevokeConfirmDto.M4dRevoke m4d = new M4dRevokeConfirmDto.M4dRevoke();
         m4d.setHashFile(hashFile);
