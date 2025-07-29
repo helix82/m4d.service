@@ -57,10 +57,6 @@ secret:
     USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9tZQo=
     #http://synapi-service.master.svc.cluster.local/api/v1/container/get-part
     CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2dldC1wYXJ0Cg==
-    #http://synapi-service.master.svc.cluster.local/api/v1/container/get-part-json
-    CONTAINER_PART_JSON_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2dldC1wYXJ0LWpzb24K
-    #http://synapi-service.master.svc.cluster.local/api/v1/container/create
-    CONTAINER_CREATE_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2NyZWF0ZQ==
     #https://operator.cprr-it.weintegrator.com/api/v0
     M4D_API_RR_FNS_URI: aHR0cHM6Ly9vcGVyYXRvci5jcHJyLWl0LndlaW50ZWdyYXRvci5jb20vYXBpL3YwPT0=
     #http://log-service.master.svc.cluster.local:8055/api/v1/audit/external
@@ -136,9 +132,7 @@ env:
   M4D_HANDBOOK_URI: M4D_HANDBOOK_URI
   USER_CERTS_ME_URI: USER_CERTS_ME_URI
   CONTAINER_PART_URI: CONTAINER_PART_URI
-  CONTAINER_PART_JSON_URI: CONTAINER_PART_JSON_URI
   M4D_API_RR_FNS_URI: M4D_API_RR_FNS_URI
-  CONTAINER_CREATE_URI: CONTAINER_CREATE_URI
   AUDIT_URL: AUDIT_URL
   SERVER_PORT: SERVER_PORT
   RESOURCE_ACCESS: RESOURCE_ACCESS

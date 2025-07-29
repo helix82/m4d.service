@@ -60,14 +60,10 @@ secret:
     USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL3VzZXItY2VydGlmaWNhdGUvbWU=
     #http://synapi-service.release-ok.svc.cluster.local/api/v1/container/get-part
     CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9nZXQtcGFydA==
-    #http://synapi-service.release-ok.svc.cluster.local/api/v1/container/get-part-json
-    CONTAINER_PART_JSON_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9nZXQtcGFydC1qc29u
     #http://log-service.release-ok.svc.cluster.local:8055/api/v1/audit/external
     AUDIT_URL: I2h0dHA6Ly9sb2ctc2VydmljZS5yZWxlYXNlLW9rLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNTUvYXBpL3YxL2F1ZGl0L2V4dGVybmFs
     #https://operator.cprr-it.weintegrator.com/api/v0
     M4D_API_RR_FNS_URI: aHR0cHM6Ly9vcGVyYXRvci5jcHJyLWl0LndlaW50ZWdyYXRvci5jb20vYXBpL3YwPT0=
-    #http://synapi-service.release-ok.svc.cluster.local/api/v1/container/create
-    CONTAINER_CREATE_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9jcmVhdGU=
     #http://ref-book-service.release-ok.svc.cluster.local:8055/api/v1/ref-book/organization/inn
     ORGANIZATION_FIND_BY_INN_URI: aHR0cDovL3JlZi1ib29rLXNlcnZpY2UucmVsZWFzZS1vay5zdmMuY2x1c3Rlci5sb2NhbDo4MDU1L2FwaS92MS9yZWYtYm9vay9vcmdhbml6YXRpb24vaW5u
     #"
@@ -144,7 +140,6 @@ env:
   M4D_HANDBOOK_URI: M4D_HANDBOOK_URI
   USER_CERTS_ME_URI: USER_CERTS_ME_URI
   CONTAINER_PART_URI: CONTAINER_PART_URI
-  CONTAINER_PART_JSON_URI: CONTAINER_PART_JSON_URI
   AUDIT_URL: AUDIT_URL
   SERVER_PORT: SERVER_PORT
   RESOURCE_ACCESS: RESOURCE_ACCESS
@@ -154,7 +149,6 @@ env:
   RPD_READ_TIMEOUT: RPD_READ_TIMEOUT
   DISABLE_TLS_CHECK: DISABLE_TLS_CHECK
   M4D_API_RR_FNS_URI: M4D_API_RR_FNS_URI
-  CONTAINER_CREATE_URI: CONTAINER_CREATE_URI
   ORGANIZATION_FIND_BY_INN_URI: ORGANIZATION_FIND_BY_INN_URI
   M4D_SOUL: M4D_SOUL
   CRYPTO_PROXY_SIGN_URL: CRYPTO_PROXY_SIGN_URL
