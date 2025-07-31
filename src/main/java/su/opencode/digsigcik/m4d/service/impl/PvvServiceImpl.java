@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,8 +16,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.common.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.CheckByGuidRequestDto;
-import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
-import su.opencode.digsigcik.m4d.dto.response.M4dRevokeResponseInfo;
 import su.opencode.digsigcik.m4d.model.M4d;
 import su.opencode.digsigcik.m4d.model.M4dConfirm;
 import su.opencode.digsigcik.m4d.model.M4dRecall;
@@ -51,10 +48,6 @@ public class PvvServiceImpl implements PvvService {
     private URI FNS_SEND_REVOKE_REQUEST_M4D_URI;
     @Value("${pvv.fns-send-status-request-m4d}")
     private URI FNS_SEND_STATUS_REQUEST_M4D_URI;
-    @Value("${pvv.fns-receive-response-m4d}")
-    private URI FNS_RECEIVE_RESPONSE_M4D_URI;
-    @Value("${pvv.fns-receive-json-response-m4d}")
-    private URI FNS_RECEIVE_JSON_RESPONSE_M4D_URI;
 
     @Override
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
@@ -177,72 +170,6 @@ public class PvvServiceImpl implements PvvService {
                     .getBody();
         } catch (Exception ex) {
             log.error("Ошибка при отправке запроса на получение статуса МЧД для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
-                    uri);
-        }
-        return null;
-    }
-
-    public ByteArrayResource receiveResponseM4dToRR(String messageId) {
-        ByteArrayResource res = receiveResponseFnsViaPvv(messageId, FNS_RECEIVE_RESPONSE_M4D_URI);
-        log.info(messageId);
-        log.info(String.valueOf(res));
-        return res;
-    }
-
-    public M4dResponseInfo receiveJsonResponseM4dToRR(String messageId) {
-        M4dResponseInfo res = receiveJsonResponseM4dFnsViaPvv(messageId, FNS_RECEIVE_JSON_RESPONSE_M4D_URI);
-        log.info(messageId);
-        log.info(String.valueOf(res));
-        return res;
-    }
-
-    public M4dRevokeResponseInfo receiveJsonResponseM4dRevokeToRR(String messageId) {
-        M4dRevokeResponseInfo res = receiveJsonResponseM4dRevokeFnsViaPvv(messageId, FNS_RECEIVE_JSON_RESPONSE_M4D_URI);
-        log.info(messageId);
-        log.info(String.valueOf(res));
-        return res;
-    }
-
-    private ByteArrayResource receiveResponseFnsViaPvv(String messageId, URI uri) {
-        try {
-            log.debug("Получение ответа {}...", messageId);
-            return restTemplate.getForEntity(
-                            uri+messageId,
-                            ByteArrayResource.class
-                    )
-                    .getBody();
-        } catch (Exception ex) {
-            log.error("Ошибка при получении ответа для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
-                    uri);
-        }
-        return null;
-    }
-
-    private M4dResponseInfo receiveJsonResponseM4dFnsViaPvv(String messageId, URI uri) {
-        try {
-            log.debug("Получение json-ответа {}...", messageId);
-            return restTemplate.getForEntity(
-                            uri+messageId,
-                            M4dResponseInfo.class
-                    )
-                    .getBody();
-        } catch (Exception ex) {
-            log.error("Ошибка при получении json-ответа для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
-                    uri);
-        }
-        return null;
-    }
-
-    private M4dRevokeResponseInfo receiveJsonResponseM4dRevokeFnsViaPvv(String messageId, URI uri) {
-        try {
-            log.debug("Получение json-ответа {}...", messageId);
-            return restTemplate.getForEntity(
-                            uri+messageId,
-                            M4dRevokeResponseInfo.class
-                    )
-                    .getBody();
-        } catch (Exception ex) {
-            log.error("Ошибка при получении json-ответа для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
                     uri);
         }
         return null;

@@ -145,11 +145,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.DISABLE_TLS_CHECK }}
-            - name: USER_CERTS_ME_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: {{ .Values.env.USER_CERTS_ME_URI }}
             - name: CONTAINER_PART_URI
               valueFrom:
                 secretKeyRef:
@@ -210,16 +205,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.FNS_SEND_REVOKE_REQUEST_M4D_URI }}
-            - name: FNS_RECEIVE_RESPONSE_M4D_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: {{ .Values.env.FNS_RECEIVE_RESPONSE_M4D_URI }}
-            - name: FNS_RECEIVE_JSON_RESPONSE_M4D_URI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secret.name }}
-                  key: {{ .Values.env.FNS_RECEIVE_JSON_RESPONSE_M4D_URI }}
             - name: WHITE_LIST
               valueFrom:
                 secretKeyRef:
