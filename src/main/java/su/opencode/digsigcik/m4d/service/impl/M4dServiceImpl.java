@@ -8,7 +8,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -2113,46 +2112,6 @@ public class M4dServiceImpl implements M4dService {
             return null;
         }
         return res;
-    }
-
-    @Override
-    public ReportCheckStatusM4dDto updateStatusM4dRequestSearchByMessageId(String messageId) throws IOException {
-        // получение zip-архива по messageId
-        ByteArrayResource res = this.pvvService.receiveResponseM4dToRR(messageId);
-        if (res == null) {
-            throw new BadRequestException(PVV_MESSAGE_ID_NOT_FOUND+messageId);
-        }
-        File tempZipFile = FileUtils.byteArrayResourceToTempFile(res, messageId, ".zip");
-        MultipartFile zipFile = new CustomMultipartFile(tempZipFile);
-
-        if (FileUtils.isNotZipFile(zipFile)) {
-            throw new BadRequestException(NO_ZIP);
-        }
-        ReportCheckStatusM4dDto report;
-        report = this.updateStatusM4dRequestSearch(zipFile);
-        if (report == null) {
-            throw new BadRequestException(MRPA_REGISTRY_UPLOAD_STATUS_ERROR);
-        }
-        return report;
-    }
-
-    @Override
-    public void uploadResultSendM4dToRRByMessageId(String messageId) {
-        M4dResponseInfo m4dResponseInfo;
-        // получение json-ответа по messageId
-        m4dResponseInfo = this.pvvService.receiveJsonResponseM4dToRR(messageId);
-        if (m4dResponseInfo == null) {
-            throw new BadRequestException(PVV_MESSAGE_ID_NOT_FOUND+messageId);
-        }
-        String error;
-        try {
-            error = this.uploadResultSendM4dToRR(m4dResponseInfo);
-        } catch (ConstraintViolationException e) {
-            throw new BadRequestException(e.getMessage());
-        }
-        if ( error != null) {
-            throw new BadRequestException(error);
-        }
     }
 
     @Override

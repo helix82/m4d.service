@@ -66,7 +66,5 @@ public interface M4dService {
     void sendM4dRevokeAllRegisterInRr() throws IOException;
     String sendRequestStatusM4dInPvv(String guid);
     String sendRequestFullM4dInPvv(CheckByGuidRequestDto requestDto);
-    ReportCheckStatusM4dDto updateStatusM4dRequestSearchByMessageId(String messageId) throws IOException;
-    void uploadResultSendM4dToRRByMessageId(String messageId);
     String sendM4dRegisterInRr(Authentication authentication, Long id) throws IOException;
 }
