@@ -99,6 +99,8 @@ synapi:
     get-part:
       uri: ${CONTAINER_PART_URI:http://localhost:8081/api/v1/container/get-part}
 #      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
+  user-certs-me:
+    uri: ${USER_CERTS_ME_URI:https://sp.dev.essocode.ru/api/v1/user-certificate/me}
 
 m4d:
   soul: ${M4D_SOUL:"}

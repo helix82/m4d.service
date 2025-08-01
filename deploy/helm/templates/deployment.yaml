@@ -145,6 +145,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.DISABLE_TLS_CHECK }}
+            - name: USER_CERTS_ME_URI
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ .Values.secret.name }}
+                    key: {{ .Values.env.USER_CERTS_ME_URI }}
             - name: CONTAINER_PART_URI
               valueFrom:
                 secretKeyRef:
@@ -280,6 +285,26 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.CONFIRM_REVOKE_TYPE }}
+            - name: SCHEDULER_INTERVAL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SCHEDULER_INTERVAL }}
+            - name: SCHEDULER_DELAY15
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SCHEDULER_DELAY15 }}
+            - name: SCHEDULER_DELAY30
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SCHEDULER_DELAY30 }}
+            - name: SCHEDULER_DELAY45
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SCHEDULER_DELAY45 }}
       volumes:
         - name: tls-volume
           configMap:
