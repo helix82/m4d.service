@@ -46,6 +46,8 @@ secret:
     RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9hcHAtc3NvMDEucnBkLm9rLnRlc3Quc3Q6ODQ0My9yZWFsbXMvdGVzdC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
     KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
     SWAGGER_URL: aHR0cDovL200ZC5zZXAub2sudGVzdC5zdA==
+    #http://synapi-service.master.svc.cluster.local/api/v1/user-certificate/me
+    USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9tZQo=
     #http://synapi-service.master.svc.cluster.local/api/v1/container/get-part
     CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2dldC1wYXJ0Cg==
     #http://log-service.master.svc.cluster.local:8055/api/v1/audit/external
@@ -126,6 +128,7 @@ env:
   RPD_SWAGGER_TOKEN_URI: RPD_SWAGGER_TOKEN_URI
   KAFKA_BROKERS_LIST_URL: KAFKA_BROKERS_LIST_URL
   SWAGGER_URL: SWAGGER_URL
+  USER_CERTS_ME_URI: USER_CERTS_ME_URI
   CONTAINER_PART_URI: CONTAINER_PART_URI
   AUDIT_URL: AUDIT_URL
   SERVER_PORT: SERVER_PORT
