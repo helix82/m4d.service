@@ -94,6 +94,7 @@ springdoc:
     token-uri: ${RPD_SWAGGER_TOKEN_URI:https://sso.rpd.zk.test.st/realms/test/protocol/openid-connect/token}
   show-actuator: true
 
+synapi:
   container:
     get-part:
       uri: ${CONTAINER_PART_URI:http://localhost:8081/api/v1/container/get-part}
