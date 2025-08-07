@@ -59,7 +59,7 @@ secret:
     #http://synapi-service.release-ok.svc.cluster.local/api/v1/container/get-part
     CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9nZXQtcGFydA==
     #http://log-service.release-ok.svc.cluster.local:8055/api/v1/audit/external
-    AUDIT_URL: I2h0dHA6Ly9sb2ctc2VydmljZS5yZWxlYXNlLW9rLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNTUvYXBpL3YxL2F1ZGl0L2V4dGVybmFs
+    AUDIT_URL: aHR0cDovL2xvZy1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWw6ODA1NS9hcGkvdjEvYXVkaXQvZXh0ZXJuYWw=
     #http://ref-book-service.release-ok.svc.cluster.local:8055/api/v1/ref-book/organization/inn
     ORGANIZATION_FIND_BY_INN_URI: aHR0cDovL3JlZi1ib29rLXNlcnZpY2UucmVsZWFzZS1vay5zdmMuY2x1c3Rlci5sb2NhbDo4MDU1L2FwaS92MS9yZWYtYm9vay9vcmdhbml6YXRpb24vaW5u
     #"
