@@ -8,7 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
+import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;

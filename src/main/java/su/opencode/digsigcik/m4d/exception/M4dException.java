@@ -1,7 +1,7 @@
 package su.opencode.digsigcik.m4d.exception;
 
 import org.springframework.http.HttpStatus;
-import su.opencode.digsigcik.common.exception.custom.BaseException;
+import su.opencode.digsigcik.common.exceptions.exception.custom.BaseException;
 
 public class M4dException extends BaseException {
 

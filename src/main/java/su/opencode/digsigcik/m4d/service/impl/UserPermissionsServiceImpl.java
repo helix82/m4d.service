@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
-import su.opencode.digsigcik.common.exception.custom.BadRequestException;
+import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.mapper.UserPermissionsMapper;
 import su.opencode.digsigcik.m4d.model.UserPermissions;
 import su.opencode.digsigcik.m4d.repository.UserPermissionsRepository;
