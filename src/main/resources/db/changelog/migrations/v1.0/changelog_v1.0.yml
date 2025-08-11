@@ -84,3 +84,5 @@ databaseChangeLog:
       file: db/changelog/migrations/v1.0/add_field_zip_file_id_in_table_m4d_request_search.sql
   - include:
       file: db/changelog/migrations/v1.0/add_fields_principal_inn_and_repres_inn_in_table_m4d_request_search.sql
+  - include:
+      file: db/changelog/migrations/v1.0/20250811-alter-table-user-permissions.sql

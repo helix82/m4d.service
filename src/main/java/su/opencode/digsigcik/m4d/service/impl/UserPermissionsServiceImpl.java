@@ -60,6 +60,6 @@ public class UserPermissionsServiceImpl implements UserPermissionsService {
     @Override
     public UserPermissions findByLogin(String login) {
         return repository.findByLogin(login)
-                .orElse(new UserPermissions(null,null,0));
+                .orElse(new UserPermissions(null,null,0,null));
     }
 }
