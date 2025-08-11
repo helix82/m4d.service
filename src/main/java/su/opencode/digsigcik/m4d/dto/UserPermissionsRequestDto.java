@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class UserPermissionsRequestDto {
     private String login;
     private Integer permissions;
+    private String payload;
 }

@@ -1,12 +1,11 @@
 package su.opencode.digsigcik.m4d.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 
-@Data
+@Getter
+@Setter
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,5 +20,8 @@ public class UserPermissions {
 
     @Column(name = "permissions", nullable = false)
     private Integer permissions;
+
+    @Column(name = "payload")
+    private String payload;
 
 }
