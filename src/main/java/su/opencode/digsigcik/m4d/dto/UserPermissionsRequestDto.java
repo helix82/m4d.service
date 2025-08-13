@@ -1,5 +1,6 @@
 package su.opencode.digsigcik.m4d.dto;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,5 +11,5 @@ import lombok.NoArgsConstructor;
 public class UserPermissionsRequestDto {
     private String login;
     private Integer permissions;
-    private String payload;
+    private JsonNode payload;
 }

@@ -3,15 +3,16 @@ package su.opencode.digsigcik.m4d.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
 import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
+import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
+import su.opencode.digsigcik.m4d.dto.UserPermissionsResponseDto;
 import su.opencode.digsigcik.m4d.mapper.UserPermissionsMapper;
-import su.opencode.digsigcik.m4d.model.UserPermissions;
 import su.opencode.digsigcik.m4d.repository.UserPermissionsRepository;
 import su.opencode.digsigcik.m4d.service.UserPermissionsService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -21,21 +22,25 @@ public class UserPermissionsServiceImpl implements UserPermissionsService {
     private final UserPermissionsMapper mapper;
 
     @Override
-    public List<UserPermissions> findAll() {
-        return repository.findAll();
+    public List<UserPermissionsResponseDto> findAll() {
+        return repository.findAll().stream()
+                .map(mapper::mapToResponseDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public UserPermissions findById(Long id) {
+    public UserPermissionsResponseDto findById(Long id) {
         return repository.findById(id)
+                .map(mapper::mapToResponseDto)
                 .orElseThrow(() -> new BadRequestException("Сущность не найдена с id: " + id));
     }
 
     @Override
-    public UserPermissions create(UserPermissionsRequestDto dto) {
+    public UserPermissionsResponseDto create(UserPermissionsRequestDto dto) {
         return Optional.of(dto)
                 .map(mapper::createMap)
                 .map(repository::save)
+                .map(mapper::mapToResponseDto)
                 .orElseThrow(() -> new BadRequestException("Ошибка при сохранении"));
     }
 
@@ -50,16 +55,18 @@ public class UserPermissionsServiceImpl implements UserPermissionsService {
     }
 
     @Override
-    public UserPermissions update(Long id, UserPermissionsRequestDto dto) {
+    public UserPermissionsResponseDto update(Long id, UserPermissionsRequestDto dto) {
         return repository.findById(id)
                 .map(entity -> mapper.updateMap(entity, dto))
                 .map(repository::saveAndFlush)
+                .map(mapper::mapToResponseDto)
                 .orElseThrow(() -> new BadRequestException("Сущность не найдена с id: " + id));
     }
 
     @Override
-    public UserPermissions findByLogin(String login) {
+    public UserPermissionsResponseDto findByLogin(String login) {
         return repository.findByLogin(login)
-                .orElse(new UserPermissions(null,null,0,null));
+                .map(mapper::mapToResponseDto)
+                .orElse(new UserPermissionsResponseDto(null, null, 0, null));
     }
 }
