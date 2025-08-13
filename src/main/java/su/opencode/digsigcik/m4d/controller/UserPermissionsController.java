@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
-import su.opencode.digsigcik.m4d.model.UserPermissions;
+import su.opencode.digsigcik.m4d.dto.UserPermissionsResponseDto;
 import su.opencode.digsigcik.m4d.service.UserPermissionsService;
 
 import java.util.HashMap;
@@ -34,7 +34,7 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping("/{id}")
-    public UserPermissions getUserPermissionsById(@PathVariable Long id) {
+    public UserPermissionsResponseDto getUserPermissionsById(@PathVariable Long id) {
         return userPermissionsService.findById(id);
     }
 
@@ -47,7 +47,7 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping("/by-login/{login}")
-    public UserPermissions getUserPermissionsByLogin(@PathVariable String login) {
+    public UserPermissionsResponseDto getUserPermissionsByLogin(@PathVariable String login) {
         return userPermissionsService.findByLogin(login);
     }
 
@@ -60,7 +60,7 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping
-    public List<UserPermissions> getAllUserPermissions() {
+    public List<UserPermissionsResponseDto> getAllUserPermissions() {
         return userPermissionsService.findAll();
     }
 
@@ -73,7 +73,7 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping
-    public UserPermissions createUserPermissions(@RequestBody UserPermissionsRequestDto dto) {
+    public UserPermissionsResponseDto createUserPermissions(@RequestBody UserPermissionsRequestDto dto) {
         return userPermissionsService.create(dto);
     }
 
@@ -86,7 +86,7 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping("/{id}")
-    public UserPermissions updateUserPermissionsById(@PathVariable Long id, @RequestBody UserPermissionsRequestDto dto) {
+    public UserPermissionsResponseDto updateUserPermissionsById(@PathVariable Long id, @RequestBody UserPermissionsRequestDto dto) {
         return userPermissionsService.update(id, dto);
     }
 
