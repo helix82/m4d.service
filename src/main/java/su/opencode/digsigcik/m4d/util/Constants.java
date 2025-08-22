@@ -327,6 +327,7 @@ public interface Constants {
     String FILE_SAVE_CREDENTIAL_ERROR = "Ошибка сохранения исходного файла справочника полномочий";
     String FILE_TEMP_DELETE_ERROR = "Ошибка удаления временного файла";
 
-    //Ошибки с контейнерами
+    //Ошибки с контейнерами и синапи
     String CONTAINER_READ_EXCEPTION = "Ошибка получения данных";
+    String SYNAPI_EXCEPTION_500 = "Ошибка на synapi: ";
 }

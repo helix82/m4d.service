@@ -6,4 +6,5 @@ import java.util.Set;
 
 public interface UserCertificateService {
     Set<String> getUserCertificateINNs(Authentication authentication);
+    Set<String> findLoginsByInn(Authentication authentication, String login);
 }

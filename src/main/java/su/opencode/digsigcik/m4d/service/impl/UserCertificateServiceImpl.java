@@ -1,15 +1,20 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import su.opencode.digsigcik.m4d.dto.UserCertificateSearchByLoginRequestDto;
 import su.opencode.digsigcik.m4d.dto.response.PublicKeyUserCertificateResponse;
 import su.opencode.digsigcik.m4d.service.RestTemplateService;
 import su.opencode.digsigcik.m4d.service.UserCertificateService;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,11 +22,14 @@ import java.util.stream.Stream;
 
 import static su.opencode.digsigcik.m4d.util.JwtTokenUtils.getTokenValue;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserCertificateServiceImpl implements UserCertificateService {
-    @Value("${synapi.user-certs-me.uri}")
+    @Value("${synapi.user-certs.me-uri}")
     private String USER_CERTIFICATE_ME_URI;
+    @Value("${synapi.user-certs.search-by-inn-uri}")
+    private String USER_CERTIFICATE_SEARCH_BY_INN_URI;
     private final RestTemplateService restTemplateService;
 
     @Override
@@ -34,5 +42,26 @@ public class UserCertificateServiceImpl implements UserCertificateService {
                 .filter(Objects::nonNull)
                 .map(PublicKeyUserCertificateResponse::getInn)
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<String> findLoginsByInn(Authentication authentication, String inn) {
+        try {
+            ResponseEntity<PublicKeyUserCertificateResponse[]> listUserCertificates =
+                    restTemplateService.fetchServiceResponse(
+                            USER_CERTIFICATE_SEARCH_BY_INN_URI,
+                            PublicKeyUserCertificateResponse[].class,
+                            getTokenValue(authentication),
+                            HttpMethod.POST,
+                            new UserCertificateSearchByLoginRequestDto(inn));
+
+            return Stream.of(Objects.requireNonNull(listUserCertificates.getBody()))
+                    .filter(Objects::nonNull)
+                    .map(PublicKeyUserCertificateResponse::getLogin)
+                    .collect(Collectors.toSet());
+        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+            log.error("Catch client or server errors from Synapi", ex);
+            return Collections.emptySet();
+        }
     }
 }

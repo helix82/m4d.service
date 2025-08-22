@@ -57,7 +57,7 @@ public interface M4dRepository extends ISpecificationRepository<M4d> {
             "WHERE r.inn = :inn " +
             "AND mr.id = :m4dId " +
             "AND mr.sigFile IS NOT NULL " +
-            "AND rc.m4d IS NULL " +
+            "AND (rc.m4d IS NULL OR rc.status = 'NEW')  " +
             "AND CURRENT_TIMESTAMP BETWEEN mr.startDate AND mr.endDate")
     Optional<M4d> findValidM4dByIdAndRepresentativeInn(@Param("inn") String inn, @Param("m4dId") Long m4dId);
 
