@@ -95,12 +95,15 @@ springdoc:
   show-actuator: true
 
 synapi:
+  notification:
+    send-uri: ${NOTIFICATION_SEND_URI:http://localhost:8081/api/v1/notifications/send}
   container:
     get-part:
       uri: ${CONTAINER_PART_URI:http://localhost:8081/api/v1/container/get-part}
 #      uri: ${CONTAINER_PART_URI:https://sp.dev.essocode.ru/api/v1/container/get-part}
-  user-certs-me:
-    uri: ${USER_CERTS_ME_URI:https://sp.dev.essocode.ru/api/v1/user-certificate/me}
+  user-certs:
+    search-by-inn-uri: ${USER_CERTS_SEARCH_BY_INN_URI:https://sp.dev.essocode.ru/api/v1/user-certificate/search-by-inn}
+    me-uri: ${USER_CERTS_ME_URI:https://sp.dev.essocode.ru/api/v1/user-certificate/me}
 
 m4d:
   soul: ${M4D_SOUL:"}

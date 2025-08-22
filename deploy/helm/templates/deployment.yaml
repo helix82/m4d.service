@@ -305,6 +305,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.SCHEDULER_DELAY45 }}
+            - name: NOTIFICATION_SEND_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.NOTIFICATION_SEND_URI }}
+            - name: USER_CERTS_SEARCH_BY_INN_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.USER_CERTS_SEARCH_BY_INN_URI }}
       volumes:
         - name: tls-volume
           configMap:

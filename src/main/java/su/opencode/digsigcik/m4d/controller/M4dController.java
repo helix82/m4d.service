@@ -26,11 +26,13 @@ import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestExcept
 import su.opencode.digsigcik.m4d.dto.*;
 import su.opencode.digsigcik.m4d.dto.response.M4dCountAndRevokeCountResponseDto;
 import su.opencode.digsigcik.m4d.dto.response.M4dResponseInfo;
+import su.opencode.digsigcik.m4d.enums.NotificationTypeEnum;
 import su.opencode.digsigcik.m4d.enums.StatusM4dTypeEnum;
 import su.opencode.digsigcik.m4d.model.*;
 import su.opencode.digsigcik.m4d.service.M4dConfirmService;
 import su.opencode.digsigcik.m4d.service.M4dFileService;
 import su.opencode.digsigcik.m4d.service.M4dService;
+import su.opencode.digsigcik.m4d.service.NotificationFacadeService;
 import su.opencode.digsigcik.m4d.util.ConvertUtils;
 import su.opencode.digsigcik.m4d.util.DateUtils;
 import su.opencode.digsigcik.m4d.util.FileUtils;
@@ -62,6 +64,7 @@ public class M4dController {
     private final M4dService m4dService;
     private final M4dFileService m4dFileService;
     private final M4dConfirmService m4dConfirmService;
+    private final NotificationFacadeService notificationFacadeService;
 
     @Operation(summary = CONTROLLER_MRPA_FIND_ALL_SUMMARY,
             description = CONTROLLER_MRPA_FIND_ALL_DESCRIPTION,
@@ -123,6 +126,11 @@ public class M4dController {
         Long m4dSaved;
         try {
             m4dSaved = this.m4dService.saveAllDataMrpaRegistry(authentication, m4d, organisation, principal, principalDetail, representative, representativeDetail, null, List.of(m4dSaveFullDto.getCredentials()), xmlString);
+            notificationFacadeService.sendNotificationByINN(
+                    authentication,
+                    principal.getInn(),
+                    m4d,
+                    NotificationTypeEnum.ADD_M4D);
         } catch (ConstraintViolationException e) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(e.getMessage()), HttpStatus.BAD_REQUEST);
         }
@@ -272,7 +280,7 @@ public class M4dController {
         if (m4d == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_NOT_FOUND), HttpStatus.NOT_FOUND);
         }
-        if (!m4d.getStatus().equals("NEW")){
+        if (!m4d.getStatus().equals("NEW")) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_NOT_DELETE), HttpStatus.NOT_FOUND);
         }
         try {
@@ -564,7 +572,7 @@ public class M4dController {
     public ResponseEntity<?> importMrpa(
             Authentication authentication,
             @RequestPart("srcFile") MultipartFile sourceFile,
-            @RequestPart(value="sigFile", required = false) MultipartFile sourceSig) throws ParseException, IOException {
+            @RequestPart(value = "sigFile", required = false) MultipartFile sourceSig) throws ParseException, IOException {
         if (sourceFile.isEmpty()) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(XML_IS_NULL), HttpStatus.BAD_REQUEST);
         }
@@ -765,7 +773,7 @@ public class M4dController {
     })
     @PutMapping(value = "send-register-in-rr/{id}", produces = "application/json; charset=UTF-8")
     public ResponseEntity<?> sendRegisterInRr(Authentication authentication,
-                                       @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws Exception {
+                                              @PathVariable @Parameter(name = "id", description = PARAMETER_MRPA_ID_DESCRIPTION, example = "1") Long id) throws Exception {
         if (id == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(ID_IS_NULL), HttpStatus.BAD_REQUEST);
         }
