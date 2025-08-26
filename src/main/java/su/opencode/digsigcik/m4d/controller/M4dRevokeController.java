@@ -157,6 +157,9 @@ public class M4dRevokeController {
     })
     @PostMapping()
     public ResponseEntity<?> saveMrpaRecall(Authentication authentication, @RequestBody M4dRevokeRequestDto mrpaRecallRequestDto) throws Exception {
+        if (mrpaRecallRequestDto.getArgument() == null || mrpaRecallRequestDto.getArgument().isEmpty()) {
+            return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_ARGUMENT_IS_NULL), HttpStatus.BAD_REQUEST);
+        }
         M4dRecall mrpaRecall = convertMrpaRecallRequestDtoToEntity(mrpaRecallRequestDto);
         if (mrpaRecall == null) {
             return new ResponseEntity<>(getCustomErrorJsonFromString(MRPA_RECALL_ERROR_CONVERT), HttpStatus.BAD_REQUEST);
