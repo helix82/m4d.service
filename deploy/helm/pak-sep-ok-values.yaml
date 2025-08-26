@@ -24,14 +24,14 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
   tlsEnabled: false  # New parameter to control TLS
   hosts:
-    - host: m4d.pep.cikcp.ru
+    - host: m4d.pep.cikrf.ru
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
     - secretName: m4d-tls
       hosts:
-        - m4d.pep.cikcp.ru
+        - m4d.pep.cikrf.ru
 
 secret:
   enabled: true
@@ -50,7 +50,8 @@ secret:
     #https://sso.prpd.cikrf.ru:8443/realms/ozk/protocol/openid-connect/token
     RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28ucHJwZC5jaWtyZi5ydTo4NDQzL3JlYWxtcy9vemsvcHJvdG9jb2wvb3BlbmlkLWNvbm5lY3QvdG9rZW4=
     KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
-    SWAGGER_URL: aHR0cDovL200ZC5wZXAuY2lrY3AucnU=
+    #http://m4d.pep.cikrf.ru
+    SWAGGER_URL: aHR0cDovL200ZC5wZXAuY2lrcmYucnU=
     #http://synapi-service.master.svc.cluster.local/api/v1/user-certificate/me
     USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9tZQo=
     #http://synapi-service.master.svc.cluster.local/api/v1/container/get-part
