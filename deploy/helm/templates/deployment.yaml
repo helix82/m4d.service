@@ -61,7 +61,7 @@ spec:
               mountPath: /workdir
             - name: setup-script
               mountPath: /scripts
-            - name: synapi-logs
+            - name: m4d-logs
               mountPath: {{ .Values.jvmOptions.logFilePath }}
           ports:
             - containerPort: {{ .Values.service.port }}
