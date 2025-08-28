@@ -1,7 +1,21 @@
 server:
   port: ${SERVER_PORT:8051}
 
+  logging:
+    file:
+      name: ${LOGGING_FILE_NAME:m4d.log}
+      path: ${LOGGING_FILE_PATH:log/m4d}
+    level:
+      su.opencode.digsigcik.synapi: DEBUG
+      org.springframework.web: DEBUG
+      org.springframework.web.client: WARN
+      org.springframework.web.servlet.mvc.method.annotation: WARN
+      su.opencode.digsigcik.specification: DEBUG    # pagination
+      su.opencode.digsigcik.synapi.service: DEBUG
+
 spring:
+  application:
+    name: ${APPLICATION_NAME:m4d}
   datasource:
     password: ${SPRING_DATASOURCE_PASSWORD:root}
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/m4d_scheme}

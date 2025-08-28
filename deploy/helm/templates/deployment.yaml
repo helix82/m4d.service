@@ -61,6 +61,8 @@ spec:
               mountPath: /workdir
             - name: setup-script
               mountPath: /scripts
+            - name: synapi-logs
+              mountPath: {{ .Values.jvmOptions.logFilePath }}
           ports:
             - containerPort: {{ .Values.service.port }}
             - containerPort: {{ .Values.service.portJMX }}
@@ -315,7 +317,16 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.USER_CERTS_SEARCH_BY_INN_URI }}
+            - name: APPLICATION_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.APPLICATION_NAME }}
       volumes:
+        - name: m4d-logs
+          hostPath:
+            path: {{ .Values.jvmOptions.logFilePath }}
+            type: DirectoryOrCreate
         - name: tls-volume
           configMap:
             name: {{ .Values.tlsConfig.name }}
