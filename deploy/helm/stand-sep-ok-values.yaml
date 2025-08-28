@@ -98,6 +98,8 @@ secret:
     CONFIRM_REVOKE_TYPE: 0J/QvtC00YLQstCX0LDRj9Cy0LvQntGC0LzQtdC90LA=
     NOTIFICATION_SEND_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvbm90aWZpY2F0aW9ucy9zZW5k
     USER_CERTS_SEARCH_BY_INN_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLm1hc3Rlci5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9zZWFyY2gtYnktaW5u
+    #m4d
+    APPLICATION_NAME: bTRk
 
 tlsConfig:
   name: tls-config-m4d
@@ -118,6 +120,8 @@ jvmOptions:
   localOnlyJMX: false
   timezone: UTC
   encoding: UTF-8
+  logFilePath: /var/log/pep
+  logFileName: m4d.log
 
 jarFile: m4d-0.0.1-SNAPSHOT.jar
 
@@ -172,6 +176,7 @@ env:
   CONFIRM_REVOKE_TYPE: CONFIRM_REVOKE_TYPE
   NOTIFICATION_SEND_URI: NOTIFICATION_SEND_URI
   USER_CERTS_SEARCH_BY_INN_URI: USER_CERTS_SEARCH_BY_INN_URI
+  APPLICATION_NAME: APPLICATION_NAME
 
 appName: m4d
 

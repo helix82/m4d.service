@@ -33,5 +33,3 @@ target/
 
 ### Project-specific ###
 .openapi-generator
-
-/src/main/resources/application-local.yml

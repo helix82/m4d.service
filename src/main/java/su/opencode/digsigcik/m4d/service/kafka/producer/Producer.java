@@ -1,13 +1,13 @@
 package su.opencode.digsigcik.m4d.service.kafka.producer;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@Log4j2
+@Slf4j
 public class Producer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 

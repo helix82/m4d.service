@@ -56,6 +56,8 @@ data:
       "-Xms{{ .Values.jvmOptions.xms }}" \
       "-Xmx{{ .Values.jvmOptions.xmx }}" \
       "{{ .Values.jvmOptions.gc }}" \
+      "-DLOGGING_FILE_PATH={{ .Values.jvmOptions.logFilePath }}" \
+      "-DLOGGING_FILE_NAME={{ .Values.jvmOptions.logFileName }}" \
       "-Duser.timezone={{ .Values.jvmOptions.timezone }}" \
       "-Dfile.encoding={{ .Values.jvmOptions.encoding }}" \
       "-XX:MinHeapFreeRatio={{ .Values.jvmOptions.minHeapFreeRatio }}" \
