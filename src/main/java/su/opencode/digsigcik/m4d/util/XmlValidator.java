@@ -1,7 +1,7 @@
 package su.opencode.digsigcik.m4d.util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class XmlValidator {
-    private static final Logger LOGGER = LogManager.getLogger(XmlValidator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XmlValidator.class);
 
     private final String xsdPath;
     private final InputStream xmlString;
