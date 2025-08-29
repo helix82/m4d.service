@@ -79,8 +79,6 @@ web:
 ---
 
 spring:
-  application:
-    name: m4d-service
 #  hotfix for running swagger in spring boot 2
   mvc:
     pathmatch:
