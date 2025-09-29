@@ -333,13 +333,13 @@
         <dependency>
             <groupId>su.opencode.digsigcik</groupId>
             <artifactId>common-starter</artifactId>
-            <version>1.2.13</version>
+            <version>1.2.15</version>
         </dependency>
 
         <dependency>
             <groupId>su.opencode.digsigcik</groupId>
             <artifactId>common</artifactId>
-            <version>1.0.42</version>
+            <version>1.0.46</version>
         </dependency>
     </dependencies>
 

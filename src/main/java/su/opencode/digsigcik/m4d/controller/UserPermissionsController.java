@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsResponseDto;
 import su.opencode.digsigcik.m4d.service.UserPermissionsService;
@@ -74,6 +75,10 @@ public class UserPermissionsController {
     })
     @PostMapping
     public UserPermissionsResponseDto createUserPermissions(@RequestBody UserPermissionsRequestDto dto) {
+        UserPermissionsResponseDto response = userPermissionsService.findByLogin(dto.getLogin());
+        if (response != null) {
+            throw new BadRequestException("Запись с таким логином уже существует в ПЭП. Внесите изменения в неё или укажите другой логин.");
+        }
         return userPermissionsService.create(dto);
     }
 
