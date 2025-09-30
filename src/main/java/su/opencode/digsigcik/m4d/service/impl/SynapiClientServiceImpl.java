@@ -3,6 +3,7 @@ package su.opencode.digsigcik.m4d.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpMethod;
@@ -13,10 +14,13 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.NotificationCreateRequestDto;
+import su.opencode.digsigcik.m4d.dto.TrustedPersonFKByLoginRequestDto;
 import su.opencode.digsigcik.m4d.dto.response.NotificationResponseDto;
+import su.opencode.digsigcik.m4d.dto.response.TrustedPersonFkByLoginResponseDto;
 import su.opencode.digsigcik.m4d.service.RestTemplateService;
 import su.opencode.digsigcik.m4d.service.SynapiClientService;
 
+import java.util.List;
 import java.util.Optional;
 
 import static su.opencode.digsigcik.m4d.util.Constants.CONTAINER_READ_EXCEPTION;
@@ -30,6 +34,9 @@ public class SynapiClientServiceImpl implements SynapiClientService {
     private String CONTAINER_PART_URI;
     @Value("${synapi.notification.send-uri}")
     private String NOTIFICATION_SEND_URI;
+    @Value("${synapi.base-uri}")
+    private String SYNAPI_BASE_URI;
+    private static final String SEARCH_TRUSTED_FK_PERSON_BY_LOGIN_PATH = "/api/v1/trusted-person-fk/search/by-login";
     private final RestTemplateService restTemplateService;
 
     @Override
@@ -74,6 +81,35 @@ public class SynapiClientServiceImpl implements SynapiClientService {
 
         } catch (HttpClientErrorException ex) {
             throw new BadRequestException(CONTAINER_READ_EXCEPTION);
+        }
+    }
+
+    @Override
+    public List<TrustedPersonFkByLoginResponseDto> getAllTrustedPersonFkByLogin(String bearerToken,
+                                                                                String login) {
+        log.info("Отправка запроса на получение данных доверенного лица");
+
+        try {
+            String url = String.format("%s%s", SYNAPI_BASE_URI, SEARCH_TRUSTED_FK_PERSON_BY_LOGIN_PATH);
+
+            ResponseEntity<List<TrustedPersonFkByLoginResponseDto>> responseEntity =
+                    restTemplateService.fetchServiceResponse(
+                            url,
+                            new ParameterizedTypeReference<List<TrustedPersonFkByLoginResponseDto>>() {},
+                            bearerToken,
+                            HttpMethod.POST,
+                            new TrustedPersonFKByLoginRequestDto(login)
+                    );
+
+            return Optional.of(responseEntity)
+                    .filter(ResponseEntity::hasBody)
+                    .map(ResponseEntity::getBody)
+                    .orElseThrow(() -> new BadRequestException(SYNAPI_EXCEPTION_500));
+
+        } catch (HttpClientErrorException ex) {
+            throw new BadRequestException(ex.getMessage());
+        } catch (HttpServerErrorException ex) {
+            throw new BadRequestException(SYNAPI_EXCEPTION_500);
         }
     }
 }

@@ -6,10 +6,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsResponseDto;
+import su.opencode.digsigcik.m4d.dto.response.UserPermissionsFindAllResponseDto;
 import su.opencode.digsigcik.m4d.service.UserPermissionsService;
 
 import java.util.HashMap;
@@ -35,8 +37,9 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping("/{id}")
-    public UserPermissionsResponseDto getUserPermissionsById(@PathVariable Long id) {
-        return userPermissionsService.findById(id);
+    public UserPermissionsResponseDto getUserPermissionsById(Authentication authentication,
+                                                             @PathVariable Long id) {
+        return userPermissionsService.findById(authentication, id);
     }
 
     @Operation(
@@ -48,8 +51,9 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping("/by-login/{login}")
-    public UserPermissionsResponseDto getUserPermissionsByLogin(@PathVariable String login) {
-        return userPermissionsService.findByLogin(login);
+    public UserPermissionsResponseDto getUserPermissionsByLogin(Authentication authentication,
+                                                                @PathVariable String login) {
+        return userPermissionsService.findByLogin(authentication, login);
     }
 
     @Operation(
@@ -61,7 +65,7 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @GetMapping
-    public List<UserPermissionsResponseDto> getAllUserPermissions() {
+    public List<UserPermissionsFindAllResponseDto> getAllUserPermissions() {
         return userPermissionsService.findAll();
     }
 
@@ -74,12 +78,13 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PostMapping
-    public UserPermissionsResponseDto createUserPermissions(@RequestBody UserPermissionsRequestDto dto) {
-        UserPermissionsResponseDto response = userPermissionsService.findByLogin(dto.getLogin());
-        if (response != null) {
+    public UserPermissionsResponseDto createUserPermissions(Authentication authentication,
+                                                            @RequestBody UserPermissionsRequestDto dto) {
+        UserPermissionsResponseDto response = userPermissionsService.findByLogin(authentication, dto.getLogin());
+        if (response.getId() != null) {
             throw new BadRequestException("Запись с таким логином уже существует в ПЭП. Внесите изменения в неё или укажите другой логин.");
         }
-        return userPermissionsService.create(dto);
+        return userPermissionsService.create(authentication, dto);
     }
 
     @Operation(
@@ -91,8 +96,10 @@ public class UserPermissionsController {
             @ApiResponse(responseCode = "400", description = API_RESPONSE_CODE_400_MESSAGE)
     })
     @PutMapping("/{id}")
-    public UserPermissionsResponseDto updateUserPermissionsById(@PathVariable Long id, @RequestBody UserPermissionsRequestDto dto) {
-        return userPermissionsService.update(id, dto);
+    public UserPermissionsResponseDto updateUserPermissionsById(Authentication authentication,
+                                                                @PathVariable Long id,
+                                                                @RequestBody UserPermissionsRequestDto dto) {
+        return userPermissionsService.update(authentication, id, dto);
     }
 
     @Operation(

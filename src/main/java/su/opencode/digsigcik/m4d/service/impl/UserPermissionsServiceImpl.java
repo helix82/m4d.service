@@ -1,14 +1,19 @@
 package su.opencode.digsigcik.m4d.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsResponseDto;
+import su.opencode.digsigcik.m4d.dto.response.TrustedPersonFkByLoginResponseDto;
+import su.opencode.digsigcik.m4d.dto.response.UserPermissionsFindAllResponseDto;
 import su.opencode.digsigcik.m4d.mapper.UserPermissionsMapper;
 import su.opencode.digsigcik.m4d.repository.UserPermissionsRepository;
+import su.opencode.digsigcik.m4d.service.SynapiClientService;
 import su.opencode.digsigcik.m4d.service.UserPermissionsService;
+import su.opencode.digsigcik.m4d.util.JwtTokenUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,29 +23,30 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class UserPermissionsServiceImpl implements UserPermissionsService {
+    private final SynapiClientService synapiClientService;
     private final UserPermissionsRepository repository;
     private final UserPermissionsMapper mapper;
 
     @Override
-    public List<UserPermissionsResponseDto> findAll() {
+    public List<UserPermissionsFindAllResponseDto> findAll() {
         return repository.findAll().stream()
-                .map(mapper::mapToResponseDto)
+                .map(mapper::mapToFindAllResponseDto)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public UserPermissionsResponseDto findById(Long id) {
+    public UserPermissionsResponseDto findById(Authentication authentication, Long id) {
         return repository.findById(id)
-                .map(mapper::mapToResponseDto)
+                .map(entity -> mapper.mapToResponseDto(entity, getAllTofkByLogin(authentication, entity.getLogin())))
                 .orElseThrow(() -> new BadRequestException("Сущность не найдена с id: " + id));
     }
 
     @Override
-    public UserPermissionsResponseDto create(UserPermissionsRequestDto dto) {
+    public UserPermissionsResponseDto create(Authentication authentication, UserPermissionsRequestDto dto) {
         return Optional.of(dto)
                 .map(mapper::createMap)
                 .map(repository::save)
-                .map(mapper::mapToResponseDto)
+                .map(entity -> mapper.mapToResponseDto(entity, getAllTofkByLogin(authentication, entity.getLogin())))
                 .orElseThrow(() -> new BadRequestException("Ошибка при сохранении"));
     }
 
@@ -55,18 +61,27 @@ public class UserPermissionsServiceImpl implements UserPermissionsService {
     }
 
     @Override
-    public UserPermissionsResponseDto update(Long id, UserPermissionsRequestDto dto) {
+    public UserPermissionsResponseDto update(Authentication authentication,
+                                             Long id,
+                                             UserPermissionsRequestDto dto) {
         return repository.findById(id)
                 .map(entity -> mapper.updateMap(entity, dto))
                 .map(repository::saveAndFlush)
-                .map(mapper::mapToResponseDto)
+                .map(entity -> mapper.mapToResponseDto(entity, getAllTofkByLogin(authentication, entity.getLogin())))
                 .orElseThrow(() -> new BadRequestException("Сущность не найдена с id: " + id));
     }
 
     @Override
-    public UserPermissionsResponseDto findByLogin(String login) {
+    public UserPermissionsResponseDto findByLogin(Authentication authentication, String login) {
         return repository.findByLogin(login)
-                .map(mapper::mapToResponseDto)
-                .orElse(new UserPermissionsResponseDto(null, null, 0, null));
+                .map(entity -> mapper.mapToResponseDto(entity, getAllTofkByLogin(authentication, login)))
+                .orElse(new UserPermissionsResponseDto(null, null, 0, null, null));
+    }
+
+    private List<String> getAllTofkByLogin(Authentication authentication,
+                                           String login) {
+        return synapiClientService.getAllTrustedPersonFkByLogin(JwtTokenUtils.getTokenValue(authentication), login).stream()
+                .map(TrustedPersonFkByLoginResponseDto::getCodeTofk)
+                .collect(Collectors.toList());
     }
 }
