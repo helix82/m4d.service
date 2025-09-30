@@ -101,6 +101,7 @@ springdoc:
   show-actuator: true
 
 synapi:
+  base-uri: ${SYNAPI_BASE_URI:https://sp.dev.essocode.ru}
   notification:
     send-uri: ${NOTIFICATION_SEND_URI:http://localhost:8081/api/v1/notifications/send}
   container:

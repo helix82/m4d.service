@@ -322,6 +322,11 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.APPLICATION_NAME }}
+            - name: SYNAPI_BASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.SYNAPI_BASE_URI }}
       volumes:
         - name: m4d-logs
           hostPath:
