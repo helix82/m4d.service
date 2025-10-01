@@ -75,7 +75,7 @@ public class UserPermissionsServiceImpl implements UserPermissionsService {
     public UserPermissionsResponseDto findByLogin(Authentication authentication, String login) {
         return repository.findByLogin(login)
                 .map(entity -> mapper.mapToResponseDto(entity, getAllTofkByLogin(authentication, login)))
-                .orElse(new UserPermissionsResponseDto(null, null, 0, null, null));
+                .orElseGet(() -> new UserPermissionsResponseDto(null, null, 0, null, getAllTofkByLogin(authentication, login)));
     }
 
     private List<String> getAllTofkByLogin(Authentication authentication,
