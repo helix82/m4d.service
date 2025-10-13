@@ -28,6 +28,10 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
+    - host: m4d.pep.cikcp.ru
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
   tls:
     - secretName: m4d-tls
       hosts:
