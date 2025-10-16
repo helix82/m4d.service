@@ -1579,13 +1579,15 @@ public class M4dServiceImpl implements M4dService {
         List<ReportCheckStatusM4dDto.Report.Representative> representatives = new ArrayList<>();
         List<M4dXml.Document.PowerAttorneys.InfoRepresentative> representativeList = m4dXml.document.powerAttorneys.getInfoRepresentative();
         for (M4dXml.Document.PowerAttorneys.InfoRepresentative x : representativeList) {
-            ReportCheckStatusM4dDto.Report.Representative representative = new ReportCheckStatusM4dDto.Report.Representative();
-            representative.setInn(x.representative.detailRepresentative.getInn());
-            String fio = x.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname() + " "
-                    + x.representative.detailRepresentative.infoIndividual.fioRepresentative.getName() + " "
-                    + x.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic();
-            representative.setFio(fio);
-            representatives.add(representative);
+            if (x.representative.detailRepresentative != null) {
+                ReportCheckStatusM4dDto.Report.Representative representative = new ReportCheckStatusM4dDto.Report.Representative();
+                representative.setInn(x.representative.detailRepresentative.getInn());
+                String fio = x.representative.detailRepresentative.infoIndividual.fioRepresentative.getSurname() + " "
+                        + x.representative.detailRepresentative.infoIndividual.fioRepresentative.getName() + " "
+                        + x.representative.detailRepresentative.infoIndividual.fioRepresentative.getPatronymic();
+                representative.setFio(fio);
+                representatives.add(representative);
+            }
         }
         return representatives;
     }
@@ -1595,13 +1597,15 @@ public class M4dServiceImpl implements M4dService {
         List<ReportCheckStatusM4dDto.Report.Principal> principals = new ArrayList<>();
         M4dXml.Document.PowerAttorneys.InfoPrincipals principal = m4dXml.document.powerAttorneys.getPrincipals();
         // TODO: helix82 Изначально почему то заложено что один доверитель с мчд, надо переделать
-        String fio = principal.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname() + " "
-                + principal.principal.legalEntity.principal.principal.fioPrincipal.fio.getName() + " "
-                + principal.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic();
-        ReportCheckStatusM4dDto.Report.Principal principal1 = new ReportCheckStatusM4dDto.Report.Principal();
-        principal1.setInn(principal.principal.legalEntity.principal.principal.getInn());
-        principal1.setFio(fio);
-        principals.add(principal1);
+        if (principal.principal.legalEntity.principal.principal != null) {
+            String fio = principal.principal.legalEntity.principal.principal.fioPrincipal.fio.getSurname() + " "
+                    + principal.principal.legalEntity.principal.principal.fioPrincipal.fio.getName() + " "
+                    + principal.principal.legalEntity.principal.principal.fioPrincipal.fio.getPatronymic();
+            ReportCheckStatusM4dDto.Report.Principal principal1 = new ReportCheckStatusM4dDto.Report.Principal();
+            principal1.setInn(principal.principal.legalEntity.principal.principal.getInn());
+            principal1.setFio(fio);
+            principals.add(principal1);
+        }
         return principals;
     }
 
@@ -1850,7 +1854,18 @@ public class M4dServiceImpl implements M4dService {
                         throw new BadRequestException(MRPA_REGISTRY_UPDATE_STATUS_ERROR + m4dFnsDataResponse.getGuid());
                     }
                     //формируем отчет
-                    return this.getReportCheckStatusM4dRr(m4dRequestSearchSaved);
+                    ReportCheckStatusM4dDto report = this.getReportCheckStatusM4dRr(m4dRequestSearchSaved);
+                    List<ReportCheckStatusM4dDto.Report.Representative> repList = report.getReport().getRepresentative();
+                    if (repList.isEmpty()) {
+                        ReportCheckStatusM4dDto.Report.Representative rep = new ReportCheckStatusM4dDto.Report.Representative();
+                        rep.setInn(m4dRequestSearch.getRepresentativeInn());
+                        repList.add(rep);
+                    }
+                    ReportCheckStatusM4dDto.Report.Principal principal = report.getReport().getPrincipal().get(0);
+                    if (principal.getInn() == null) {
+                        principal.setInn(m4dRequestSearch.getPrincipalInn());
+                    }
+                    return report;
                 }
             }
         }
