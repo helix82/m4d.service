@@ -865,15 +865,23 @@ public class M4dServiceImpl implements M4dService {
             rep.setCredentials(getCredentialM4dFromXml(m4dXml));
             rep.setRepresentative(getRepresentativeM4dFromXml(m4dXml));
             rep.setPrincipal(getPrincipalM4dFromXml(m4dXml));
-            if (rep.getRepresentative().isEmpty()) {
-                ReportCheckStatusM4dDto.Report.Representative repres = new ReportCheckStatusM4dDto.Report.Representative();
-                repres.setInn(m4dRequestSearchSaved.getRepresentativeInn());
-                rep.setRepresentative((List<ReportCheckStatusM4dDto.Report.Representative>) repres);
-            }
             if (rep.getPrincipal().isEmpty()) {
-                ReportCheckStatusM4dDto.Report.Principal princ = new ReportCheckStatusM4dDto.Report.Principal();
-                princ.setInn(m4dRequestSearchSaved.getPrincipalInn());
-                rep.setPrincipal((List<ReportCheckStatusM4dDto.Report.Principal>) princ);
+                rep.setPrincipal(
+                        Collections.singletonList(
+                                new ReportCheckStatusM4dDto.Report.Principal() {{
+                                    setInn(m4dRequestSearchSaved.getPrincipalInn());
+                                }}
+                        )
+                );
+            }
+            if (rep.getRepresentative().isEmpty()) {
+                rep.setRepresentative(
+                        Collections.singletonList(
+                                new ReportCheckStatusM4dDto.Report.Representative() {{
+                                    setInn(m4dRequestSearchSaved.getRepresentativeInn());
+                                }}
+                        )
+                );
             }
             rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
             rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
@@ -987,15 +995,23 @@ public class M4dServiceImpl implements M4dService {
             rep.setCredentials(getCredentialM4dFromXml(m4dXml));
             rep.setRepresentative(getRepresentativeM4dFromXml(m4dXml));
             rep.setPrincipal(getPrincipalM4dFromXml(m4dXml));
-            if (rep.getRepresentative().isEmpty()) {
-                ReportCheckStatusM4dDto.Report.Representative repres = new ReportCheckStatusM4dDto.Report.Representative();
-                repres.setInn(m4dRequestSearch.getRepresentativeInn());
-                rep.setRepresentative((List<ReportCheckStatusM4dDto.Report.Representative>) repres);
-            }
             if (rep.getPrincipal().isEmpty()) {
-                ReportCheckStatusM4dDto.Report.Principal princ = new ReportCheckStatusM4dDto.Report.Principal();
-                princ.setInn(m4dRequestSearch.getPrincipalInn());
-                rep.setPrincipal((List<ReportCheckStatusM4dDto.Report.Principal>) princ);
+                rep.setPrincipal(
+                        Collections.singletonList(
+                                new ReportCheckStatusM4dDto.Report.Principal() {{
+                                    setInn(m4dRequestSearch.getPrincipalInn());
+                                }}
+                        )
+                );
+            }
+            if (rep.getRepresentative().isEmpty()) {
+                rep.setRepresentative(
+                        Collections.singletonList(
+                                new ReportCheckStatusM4dDto.Report.Representative() {{
+                                    setInn(m4dRequestSearch.getRepresentativeInn());
+                                }}
+                        )
+                );
             }
             rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
             rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
@@ -1100,15 +1116,23 @@ public class M4dServiceImpl implements M4dService {
                 rep.setCredentials(getCredentialM4dFromXml(m4dXml));
                 rep.setRepresentative(getRepresentativeM4dFromXml(m4dXml));
                 rep.setPrincipal(getPrincipalM4dFromXml(m4dXml));
-                if (rep.getRepresentative().isEmpty()) {
-                    ReportCheckStatusM4dDto.Report.Representative repres = new ReportCheckStatusM4dDto.Report.Representative();
-                    repres.setInn(m4dRequestSearch.getRepresentativeInn());
-                    rep.setRepresentative((List<ReportCheckStatusM4dDto.Report.Representative>) repres);
-                }
                 if (rep.getPrincipal().isEmpty()) {
-                    ReportCheckStatusM4dDto.Report.Principal princ = new ReportCheckStatusM4dDto.Report.Principal();
-                    princ.setInn(m4dRequestSearch.getPrincipalInn());
-                    rep.setPrincipal((List<ReportCheckStatusM4dDto.Report.Principal>) princ);
+                    rep.setPrincipal(
+                            Collections.singletonList(
+                                    new ReportCheckStatusM4dDto.Report.Principal() {{
+                                        setInn(m4dRequestSearch.getPrincipalInn());
+                                    }}
+                            )
+                    );
+                }
+                if (rep.getRepresentative().isEmpty()) {
+                    rep.setRepresentative(
+                            Collections.singletonList(
+                                    new ReportCheckStatusM4dDto.Report.Representative() {{
+                                        setInn(m4dRequestSearch.getRepresentativeInn());
+                                    }}
+                            )
+                    );
                 }
                 rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
                 rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
@@ -1954,15 +1978,23 @@ public class M4dServiceImpl implements M4dService {
             rep.setCredentials(getCredentialM4dFromXml(m4dXml));
             rep.setRepresentative(getRepresentativeM4dFromXml(m4dXml));
             rep.setPrincipal(getPrincipalM4dFromXml(m4dXml));
-            if (rep.getRepresentative().isEmpty()) {
-                ReportCheckStatusM4dDto.Report.Representative repres = new ReportCheckStatusM4dDto.Report.Representative();
-                repres.setInn(m4dRequestSearch.getRepresentativeInn());
-                rep.setRepresentative((List<ReportCheckStatusM4dDto.Report.Representative>) repres);
-            }
             if (rep.getPrincipal().isEmpty()) {
-                ReportCheckStatusM4dDto.Report.Principal princ = new ReportCheckStatusM4dDto.Report.Principal();
-                princ.setInn(m4dRequestSearch.getPrincipalInn());
-                rep.setPrincipal((List<ReportCheckStatusM4dDto.Report.Principal>) princ);
+                rep.setPrincipal(
+                        Collections.singletonList(
+                                new ReportCheckStatusM4dDto.Report.Principal() {{
+                                    setInn(m4dRequestSearch.getPrincipalInn());
+                                }}
+                        )
+                );
+            }
+            if (rep.getRepresentative().isEmpty()) {
+                rep.setRepresentative(
+                        Collections.singletonList(
+                                new ReportCheckStatusM4dDto.Report.Representative() {{
+                                    setInn(m4dRequestSearch.getRepresentativeInn());
+                                }}
+                        )
+                );
             }
             rep.setInnOrganisation(getInnOrganizationFromXml(m4dXml));
             rep.setNameOrganisation(getNameOrganizationFromXml(m4dXml));
