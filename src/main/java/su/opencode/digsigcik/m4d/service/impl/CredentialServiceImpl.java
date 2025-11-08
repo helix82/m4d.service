@@ -99,7 +99,7 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     @Transactional(rollbackFor = {Exception.class}, isolation = Isolation.READ_UNCOMMITTED)
-    //@AuditLogThis(event = AuditLogEventEnum.M4D_CREDENTIAL_UPLOAD)
+    @AuditLogThis(event = AuditLogEventEnum.M4D_CREDENTIAL_UPLOAD)
     public Integer uploadFromJson(MultipartFile sourceFile) throws IOException {
         CredentialJsonDto[] credentials = convertStringToClass(new String(sourceFile.getBytes()), CredentialJsonDto[].class);
 

@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import su.opencode.digsigcik.audit.AuditLogEventEnum;
+import su.opencode.digsigcik.audit.AuditLogThis;
 import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsRequestDto;
 import su.opencode.digsigcik.m4d.dto.UserPermissionsResponseDto;
@@ -41,6 +43,7 @@ public class UserPermissionsServiceImpl implements UserPermissionsService {
                 .orElseThrow(() -> new BadRequestException("Сущность не найдена с id: " + id));
     }
 
+    @AuditLogThis(event = AuditLogEventEnum.USER_PERMISSIONS_CREATE)
     @Override
     public UserPermissionsResponseDto create(Authentication authentication, UserPermissionsRequestDto dto) {
         return Optional.of(dto)
@@ -50,6 +53,7 @@ public class UserPermissionsServiceImpl implements UserPermissionsService {
                 .orElseThrow(() -> new BadRequestException("Ошибка при сохранении"));
     }
 
+    @AuditLogThis(event = AuditLogEventEnum.USER_PERMISSIONS_DELETE, deleteByIdRepository = UserPermissionsRepository.class)
     @Override
     public boolean delete(Long id) {
         return repository.findById(id)
@@ -60,6 +64,7 @@ public class UserPermissionsServiceImpl implements UserPermissionsService {
                 }).orElse(false);
     }
 
+    @AuditLogThis(event = AuditLogEventEnum.USER_PERMISSIONS_UPDATE)
     @Override
     public UserPermissionsResponseDto update(Authentication authentication,
                                              Long id,

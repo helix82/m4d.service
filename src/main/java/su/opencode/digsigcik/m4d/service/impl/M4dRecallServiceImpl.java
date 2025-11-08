@@ -143,13 +143,12 @@ public class M4dRecallServiceImpl implements M4dRecallService {
     }
 
     @Override
-    @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_DELETE)
+    @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_DELETE, deleteByIdRepository = M4dRecallRepository.class)
     public void deleteMrpaRecallById(Long id) {
         this.m4dRevokeRepository.deleteById(id);
     }
 
     @Override
-    @AuditLogThis(event = AuditLogEventEnum.M4D_RECALL_UPDATE)
     public M4dRecall updateMrpaRecall(M4dRecall mrpaRecall) {
         return this.m4dRevokeRepository.save(mrpaRecall);
     }
