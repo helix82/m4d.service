@@ -1176,6 +1176,7 @@ public class M4dServiceImpl implements M4dService {
     }
 
     @Override
+    @AuditLogThis(event = AuditLogEventEnum.M4D_CHECK_IN_PEP)
     public ReportCheckStatusM4dDto checkM4dInPep(Authentication authentication, M4dXml m4dXml) throws ParseException {
         // - извлечение номера МЧД из XML
         String guidXml;
