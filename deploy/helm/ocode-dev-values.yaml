@@ -117,6 +117,9 @@ tlsConfig:
 scriptConfig:
   name: script-config-m4d
 
+nodeSelector:
+  kubernetes.io/hostname: sep-1
+
 jvmOptions:
   xms: 512m
   xmx: 750m

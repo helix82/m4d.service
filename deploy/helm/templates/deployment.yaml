@@ -32,6 +32,10 @@ spec:
         {{- end }}
       {{- end }}
       terminationGracePeriodSeconds: 30
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: setup-certs
           image: "{{ .Values.image.libericaImage.repository }}:{{ .Values.image.libericaImage.tag }}"
