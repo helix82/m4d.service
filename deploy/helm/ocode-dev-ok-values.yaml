@@ -28,18 +28,18 @@ ingress:
     ingress.kubernetes.io/ssl-redirect: "true"
   tlsEnabled: true  # New parameter to control TLS
   hosts:
-    - host: m4d.dev.zk.essocode.ru
+    - host: m4d.dev.ok.essocode.ru
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
     - secretName: m4d-dev-tls
       hosts:
-        - m4d.dev.zk.essocode.ru
+        - m4d.dev.ok.essocode.ru
 
 secret:
   enabled: true
-  name: dev-zk-m4d-back-cred
+  name: dev-ok-m4d-back-cred
   data:
     # jdbc:postgresql://192.168.17.1:5432/dev_ok_m4d_db
     SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMTkyLjE2OC4xNy4xOjU0MzIvZGV2X29rX200ZF9kYg==
@@ -163,7 +163,7 @@ jvmOptions:
   timezone: UTC
   encoding: UTF-8
   logFilePath: /var/log/pep
-  logFileName: m4d-dev-zk.log
+  logFileName: m4d-dev-ok.log
 
 jarFile: m4d-0.0.1-SNAPSHOT.jar
 
