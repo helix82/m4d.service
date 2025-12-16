@@ -1,0 +1,238 @@
+namespace: dev-zk
+
+image:
+  repository: nexus.essocode.ru/ess/m4d
+  tag: "{{.tag}}"
+  libericaImage:
+    repository: nexus.essocode.ru/bellsoft/liberica-openjdk-debian
+    tag: "11"
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 8051
+  targetPort: 8051
+  portJMX: 9010
+  targetPortJMX: 9010
+
+replicaCount: 1
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/issue-temporary-certificate: "true"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    ingress.kubernetes.io/ssl-redirect: "true"
+  tlsEnabled: true  # New parameter to control TLS
+  hosts:
+    - host: m4d.dev.zk.essocode.ru
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: m4d-dev-tls
+      hosts:
+        - m4d.dev.zk.essocode.ru
+
+secret:
+  enabled: true
+  name: dev-zk-m4d-back-cred
+  data:
+    # jdbc:postgresql://192.168.17.1:5432/dev_ok_m4d_db
+    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMTkyLjE2OC4xNy4xOjU0MzIvZGV2X29rX200ZF9kYg==
+    # root
+    SPRING_DATASOURCE_USERNAME: cm9vdA==
+    # root
+    SPRING_DATASOURCE_PASSWORD: cm9vdA==
+    # https://sso.dev.essocode.ru/auth/realms/pep/protocol/openid-connect/auth
+    RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
+    # https://sso.dev.essocode.ru/auth/realms/pep/protocol/openid-connect/token
+    RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
+    # https://sso.dev.essocode.ru/auth/realms/pep
+    OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcA==
+    # kafka1.essocode.ru:29092,kafka2.essocode.ru:39092
+    KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
+    # https://m4d.dev.ok.essocode.ru
+    SWAGGER_URL: aHR0cHM6Ly9tNGQuZGV2Lm9rLmVzc29jb2RlLnJ1
+    # m4d-dev
+    APPLICATION_NAME: bTRkLWRldg==
+    # 8051
+    SERVER_PORT: ODA1MQ==
+    # http://synapi-service.dev-ok.svc.cluster.local/api/v1/user-certificate/me
+    USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9tZQ==
+    # http://synapi-service.dev-ok.svc.cluster.local/api/v1/container/get-part
+    CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2dldC1wYXJ0
+    # http://log-service.dev-ok.svc.cluster.local:8055/api/v1/audit/external
+    AUDIT_URL: aHR0cDovL2xvZy1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbDo4MDU1L2FwaS92MS9hdWRpdC9leHRlcm5hbA==
+    # http://ref-book-service.dev-ok.svc.cluster.local:8055/api/v1/ref-book/organization/inn
+    ORGANIZATION_FIND_BY_INN_URI: aHR0cDovL3JlZi1ib29rLXNlcnZpY2UuZGV2LW9rLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNTUvYXBpL3YxL3JlZi1ib29rL29yZ2FuaXphdGlvbi9pbm4=
+    # http://synapi-service.dev-ok.svc.cluster.local
+    SYNAPI_BASE_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbA==
+    # http://cp-service.dev-ok.svc.cluster.local:8054/api/v1/sign/cades/as-user
+    CRYPTO_PROXY_SIGN_URL: aHR0cDovL2NwLXNlcnZpY2UuZGV2LW9rLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNTQvYXBpL3YxL3NpZ24vY2FkZXMvYXMtdXNlcg==
+    # pep
+    AUTOSIGN_USER_LOGIN: cGVw
+    # 1234
+    AUTOSIGN_PINCODE: MTIzNA==
+    # true
+    AUTOSIGN_IS_DETACHED: dHJ1ZQ==
+    # CADES_BES
+    AUTOSIGN_SIG_TYPE: Q0FkRVNfQkVT
+    # pep
+    RESOURCE_ACCESS: cGVw
+    # false
+    DISABLE_TLS_CHECK: ZmFsc2U=
+    # test
+    SPRING_LIQUIBASE_CONTEXTS: dGVzdA==
+    # 1440
+    RPD_LIFESPAN_CACHE: MTQ0MA==
+    # 1350
+    RPD_REFRESH_TIME_CACHE: MTM1MA==
+    # 300000
+    RPD_CONNECTION_TIMEOUT: MzAwMDAw
+    # 300000
+    RPD_READ_TIMEOUT: MzAwMDAw
+    # PT24H
+    SCHEDULER_INTERVAL: UFQyNEg=
+    # PT15S
+    SCHEDULER_DELAY15: UFQxNVM=
+    # PT30S
+    SCHEDULER_DELAY30: UFQzMFM=
+    # PT45S
+    SCHEDULER_DELAY45: UFQ0NVM=
+    # /v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings,/actuator/health/readiness,/actuator/health/liveness
+    WHITE_LIST: L3YzL2FwaS1kb2NzLyoqLC9jb25maWd1cmF0aW9uL3VpLC9zd2FnZ2VyLXJlc291cmNlcy8qKiwvY29uZmlndXJhdGlvbi9zZWN1cml0eSwvc3dhZ2dlci11aS5odG1sLC9zd2FnZ2VyLXVpLyoqLC93ZWJqYXJzLyoqLC8ud2VsbC1rbm93bi9hY21lLWNoYWxsZW5nZS8qKiwvZmF2aWNvbi5pY28sL2FjdHVhdG9yLC9hY3R1YXRvci9oZWFsdGgsL2FjdHVhdG9yL2luZm8sL2FjdHVhdG9yL2VudiwvYWN0dWF0b3IvYmVhbnMsL2FjdHVhdG9yL21ldHJpY3MsL2FjdHVhdG9yL2xvZ2dlcnMsL2FjdHVhdG9yL21hcHBpbmdzLC9hY3R1YXRvci9oZWFsdGgvcmVhZGluZXNzLC9hY3R1YXRvci9oZWFsdGgvbGl2ZW5lc3M=
+    # *
+    ACTUATOR_ENDPOINTS: Kg==
+    # EMCHD_1
+    M4D_XML_VERSION_FORMAT: RU1DSERfMQ==
+    # 001
+    M4D_REVOKE_XML_VERSION_FORMAT: MDAx
+    # ПодтвДНФ001
+    CONFIRM_VERSION_FORMAT: 0J/QvtC00YLQstCk0J3QoTAwMQ==
+    # de8d2875-283a-4f59-9246-e1879e256bc2
+    CONFIRM_LEGAL_ENTITY_ID: ZGU4ZDI4NzUtMjgzYS00ZjU5LTkyNDYtZTE4NzllMjU2YmMy
+    # ЦЕНТР ИНФОРМАЦИОННЫХ ТЕХНОЛОГИЙ
+    CONFIRM_LEGAL_ENTITY_NAME: 0KbQldCd0KLQoNCQ0JvQrNCd0JDQryDQmNCX0JHQmNCg0JDQotCV0JvQrNCd0JDQryDQmtCe0JzQmNCh0KHQmNCvINCg0J7QodCh0JjQmdCh0JrQntCZINCk0JXQlNCV0KDQkNCm0JjQmA==
+    # ЦИТ РФ
+    CONFIRM_LEGAL_ENTITY_TRADE_NAME: 0KbQmNCaINCg0KQ=
+    # 7710010990
+    CONFIRM_LEGAL_ENTITY_INN: NzcxMDAxMDk5MA==
+    # 1027700466640
+    CONFIRM_LEGAL_ENTITY_OGRN: MTAyNzcwMDQ2NjY0MA==
+    # 4M2EFnszPAT1yr45SgWVVLdXxfYCa4AYvDGns
+    CONFIRM_OPERATOR_ADR_NOD: NE0yRUZuc3pQQVQxeXI0NVNnV1ZETHhmWUNhNEFZdkRHbnM=
+    # sep.cip
+    CONFIRM_OPERATOR_PRODUCT_URL: c2VwLmNpcA==
+    # sep.cip 2.11
+    CONFIRM_OPERATOR_PRODUCT_VERSION: c2VwLmNpcCAyLjEx
+    # ПодтвДовер
+    CONFIRM_M4D_TYPE: 0J/QvtC00YLQstCU0L7QstC10YA=
+    # ПодтвЗаявОтмена
+    CONFIRM_REVOKE_TYPE: 0J/QvtC00YLQstCX0LDRj9Cy0LvQntGC0LzQtdC90LA=
+    # http://synapi-service.dev-ok.svc.cluster.local/api/v1/notifications/send
+    NOTIFICATION_SEND_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvbm90aWZpY2F0aW9ucy9zZW5k
+    # http://synapi-service.dev-ok.svc.cluster.local/api/v1/user-certificate/search-by-inn
+    USER_CERTS_SEARCH_BY_INN_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9zZWFyY2gtYnktaW5u
+    # empty
+    M4D_SOUL: ""
+
+tlsConfig:
+  name: tls-config-m4d
+
+scriptConfig:
+  name: script-config-m4d
+
+nodeSelector:
+  kubernetes.io/hostname: sep-1
+
+jvmOptions:
+  xms: 512m
+  xmx: 750m
+  gc: "-XX:+UseG1GC"
+  minHeapFreeRatio: 10
+  maxHeapFreeRatio: 30
+  portJMX: 9010
+  authenticateJMX: false
+  sslJMX: false
+  hostnameJMX: localhost
+  localOnlyJMX: false
+  timezone: UTC
+  encoding: UTF-8
+  logFilePath: /var/log/pep
+  logFileName: m4d-dev-zk.log
+
+jarFile: m4d-0.0.1-SNAPSHOT.jar
+
+env:
+  SPRING_DATASOURCE_URL: SPRING_DATASOURCE_URL
+  SPRING_DATASOURCE_USERNAME: SPRING_DATASOURCE_USERNAME
+  SPRING_DATASOURCE_PASSWORD: SPRING_DATASOURCE_PASSWORD
+  RPD_AUTHORIZATION_URI: RPD_AUTHORIZATION_URI
+  OAUTH2_ISSUER_URL: OAUTH2_ISSUER_URL
+  RPD_SWAGGER_TOKEN_URI: RPD_SWAGGER_TOKEN_URI
+  KAFKA_BROKERS_LIST_URL: KAFKA_BROKERS_LIST_URL
+  SWAGGER_URL: SWAGGER_URL
+  USER_CERTS_ME_URI: USER_CERTS_ME_URI
+  CONTAINER_PART_URI: CONTAINER_PART_URI
+  AUDIT_URL: AUDIT_URL
+  SERVER_PORT: SERVER_PORT
+  RESOURCE_ACCESS: RESOURCE_ACCESS
+  RPD_LIFESPAN_CACHE: RPD_LIFESPAN_CACHE
+  RPD_REFRESH_TIME_CACHE: RPD_REFRESH_TIME_CACHE
+  RPD_CONNECTION_TIMEOUT: RPD_CONNECTION_TIMEOUT
+  RPD_READ_TIMEOUT: RPD_READ_TIMEOUT
+  DISABLE_TLS_CHECK: DISABLE_TLS_CHECK
+  ORGANIZATION_FIND_BY_INN_URI: ORGANIZATION_FIND_BY_INN_URI
+  M4D_SOUL: M4D_SOUL
+  CRYPTO_PROXY_SIGN_URL: CRYPTO_PROXY_SIGN_URL
+  AUTOSIGN_USER_LOGIN: AUTOSIGN_USER_LOGIN
+  AUTOSIGN_PINCODE: AUTOSIGN_PINCODE
+  AUTOSIGN_IS_DETACHED: AUTOSIGN_IS_DETACHED
+  AUTOSIGN_SIG_TYPE: AUTOSIGN_SIG_TYPE
+  FNS_SEND_REGISTRATION_REQUEST_M4D_URI: FNS_SEND_REGISTRATION_REQUEST_M4D_URI
+  FNS_SEND_STATUS_REQUEST_M4D_URI: FNS_SEND_STATUS_REQUEST_M4D_URI
+  FNS_SEND_REVOKE_REQUEST_M4D_URI: FNS_SEND_REVOKE_REQUEST_M4D_URI
+  SPRING_LIQUIBASE_CONTEXTS: SPRING_LIQUIBASE_CONTEXTS
+  WHITE_LIST: WHITE_LIST
+  ACTUATOR_ENDPOINTS: ACTUATOR_ENDPOINTS
+  SCHEDULER_INTERVAL: SCHEDULER_INTERVAL
+  SCHEDULER_DELAY15: SCHEDULER_DELAY15
+  SCHEDULER_DELAY30: SCHEDULER_DELAY30
+  SCHEDULER_DELAY45: SCHEDULER_DELAY45
+  M4D_XML_VERSION_FORMAT: M4D_XML_VERSION_FORMAT
+  M4D_REVOKE_XML_VERSION_FORMAT: M4D_REVOKE_XML_VERSION_FORMAT
+  CONFIRM_VERSION_FORMAT: CONFIRM_VERSION_FORMAT
+  CONFIRM_LEGAL_ENTITY_ID: CONFIRM_LEGAL_ENTITY_ID
+  CONFIRM_LEGAL_ENTITY_NAME: CONFIRM_LEGAL_ENTITY_NAME
+  CONFIRM_LEGAL_ENTITY_TRADE_NAME: CONFIRM_LEGAL_ENTITY_TRADE_NAME
+  CONFIRM_LEGAL_ENTITY_INN: CONFIRM_LEGAL_ENTITY_INN
+  CONFIRM_LEGAL_ENTITY_OGRN: CONFIRM_LEGAL_ENTITY_OGRN
+  CONFIRM_OPERATOR_ADR_NOD: CONFIRM_OPERATOR_ADR_NOD
+  CONFIRM_OPERATOR_PRODUCT_URL: CONFIRM_OPERATOR_PRODUCT_URL
+  CONFIRM_OPERATOR_PRODUCT_VERSION: CONFIRM_OPERATOR_PRODUCT_VERSION
+  CONFIRM_M4D_TYPE: CONFIRM_M4D_TYPE
+  CONFIRM_REVOKE_TYPE: CONFIRM_REVOKE_TYPE
+  NOTIFICATION_SEND_URI: NOTIFICATION_SEND_URI
+  USER_CERTS_SEARCH_BY_INN_URI: USER_CERTS_SEARCH_BY_INN_URI
+  APPLICATION_NAME: APPLICATION_NAME
+  SYNAPI_BASE_URI: SYNAPI_BASE_URI
+
+appName: m4d
+
+deployment:
+  container:
+    requests:
+      cpu: 150m
+      memory: 512Mi
+    limits:
+      cpu: 400m
+      memory: 1Gi
+
+imagePullSecrets:
+  - registrypullsecret
+
+resources: {}

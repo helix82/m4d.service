@@ -163,7 +163,12 @@ pvv:
 management:
   endpoint:
     health:
-      show-details: always
+      group:
+        readiness:
+          include: db, readinessState
+      probes:
+        enabled: true
+    show-details: always
   endpoints:
     web:
       exposure:

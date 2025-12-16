@@ -129,6 +129,48 @@ steps:
       branch:
         - master
 
+  #TODO: новое, добавить позже
+  - name: create-helm-template-dev-new
+    image: alpine/helm:3.12.3
+    environment:
+      HELM_PATH: ./deploy/helm
+      HELM_NAMESPACE_ZK: dev-zk
+      HELM_NAMESPACE_OK: dev-ok
+    commands:
+      - helm template m4d-ok $HELM_PATH --namespace $HELM_NAMESPACE_OK --values $HELM_PATH/ocode-dev-ok-values.yaml --set image.tag=${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT} > $HELM_PATH/k8s-m4d-ok.yaml
+      - helm template m4d-zk $HELM_PATH --namespace $HELM_NAMESPACE_ZK --values $HELM_PATH/ocode-dev-zk-values.yaml --set image.tag=${DRONE_SOURCE_BRANCH/\//-}-${DRONE_COMMIT} > $HELM_PATH/k8s-m4d-zk.yaml
+      - test -s $HELM_PATH/k8s-m4d-ok.yaml
+      - test -s $HELM_PATH/k8s-m4d-zk.yaml
+      - cat $HELM_PATH/k8s-m4d-ok.yaml > $HELM_PATH/k8s-m4d-dev-combined.yaml
+      - cat $HELM_PATH/k8s-m4d-zk.yaml >> $HELM_PATH/k8s-m4d-dev-combined.yaml
+      - cat $HELM_PATH/k8s-m4d-dev-combined.yaml
+    depends_on:
+      - build
+    when:
+      branch:
+        - master
+
+  - name: deploy-dev-new
+    image: alpine/k8s:1.32.2
+    environment:
+      KUBECONFIG_CONTENT:
+        from_secret: kubeconfig
+    commands:
+      - export KUBE_TMP_DIR=$(mktemp -d)
+      - echo "$KUBECONFIG_CONTENT" > $KUBE_TMP_DIR/config
+      - chmod 600 $KUBE_TMP_DIR/config
+      - echo "File permissions:"
+      - ls -la $KUBE_TMP_DIR/
+      - echo "Kubectl version:"
+      - kubectl version --client
+      - cat ./deploy/helm/k8s-m4d-dev-combined.yaml
+      - kubectl --kubeconfig=$KUBE_TMP_DIR/config apply -f ./deploy/helm/k8s-m4d-dev-combined.yaml
+    depends_on:
+      - create-helm-template-dev-new
+    when:
+      branch:
+        - master
+
   - name: create-helm-template-release
     image: alpine/helm:3.12.3
     environment:
