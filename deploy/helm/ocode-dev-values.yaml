@@ -89,8 +89,10 @@ secret:
     SCHEDULER_DELAY15: UFQxNVM=
     SCHEDULER_DELAY30: UFQzMFM=
     SCHEDULER_DELAY45: UFQ0NVM=
-    WHITE_LIST: L3YzL2FwaS1kb2NzLyoqLC9jb25maWd1cmF0aW9uL3VpLC9zd2FnZ2VyLXJlc291cmNlcy8qKiwvY29uZmlndXJhdGlvbi9zZWN1cml0eSwvc3dhZ2dlci11aS5odG1sLC9zd2FnZ2VyLXVpLyoqLC93ZWJqYXJzLyoqLC8ud2VsbC1rbm93bi9hY21lLWNoYWxsZW5nZS8qKiwvZmF2aWNvbi5pY28sL2FjdHVhdG9yLC9hY3R1YXRvci9oZWFsdGgsL2FjdHVhdG9yL2luZm8sL2FjdHVhdG9yL2VudiwvYWN0dWF0b3IvYmVhbnMsL2FjdHVhdG9yL21ldHJpY3MsL2FjdHVhdG9yL2xvZ2dlcnMsL2FjdHVhdG9yL21hcHBpbmdz
-    ACTUATOR_ENDPOINTS: aGVhbHRoLGluZm8=
+    # /v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings,/actuator/health/readiness,/actuator/health/liveness
+    WHITE_LIST: L3YzL2FwaS1kb2NzLyoqLC9jb25maWd1cmF0aW9uL3VpLC9zd2FnZ2VyLXJlc291cmNlcy8qKiwvY29uZmlndXJhdGlvbi9zZWN1cml0eSwvc3dhZ2dlci11aS5odG1sLC9zd2FnZ2VyLXVpLyoqLC93ZWJqYXJzLyoqLC8ud2VsbC1rbm93bi9hY21lLWNoYWxsZW5nZS8qKiwvZmF2aWNvbi5pY28sL2FjdHVhdG9yLC9hY3R1YXRvci9oZWFsdGgsL2FjdHVhdG9yL2luZm8sL2FjdHVhdG9yL2VudiwvYWN0dWF0b3IvYmVhbnMsL2FjdHVhdG9yL21ldHJpY3MsL2FjdHVhdG9yL2xvZ2dlcnMsL2FjdHVhdG9yL21hcHBpbmdzLC9hY3R1YXRvci9oZWFsdGgvcmVhZGluZXNzLC9hY3R1YXRvci9oZWFsdGgvbGl2ZW5lc3M=
+    # *
+    ACTUATOR_ENDPOINTS: Kg==
     M4D_XML_VERSION_FORMAT: RU1DSERfMQ==
     M4D_REVOKE_XML_VERSION_FORMAT: MDAx
     CONFIRM_VERSION_FORMAT: 0J/QvtC00YLQstCk0J3QoTAwMw==

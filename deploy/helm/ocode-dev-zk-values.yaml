@@ -1,4 +1,4 @@
-namespace: dev-ok
+namespace: dev-zk
 
 image:
   repository: nexus.essocode.ru/ess/m4d
