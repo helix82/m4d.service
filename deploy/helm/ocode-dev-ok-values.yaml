@@ -138,7 +138,7 @@ secret:
     # http://synapi-service.dev-ok.svc.cluster.local/api/v1/user-certificate/search-by-inn
     USER_CERTS_SEARCH_BY_INN_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9zZWFyY2gtYnktaW5u
     # empty
-    M4D_SOUL: ""
+    M4D_SOUL: Ig==
 
 tlsConfig:
   name: tls-config-m4d
