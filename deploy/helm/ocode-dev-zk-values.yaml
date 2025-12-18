@@ -47,24 +47,20 @@ secret:
     SPRING_DATASOURCE_USERNAME: cm9vdA==
     # root
     SPRING_DATASOURCE_PASSWORD: cm9vdA==
-
     # https://sso.dev.essocode.ru/auth/realms/pep/protocol/openid-connect/auth
     RPD_AUTHORIZATION_URI: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC9hdXRo
     # https://sso.dev.essocode.ru/auth/realms/pep/protocol/openid-connect/token
     RPD_SWAGGER_TOKEN_URI: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcC9wcm90b2NvbC9vcGVuaWQtY29ubmVjdC90b2tlbg==
     # https://sso.dev.essocode.ru/auth/realms/pep
     OAUTH2_ISSUER_URL: aHR0cHM6Ly9zc28uZGV2LmVzc29jb2RlLnJ1L2F1dGgvcmVhbG1zL3BlcA==
-
     # kafka1.essocode.ru:29092,kafka2.essocode.ru:39092
     KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
-
     # https://m4d.dev.zk.essocode.ru
     SWAGGER_URL: aHR0cHM6Ly9tNGQuZGV2LnprLmVzc29jb2RlLnJ1
     # m4d-dev
     APPLICATION_NAME: bTRkLWRldg==
     # 8051
     SERVER_PORT: ODA1MQ==
-
     # http://synapi-service.dev-zk.svc.cluster.local/api/v1/user-certificate/me
     USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi16ay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9tZQ==
     # http://synapi-service.dev-zk.svc.cluster.local/api/v1/container/get-part
@@ -75,7 +71,6 @@ secret:
     ORGANIZATION_FIND_BY_INN_URI: aHR0cDovL3JlZi1ib29rLXNlcnZpY2UuZGV2LXprLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNTUvYXBpL3YxL3JlZi1ib29rL29yZ2FuaXphdGlvbi9pbm4=
     # http://synapi-service.dev-zk.svc.cluster.local
     SYNAPI_BASE_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi16ay5zdmMuY2x1c3Rlci5sb2NhbA==
-
     # http://cp-service.dev-zk.svc.cluster.local:8054/api/v1/sign/cades/as-user
     CRYPTO_PROXY_SIGN_URL: aHR0cDovL2NwLXNlcnZpY2UuZGV2LXprLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNTQvYXBpL3YxL3NpZ24vY2FkZXMvYXMtdXNlcg==
     # pep
@@ -86,21 +81,18 @@ secret:
     AUTOSIGN_IS_DETACHED: dHJ1ZQ==
     # CADES_BES
     AUTOSIGN_SIG_TYPE: Q0FkRVNfQkVT
-
     # http://pvv-adapter-service.release-zk.svc.cluster.local:8077/api/v1/manual/rrm4d/send-registration-request-file
     FNS_SEND_REGISTRATION_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UucmVsZWFzZS16ay5zdmMuY2x1c3Rlci5sb2NhbDo4MDc3L2FwaS92MS9tYW51YWwvcnJtNGQvc2VuZC1yZWdpc3RyYXRpb24tcmVxdWVzdC1maWxl
     # http://pvv-adapter-service.release-zk.svc.cluster.local:8077/api/v1/manual/rrm4d/send-status-request-json
     FNS_SEND_STATUS_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UucmVsZWFzZS16ay5zdmMuY2x1c3Rlci5sb2NhbDo4MDc3L2FwaS92MS9tYW51YWwvcnJtNGQvc2VuZC1zdGF0dXMtcmVxdWVzdC1qc29u
     # http://pvv-adapter-service.release-zk.svc.cluster.local:8077/api/v1/manual/rrm4d/send-revocation-request-file
     FNS_SEND_REVOKE_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UucmVsZWFzZS16ay5zdmMuY2x1c3Rlci5sb2NhbDo4MDc3L2FwaS92MS9tYW51YWwvcnJtNGQvc2VuZC1yZXZvY2F0aW9uLXJlcXVlc3QtZmlsZQ==
-
     # pep
     RESOURCE_ACCESS: cGVw
     # false
     DISABLE_TLS_CHECK: ZmFsc2U=
     # test
     SPRING_LIQUIBASE_CONTEXTS: dGVzdA==
-
     # 1440
     RPD_LIFESPAN_CACHE: MTQ0MA==
     # 1350
@@ -109,7 +101,6 @@ secret:
     RPD_CONNECTION_TIMEOUT: MzAwMDAw
     # 300000
     RPD_READ_TIMEOUT: MzAwMDAw
-
     # PT24H
     SCHEDULER_INTERVAL: UFQyNEg=
     # PT15S
@@ -118,19 +109,16 @@ secret:
     SCHEDULER_DELAY30: UFQzMFM=
     # PT45S
     SCHEDULER_DELAY45: UFQ0NVM=
-
     # /v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings,/actuator/health/readiness,/actuator/health/liveness
     WHITE_LIST: L3YzL2FwaS1kb2NzLyoqLC9jb25maWd1cmF0aW9uL3VpLC9zd2FnZ2VyLXJlc291cmNlcy8qKiwvY29uZmlndXJhdGlvbi9zZWN1cml0eSwvc3dhZ2dlci11aS5odG1sLC9zd2FnZ2VyLXVpLyoqLC93ZWJqYXJzLyoqLC8ud2VsbC1rbm93bi9hY21lLWNoYWxsZW5nZS8qKiwvZmF2aWNvbi5pY28sL2FjdHVhdG9yLC9hY3R1YXRvci9oZWFsdGgsL2FjdHVhdG9yL2luZm8sL2FjdHVhdG9yL2VudiwvYWN0dWF0b3IvYmVhbnMsL2FjdHVhdG9yL21ldHJpY3MsL2FjdHVhdG9yL2xvZ2dlcnMsL2FjdHVhdG9yL21hcHBpbmdzLC9hY3R1YXRvci9oZWFsdGgvcmVhZGluZXNzLC9hY3R1YXRvci9oZWFsdGgvbGl2ZW5lc3M=
     # *
     ACTUATOR_ENDPOINTS: Kg==
-
     # EMCHD_1
     M4D_XML_VERSION_FORMAT: RU1DSERfMQ==
     # 001
     M4D_REVOKE_XML_VERSION_FORMAT: MDAx
     # ПодтвДНФ001
     CONFIRM_VERSION_FORMAT: 0J/QvtC00YLQstCk0J3QoTAwMQ==
-
     # de8d2875-283a-4f59-9246-e1879e256bc2
     CONFIRM_LEGAL_ENTITY_ID: ZGU4ZDI4NzUtMjgzYS00ZjU5LTkyNDYtZTE4NzllMjU2YmMy
     # ЦЕНТР ИНФОРМАЦИОННЫХ ТЕХНОЛОГИЙ
@@ -141,24 +129,20 @@ secret:
     CONFIRM_LEGAL_ENTITY_INN: NzcxMDAxMDk5MA==
     # 1027700466640
     CONFIRM_LEGAL_ENTITY_OGRN: MTAyNzcwMDQ2NjY0MA==
-
     # 4M2EFnszPAT1yr45SgWVVLdXxfYCa4AYvDGns
     CONFIRM_OPERATOR_ADR_NOD: NE0yRUZuc3pQQVQxeXI0NVNnV1ZETHhmWUNhNEFZdkRHbnM=
     # sep.cip
     CONFIRM_OPERATOR_PRODUCT_URL: c2VwLmNpcA==
     # sep.cip 2.11
     CONFIRM_OPERATOR_PRODUCT_VERSION: c2VwLmNpcCAyLjEx
-
     # ПодтвДовер
     CONFIRM_M4D_TYPE: 0J/QvtC00YLQstCU0L7QstC10YA=
     # ПодтвЗаявОтмена
     CONFIRM_REVOKE_TYPE: 0J/QvtC00YLQstCX0LDRj9Cy0LvQntGC0LzQtdC90LA=
-
     # http://synapi-service.dev-zk.svc.cluster.local/api/v1/notifications/send
     NOTIFICATION_SEND_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi16ay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvbm90aWZpY2F0aW9ucy9zZW5k
     # http://synapi-service.dev-zk.svc.cluster.local/api/v1/user-certificate/search-by-inn
     USER_CERTS_SEARCH_BY_INN_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi16ay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9zZWFyY2gtYnktaW5u
-
     # empty
     M4D_SOUL: Ig==
 
