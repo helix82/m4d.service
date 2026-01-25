@@ -54,8 +54,10 @@ secret:
     KAFKA_BROKERS_LIST_URL: a2Fma2ExLmVzc29jb2RlLnJ1OjI5MDkyLGthZmthMi5lc3NvY29kZS5ydTozOTA5Mg==
     #https://m4d.rel.ok.essocode.ru
     SWAGGER_URL: aHR0cHM6Ly9tNGQucmVsLm9rLmVzc29jb2RlLnJ1
-    #http://synapi-service.release-ok.svc.cluster.local/api/v1/user-certificate/me
-    USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL3VzZXItY2VydGlmaWNhdGUvbWU=
+    #http://synapi-service.release-ok.svc.cluster.local/api/v1/user/user-certificate
+    USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL3VzZXIvdXNlci1jZXJ0aWZpY2F0ZQ==
+    #http://synapi-service.release-ok.svc.cluster.local/api/v1/user/user-certificate/search-by-inn
+    USER_CERTS_SEARCH_BY_INN_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL3VzZXIvdXNlci1jZXJ0aWZpY2F0ZS9zZWFyY2gtYnktaW5u
     #http://synapi-service.release-ok.svc.cluster.local/api/v1/container/get-part
     CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL2NvbnRhaW5lci9nZXQtcGFydA==
     #http://log-service.release-ok.svc.cluster.local:8055/api/v1/audit/external
@@ -108,7 +110,6 @@ secret:
     CONFIRM_M4D_TYPE: 0J/QvtC00YLQstCU0L7QstC10YA=
     CONFIRM_REVOKE_TYPE: 0J/QvtC00YLQstCX0LDRj9Cy0LvQntGC0LzQtdC90LA=
     NOTIFICATION_SEND_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL25vdGlmaWNhdGlvbnMvc2VuZA==
-    USER_CERTS_SEARCH_BY_INN_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLnJlbGVhc2Utb2suc3ZjLmNsdXN0ZXIubG9jYWwvYXBpL3YxL3VzZXItY2VydGlmaWNhdGUvc2VhcmNoLWJ5LWlubg==
     #m4d-release-ok
     APPLICATION_NAME: bTRkLXJlbGVhc2Utb2s=
     #http://synapi-service.release-ok.svc.cluster.local

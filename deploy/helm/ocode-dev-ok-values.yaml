@@ -61,8 +61,10 @@ secret:
     APPLICATION_NAME: bTRkLWRldg==
     # 8051
     SERVER_PORT: ODA1MQ==
-    # http://synapi-service.dev-ok.svc.cluster.local/api/v1/user-certificate/me
-    USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9tZQ==
+    # http://synapi-service.dev-ok.svc.cluster.local/api/v1/user/user-certificate
+    USER_CERTS_ME_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci91c2VyLWNlcnRpZmljYXRl
+    # http://synapi-service.dev-ok.svc.cluster.local/api/v1/user/user-certificate/search-by-inn
+    USER_CERTS_SEARCH_BY_INN_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci91c2VyLWNlcnRpZmljYXRlL3NlYXJjaC1ieS1pbm4=
     # http://synapi-service.dev-ok.svc.cluster.local/api/v1/container/get-part
     CONTAINER_PART_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvY29udGFpbmVyL2dldC1wYXJ0
     # http://log-service.dev-ok.svc.cluster.local:8055/api/v1/audit/external
@@ -135,8 +137,6 @@ secret:
     CONFIRM_REVOKE_TYPE: 0J/QvtC00YLQstCX0LDRj9Cy0LvQntGC0LzQtdC90LA=
     # http://synapi-service.dev-ok.svc.cluster.local/api/v1/notifications/send
     NOTIFICATION_SEND_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvbm90aWZpY2F0aW9ucy9zZW5k
-    # http://synapi-service.dev-ok.svc.cluster.local/api/v1/user-certificate/search-by-inn
-    USER_CERTS_SEARCH_BY_INN_URI: aHR0cDovL3N5bmFwaS1zZXJ2aWNlLmRldi1vay5zdmMuY2x1c3Rlci5sb2NhbC9hcGkvdjEvdXNlci1jZXJ0aWZpY2F0ZS9zZWFyY2gtYnktaW5u
     # empty
     M4D_SOUL: ""
 
