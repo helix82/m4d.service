@@ -66,12 +66,12 @@ secret:
     AUTOSIGN_PINCODE: MTIzNA==
     AUTOSIGN_IS_DETACHED: dHJ1ZQ==
     AUTOSIGN_SIG_TYPE: Q0FkRVNfQkVT
-    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-registration-request-file
-    FNS_SEND_REGISTRATION_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJlZ2lzdHJhdGlvbi1yZXF1ZXN0LWZpbGU=
-    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-status-request-json
-    FNS_SEND_STATUS_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXN0YXR1cy1yZXF1ZXN0LWpzb24=
-    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/manual/rrm4d/send-revocation-request-file
-    FNS_SEND_REVOKE_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL21hbnVhbC9ycm00ZC9zZW5kLXJldm9jYXRpb24tcmVxdWVzdC1maWxl
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/rrm4d/send-registration-request-file
+    FNS_SEND_REGISTRATION_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL3JybTRkL3NlbmQtcmVnaXN0cmF0aW9uLXJlcXVlc3QtZmlsZQ==
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/rrm4d/send-status-request-json
+    FNS_SEND_STATUS_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL3JybTRkL3NlbmQtc3RhdHVzLXJlcXVlc3QtanNvbg==
+    # http://pvv-adapter-service.master.svc.cluster.local:8077/api/v1/rrm4d/send-revocation-request-file
+    FNS_SEND_REVOKE_REQUEST_M4D_URI: aHR0cDovL3B2di1hZGFwdGVyLXNlcnZpY2UubWFzdGVyLnN2Yy5jbHVzdGVyLmxvY2FsOjgwNzcvYXBpL3YxL3JybTRkL3NlbmQtcmV2b2NhdGlvbi1yZXF1ZXN0LWZpbGU=
 
     RESOURCE_ACCESS: cGVw
     RPD_LIFESPAN_CACHE: MzA=
