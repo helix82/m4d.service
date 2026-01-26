@@ -155,9 +155,9 @@ cryptopro:
   proxy-service: ${CRYPTO_PROXY_SIGN_URL:https://cp.dev.essocode.ru/api/v1/sign/cades/as-user}
 
 pvv:
-  fns-send-registration-request-m4d: ${FNS_SEND_REGISTRATION_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-registration-request-file}
-  fns-send-status-request-m4d: ${FNS_SEND_STATUS_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-status-request-json}
-  fns-send-revoke-request-m4d: ${FNS_SEND_REVOKE_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/manual/rrm4d/send-revocation-request-file}
+  fns-send-registration-request-m4d: ${FNS_SEND_REGISTRATION_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/rrm4d/send-registration-request-file}
+  fns-send-status-request-m4d: ${FNS_SEND_STATUS_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/rrm4d/send-status-request-json}
+  fns-send-revoke-request-m4d: ${FNS_SEND_REVOKE_REQUEST_M4D_URI:https://pvv-adapter.rel.zk.essocode.ru/api/v1/rrm4d/send-revocation-request-file}
 
 #actuator
 management:
