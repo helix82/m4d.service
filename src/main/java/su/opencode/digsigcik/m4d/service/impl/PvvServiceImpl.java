@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import su.opencode.digsigcik.common.exceptions.exception.custom.BadRequestException;
@@ -70,7 +71,7 @@ public class PvvServiceImpl implements PvvService {
         }
 
         MultipartFile requestTempFile = new CustomMultipartFile(resp);
-        String res = registrationRequestM4dFnsViaPvv(requestTempFile, FNS_SEND_REGISTRATION_REQUEST_M4D_URI);
+        String res = registrationRequestM4dFnsViaPvv(requestTempFile, m4d.getGuid(), FNS_SEND_REGISTRATION_REQUEST_M4D_URI);
         log.info(res);
         return res;
     }
@@ -98,7 +99,7 @@ public class PvvServiceImpl implements PvvService {
             throw new BadRequestException(ZIP_CREATE_ERROR);
         }
         MultipartFile requestTempFile = new CustomMultipartFile(resp);
-        String res = registrationRequestM4dFnsViaPvv(requestTempFile, FNS_SEND_REVOKE_REQUEST_M4D_URI);
+        String res = registrationRequestM4dFnsViaPvv(requestTempFile, m4dRecall.getM4d().getGuid(), FNS_SEND_REVOKE_REQUEST_M4D_URI);
         log.info(res);
         return res;
     }
@@ -115,29 +116,32 @@ public class PvvServiceImpl implements PvvService {
         return res;
     }
 
-    private String registrationRequestM4dFnsViaPvv(MultipartFile file, URI uri) {
+    private String registrationRequestM4dFnsViaPvv(MultipartFile file, String guid, URI uri) {
+        log.info("Отправка {} в ПВВ (МЧД/Отзыв МЧД): {}...", guid, uri);
+
+        MultiValueMap<String, String> headers = new HttpHeaders();
+        headers.add("common-id", guid);
+        headers.add("Content-Type", MediaType.APPLICATION_OCTET_STREAM_VALUE);
         try {
-            log.debug("Отправка файла {}...", file);
             return restTemplate.postForEntity(
                             uri,
-                            new HttpEntity<>(file.getBytes()),
+                            new HttpEntity<>(file.getBytes(), headers),
                             String.class
                     )
                     .getBody();
         } catch (Exception ex) {
-            log.error("Ошибка при отправке файла для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
-                    uri);
+            log.error("Ошибка при отправке запроса в ПВВ: {}", ex.getMessage());
         }
         return null;
     }
 
     private String sendRequestM4dFnsViaPvv(String guid, URI uri) {
         String body = "{\"guid\":\"" + guid + "\"}";
+        log.debug("Отправка запроса на получение статуса МЧД {} в ПВВ: {}...", guid, uri);
         try {
-            log.debug("Отправка запроса на получение статуса МЧД {}...", guid);
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            headers.setContentType(MediaType.APPLICATION_JSON); // если тело JSON
+            MultiValueMap<String, String> headers = new HttpHeaders();
+            headers.add("common-id", guid);
+            headers.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
 
             HttpEntity<String> entity = new HttpEntity<>(body, headers);
             return restTemplate.postForEntity(
@@ -147,19 +151,18 @@ public class PvvServiceImpl implements PvvService {
                     )
                     .getBody();
         } catch (Exception ex) {
-            log.error("Ошибка при отправке запроса на получение статуса МЧД для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
-                    uri);
+            log.error("Ошибка при отправке запроса на получение статуса МЧД в ПВВ: {}", ex.getMessage());
         }
         return null;
     }
 
     private String sendRequestFullM4dFnsViaPvv(CheckByGuidRequestDto requestDto, URI uri) {
         String body = requestDto.toString();
+        log.debug("Отправка запроса на получение статуса МЧД {} в ПВВ: {}...", body, uri);
         try {
-            log.debug("Отправка запроса на получение статуса МЧД {}...", body);
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Accept", "application/json");
-            headers.setContentType(MediaType.APPLICATION_JSON); // если тело JSON
+            MultiValueMap<String, String> headers = new HttpHeaders();
+            headers.add("common-id", requestDto.getGuid());
+            headers.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
 
             HttpEntity<String> entity = new HttpEntity<>(body, headers);
             return restTemplate.postForEntity(
@@ -169,8 +172,7 @@ public class PvvServiceImpl implements PvvService {
                     )
                     .getBody();
         } catch (Exception ex) {
-            log.error("Ошибка при отправке запроса на получение статуса МЧД для межконтурного обновления: {} по адресу '{}'", ex.getMessage(),
-                    uri);
+            log.error("Ошибка при отправке запроса на получение статуса МЧД в ПВВ: {}", ex.getMessage());
         }
         return null;
     }
