@@ -41,8 +41,8 @@ secret:
   enabled: true
   name: m4d-back-cred
   data:
-    #jdbc:postgresql://217.79.22.46:5432/rel_zk_m4d_db
-    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMjE3Ljc5LjIyLjQ2OjU0MzIvcmVsX3prX200ZF9kYg==
+    #jdbc:postgresql://192.168.17.1:5432/rel_zk_m4d_db
+    SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3FsOi8vMTkyLjE2OC4xNy4xOjU0MzIvcmVsX3prX200ZF9kYg==
     SPRING_DATASOURCE_USERNAME: cm9vdA==
     SPRING_DATASOURCE_PASSWORD: cm9vdA==
     #https://sso.rpd.zk.dev.cit.st/realms/test/protocol/openid-connect/auth

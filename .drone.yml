@@ -148,7 +148,7 @@ steps:
       - build
     when:
       branch:
-        - master
+        - master1
 
   - name: deploy-dev-new
     image: alpine/k8s:1.32.2
@@ -169,7 +169,7 @@ steps:
       - create-helm-template-dev-new
     when:
       branch:
-        - master
+        - master1
 
   - name: create-helm-template-release
     image: alpine/helm:3.12.3
