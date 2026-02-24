@@ -331,6 +331,26 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.secret.name }}
                   key: {{ .Values.env.SYNAPI_BASE_URI }}
+            - name: DB_MAX_POOL_SIZE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.DB_MAX_POOL_SIZE }}
+            - name: DB_MIN_IDLE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.DB_MIN_IDLE }}
+            - name: DB_KEEPALIVE_MS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.DB_KEEPALIVE_MS }}
+            - name: DB_CONN_TIMEOUT_MS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.name }}
+                  key: {{ .Values.env.DB_CONN_TIMEOUT_MS }}
       volumes:
         - name: m4d-logs
           hostPath:
