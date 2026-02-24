@@ -9,6 +9,11 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/m4d_scheme}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_MAX_POOL_SIZE:10}
+      minimum-idle: ${DB_MIN_IDLE:4}
+      keepalive-time: ${DB_KEEPALIVE_MS:120000}
+      connection-timeout: ${DB_CONN_TIMEOUT_MS:30000}
   liquibase:
     change-log: classpath:db/changelog/db.changelog_master.yml
   #Security properties
@@ -61,6 +66,7 @@ logging:
     org.springframework.web.servlet.mvc.method.annotation: WARN
     su.opencode.digsigcik.specification: DEBUG    # pagination
     su.opencode.digsigcik.synapi.service: DEBUG
+    com.zaxxer.hikari: DEBUG
 
 web:
   cors:
