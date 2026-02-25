@@ -95,8 +95,8 @@ secret:
     SCHEDULER_DELAY15: UFQxNVM=
     SCHEDULER_DELAY30: UFQzMFM=
     SCHEDULER_DELAY45: UFQ0NVM=
-    # /v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings,/actuator/health/readiness,/actuator/health/liveness
-    WHITE_LIST: L3YzL2FwaS1kb2NzLyoqLC9jb25maWd1cmF0aW9uL3VpLC9zd2FnZ2VyLXJlc291cmNlcy8qKiwvY29uZmlndXJhdGlvbi9zZWN1cml0eSwvc3dhZ2dlci11aS5odG1sLC9zd2FnZ2VyLXVpLyoqLC93ZWJqYXJzLyoqLC8ud2VsbC1rbm93bi9hY21lLWNoYWxsZW5nZS8qKiwvZmF2aWNvbi5pY28sL2FjdHVhdG9yLC9hY3R1YXRvci9oZWFsdGgsL2FjdHVhdG9yL2luZm8sL2FjdHVhdG9yL2VudiwvYWN0dWF0b3IvYmVhbnMsL2FjdHVhdG9yL21ldHJpY3MsL2FjdHVhdG9yL2xvZ2dlcnMsL2FjdHVhdG9yL21hcHBpbmdzLC9hY3R1YXRvci9oZWFsdGgvcmVhZGluZXNzLC9hY3R1YXRvci9oZWFsdGgvbGl2ZW5lc3M=
+    # /v3/api-docs/**,/configuration/ui,/swagger-resources/**,/configuration/security,/swagger-ui.html,/swagger-ui/**,/webjars/**,/.well-known/acme-challenge/**,/favicon.ico,/actuator,/actuator/health,/actuator/info,/actuator/env,/actuator/beans,/actuator/metrics,/actuator/loggers,/actuator/mappings,/actuator/health/readiness,/actuator/health/liveness,/api/v1/m4d/upload-result-sending-to-rr,/api/v1/m4d/status,/api/v1/m4d/revoke/upload-result-sending-to-rr
+    WHITE_LIST: L3YzL2FwaS1kb2NzLyoqLC9jb25maWd1cmF0aW9uL3VpLC9zd2FnZ2VyLXJlc291cmNlcy8qKiwvY29uZmlndXJhdGlvbi9zZWN1cml0eSwvc3dhZ2dlci11aS5odG1sLC9zd2FnZ2VyLXVpLyoqLC93ZWJqYXJzLyoqLC8ud2VsbC1rbm93bi9hY21lLWNoYWxsZW5nZS8qKiwvZmF2aWNvbi5pY28sL2FjdHVhdG9yLC9hY3R1YXRvci9oZWFsdGgsL2FjdHVhdG9yL2luZm8sL2FjdHVhdG9yL2VudiwvYWN0dWF0b3IvYmVhbnMsL2FjdHVhdG9yL21ldHJpY3MsL2FjdHVhdG9yL2xvZ2dlcnMsL2FjdHVhdG9yL21hcHBpbmdzLC9hY3R1YXRvci9oZWFsdGgvcmVhZGluZXNzLC9hY3R1YXRvci9oZWFsdGgvbGl2ZW5lc3MsL2FwaS92MS9tNGQvdXBsb2FkLXJlc3VsdC1zZW5kaW5nLXRvLXJyLC9hcGkvdjEvbTRkL3N0YXR1cywvYXBpL3YxL200ZC9yZXZva2UvdXBsb2FkLXJlc3VsdC1zZW5kaW5nLXRvLXJy
     # *
     ACTUATOR_ENDPOINTS: Kg==
     M4D_XML_VERSION_FORMAT: RU1DSERfMQ==
